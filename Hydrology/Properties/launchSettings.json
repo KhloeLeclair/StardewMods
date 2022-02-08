@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Hydrology": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}

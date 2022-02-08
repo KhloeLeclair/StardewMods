@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BetterCrafting": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}

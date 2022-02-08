@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Almanac": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}

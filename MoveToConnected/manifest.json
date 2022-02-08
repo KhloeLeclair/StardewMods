@@ -1,0 +1,10 @@
+{
+	"Name": "Move To Connected",
+	"Author": "Khloe Leclair",
+	"Version": "1.0.0",
+	"Description": "Adds buttons to inventory menus allowing you to move your items to not just the chest you're using, but also connected chests. It also works for a workbench's connected chests.",
+	"UniqueID": "leclair.movetoconnected",
+	"EntryDll": "MoveToConnected.dll",
+	"MinimumApiVersion": "3.0.0",
+	"UpdateKeys": []
+}

@@ -1,0 +1,87 @@
+{
+	"mod-name": "Almanac",
+
+	"almanac.cover": "The\nFerngil\nFarmer's\nAlmanac",
+
+	"calendar.when": "{{season}}, Year {{year}}",
+
+	"calendar.day.1": "M",
+	"calendar.day.2": "T",
+	"calendar.day.3": "W",
+	"calendar.day.4": "Th",
+	"calendar.day.5": "F",
+	"calendar.day.6": "Sa",
+	"calendar.day.7": "Su",
+
+	"page.crops": "Planting Dates",
+
+	"crop.last-day": "Last Day For:",
+
+	"crop.toggle": "Toggle {{mode}}",
+	"crop.paddy": "Paddy Bonus",
+
+	"crop.using-none": "The following growth times and dates assume you have no fertilizer or skill.",
+	"crop.using-agri": "The following growth times and dates assume you are an {{agriculturist}}.",
+	"crop.using-speed": "The following growth times and dates assume you are using {{fertilizer}}.",
+	"crop.using-both": "The following growth times and dates assume you are an {{agriculturist}} and that you are using {{fertilizer}}.",
+	"crop.using-paddy":  "They also assume crops that benefit from it are grown near water.",
+
+	"crop.grow-time": "Grows in {{count}} days.",
+	"crop.last-date": "Plant no later than {{date}}.",
+	"crop.regrow-time": "Regrows every {{count}} days.",
+	"crop.paddy-note": "Grows faster near water.",
+	"crop.giant-note":  "Able to grow to giant size.",
+	"crop.trellis-note":  "Requires a trellis.",
+
+	"page.weather": "Weather Forecast",
+
+	"festival.when": "When:",
+	"festival.when-times": "{{start}} to {{end}}",
+	"festival.where": "Where:",
+	"festival.date": "Date:",
+
+	"weather.sunny": "Sunny",
+	"weather.rain": "Rain",
+	"weather.debris": "Windy",
+	"weather.lightning": "Thunderstorms",
+	"weather.festival": "Sunny",
+	"weather.snow": "Snow",
+
+	"page.train": "Train Schedule",
+	"page.train-arrivals": "Arrival Times:",
+
+	// Settings
+
+	"settings.available": "Almanac Always Available",
+	"settings.available-desc": "When enabled, the Almanac will always be available regardless of whether you've received a copy.",
+
+	"settings.weather.deterministic": "Use Deterministic Weather",
+	"settings.weather.deterministic-desc": "In order for the weather forecast of the Almanac to work, we replace the calculation for tomorrow's weather with one that uses a predictable source of randomness. If this is causing problems, you can disable the behavior here. However, doing so will disable the extended weather forecast.",
+
+	"settings.controls": "Controls",
+
+	"settings.controls.almanac": "Open Almanac",
+	"settings.controls.almanac-desc": "Pressing this key will open the Almanac interface.",
+
+	"settings.enable": "Enable Page",
+	"settings.enable-desc":  "Whether or not this page should be added to the Almanac.",
+
+	"settings.crops": "Page: Planting Dates",
+
+	"settings.crops.preview": "Crop Previews",
+	"settings.crops.preview-desc":  "When Crop Previews are enabled, hovering over a crop in the Planting Dates tab will show you with the calendar what stage the crop will be at on a given day.",
+
+	"settings.crops.preview.enable":  "Enable Previews",
+
+	"settings.crops.preview.plantonfirst": "Always Plant on First",
+	"settings.crops.preview.plantonfirst-desc":  "When enabled, the month overview you see when a crop is selected will always start planting on the first even if the current date is after the first of the month.",
+
+	"settings.crops.preview.sprite": "Use Harvest Sprites",
+	"settings.crops.preview.sprite-desc":  "When enabled, an image of the harvest product will be used rather than the final growth stage, to make it more easily apparent what days the crop is harvestable.",
+
+
+	"settings.train": "Page: Train Schedule",
+
+	"settings.weather": "Page: Weather Forecast"
+
+}

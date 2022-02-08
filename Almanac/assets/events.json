@@ -1,0 +1,40 @@
+{
+	"Farm": [
+		{
+			"Where": "Farm",
+			"Id": "999999999",
+			"Conditions": [
+				"m 1000",
+				"w sunny"
+			],
+			"Script": [
+				"continue",
+				"64 15",
+				"farmer 64 16 2 Pierre 64 18 0",
+				"skippable",
+				"pause 1500",
+				"speak Pierre \"Hello there, @. It seems you're settling in well!\"",
+				"pause 500",
+				"faceDirection Pierre 3",
+				"pause 500",
+				"faceDirection Pierre 2",
+				"pause 500",
+				"faceDirection Pierre 0",
+				"pause 500",
+				"speak Pierre \"My shipment of this year's Farmer's Almanac just arrived. Since you're new, I thought I'd bring you a copy.\"",
+				"pause 500",
+				"playSound getNewSpecialItem",
+				"message \"Received a copy of 'Farmer's Almanac'.\"",
+				"pause 800",
+				"speak Pierre \"They're full of useful information. Weather forecasts. Crop rotations. The regional train schedule. Lots of stuff.\"",
+				"pause 500",
+				"move Pierre 0 1 2",
+				"pause 1500",
+				"faceDirection Pierre 0",
+				"speak Pierre \"Make sure to read up on what you can grow. Once you're ready to plant, you can buy seeds from my shop.#$b#Pierre's seeds are the *best* you can find.\"",
+				"pause 500",
+				"end"
+			]
+		}
+	]
+}

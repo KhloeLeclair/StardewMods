@@ -1,0 +1,54 @@
+{
+	// Settings
+	"setting.general": "General Options",
+
+	"setting.replace-crafting": "Replace Crafting Menu",
+	"setting.replace-crafting.tip": "When enabled, the crafting menu is replaced with a reimplementation.",
+
+	"setting.replace-cooking": "Replace Cooking Menu",
+	"setting.replace-cooking.tip": "When enabled, the cooking menu is replaced with a reimplementation.",
+
+	"setting.enable-categories": "Enable Categories",
+	"setting.enable-categories.tip": "Display category tabs in crafting menus, rather than one big list of everything.",
+
+	// Crafting
+	"setting.crafting": "Crafting",
+	"setting.crafting.tip": "These settings apply specifically to the reimplemented crafting menu.",
+
+	"setting.uniform-grid": "Force Uniform Sizes",
+	"setting.uniform-grid.tip": "When enabled, big craftables will be squished down to fit in a single row.",
+
+	"setting.big-craftables-last": "Sort Big Craftables Last",
+	"setting.big-craftables-last.tip": "When enabled, big craftables will all be put at the end of the list.",
+
+	// Cooking
+	"setting.cooking": "Cooking",
+	"setting.cooking.tip": "These settings apply specifically to the reimplemented cooking menu.",
+
+	"setting.seasoning": "Use Seasoning",
+	"setting.seasoning.tip": "Whether or not seasoning should be used to enhance cooked items. When set to \"Inventory Only\", seasoning will only be used from your inventory and not from the fridge or any other source.",
+
+	"seasoning.disabled": "Never",
+	"seasoning.enabled": "Always",
+	"seasoning.inventory": "Inventory Only",
+
+	"setting.hide-unknown": "Hide Unknown Recipes",
+	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",
+
+	// Buttons
+	"tooltip.edit-mode": "Edit Categories",
+	"tooltip.favorites": "Only Show Favorites",
+	"tooltip.seasoning": "Use Seasoning",
+	"tooltip.uniform": "Use Uniform Grid",
+
+	// Categories
+	"category.new": "New Category",
+	"category.favorites": "Favorites",
+	"category.combat_rings": "Combat and Rings",
+	"category.consumables": "Consumables",
+	"category.decoration": "Decoration",
+	"category.fertilizer_seeds": "Fertilizer and Seeds",
+	"category.fishing": "Fishing",
+	"category.machinery": "Machinery",
+	"category.misc": "Miscellaneous"
+}

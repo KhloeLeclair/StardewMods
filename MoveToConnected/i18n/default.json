@@ -1,0 +1,6 @@
+{
+	"tooltip.insert": "Add to Connected",
+	"tooltip.insert.held": "Add Held to Connected",
+	"tooltip.extract": "Fill from Connected",
+	"tooltip.extract.held": "Fill Held from Connected"
+}

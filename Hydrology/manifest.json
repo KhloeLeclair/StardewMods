@@ -1,0 +1,10 @@
+{
+	"Name": "Hydrology",
+	"Author": "Khloe Leclair",
+	"Version": "1.0.0",
+	"Description": "Allows farmers to place and remove additional water tiles around the farm.",
+	"UniqueID": "leclair.hydrology",
+	"EntryDll": "Hydrology.dll",
+	"MinimumApiVersion": "3.0.0",
+	"UpdateKeys": []
+}
