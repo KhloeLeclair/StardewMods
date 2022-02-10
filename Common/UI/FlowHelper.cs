@@ -64,13 +64,14 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
-		public FlowBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment? align = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+		public FlowBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment? align = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
 			TextStyle style = new TextStyle(
 				color: color,
 				prismatic: prismatic,
 				font: font,
 				fancy: fancy,
 				shadow: shadow,
+				shadowColor: shadowColor,
 				bold: bold,
 				strikethrough: strikethrough,
 				underline: underline,
@@ -387,7 +388,7 @@ namespace Leclair.Stardew.Common.UI {
 			}
 		}
 
-		public static void RenderFlow(SpriteBatch batch, CachedFlow flow, Vector2 position, Color? defaultColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
+		public static void RenderFlow(SpriteBatch batch, CachedFlow flow, Vector2 position, Color? defaultColor = null, Color? defaultShadowColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
 			float x = 0;
 			float y = 0;
 
@@ -404,7 +405,7 @@ namespace Leclair.Stardew.Common.UI {
 					IFlowNode node = slice.Node;
 					float offsetY = GetYOffset(node.Alignment, slice.Height * scale, line.Height * scale);
 
-					node.Draw(slice, batch, new Vector2(position.X + x, position.Y + y + offsetY), scale, flow.Font, defaultColor, line, flow);
+					node.Draw(slice, batch, new Vector2(position.X + x, position.Y + y + offsetY), scale, flow.Font, defaultColor, defaultShadowColor, line, flow);
 
 					x += slice.Width * scale;
 				}
@@ -417,15 +418,15 @@ namespace Leclair.Stardew.Common.UI {
 			}
 		}
 
-		public static CachedFlow RenderFlow(SpriteBatch batch, CachedFlow flow, Vector2 position, float maxWidth = -1, SpriteFont defaultFont = null, Color? defaultColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
+		public static CachedFlow RenderFlow(SpriteBatch batch, CachedFlow flow, Vector2 position, float maxWidth = -1, SpriteFont defaultFont = null, Color? defaultColor = null, Color? defaultShadowColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
 			CachedFlow result = CalculateFlow(flow, maxWidth, defaultFont);
-			RenderFlow(batch, result, position, defaultColor, scale, lineOffset, maxHeight);
+			RenderFlow(batch, result, position, defaultColor, defaultShadowColor, scale, lineOffset, maxHeight);
 			return result;
 		}
 
-		public static CachedFlow RenderFlow(SpriteBatch batch, IEnumerable<IFlowNode> nodes, Vector2 position, float maxWidth = -1, SpriteFont defaultFont = null, Color? defaultColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
+		public static CachedFlow RenderFlow(SpriteBatch batch, IEnumerable<IFlowNode> nodes, Vector2 position, float maxWidth = -1, SpriteFont defaultFont = null, Color? defaultColor = null, Color? defaultShadowColor = null, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
 			CachedFlow result = CalculateFlow(nodes, maxWidth, defaultFont);
-			RenderFlow(batch, result, position, defaultColor, scale, lineOffset, maxHeight);
+			RenderFlow(batch, result, position, defaultColor, defaultShadowColor, scale, lineOffset, maxHeight);
 			return result;
 		}
 	}

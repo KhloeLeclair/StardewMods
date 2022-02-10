@@ -140,13 +140,14 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return new TextSlice(this, final, start, start + final.Length + offset, finalSize.X, Math.Max(finalSize.Y, spaceSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
 		}
 
-		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, CachedFlowLine line, CachedFlow flow) {
+		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor, CachedFlowLine line, CachedFlow flow) {
 			if (slice is not TextSlice tslice)
 				return;
 
 			float s = scale * (Style.Scale ?? 1f);
 			SpriteFont font = Style.Font ?? defaultFont;
 			Color color = Style.Color ?? defaultColor ?? Game1.textColor;
+			Color? shadowColor = Style.ShadowColor ?? defaultShadowColor;
 			if (Style.IsPrismatic())
 				color = Utility.GetPrismaticColor();
 
@@ -156,9 +157,12 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y);
 			else if (Style.IsBold())
 				Utility.drawBoldText(batch, text, font, position, color, s);
-			else if (Style.HasShadow())
-				Utility.drawTextWithShadow(batch, text, font, position, color, s);
-			else
+			else if (Style.HasShadow()) {
+				if (shadowColor.HasValue)
+					Utility.drawTextWithColoredShadow(batch, text, font, position, color, shadowColor.Value, s);
+				else
+					Utility.drawTextWithShadow(batch, text, font, position, color, s);
+			} else
 				batch.DrawString(font, text, position, color, 0f, Vector2.Zero, s, SpriteEffects.None, GUIHelper.GetLayerDepth(position.Y));
 
 			// TODO: Strike and Underline

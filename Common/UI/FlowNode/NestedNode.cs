@@ -48,9 +48,9 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return null;
 		}
 
-		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, CachedFlowLine line, CachedFlow flow) {
+		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor, CachedFlowLine line, CachedFlow flow) {
 			if (slice is NestedNodeSlice tslice)
-				tslice.Slice.Node.Draw(tslice.Slice, batch, position, scale, defaultFont, defaultColor, line, flow);
+				tslice.Slice.Node.Draw(tslice.Slice, batch, position, scale, defaultFont, defaultColor, defaultShadowColor, line, flow);
 		}
 
 		public override bool Equals(object obj) {

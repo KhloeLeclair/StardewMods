@@ -33,12 +33,15 @@ namespace Leclair.Stardew.Common {
 
 
 		public static class Tabs {
-			public static Rectangle BACKGROUND = new(16, 368, 16, 16);
+			public static readonly Rectangle BACKGROUND = new(16, 368, 16, 16);
 		}
 
 		public static class MouseIcons {
-			public static Rectangle BACKPACK = new Rectangle(268, 1436, 11, 13);
+			public static readonly Rectangle BACKPACK = new(268, 1436, 11, 13);
+		}
 
+		public static class MouseIcons2 {
+			public static readonly Rectangle GOLDEN_NUT = new(0, 240, 16, 16);
 		}
 
 		/*public static class Buttons {

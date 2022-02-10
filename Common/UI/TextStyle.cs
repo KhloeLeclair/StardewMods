@@ -11,6 +11,7 @@ namespace Leclair.Stardew.Common.UI {
 		public bool? Fancy { get; }
 		public bool? Title { get; }
 		public bool? Shadow { get; }
+		public Color? ShadowColor { get; }
 		public bool? Bold { get; }
 		public Color? Color { get; }
 		public bool? Prismatic { get; }
@@ -19,11 +20,12 @@ namespace Leclair.Stardew.Common.UI {
 		public bool? Underline { get; }
 		public float? Scale { get; }
 
-		public TextStyle(Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? title = null, bool? shadow = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, float? scale = null) {
+		public TextStyle(Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? title = null, bool? shadow = null, Color? shadowColor = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, float? scale = null) {
 			Title = title;
 			Fancy = fancy;
 			Bold = bold;
 			Shadow = shadow;
+			ShadowColor = shadowColor;
 			Color = color;
 			Prismatic = prismatic;
 			Font = font;
@@ -69,6 +71,7 @@ namespace Leclair.Stardew.Common.UI {
 				Title.Equals(other.Title) &&
 				Fancy.Equals(other.Fancy) &&
 				Shadow.Equals(other.Shadow) &&
+				ShadowColor.Equals(other.ShadowColor) &&
 				Bold.Equals(other.Bold) &&
 				Color.Equals(other.Color) &&
 				Prismatic.Equals(other.Prismatic) &&
@@ -83,6 +86,7 @@ namespace Leclair.Stardew.Common.UI {
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Fancy);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Title);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Shadow);
+			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(ShadowColor);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Bold);
 			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(Color);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Prismatic);

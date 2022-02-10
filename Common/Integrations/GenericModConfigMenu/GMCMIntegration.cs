@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
+using StardewValley;
+
 namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 	public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi, M> where T : new() where M : Mod {
@@ -22,7 +24,7 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 		private IManifest Consumer { get => Self.ModManifest; }
 
-		public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.3.3") {
+		public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.8.0") {
 
 			GetConfig = getConfig;
 			ResetConfig = resetConfig;
@@ -37,11 +39,8 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 			if (!hasRegistered) {
 				hasRegistered = true;
-				API.RegisterModConfig(Consumer, ResetConfig, SaveConfig);
+				API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue ? ! allowInGameChanges.Value : false);
 			}
-
-			if (allowInGameChanges.HasValue)
-				API.SetDefaultIngameOptinValue(Consumer, optedIn: allowInGameChanges.Value);
 
 			return this;
 		}
@@ -51,7 +50,7 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 			if (hasRegistered) {
 				hasRegistered = false;
-				API.UnregisterModConfig(Consumer);
+				API.Unregister(Consumer);
 			}
 
 			return this;
@@ -63,9 +62,21 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 		public GMCMIntegration<T, M> StartPage(string name, string displayName) {
 			AssertLoaded();
-			API.StartNewPage(Self.ModManifest, name);
-			if (!string.IsNullOrEmpty(displayName))
-				API.OverridePageDisplayName(Consumer, name, displayName);
+			API.AddPage(
+				Consumer,
+				name,
+				string.IsNullOrEmpty(displayName) ? null : () => displayName
+			);
+			return this;
+		}
+
+		public GMCMIntegration<T, M> StartPage(string name, Func<string> displayName) {
+			AssertLoaded();
+			API.AddPage(
+				Consumer,
+				name,
+				displayName
+			);
 			return this;
 		}
 
@@ -74,29 +85,118 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 		#region Formatting
 
 		public GMCMIntegration<T, M> AddLabel(string name, string tooltip = null, string shortcut = null) {
+			return AddLabel(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				shortcut
+			);
+		}
+
+		public GMCMIntegration<T, M> AddLabel(Func<string> name, Func<string> tooltip = null, string shortcut = null) {
 			AssertLoaded();
 			if (string.IsNullOrEmpty(shortcut))
-				API.RegisterLabel(Consumer, name, tooltip);
+				API.AddSectionTitle(Consumer, name, tooltip);
 			else
-				API.RegisterPageLabel(Consumer, name, tooltip, shortcut);
+				API.AddPageLink(Consumer, shortcut, name, tooltip);
 			return this;
 		}
 
 		public GMCMIntegration<T, M> AddParagraph(string text) {
+			return AddParagraph(() => text);
+		}
+
+		public GMCMIntegration<T, M> AddParagraph(Func<string> text) {
 			AssertLoaded();
-			API.RegisterParagraph(Consumer, text);
+			API.AddParagraph(Consumer, text);
 			return this;
 		}
 
 		public GMCMIntegration<T, M> AddImage(string path, Rectangle? source = null, int scale = 4) {
 			AssertLoaded();
-			API.RegisterImage(Consumer, path, source, scale);
+			API.AddImage(Consumer, () => Self.Helper.Content.Load<Texture2D>(path), source, scale);
+			return this;
+		}
+
+		public GMCMIntegration<T, M> AddImage(Func<Texture2D> texture, Rectangle? source = null, int scale = 4) {
+			AssertLoaded();
+			API.AddImage(Consumer, texture, source, scale);
 			return this;
 		}
 
 		#endregion
 
 		#region Fancy Controls
+
+		public GMCMIntegration<T, M> AddChoice<TType>(Func<string> name, Func<string> tooltip, Func<T, TType> get, Action<T, TType> set, IEnumerable<KeyValuePair<TType, Func<string>>> choices) {
+			List<TType> values = new();
+			List<Func<string>> labels = new();
+
+			foreach (KeyValuePair<TType, Func<string>> entry in choices) {
+				values.Add(entry.Key);
+				labels.Add(entry.Value);
+			}
+
+			return AddChoice(name, tooltip, get, set, labels, values);
+		}
+
+		public GMCMIntegration<T, M> AddChoice<TType>(Func<string> name, Func<string> tooltip, Func<T, TType> get, Action<T, TType> set, IEnumerable<KeyValuePair<Func<string>, TType>> choices) {
+			List<TType> values = new();
+			List<Func<string>> labels = new();
+
+			foreach (KeyValuePair<Func<string>, TType> entry in choices) {
+				values.Add(entry.Value);
+				labels.Add(entry.Key);
+			}
+
+			return AddChoice(name, tooltip, get, set, labels, values);
+		}
+
+		public GMCMIntegration<T, M> AddChoice<TType>(Func<string> name, Func<string> tooltip, Func<T, TType> get, Action<T, TType> set, IList<Func<string>> labels, IList<TType> values, string fieldId = null) {
+			return AddChoice(
+				get,
+				set,
+				labels,
+				values,
+				name,
+				tooltip,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> AddChoice<TType>(Func<T, TType> get, Action<T, TType> set, IList<Func<string>> labels, IList<TType> values, Func<string> name, Func<string> tooltip = null, string fieldId = null) {
+			AssertLoaded();
+
+			List<string> keys = new(labels.Count);
+			for(int i = 0; i < labels.Count; i++)
+				keys.Add(i.ToString());
+
+			API.AddTextOption(
+				mod: Consumer,
+				getValue: () => {
+					TType val = get(GetConfig());
+					int idx = values.IndexOf(val);
+					return idx == -1 ? "0" : idx.ToString();
+				},
+				setValue: val => {
+					if (!int.TryParse(val, out int idx))
+						idx = -1;
+
+					set(GetConfig(), idx == -1 ? values[0] : values[idx]);
+				},
+				name: name,
+				tooltip: tooltip,
+				allowedValues: keys.ToArray(),
+				formatAllowedValue: key => {
+					if (!int.TryParse(key, out int idx))
+						idx = -1;
+
+					return labels[idx == -1 ? 0 : idx]();
+				},
+				fieldId: fieldId
+			);
+
+			return this;
+		}
 
 		public GMCMIntegration<T, M> AddChoice<TType>(string name, string tooltip, Func<T, TType> get, Action<T, TType> set, IEnumerable<KeyValuePair<TType, string>> choices) {
 			List<TType> values = new();
@@ -122,31 +222,38 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 			return AddChoice(name, tooltip, get, set, labels, values);
 		}
 
-		public GMCMIntegration<T, M> AddChoice<TType>(string name, string tooltip, Func<T, TType> get, Action<T, TType> set, IList<string> labels, IList<TType> values) {
+		public GMCMIntegration<T, M> AddChoice<TType>(string name, string tooltip, Func<T, TType> get, Action<T, TType> set, IList<string> labels, IList<TType> values, string fieldId = null) {
+			return AddChoice(
+				get,
+				set,
+				labels,
+				values,
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> AddChoice<TType>(Func<T, TType> get, Action<T, TType> set, IList<string> labels, IList<TType> values, Func<string> name, Func<string> tooltip = null, string fieldId = null) {
 			AssertLoaded();
 
-			API.RegisterChoiceOption(
+			API.AddTextOption(
 				mod: Consumer,
-				optionName: name,
-				optionDesc: tooltip,
-				optionGet: () => {
+				getValue: () => {
 					TType val = get(GetConfig());
 					int idx = values.IndexOf(val);
 					return idx == -1 ? labels[0] : labels[idx];
 				},
-				optionSet: val => {
+				setValue: val => {
 					int idx = labels.IndexOf(val);
 					set(GetConfig(), idx == -1 ? values[0] : values[idx]);
 				},
-				choices: labels.ToArray()
+				name: name,
+				tooltip: tooltip,
+				allowedValues: labels.ToArray(),
+				fieldId: fieldId
 			);
 
-			return this;
-		}
-
-		public GMCMIntegration<T, M> AddCustom(string name, string tooltip, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave) {
-			AssertLoaded();
-			API.RegisterComplexOption(Consumer, name, tooltip, widgetUpdate, widgetDraw, onSave);
 			return this;
 		}
 
@@ -154,50 +261,94 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 		#region Basic Controls
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, bool> get, Action<T, bool> set) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, bool> get, Action<T, bool> set, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, bool> get, Action<T, bool> set, string fieldId = null) {
 			AssertLoaded();
-			API.RegisterSimpleOption(
+			API.AddBoolOption(
 				mod: Consumer,
-				optionName: name,
-				optionDesc: tooltip,
-				optionGet: () => get(GetConfig()),
-				optionSet: val => set(GetConfig(), val)
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				fieldId: fieldId
 			);
 			return this;
 		}
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, string> get, Action<T, string> set) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, string> get, Action<T, string> set, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, string> get, Action<T, string> set, string fieldId = null) {
 			AssertLoaded();
-			API.RegisterSimpleOption(
+			API.AddTextOption(
 				mod: Consumer,
-				optionName: name,
-				optionDesc: tooltip,
-				optionGet: () => get(GetConfig()),
-				optionSet: val => set(GetConfig(), val)
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				fieldId: fieldId
 			);
 			return this;
 		}
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, SButton> get, Action<T, SButton> set) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, SButton> get, Action<T, SButton> set, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, SButton> get, Action<T, SButton> set, string fieldId = null) {
 			AssertLoaded();
-			API.RegisterSimpleOption(
+			API.AddKeybind(
 				mod: Consumer,
-				optionName: name,
-				optionDesc: tooltip,
-				optionGet: () => get(GetConfig()),
-				optionSet: val => set(GetConfig(), val)
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				fieldId: fieldId
 			);
 			return this;
 		}
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, KeybindList> get, Action<T, KeybindList> set) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, KeybindList> get, Action<T, KeybindList> set, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, KeybindList> get, Action<T, KeybindList> set, string fieldId = null) {
 			AssertLoaded();
-			API.RegisterSimpleOption(
+			API.AddKeybindList(
 				mod: Consumer,
-				optionName: name,
-				optionDesc: tooltip,
-				optionGet: () => get(GetConfig()),
-				optionSet: val => set(GetConfig(), val)
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				fieldId: fieldId
 			);
 			return this;
 		}
@@ -206,60 +357,68 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 		#region Numeric Controls
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, int> get, Action<T, int> set, int? minValue = null, int? maxValue = null, int? interval = null) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, int> get, Action<T, int> set, int? min = null, int? max = null, int? interval = null, Func<int, string> format = null, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				min,
+				max,
+				interval,
+				format,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, int> get, Action<T, int> set, int? min = null, int? max = null, int? interval = null, Func<int, string> format = null, string fieldId = null) {
 			AssertLoaded();
 
-			if (minValue.HasValue || maxValue.HasValue) {
-				// Here, we do stupid stuff with floats because GMCM doesn't render the current value
-				// if the number isn't a float.
-				API.RegisterClampedOption(
-					mod: Consumer,
-					optionName: name,
-					optionDesc: tooltip,
-					optionGet: () => get(GetConfig()),
-					optionSet: val => set(GetConfig(), (int) val),
-					min: minValue ?? int.MinValue,
-					max: maxValue ?? int.MaxValue,
-					interval: (float) (interval ?? 1)
-				);
-
-			} else
-				API.RegisterSimpleOption(
-					mod: Consumer,
-					optionName: name,
-					optionDesc: tooltip,
-					optionGet: () => get(GetConfig()),
-					optionSet: val => set(GetConfig(), val)
-				);
+			API.AddNumberOption(
+				Consumer,
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				min: min,
+				max: max,
+				interval: interval,
+				formatValue: format,
+				fieldId: fieldId
+			);
 
 			return this;
 		}
 
-		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, float> get, Action<T, float> set, float? minValue = null, float? maxValue = null, float? interval = null) {
+		public GMCMIntegration<T, M> Add(string name, string tooltip, Func<T, float> get, Action<T, float> set, float? min = null, float? max = null, float? interval = null, Func<float, string> format = null, string fieldId = null) {
+			return Add(
+				() => name,
+				string.IsNullOrEmpty(tooltip) ? null : () => tooltip,
+				get,
+				set,
+				min,
+				max,
+				interval,
+				format,
+				fieldId
+			);
+		}
+
+		public GMCMIntegration<T, M> Add(Func<string> name, Func<string> tooltip, Func<T, float> get, Action<T, float> set, float? min = null, float? max = null, float? interval = null, Func<float, string> format = null, string fieldId = null) {
 			AssertLoaded();
 
-			if (minValue.HasValue || maxValue.HasValue) {
-				// Here, we do stupid stuff with floats because GMCM doesn't render the current value
-				// if the number isn't a float.
-				API.RegisterClampedOption(
-					mod: Consumer,
-					optionName: name,
-					optionDesc: tooltip,
-					optionGet: () => get(GetConfig()),
-					optionSet: val => set(GetConfig(), val),
-					min: minValue ?? int.MinValue,
-					max: maxValue ?? int.MaxValue,
-					interval: interval ?? 1
-				);
-
-			} else
-				API.RegisterSimpleOption(
-					mod: Consumer,
-					optionName: name,
-					optionDesc: tooltip,
-					optionGet: () => get(GetConfig()),
-					optionSet: val => set(GetConfig(), val)
-				);
+			API.AddNumberOption(
+				Consumer,
+				getValue: () => get(GetConfig()),
+				setValue: val => set(GetConfig(), val),
+				name: name,
+				tooltip: tooltip,
+				min: min,
+				max: max,
+				interval: interval,
+				formatValue: format,
+				fieldId: fieldId
+			);
 
 			return this;
 		}

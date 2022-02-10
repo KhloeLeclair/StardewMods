@@ -1,3 +1,4 @@
+using System;
 
 using StardewModdingAPI;
 
@@ -18,7 +19,13 @@ namespace Leclair.Stardew.Common.Integrations {
 		}
 
 		private T GetAPI() {
-			return Self.Helper.ModRegistry.GetApi<T>(ModID);
+			try {
+				return Self.Helper.ModRegistry.GetApi<T>(ModID);
+			} catch (Exception ex) {
+				Log("An error occurred calling GetApi.", LogLevel.Debug, ex);
+
+				return null;
+			}
 		}
 	}
 }

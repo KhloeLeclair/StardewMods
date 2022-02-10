@@ -34,7 +34,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return new UnslicedNode(this, 16 * Scale, 16 * Scale, WrapMode.None);
 		}
 
-		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, CachedFlowLine line, CachedFlow flow) {
+		public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor, CachedFlowLine line, CachedFlow flow) {
 			if (IsEmpty())
 				return;
 
