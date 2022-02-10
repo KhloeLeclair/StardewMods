@@ -11,6 +11,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		// Type
 		PageType Type { get; }
+		bool IsMagic { get; }
 
 		// Events
 		void Activate();

@@ -19,6 +19,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 		private readonly int Seed;
 		private int[] Forecast;
 
+		readonly bool IsIsland;
+
 		private IEnumerable<IFlowNode> Flow;
 
 		#region Lifecycle
@@ -27,11 +29,22 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (!mod.Config.ShowWeather || !mod.Config.EnableDeterministicWeather)
 				return null;
 
-			return new(menu, mod);
+			return new(menu, mod, false);
 		}
 
-		public WeatherPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
-			Seed = Mod.GetBaseWeatherSeed();
+		public static WeatherPage GetIslandPage(AlmanacMenu menu, ModEntry mod) {
+			if (!mod.Config.ShowWeather || !mod.Config.EnableDeterministicWeather)
+				return null;
+
+			if (!Game1.player.eventsSeen.Contains(9999991))
+				return null;
+
+			return new(menu, mod, true);
+		}
+
+		public WeatherPage(AlmanacMenu menu, ModEntry mod, bool isIsland) : base(menu, mod) {
+			Seed = Mod.GetBaseWorldSeed();
+			IsIsland = isIsland;
 			UpdateForecast();
 		}
 
@@ -44,12 +57,19 @@ namespace Leclair.Stardew.Almanac.Pages {
 			WorldDate date = new(Menu.Date);
 
 			FlowBuilder builder = new();
+			List<int> pirateDays = IsIsland ? new() : null;
+
+			if (!IsIsland)
+				builder.Text($"{I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex))}\n\n");
 
 			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
 				date.DayOfMonth = day;
-				Forecast[day - 1] = WeatherHelper.GetWeatherForDate(Seed, date, GameLocation.LocationContext.Default);
+				int weather = Forecast[day - 1] = WeatherHelper.GetWeatherForDate(Seed, date, IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default);
 
-				if (Utility.isFestivalDay(day, date.Season)) {
+				if (IsIsland && day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather))
+					pirateDays.Add(day);
+
+				if (! IsIsland && Utility.isFestivalDay(day, date.Season)) {
 					SDate sdate = new(day, date.Season);
 
 					var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + day);
@@ -89,7 +109,16 @@ namespace Leclair.Stardew.Almanac.Pages {
 				}
 			}
 
-			Flow = builder.Build();
+			if (IsIsland) {
+				builder.Text($"Island Weather\n", font: Game1.dialogueFont, shadow: true);
+
+				if (pirateDays.Count > 0) {
+					builder.Text($"Pirate activity is expected near the island on the following dates: {string.Join(", ", pirateDays)}\n");
+				}
+
+			}
+
+			Flow = builder?.Build();
 			if (Active)
 				Menu.SetFlow(Flow, 2);
 		}
@@ -98,13 +127,13 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		#region ITab
 
-		public override int SortKey => 1;
+		public override int SortKey => IsIsland ? 1000 : 1;
 
-		public override string TabSimpleTooltip => I18n.Page_Weather();
+		public override string TabSimpleTooltip => IsIsland ? I18n.Page_WeatherIsland() : I18n.Page_Weather();
 
-		public override Texture2D TabTexture => Menu.background;
+		public override Texture2D TabTexture => IsIsland ? SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors2) : Menu.background;
 
-		public override Rectangle? TabSource => WeatherHelper.GetWeatherIcon(0, null);
+		public override Rectangle? TabSource => IsIsland ? SpriteHelper.MouseIcons2.GOLDEN_NUT : WeatherHelper.GetWeatherIcon(0, null);
 
 		#endregion
 

@@ -39,7 +39,9 @@ namespace Leclair.Stardew.Almanac.Pages {
 			// Cache the string when we activate the page.
 			// We do this here rather than when the class
 			// is instantiated to allow for reloading i18n.
-			words = I18n.Almanac_Cover().Split('\n');
+			words = (Game1.player.eventsSeen.Contains(ModEntry.Event_Island) ?
+				I18n.Almanac_CoverIsland() : I18n.Almanac_Cover()
+			).Split('\n');
 			wordHeight = 0;
 			foreach (string word in words) {
 				int height = SpriteText.getHeightOfString(word);

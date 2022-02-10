@@ -7,7 +7,7 @@ using StardewValley;
 namespace Leclair.Stardew.Almanac {
 	public static class TrainHelper {
 
-		public static Rectangle TRAIN = new Rectangle(577, 512, 126, 62);
+		public static readonly Rectangle TRAIN = new(577, 512, 126, 62);
 
 		public static bool IsTrainDay(WorldDate date) {
 			return GetTrainTime(date) >= 0;

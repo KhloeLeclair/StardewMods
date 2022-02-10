@@ -43,6 +43,14 @@ namespace Leclair.Stardew.Almanac {
 			};
 		}
 
+		public static bool IsRainy(int weather) {
+			return weather == 1 || weather == 3;
+		}
+
+		public static bool IsRainOrSnow(int weather) {
+			return weather == 1 || weather == 3 || weather == 5;
+		}
+
 		public static Rectangle GetWeatherIcon(int weather, string season) {
 			int offset = weather switch {
 				-1 => 5,
@@ -63,7 +71,9 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		public static int GetWeatherForDate(int seed, WorldDate date, GameLocation.LocationContext context) {
-			Random rnd = new Random(seed + date.TotalDays);
+			int offseed = seed + date.TotalDays + (context == GameLocation.LocationContext.Island ? 1 : 0);
+
+			Random rnd = new Random(offseed);
 			string season = date.Season;
 			int totalDays = date.TotalDays;
 			int dayOfMonth = date.DayOfMonth;

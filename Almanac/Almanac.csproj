@@ -9,34 +9,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="1.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Include="i18n.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>i18n.tt</DependentUpon>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="i18n.tt">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>i18n.cs</LastGenOutput>
-	  </None>
+		<PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Update="i18n.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>i18n.tt</DependentUpon>
-	  </Compile>
 	</ItemGroup>
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />

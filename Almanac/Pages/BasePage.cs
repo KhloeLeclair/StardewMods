@@ -30,6 +30,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public virtual PageType Type => typeof(ICalendarPage).IsAssignableFrom(GetType()) ? PageType.Calendar : PageType.Blank;
 
+		public virtual bool IsMagic => false;
+
 		public virtual void Activate() {
 			Active = true;
 		}
@@ -108,6 +110,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 		#endregion
 
 		#region ITab
+
+		public virtual bool TabMagic => IsMagic;
 
 		public virtual int SortKey => 50;
 		public virtual bool TabVisible => TabTexture != null;

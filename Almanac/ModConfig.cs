@@ -24,6 +24,10 @@ namespace Leclair.Stardew.Almanac {
 		public bool EnableDeterministicWeather { get; set; } = true;
 
 
+		// Horoscope Page
+		public bool ShowHoroscopes { get; set; } = true;
+		public bool EnableDeterministicLuck { get; set; } = true;
+
 		// Train Page
 		public bool ShowTrains { get; set; } = true;
 

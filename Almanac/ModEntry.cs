@@ -14,7 +14,8 @@ using StardewValley;
 namespace Leclair.Stardew.Almanac {
 	public class ModEntry : ModSubscriber {
 
-		public static int EventID = 999999999;
+		public static readonly int Event_Base = 999999999;
+		public static readonly int Event_Island = 9999991;
 
 		public static ModEntry instance;
 		public static ModAPI API;
@@ -45,10 +46,8 @@ namespace Leclair.Stardew.Almanac {
 			RegisterBuilder(CropPage.GetPage);
 			RegisterBuilder(WeatherPage.GetPage);
 			RegisterBuilder(TrainPage.GetPage);
-
-			Helper.ConsoleCommands.Add("events", "", (_, args) => {
-				Monitor.Log("Test");
-			});
+			RegisterBuilder(WeatherPage.GetIslandPage);
+			RegisterBuilder(HoroscopePage.GetPage);
 		}
 
 		public override object GetApi() {
@@ -74,18 +73,28 @@ namespace Leclair.Stardew.Almanac {
 
 			// If the player hasn't seen the event where they receive the Almanac, don't
 			// let them use it unless it's always available.
-			if (!Game1.player.eventsSeen.Contains(EventID) && !Config.AlmanacAlwaysAvailable)
+			if (!Game1.player.eventsSeen.Contains(Event_Base) && !Config.AlmanacAlwaysAvailable)
 				return;
 
 			Game1.activeClickableMenu = new Menus.AlmanacMenu(Game1.Date.Year);
 		}
 
+
+		// We mark this event as high priority so we can change tomorrow's weather
+		// before other mods might rely on it.
+
 		[Subscriber]
+		[EventPriority(EventPriority.High)]
 		private void OnDayStarted(object sender, DayStartedEventArgs e) {
+			int seed = GetBaseWorldSeed();
+
+			if (Config.EnableDeterministicLuck && Game1.IsMasterGame) {
+				Game1.player.team.sharedDailyLuck.Value = LuckHelper.GetLuckForDate(seed, Game1.Date);
+			}
+
 			if (Config.EnableDeterministicWeather) {
 				WorldDate tomorrow = new WorldDate(Game1.Date);
 				tomorrow.TotalDays++;
-				int seed = GetBaseWeatherSeed();
 
 				// Main Weather
 				Game1.weatherForTomorrow = WeatherHelper.GetWeatherForDate(seed, tomorrow, GameLocation.LocationContext.Default);
@@ -114,7 +123,7 @@ namespace Leclair.Stardew.Almanac {
 			});
 
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
-				int seed = GetBaseWeatherSeed();
+				int seed = GetBaseWorldSeed();
 				WorldDate date = new WorldDate(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
 					int weather = WeatherHelper.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
@@ -141,11 +150,14 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		public void OpenGMCM() {
-			GMCMIntegration?.OpenMenu();
+			if (HasGMCM())
+				GMCMIntegration.OpenMenu();
 		}
 
 		private void RegisterConfig() {
 			GMCMIntegration = new(this, () => Config, ResetConfig, SaveConfig);
+			if (!GMCMIntegration.IsLoaded)
+				return;
 
 			GMCMIntegration.Register(true);
 
@@ -242,7 +254,7 @@ namespace Leclair.Stardew.Almanac {
 
 		#endregion
 
-		public int GetBaseWeatherSeed() {
+		public int GetBaseWorldSeed() {
 			// TODO: Check configuration.
 			return (int) Game1.uniqueIDForThisGame;
 		}

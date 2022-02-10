@@ -1,7 +1,8 @@
 {
 	"mod-name": "Almanac",
 
-	"almanac.cover": "The\nFerngil\nFarmer's\nAlmanac",
+	"almanac.cover": "The\nFerngill\nFarmer's\nAlmanac",
+	"almanac.cover-island": "The\nFerngill\nand\nFern Islands\nFarmer's\nAlmanac",
 
 	"calendar.when": "{{season}}, Year {{year}}",
 
@@ -24,16 +25,19 @@
 	"crop.using-agri": "The following growth times and dates assume you are an {{agriculturist}}.",
 	"crop.using-speed": "The following growth times and dates assume you are using {{fertilizer}}.",
 	"crop.using-both": "The following growth times and dates assume you are an {{agriculturist}} and that you are using {{fertilizer}}.",
-	"crop.using-paddy":  "They also assume crops that benefit from it are grown near water.",
+	"crop.using-paddy": "They also assume crops that benefit from it are grown near water.",
 
 	"crop.grow-time": "Grows in {{count}} days.",
 	"crop.last-date": "Plant no later than {{date}}.",
 	"crop.regrow-time": "Regrows every {{count}} days.",
 	"crop.paddy-note": "Grows faster near water.",
-	"crop.giant-note":  "Able to grow to giant size.",
-	"crop.trellis-note":  "Requires a trellis.",
+	"crop.giant-note": "Able to grow to giant size.",
+	"crop.trellis-note": "Requires a trellis.",
 
 	"page.weather": "Weather Forecast",
+	"page.weather-island": "Ginger Island Forecast",
+
+	"festival.about": "The following festivals are scheduled to be held within the greater Pelican Town area in {{season}}:",
 
 	"festival.when": "When:",
 	"festival.when-times": "{{start}} to {{end}}",
@@ -48,7 +52,8 @@
 	"weather.snow": "Snow",
 
 	"page.train": "Train Schedule",
-	"page.train-arrivals": "Arrival Times:",
+
+	"page.train.about": "Warning: Trains will be passing by the Stardew Valley station at the following times. For your safety, always remain clear of the tracks when a train is present.",
 
 	// Settings
 
@@ -64,20 +69,20 @@
 	"settings.controls.almanac-desc": "Pressing this key will open the Almanac interface.",
 
 	"settings.enable": "Enable Page",
-	"settings.enable-desc":  "Whether or not this page should be added to the Almanac.",
+	"settings.enable-desc": "Whether or not this page should be added to the Almanac.",
 
 	"settings.crops": "Page: Planting Dates",
 
 	"settings.crops.preview": "Crop Previews",
-	"settings.crops.preview-desc":  "When Crop Previews are enabled, hovering over a crop in the Planting Dates tab will show you with the calendar what stage the crop will be at on a given day.",
+	"settings.crops.preview-desc": "When Crop Previews are enabled, hovering over a crop in the Planting Dates tab will show you with the calendar what stage the crop will be at on a given day.",
 
-	"settings.crops.preview.enable":  "Enable Previews",
+	"settings.crops.preview.enable": "Enable Previews",
 
 	"settings.crops.preview.plantonfirst": "Always Plant on First",
-	"settings.crops.preview.plantonfirst-desc":  "When enabled, the month overview you see when a crop is selected will always start planting on the first even if the current date is after the first of the month.",
+	"settings.crops.preview.plantonfirst-desc": "When enabled, the month overview you see when a crop is selected will always start planting on the first even if the current date is after the first of the month.",
 
 	"settings.crops.preview.sprite": "Use Harvest Sprites",
-	"settings.crops.preview.sprite-desc":  "When enabled, an image of the harvest product will be used rather than the final growth stage, to make it more easily apparent what days the crop is harvestable.",
+	"settings.crops.preview.sprite-desc": "When enabled, an image of the harvest product will be used rather than the final growth stage, to make it more easily apparent what days the crop is harvestable.",
 
 
 	"settings.train": "Page: Train Schedule",

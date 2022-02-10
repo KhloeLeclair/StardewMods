@@ -12,6 +12,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 		string TabSimpleTooltip { get; }
 		ISimpleNode TabAdvancedTooltip { get; }
 
+		bool TabMagic { get; }
+
 		Texture2D TabTexture { get; }
 		Rectangle? TabSource { get; }
 		float? TabScale { get; }

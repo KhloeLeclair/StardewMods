@@ -42,6 +42,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			FlowBuilder builder = new();
 
+			builder.Text($"{I18n.Page_Train_About()}\n\n");
 
 			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
 				date.DayOfMonth = day;

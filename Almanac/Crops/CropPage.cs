@@ -247,6 +247,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			CropNodes.Clear();
 
 			List<CropInfo> crops = Mod.Crops.GetSeasonCrops(Menu.Season);
+			crops.Sort((a,b) => StringComparer.CurrentCultureIgnoreCase.Compare(a.Name, b.Name));
 
 			FlowBuilder builder = new();
 
@@ -508,7 +509,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			b.Draw(
 				Menu.background,
 				new Vector2(x, y),
-				AlmanacMenu.TABS[index],
+				AlmanacMenu.TABS[0][index],
 				Color.White,
 				1 * (float) Math.PI / 2f,
 				new Vector2(0, 16),

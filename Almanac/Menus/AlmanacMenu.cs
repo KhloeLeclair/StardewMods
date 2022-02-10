@@ -19,23 +19,38 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 		// Static Stuff
 
-		public static int REGION_LEFT_PAGE = 1;
-		public static int REGION_RIGHT_PAGE = 2;
-		public static int REGION_TABS = 3;
+		public static readonly int REGION_LEFT_PAGE = 1;
+		public static readonly int REGION_RIGHT_PAGE = 2;
+		public static readonly int REGION_TABS = 3;
 
-		private static Rectangle LEFT_BUTTON = new Rectangle(0, 256, 64, 64);
-		private static Rectangle RIGHT_BUTTON = new Rectangle(0, 192, 64, 64);
+		private static readonly Rectangle LEFT_BUTTON = new Rectangle(0, 256, 64, 64);
+		private static readonly Rectangle RIGHT_BUTTON = new Rectangle(0, 192, 64, 64);
 
-		private static Rectangle COVER = new Rectangle(160, 185, 160, 185);
+		private static readonly Rectangle COVER = new Rectangle(160, 185, 160, 185);
 
-		private static Rectangle OPEN_PAGES = new Rectangle(0, 0, 320, 185);
-		private static Rectangle CALENDAR = new Rectangle(0, 185, 134, 145);
+		private static readonly Rectangle[] OPEN_PAGES = new Rectangle[] {
+			new(0, 0, 320, 185),
+			new(320, 0, 320, 185)
+		};
 
-		public static Rectangle[] TABS = new Rectangle[] {
-			new Rectangle(134, 185, 16, 16),
-			new Rectangle(134, 201, 16, 16),
-			new Rectangle(134, 217, 16, 16),
-			new Rectangle(134, 233, 16, 16),
+		private static readonly Rectangle[] CALENDAR = new Rectangle[] {
+			new(0, 185, 134, 145),
+			new(320, 185, 134, 145)
+		};
+
+		public static readonly Rectangle[][] TABS = new Rectangle[][] {
+			new Rectangle[] {
+				new Rectangle(134, 185, 16, 16),
+				new Rectangle(134, 201, 16, 16),
+				new Rectangle(134, 217, 16, 16),
+				new Rectangle(134, 233, 16, 16),
+			},
+			new Rectangle[] {
+				new Rectangle(454, 185, 16, 16),
+				new Rectangle(454, 201, 16, 16),
+				new Rectangle(454, 217, 16, 16),
+				new Rectangle(454, 233, 16, 16),
+			},
 		};
 
 		// Rendering Stuff
@@ -64,6 +79,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 		private int PageIndex = -1;
 		private IAlmanacPage CurrentPage => (Pages == null || PageIndex < 0 || PageIndex >= Pages.Length) ? null : Pages[PageIndex];
+
+		private bool IsMagic => CurrentPage?.IsMagic ?? false;
 
 		// Tabs
 		private List<Tuple<ClickableComponent, int, int, int>> Tabs = new();
@@ -230,20 +247,20 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			btnPageUp.bounds = new Rectangle(
 					xPositionOnScreen + width - 64 - 16,
-					yPositionOnScreen + 60,
+					yPositionOnScreen + 60 + (IsMagic ? 32 : 0),
 					64, 64
 				);
 
 			btnPageDown.bounds = new Rectangle(
 					xPositionOnScreen + width - 64 - 16,
-					yPositionOnScreen + height - 64 - 60,
+					yPositionOnScreen + height - 64 - 60 + (IsMagic ? 32 : 0),
 					64,
 					64
 				);
 
 			FlowScrollArea = new Rectangle(
 				xPositionOnScreen + width - 66,
-				yPositionOnScreen + 124,
+				yPositionOnScreen + 124 + (IsMagic ? 32 : 0),
 				24,
 				height - 256
 			);
@@ -768,7 +785,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 			b.Draw(
 				background,
 				new Vector2(xPositionOnScreen, yPositionOnScreen),
-				CurrentPage?.Type == PageType.Cover ? COVER : OPEN_PAGES,
+				CurrentPage?.Type == PageType.Cover ? COVER : OPEN_PAGES[IsMagic ? 1 : 0],
 				Color.White,
 				0f,
 				Vector2.Zero,
@@ -787,7 +804,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				b.Draw(
 					background,
 					new Vector2(xPositionOnScreen + 60, yPositionOnScreen + 104),
-					CALENDAR,
+					CALENDAR[IsMagic ? 1 : 0],
 					Color.White,
 					0f,
 					Vector2.Zero,
@@ -804,7 +821,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 						year: date.Year
 					),
 					xPositionOnScreen + (width / 4),
-					yPositionOnScreen + 40
+					yPositionOnScreen + 40,
+					color: IsMagic ? 4 : -1
 				);
 
 				// Navigation
@@ -833,7 +851,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 							x + (76 - size.X) / 2,
 							y
 						),
-						Game1.textColor
+						color: IsMagic ? Color.SkyBlue : Game1.textColor
 					);
 				}
 
@@ -869,13 +887,13 @@ namespace Leclair.Stardew.Almanac.Menus {
 						Game1.smallFont,
 						Convert.ToString(day),
 						new Vector2(cmp.bounds.X, cmp.bounds.Y - 4),
-						Game1.textColor
+						color: IsMagic ? Color.LightSkyBlue : Game1.textColor
 					);
 
 					page?.DrawOverCell(b, date, cmp.bounds);
 
 					if ((page?.ShouldDimPastCells ?? false) && ddays < today)
-						b.Draw(Game1.staminaRect, cmp.bounds, Color.Gray * 0.25f);
+						b.Draw(Game1.staminaRect, cmp.bounds, (IsMagic ? Color.Black : Color.Gray) * 0.25f);
 				}
 			}
 
@@ -896,7 +914,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 					b.Draw(
 						background,
 						new Vector2(x, cmp.bounds.Y),
-						TABS[tsprite],
+						TABS[tab.TabMagic ? 1 : 0][tsprite],
 						Color.White,
 						0f,
 						Vector2.Zero,
@@ -967,7 +985,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 					b,
 					Flow.Value,
 					new Vector2(xPositionOnScreen + width / 2 + 40, yPositionOnScreen + 40),
-					Game1.textColor,
+					IsMagic ? Color.White : Game1.textColor,
+					defaultShadowColor: IsMagic ? new Color(19, 16, 57) : null,
 					lineOffset: FlowOffset,
 					maxHeight: height - 120
 				);

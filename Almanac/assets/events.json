@@ -1,7 +1,6 @@
 {
 	"Farm": [
 		{
-			"Where": "Farm",
 			"Id": "999999999",
 			"Conditions": [
 				"m 1000",
@@ -33,6 +32,41 @@
 				"faceDirection Pierre 0",
 				"speak Pierre \"Make sure to read up on what you can grow. Once you're ready to plant, you can buy seeds from my shop.#$b#Pierre's seeds are the *best* you can find.\"",
 				"pause 500",
+				"end"
+			]
+		}
+	],
+	"FishShop": [
+		{
+			"Id": "9999991",
+			"Conditions": [
+				"e 999999999",
+				"n willyHours"
+			],
+			"Script": [
+				"continue",
+				"6 6",
+				"farmer 5 9 0 Willy -100 -100 2",
+				"skippable",
+				"move farmer 0 -1 0",
+				"pause 1000",
+				"warp Willy 4 4",
+				"playsound doorClose",
+				"pause 100",
+				"textAboveHead Willy \"Ahoy!\"",
+				"pause 500",
+				"move Willy 1 0 2",
+				"move farmer 0 -2 0",
+				"speak Willy \"Headin' off to the island, lad?^Headin' off to the island, lass?\"",
+				"pause 500",
+				"speak Willy \"Have somethin' you might want, then. Here.\"",
+				"pause 500",
+				"playSound getNewSpecialItem",
+				"message \"Received a copy of 'Fern Islands Almanac'.\"",
+				"pause 800",
+				"speak Willy \"'s not much, but knowin' what the weather'll be is great. Some fish only come out in the rain, you know?\"",
+				"pause 500",
+				"speak Willy \"Well, I best not keep yeh. Have a good day, @.\"",
 				"end"
 			]
 		}
