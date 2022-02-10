@@ -145,7 +145,15 @@ namespace Leclair.Stardew.SeeMeRollin {
 
 			RemoveBuff();
 
-			if (!who.UsingTool && IsAnimating.Value) {
+			if (IsAnimating.Value && Game1.player.Equals(who)) {
+				IsAnimating.Value = false;
+				if (!who.UsingTool)
+					who.stopShowingFrame();
+			}
+		}
+
+		public void FixAnimation(Farmer who) {
+			if (IsAnimating.Value && Game1.player.Equals(who)) {
 				IsAnimating.Value = false;
 				who.stopShowingFrame();
 			}
@@ -168,60 +176,63 @@ namespace Leclair.Stardew.SeeMeRollin {
 		}
 
 		public void OpenGMCM() {
-			GMCMIntegration?.OpenMenu();
+			if (HasGMCM())
+				GMCMIntegration.OpenMenu();
 		}
 
 		private void RegisterConfig() {
 			GMCMIntegration = new(this, () => Config, ResetConfig, SaveConfig);
+			if (!GMCMIntegration.IsLoaded)
+				return;
 
 			GMCMIntegration.Register(true);
 
 			GMCMIntegration
 				.Add(
-					I18n.Setting_EnableAnimation(),
-					I18n.Setting_EnableAnimation_Desc(),
+					I18n.Setting_EnableAnimation,
+					I18n.Setting_EnableAnimation_Desc,
 					c => c.EnableAnimation,
 					(c, v) => c.EnableAnimation = v
 				)
 				.Add(
-					I18n.Setting_UseKey(),
-					I18n.Setting_UseKey_Desc(),
+					I18n.Setting_UseKey,
+					I18n.Setting_UseKey_Desc,
 					c => c.UseKey,
 					(c, v) => c.UseKey = v
 				)
 				.Add(
-					I18n.Setting_ShowBuff(),
-					I18n.Setting_ShowBuff_Desc(),
+					I18n.Setting_ShowBuff,
+					I18n.Setting_ShowBuff_Desc,
 					c => c.ShowBuff,
 					(c, v) => c.ShowBuff = v
 				)
 				.Add(
-					I18n.Setting_SpeedMod(),
-					I18n.Setting_SpeedMod_Desc(),
+					I18n.Setting_SpeedMod,
+					I18n.Setting_SpeedMod_Desc,
 					c => c.SpeedModifier,
 					(c, v) => c.SpeedModifier = v,
 					1, 15
 				)
 				.AddChoice(
-					I18n.Setting_FallOff(),
-					I18n.Setting_FallOff_Desc(),
+					I18n.Setting_FallOff,
+					I18n.Setting_FallOff_Desc,
 					c => c.FalloffMode,
 					(c, v) => c.FalloffMode = v,
-					new Dictionary<string, FalloffMode>() {
-						{I18n.Setting_FallOff_None(), FalloffMode.None},
-						{I18n.Setting_FallOff_Slight(), FalloffMode.Slight},
-						{I18n.Setting_FallOff_TillZero(), FalloffMode.TillZero}
+					new Dictionary<Func<string>, FalloffMode>() {
+						{I18n.Setting_FallOff_None, FalloffMode.None},
+						{I18n.Setting_FallOff_Slight, FalloffMode.Slight},
+						{I18n.Setting_FallOff_TillZero, FalloffMode.TillZero}
 					}
 				)
 				.Add(
-					I18n.Setting_AllowSwim(),
-					I18n.Setting_AllowSwim_Desc(),
+					I18n.Setting_AllowSwim,
+					I18n.Setting_AllowSwim_Desc,
 					c => c.AllowWhenSwimming,
 					(c, v) => c.AllowWhenSwimming = v
 				)
 				.Add(
-					I18n.Setting_AllowSlowed(),
-					I18n.Setting_AllowSlowed_Desc(),
+					I18n.Setting_AllowSlowed,
+					I18n.Setting_AllowSlowed_Desc,
 					c => c.AllowWhenSlowed,
 					(c, v) => c.AllowWhenSlowed = v
 				);
@@ -246,6 +257,7 @@ namespace Leclair.Stardew.SeeMeRollin {
 						.Text($"Bathing: {Game1.player.bathingClothes.Value}")
 						.Text($"Speed: {Speeds.Value.Item3}")
 						.Text($"Can Move: {Game1.player.CanMove}")
+						.Text($"Using Tool: {Game1.player.UsingTool}")
 						.Divider()
 						.Text($"Foot: {OtherFoot.Value}")
 						.Text($"Rollin: {IsRollin.Value}")
@@ -353,8 +365,14 @@ namespace Leclair.Stardew.SeeMeRollin {
 			Speed.Value -= 0.02f;
 
 			// Show a static animation frame, to make us look fly.
-			if (Game1.player.movementDirections.Count <= 0 || !Game1.player.CanMove || Game1.player.UsingTool || ! Config.EnableAnimation)
+			if (Game1.player.movementDirections.Count <= 0 || !Game1.player.CanMove || Game1.player.UsingTool || !Config.EnableAnimation) {
+				if (IsAnimating.Value) {
+					IsAnimating.Value = false;
+					Game1.player.stopShowingFrame();
+				}
+
 				return;
+			}
 
 			int direction = Game1.player.movementDirections[0];
 			if (direction < 0 || direction > 3)
