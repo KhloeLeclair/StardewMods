@@ -65,7 +65,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		#region Events
 
 		[Subscriber]
-		private void OnUpdateTicked(object sender, UpdateTickedEventArgs e) {
+		private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
 			IClickableMenu menu = Game1.activeClickableMenu;
 			if (CurrentMenu.Value == menu)
 				return;
@@ -79,15 +79,22 @@ namespace Leclair.Stardew.BetterCrafting {
 			if (menu is CraftingPage page) {
 				bool cooking = CraftingPageHelper.IsCooking(page);
 				if (cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
+
+					// Make a copy of the existing chests, in case yeeting
+					// the menu creates an issue.
+					List<Chest> chests = new(page._materialContainers);
+
+					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(page);
 
+					// And now create our own.
 					menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
 						this,
 						Game1.player.currentLocation,
 						null,
 						cooking: cooking,
 						standalone_menu: true,
-						material_containers: page._materialContainers
+						material_containers: chests
 					);
 				}
 			}

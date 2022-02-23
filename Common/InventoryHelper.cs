@@ -1,44 +1,80 @@
 using System;
 using System.Collections.Generic;
-
-/* Unmerged change from project 'MoveToConnected'
-Before:
-using System.Collections.Generic;
-
-using Microsoft.Xna.Framework;
-After:
-using System.Linq;
-
-using Leclair.Stardew.Common.Enums;
-using Leclair.Stardew.Common.Inventory;
-
-using Microsoft.Xna.Framework;
-*/
 using System.Linq;
 
 using Leclair.Stardew.Common.Inventory;
 
 using StardewValley;
-
-/* Unmerged change from project 'MoveToConnected'
-Before:
-using StardewValley.Objects;
-using StardewValley.Network;
-After:
-using StardewValley.Network;
-using StardewValley.Objects;
-*/
 using StardewValley.Network;
 
 using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.Common {
+
+	public struct LocatedInventory {
+		public object Source { get; }
+		public GameLocation Location { get; }
+
+		public LocatedInventory(object source, GameLocation location) {
+			Source = source;
+			Location = location;
+		}
+
+		public override bool Equals(object obj) {
+			return obj is LocatedInventory inventory &&
+				   EqualityComparer<object>.Default.Equals(Source, inventory.Source) &&
+				   EqualityComparer<GameLocation>.Default.Equals(Location, inventory.Location);
+		}
+
+		public override int GetHashCode() {
+			return HashCode.Combine(Source, Location);
+		}
+	}
+
 	public static class InventoryHelper {
+
+		public static List<LocatedInventory> LocateInventories(
+			IEnumerable<object> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			GameLocation first,
+			Farmer who
+		) {
+			List<LocatedInventory> result = new();
+
+			foreach (object obj in inventories) {
+				IInventoryProvider provider = getProvider(obj);
+				if (provider == null)
+					continue;
+
+				GameLocation loc = null;
+
+				if (first != null && first.Objects.Values.Contains(obj)) {
+					loc = first;
+				} else {
+					foreach(GameLocation location in Game1.locations) {
+						if (location != first && location.Objects.Values.Contains(obj)) {
+							loc = location;
+							break;
+						}
+					}
+				}
+
+				if (loc != null)
+					result.Add(new(obj, loc));
+			}
+
+			return result;
+		}
 
 		#region Mutex Handling
 
-		public static void WithInventories(IEnumerable<object> inventories, Func<object, IInventoryProvider> getProvider, GameLocation location, Farmer who, Action<IList<WorkingInventory>> withLocks) {
-			WithInventories(inventories, getProvider, location, who, (locked, onDone) => {
+		public static void WithInventories(
+			IEnumerable<LocatedInventory> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			Farmer who,
+			Action<IList<WorkingInventory>> withLocks
+		) {
+			WithInventories(inventories, getProvider, who, (locked, onDone) => {
 				try {
 					withLocks(locked);
 				} catch (Exception) {
@@ -50,18 +86,50 @@ namespace Leclair.Stardew.Common {
 			});
 		}
 
-		public static void WithInventories(IEnumerable<object> inventories, Func<object, IInventoryProvider> getProvider, GameLocation location, Farmer who, Action<IList<WorkingInventory>, Action> withLocks) {
+		public static void WithInventories(
+			IEnumerable<object> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			GameLocation location,
+			Farmer who,
+			Action<IList<WorkingInventory>> withLocks
+		) {
+			List<LocatedInventory> located = new();
+			foreach (object obj in inventories) {
+				if (obj is LocatedInventory inv)
+					located.Add(inv);
+				else
+					located.Add(new(obj, location));
+			}
+
+			WithInventories(located, getProvider, who, (locked, onDone) => {
+				try {
+					withLocks(locked);
+				} catch (Exception) {
+					onDone();
+					throw;
+				}
+
+				onDone();
+			});
+		}
+
+		public static void WithInventories(
+			IEnumerable<LocatedInventory> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			Farmer who,
+			Action<IList<WorkingInventory>, Action> withLocks
+		) {
 			List<WorkingInventory> locked = new();
 			List<WorkingInventory> lockable = new();
 
 			if (inventories != null)
-				foreach (object obj in inventories) {
-					IInventoryProvider provider = getProvider(obj);
-					if (provider == null || !provider.IsValid(obj, location, who))
+				foreach (LocatedInventory loc in inventories) {
+					IInventoryProvider provider = getProvider(loc.Source);
+					if (provider == null || !provider.IsValid(loc.Source, loc.Location, who))
 						continue;
 
 					// If we can't get a mutex, we can't assure safety. Abort.
-					NetMutex mutex = provider.GetMutex(obj, location, who);
+					NetMutex mutex = provider.GetMutex(loc.Source, loc.Location, who);
 					if (mutex == null)
 						continue;
 
@@ -71,7 +139,7 @@ namespace Leclair.Stardew.Common {
 					if (mlocked && !mutex.IsLockHeld())
 						continue;
 
-					WorkingInventory entry = new(obj, provider, mutex, location, who);
+					WorkingInventory entry = new(loc.Source, provider, mutex, loc.Location, who);
 					if (mlocked)
 						locked.Add(entry);
 					else

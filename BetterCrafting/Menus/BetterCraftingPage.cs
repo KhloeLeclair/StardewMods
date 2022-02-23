@@ -47,7 +47,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public NetMutex Mutex;
 
 		public IList<Chest> NearbyChests;
-		protected IList<object> CachedInventories;
+		protected IList<LocatedInventory> CachedInventories;
 
 
 		// Editing Mode
@@ -143,6 +143,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			Vector2 pos = Utility.getTopLeftPositionForCenteringOnScreen(width, height);
 			if (x == -1) x = (int) pos.X;
 			if (y == -1) y = (int) pos.Y;
+
+			mod.Log($"Material Containers: {material_containers?.Count ?? 0}", StardewModdingAPI.LogLevel.Debug);
 
 			return new BetterCraftingPage(
 				mod,
@@ -682,9 +684,24 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 		protected virtual void DiscoverInventories() {
-			// TODO: Check for that other shit.
+			// TODO: Integration with connection blocks?
 
-			CachedInventories = NearbyChests?.ToList<object>();
+			if (NearbyChests == null) {
+				CachedInventories = new List<LocatedInventory>();
+				return;
+			}
+
+			// We want to locate all our inventories.
+			CachedInventories = InventoryHelper.LocateInventories(
+				NearbyChests,
+				obj => Mod.GetInventoryProvider(obj),
+				Location,
+				Game1.player
+			);
+
+			Log($"Inventories: {NearbyChests.Count} -- Cached: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
+
+			//CachedInventories = NearbyChests?.ToList<object>();
 		}
 
 		protected virtual IList<Item> GetEstimatedContainerContents() {
@@ -692,16 +709,16 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				return null;
 
 			List<Item> items = new();
-			foreach (object obj in CachedInventories) {
-				var provider = Mod.GetInventoryProvider(obj);
-				if (provider == null || !provider.CanExtractItems(obj, Location, Game1.player))
+			foreach (LocatedInventory loc in CachedInventories) {
+				var provider = Mod.GetInventoryProvider(loc.Source);
+				if (provider == null || !provider.CanExtractItems(loc.Source, loc.Location, Game1.player))
 					continue;
 
-				var mutex = provider.GetMutex(obj, Location, Game1.player);
+				var mutex = provider.GetMutex(loc.Source, loc.Location, Game1.player);
 				if (mutex == null || (mutex.IsLocked() && !mutex.IsLockHeld()))
 					continue;
 
-				var oitems = provider.GetItems(obj, Location, Game1.player);
+				var oitems = provider.GetItems(loc.Source, loc.Location, Game1.player);
 				if (oitems != null)
 					items.AddRange(oitems);
 			}
@@ -724,7 +741,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 		public void PerformCraft(IRecipe recipe, int times, Action<int> DoneAction = null, bool playSound = true, bool moveResultToInventory = false) {
-			InventoryHelper.WithInventories(CachedInventories, obj => Mod.GetInventoryProvider(obj), Location, Game1.player, locked => {
+			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, locked => {
 
 				int success = 0;
 				bool used_additional = false;

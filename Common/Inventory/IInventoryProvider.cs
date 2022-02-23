@@ -47,7 +47,7 @@ namespace Leclair.Stardew.Common.Inventory {
 
 		/// <summary>
 		/// Return the real position of the object. If the object has no position, returns null.
-		/// For multi-tile objects, this should return the "main" object if there is one.
+		/// For multi-tile objects, this should return the "main" object if there is one. 
 		/// </summary>
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>

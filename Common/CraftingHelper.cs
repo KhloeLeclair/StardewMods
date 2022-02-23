@@ -1,43 +1,4 @@
 using System.Collections.Generic;
-/* Unmerged change from project 'Hydrology'
-Before:
-using System.Text;
-
-using StardewValley;
-
-using Leclair.Stardew.Common.Crafting;
-After:
-using System.Text;
-
-using Leclair.Stardew.Common.Crafting;
-*/
-
-/* Unmerged change from project 'Almanac'
-Before:
-using System.Text;
-
-using StardewValley;
-
-using Leclair.Stardew.Common.Crafting;
-After:
-using System.Text;
-
-using Leclair.Stardew.Common.Crafting;
-*/
-
-/* Unmerged change from project 'SeeMeRollin'
-Before:
-using System.Text;
-
-using StardewValley;
-
-using Leclair.Stardew.Common.Crafting;
-After:
-using System.Text;
-
-using Leclair.Stardew.Common.Crafting;
-*/
-
 
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Inventory;
