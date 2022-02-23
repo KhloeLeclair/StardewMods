@@ -1,4 +1,144 @@
 {
+	"Cooking": [
+		{
+			"Id": "farming",
+			"Name": "Farming and Foraging",
+			"I18nKey": "category.food.farming",
+			"Icon": {
+				"Type": "Texture",
+				"Source": "MouseCursors",
+				"Rect": {
+					"X": 10,
+					"Y": 428,
+					"Width": 10,
+					"Height": 10
+				}
+			},
+			"Recipes": [
+				"Complete Breakfast",
+				"Hashbrowns",
+				"Pancakes",
+				"Pepper Poppers",
+				"Tom Kha Soup",
+				"Autumn's Bounty",
+				"Farmer's Lunch",
+				"Survival Burger",
+				"Maple Bar",
+				"Tropical Curry"
+			]
+		},
+		{
+			"Id": "mining",
+			"Name": "Mining and Magnetism",
+			"I18nKey": "category.food.mining",
+			"Icon": {
+				"Type": "Texture",
+				"Source": "MouseCursors",
+				"Rect": {
+					"X": 30,
+					"Y": 428,
+					"Width": 10,
+					"Height": 10
+				}
+			},
+			"Recipes": [
+				"Bean Hotpot",
+				"Crispy Bass",
+				"Eggplant Parm.",
+				"Cran. Sauce",
+				"Miner's Treat",
+				"Banana Pudding",
+				"Squid Ink Ravioli"
+			]
+		},
+		{
+			"Id": "fishing",
+			"Name": "Fishing",
+			"I18nKey": "category.food.fishing",
+			"Icon": {
+				"Type": "Texture",
+				"Source": "MouseCursors",
+				"Rect": {
+					"X": 20,
+					"Y": 428,
+					"Width": 10,
+					"Height": 10
+				}
+			},
+			"Recipes": [
+				"Fish Taco",
+				"Trout Soup",
+				"Dish o' The Sea",
+				"Seafoam Pudding",
+				"Chowder",
+				"Fish Stew",
+				"Escargot",
+				"Lobster Bisque",
+				"Maple Bar",
+				"Shrimp Cocktail"
+			]
+		},
+		{
+			"Id": "combat",
+			"Name": "Combat",
+			"I18nKey": "category.food.combat",
+			"Icon": {
+				"Type": "Texture",
+				"Source": "MouseCursors",
+				"Rect": {
+					"X": 120,
+					"Y": 428,
+					"Width": 10,
+					"Height": 10
+				}
+			},
+			"Recipes": [
+				"Fried Mushroom",
+				"Eggplant Parm.",
+				"Autumn's Bounty",
+				"Pumpkin Soup",
+				"Stuffing",
+				"Roots Platter",
+				"Crab Cakes",
+				"Banana Pudding",
+				"Mango Sticky Rice",
+				"Squid Ink Ravioli"
+			]
+		},
+		{
+			"Id": "other",
+			"Name": "Luck, Speed, and Others",
+			"I18nKey": "category.food.other",
+			"Icon": {
+				"Type": "Texture",
+				"Source": "MouseCursors",
+				"Rect": {
+					"X": 50,
+					"Y": 428,
+					"Width": 10,
+					"Height": 10
+				}
+			},
+			"Recipes": [
+				"Complete Breakfast",
+				"Lucky Lunch",
+				"Bean Hotpot",
+				"Pepper Poppers",
+				"Tom Kha Soup",
+				"Fried Eel",
+				"Spicy Eel",
+				"Red Plate",
+				"Pumpkin Soup",
+				"Super Meal",
+				"Triple Shot Espresso",
+				"Lobster Bisque",
+				"Crab Cakes",
+				"Shrimp Cocktail",
+				"Ginger Ale",
+				"Banana Pudding"
+			]
+		}
+	],
 	"Crafting": [
 		{
 			"Id": "decoration",

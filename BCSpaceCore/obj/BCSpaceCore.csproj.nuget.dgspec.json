@@ -47,6 +47,10 @@
             "Pathoschild.Stardew.ModBuildConfig": {
               "target": "Package",
               "version": "[4.0.0, )"
+            },
+            "Pathoschild.Stardew.ModTranslationClassBuilder": {
+              "target": "Package",
+              "version": "[2.0.0, )"
             }
           },
           "imports": [
@@ -114,7 +118,7 @@
             },
             "Pathoschild.Stardew.ModTranslationClassBuilder": {
               "target": "Package",
-              "version": "[1.0.1, )"
+              "version": "[2.0.0, )"
             }
           },
           "imports": [

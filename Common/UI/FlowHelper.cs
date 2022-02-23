@@ -46,9 +46,9 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
-		public FlowBuilder Sprite(SpriteInfo sprite, float scale, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+		public FlowBuilder Sprite(SpriteInfo sprite, float scale, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false, float size = 16, int frame = -1) {
 			AssertState();
-			Nodes.Add(new SpriteNode(sprite, scale, alignment, onClick, onHover, noComponent));
+			Nodes.Add(new SpriteNode(sprite, scale, alignment, onClick, onHover, noComponent, size, frame));
 			return this;
 		}
 

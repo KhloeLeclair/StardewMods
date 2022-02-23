@@ -58,6 +58,16 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 		#endregion
 
+		#region Editability
+
+		public GMCMIntegration<T, M> SetTitleOnly(bool titleOnly) {
+			AssertLoaded();
+			API.SetTitleScreenOnlyForNextOptions(Consumer, titleOnly);
+			return this;
+		}
+
+		#endregion
+
 		#region Pages
 
 		public GMCMIntegration<T, M> StartPage(string name, string displayName) {

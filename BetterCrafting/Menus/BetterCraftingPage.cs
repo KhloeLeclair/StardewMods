@@ -130,17 +130,23 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		#region Lifecycle
 
-		public static BetterCraftingPage Open(ModEntry mod, GameLocation location, Vector2? position = null, int width = -1, int height = -1, bool cooking = false, bool standalone_menu = false, IList<Chest> material_containers = null) {
+		public static BetterCraftingPage Open(ModEntry mod, GameLocation location, Vector2? position = null, int width = -1, int height = -1, bool cooking = false, bool standalone_menu = false, IList<Chest> material_containers = null, int x = -1, int y = -1) {
 			if (width <= 0)
 				width = 800 + borderWidth * 2;
 			if (height <= 0)
 				height = 600 + borderWidth * 2;
 
+			int rows = mod.GetBackpackRows(Game1.player);
+			if (rows > 3)
+				height += Game1.tileSize * (rows - 3);
+
 			Vector2 pos = Utility.getTopLeftPositionForCenteringOnScreen(width, height);
+			if (x == -1) x = (int) pos.X;
+			if (y == -1) y = (int) pos.Y;
 
 			return new BetterCraftingPage(
 				mod,
-				(int) pos.X, (int) pos.Y,
+				x, y,
 				width, height,
 
 				location,
@@ -182,10 +188,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				Object = null;
 
 			// InventoryMenu
+			int rows = Mod.GetBackpackRows(Game1.player);
+
 			inventory = new InventoryMenu(
 				xPositionOnScreen + spaceToClearSideBorder + borderWidth,
 				yPositionOnScreen + spaceToClearTopBorder + borderWidth + 320 - 16,
-				false
+				false,
+				capacity: rows * 12,
+				rows: rows
 			) {
 				showGrayedOutSlots = true
 			};
@@ -566,7 +576,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						Icon = new CategoryIcon() {
 							Type = CategoryIcon.IconType.Texture,
 							Source = Common.Enums.GameTexture.MouseCursors,
-							Rect = new Rectangle(381, 361, 10, 10)
+							Rect = Cooking
+								? new Rectangle(0, 428, 10, 10)
+								: new Rectangle(50, 428, 10, 10)
 						}
 					}, unused);
 				else {
@@ -586,44 +598,44 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				SpriteInfo sprite = null;
 
 				// TODO: Refactor this mess.
+				if (cat.Icon != null)
+					switch (cat.Icon.Type) {
+						case CategoryIcon.IconType.Item:
+							string name = cat.Icon.RecipeName;
+							if (!string.IsNullOrEmpty(name)) {
+								RecipesByName.TryGetValue(name, out IRecipe recipe);
 
-				switch (cat.Icon.Type) {
-					case CategoryIcon.IconType.Item:
-						string name = cat.Icon.RecipeName;
-						if (!string.IsNullOrEmpty(name)) {
-							RecipesByName.TryGetValue(name, out IRecipe recipe);
-
-							if (recipe != null)
-								sprite = SpriteHelper.GetSprite(recipe.CreateItem(), Mod.Helper);
-						}
-
-						if (sprite == null && entry.Value.Count > 0)
-							sprite = SpriteHelper.GetSprite(entry.Value[0].CreateItem(), Mod.Helper);
-
-						if (sprite == null)
-							sprite = new SpriteInfo(
-								SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors),
-								new Rectangle(173, 423, 16, 16)
-							);
-
-						break;
-
-					case CategoryIcon.IconType.Texture:
-						Texture2D texture = cat.Icon.Source.HasValue ? SpriteHelper.GetTexture(cat.Icon.Source.Value) : null;
-						if (!string.IsNullOrEmpty(cat.Icon.Path))
-							try {
-								texture = Mod.Helper.Content.Load<Texture2D>(cat.Icon.Path) ?? texture;
-							} catch (Exception ex) {
-								Log($"Unable to load texture \"{cat.Icon.Path}\" for category {cat.Name}", StardewModdingAPI.LogLevel.Warn, ex);
+								if (recipe != null)
+									sprite = SpriteHelper.GetSprite(recipe.CreateItem(), Mod.Helper);
 							}
 
-						if (texture != null) {
-							Rectangle rect = cat.Icon.Rect ?? texture.Bounds;
-							sprite = new SpriteInfo(texture, rect, baseScale: cat.Icon.Scale);
-						}
+							if (sprite == null && entry.Value.Count > 0)
+								sprite = SpriteHelper.GetSprite(entry.Value[0].CreateItem(), Mod.Helper);
 
-						break;
-				}
+							if (sprite == null)
+								sprite = new SpriteInfo(
+									SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors),
+									new Rectangle(173, 423, 16, 16)
+								);
+
+							break;
+
+						case CategoryIcon.IconType.Texture:
+							Texture2D texture = cat.Icon.Source.HasValue ? SpriteHelper.GetTexture(cat.Icon.Source.Value) : null;
+							if (!string.IsNullOrEmpty(cat.Icon.Path))
+								try {
+									texture = Mod.Helper.Content.Load<Texture2D>(cat.Icon.Path) ?? texture;
+								} catch (Exception ex) {
+									Log($"Unable to load texture \"{cat.Icon.Path}\" for category {cat.Name}", StardewModdingAPI.LogLevel.Warn, ex);
+								}
+
+							if (texture != null) {
+								Rectangle rect = cat.Icon.Rect ?? texture.Bounds;
+								sprite = new SpriteInfo(texture, rect, baseScale: cat.Icon.Scale);
+							}
+
+							break;
+					}
 
 				ClickableComponent tab = new ClickableComponent(
 					bounds: new Rectangle(xPositionOnScreen - 48, yPositionOnScreen + offsetY + (64 * idx), 64, 64),
@@ -1488,7 +1500,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
 
 			if (!Editing)
-				drawHorizontalPartition(b, yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 256);
+				drawHorizontalPartition(b, yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 248);
 
 			// Inventory
 			if (!Editing)
@@ -1822,7 +1834,12 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				builder
 					.AddRange(buffs)
 					.GetLayout()
-					.DrawHover(b, Game1.smallFont);
+					.DrawHover(
+						b,
+						Game1.smallFont,
+						offsetX: HeldItem == null ? 0 : 48,
+						offsetY: HeldItem == null ? 0 : 48
+					);
 			}
 		}
 

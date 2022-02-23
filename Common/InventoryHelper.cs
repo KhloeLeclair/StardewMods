@@ -191,7 +191,7 @@ namespace Leclair.Stardew.Common {
 						if (inv == null || inv.Count == 0)
 							continue;
 
-						remaining -= ConsumeItem(id, remaining, inv, out bool modded);
+						remaining = ConsumeItem(id, remaining, inv, out bool modded);
 						if (modded)
 							modified[iidx] = true;
 

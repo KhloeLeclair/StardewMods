@@ -2,6 +2,9 @@
 	// Settings
 	"setting.general": "General Options",
 
+	"settings.suppress": "Disable Key",
+	"settings.suppress.tip": "When this key is held and you open a crafting menu, Better Crafting will not replace it.",
+
 	"setting.replace-crafting": "Replace Crafting Menu",
 	"setting.replace-crafting.tip": "When enabled, the crafting menu is replaced with a reimplementation.",
 
@@ -50,5 +53,11 @@
 	"category.fertilizer_seeds": "Fertilizer and Seeds",
 	"category.fishing": "Fishing",
 	"category.machinery": "Machinery",
-	"category.misc": "Miscellaneous"
+	"category.misc": "Miscellaneous",
+
+	"category.food.farming": "Farming and Foraging",
+	"category.food.mining": "Mining and Magnetism",
+	"category.food.fishing": "Fishing",
+	"category.food.combat": "Combat",
+	"category.food.other": "Luck, Speed, and Others"
 }

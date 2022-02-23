@@ -26,12 +26,14 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
 
+		private bool? hasBiggerBackpacks;
+
 		public ModConfig Config;
 
 		public RecipeManager Recipes;
 		public FavoriteManager Favorites;
 
-		private GMCMIntegration<ModConfig, ModEntry> intGMCM;
+		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
 		internal Integrations.RaisedGardenBeds.RGBIntegration intRGB;
 
 		public ChestProvider ChestProvider = new(any: true);
@@ -69,8 +71,7 @@ namespace Leclair.Stardew.BetterCrafting {
 				return;
 
 			// Replace crafting pages.
-			KeybindList list = new(SButton.LeftShift);
-			if (list.IsDown()) {
+			if (Config.SuppressBC?.IsDown() ?? false) { 
 				CurrentMenu.Value = menu;
 				return;
 			}
@@ -104,7 +105,9 @@ namespace Leclair.Stardew.BetterCrafting {
 							width: gm.width,
 							height: gm.height,
 							cooking: false,
-							standalone_menu: false
+							standalone_menu: false,
+							x: gm.xPositionOnScreen,
+							y: gm.yPositionOnScreen
 						);
 					}
 				}
@@ -135,47 +138,65 @@ namespace Leclair.Stardew.BetterCrafting {
 		}
 
 		public bool HasGMCM() {
-			return intGMCM?.IsLoaded ?? false;
+			return GMCMIntegration?.IsLoaded ?? false;
 		}
 
 		public void OpenGMCM() {
-			intGMCM?.OpenMenu();
+			if (HasGMCM())
+				GMCMIntegration.OpenMenu();
 		}
 
 
 		private void RegisterSettings() {
-			intGMCM = new GMCMIntegration<ModConfig, ModEntry>(this, () => Config, () => Config = new ModConfig(), () => SaveConfig());
+			GMCMIntegration = new(this, () => Config, () => Config = new ModConfig(), () => SaveConfig());
+			if (!GMCMIntegration.IsLoaded)
+				return;
 
-			Dictionary<Models.SeasoningMode, string> seasoning = new();
-			seasoning.Add(Models.SeasoningMode.Disabled, I18n.Seasoning_Disabled());
-			seasoning.Add(Models.SeasoningMode.Enabled, I18n.Seasoning_Enabled());
-			seasoning.Add(Models.SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory());
+			Dictionary<Models.SeasoningMode, Func<string>> seasoning = new();
+			seasoning.Add(Models.SeasoningMode.Disabled, I18n.Seasoning_Disabled);
+			seasoning.Add(Models.SeasoningMode.Enabled, I18n.Seasoning_Enabled);
+			seasoning.Add(Models.SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory);
 
-			intGMCM.Register(true);
-			intGMCM
-				.AddLabel(I18n.Setting_General())
-				.Add(I18n.Setting_ReplaceCrafting(), I18n.Setting_ReplaceCrafting_Tip(), c => c.ReplaceCrafting, (c, val) => c.ReplaceCrafting = val)
-				.Add(I18n.Setting_ReplaceCooking(), I18n.Setting_ReplaceCooking_Tip(), c => c.ReplaceCooking, (c, val) => c.ReplaceCooking = val)
-				.Add(I18n.Setting_EnableCategories(), I18n.Setting_EnableCategories_Tip(), c => c.UseCategories, (c, val) => c.UseCategories = val);
+			GMCMIntegration.Register(true);
+			GMCMIntegration
+				.AddLabel(I18n.Setting_General)
+				.Add(I18n.Settings_Suppress, I18n.Settings_Suppress_Tip, c => c.SuppressBC, (c, v) => c.SuppressBC = v)
+				.Add(I18n.Setting_ReplaceCrafting, I18n.Setting_ReplaceCrafting_Tip, c => c.ReplaceCrafting, (c, val) => c.ReplaceCrafting = val)
+				.Add(I18n.Setting_ReplaceCooking, I18n.Setting_ReplaceCooking_Tip, c => c.ReplaceCooking, (c, val) => c.ReplaceCooking = val)
+				.Add(I18n.Setting_EnableCategories, I18n.Setting_EnableCategories_Tip, c => c.UseCategories, (c, val) => c.UseCategories = val);
 
-			intGMCM
-				.AddLabel(I18n.Setting_Crafting(), I18n.Setting_Crafting_Tip())
-				.Add(I18n.Setting_UniformGrid(), I18n.Setting_UniformGrid_Tip(), c => c.UseUniformGrid, (c, val) => c.UseUniformGrid = val)
-				.Add(I18n.Setting_BigCraftablesLast(), I18n.Setting_BigCraftablesLast_Tip(), c => c.SortBigLast, (c, val) => c.SortBigLast = val);
+			GMCMIntegration
+				.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
+				.Add(I18n.Setting_UniformGrid, I18n.Setting_UniformGrid_Tip, c => c.UseUniformGrid, (c, val) => c.UseUniformGrid = val)
+				.Add(I18n.Setting_BigCraftablesLast, I18n.Setting_BigCraftablesLast_Tip, c => c.SortBigLast, (c, val) => c.SortBigLast = val);
 
-			intGMCM
-				.AddLabel(I18n.Setting_Cooking(), I18n.Setting_Cooking_Tip())
+			GMCMIntegration
+				.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
 				.AddChoice(
-					I18n.Setting_Seasoning(),
-					I18n.Setting_Seasoning_Tip(),
+					I18n.Setting_Seasoning,
+					I18n.Setting_Seasoning_Tip,
 					c => c.UseSeasoning,
 					(c, val) => c.UseSeasoning = val,
 					choices: seasoning
 				)
-				.Add(I18n.Setting_HideUnknown(), I18n.Setting_HideUnknown_Tip(), c => c.HideUnknown, (c, val) => c.HideUnknown = val);
+				.Add(I18n.Setting_HideUnknown, I18n.Setting_HideUnknown_Tip, c => c.HideUnknown, (c, val) => c.HideUnknown = val);
 		}
 
 		#endregion
+
+		public bool HasBiggerBackpacks() {
+			if (!hasBiggerBackpacks.HasValue)
+				hasBiggerBackpacks = Helper.ModRegistry.IsLoaded("spacechase0.BiggerBackpack");
+
+			return hasBiggerBackpacks.Value;
+		}
+
+		public int GetBackpackRows(Farmer who) {
+			int rows = who.MaxItems / 12;
+			if (rows < 3) rows = 3;
+			if (rows < 4 && HasBiggerBackpacks()) rows = 4;
+			return rows;
+		}
 
 		public bool CanEnterNutDoor() {
 			int num = Math.Max(Game1.netWorldState.Value.GoldenWalnutsFound.Value - 1, 0);

@@ -1,3 +1,5 @@
+using StardewModdingAPI.Utilities;
+
 using Leclair.Stardew.BetterCrafting.Models;
 
 namespace Leclair.Stardew.BetterCrafting {
@@ -7,6 +9,9 @@ namespace Leclair.Stardew.BetterCrafting {
 		public bool ReplaceCrafting { get; set; } = true;
 
 		public bool UseCategories { get; set; } = true;
+
+		// Bindings
+		public KeybindList SuppressBC { get; set; } = KeybindList.Parse("LeftShift");
 
 		// Standard Crafting
 		public bool UseUniformGrid { get; set; } = false;
