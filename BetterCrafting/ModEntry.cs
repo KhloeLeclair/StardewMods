@@ -34,7 +34,11 @@ namespace Leclair.Stardew.BetterCrafting {
 		public FavoriteManager Favorites;
 
 		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
+
 		internal Integrations.RaisedGardenBeds.RGBIntegration intRGB;
+		internal Integrations.StackSplitRedux.SSRIntegration intSSR;
+		internal Integrations.CookingSkill.CSIntegration intCSkill;
+		internal Integrations.SpaceCore.SCIntegration intSCore;
 
 		public ChestProvider ChestProvider = new(any: true);
 		public Texture2D ButtonTexture;
@@ -130,6 +134,9 @@ namespace Leclair.Stardew.BetterCrafting {
 
 			// Integrations
 			intRGB = new(this);
+			intSSR = new(this);
+			intCSkill = new(this);
+			intSCore = new(this);
 
 			// Load Data
 			Recipes.LoadRecipes();

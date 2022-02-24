@@ -4,6 +4,8 @@ using Leclair.Stardew.Common.Events;
 
 using StardewModdingAPI.Events;
 
+using StardewValley;
+
 namespace Leclair.Stardew.BCSpaceCore {
 	class ModEntry : ModSubscriber {
 

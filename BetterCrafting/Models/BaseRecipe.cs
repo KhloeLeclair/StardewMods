@@ -34,6 +34,18 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual string Description => Recipe.description;
 
+		public virtual int GetTimesCrafted(Farmer who) {
+			if (Recipe.isCookingRecipe) {
+				int idx = Recipe.getIndexOfMenuView();
+				if (who.recipesCooked.ContainsKey(idx))
+					return who.recipesCooked[idx];
+
+			} else if (who.craftingRecipes.ContainsKey(Name))
+					return who.craftingRecipes[Name];
+
+			return 0;
+		}
+
 		public virtual SpriteInfo Sprite => SpriteHelper.GetSprite(CreateItem(), Mod.Helper);
 
 		public virtual Texture2D Texture => Recipe.bigCraftable ?
@@ -55,6 +67,8 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 		public virtual Item CreateItem() {
 			return Recipe.createItem();
 		}
+
+		public virtual CraftingRecipe CraftingRecipe => Recipe;
 
 
 	}

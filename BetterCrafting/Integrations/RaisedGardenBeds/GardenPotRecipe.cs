@@ -45,6 +45,15 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 		public string DisplayName { get; }
 		public string Description { get; }
 
+		public virtual int GetTimesCrafted(Farmer who) {
+			if (who.craftingRecipes.ContainsKey(Name))
+				return who.craftingRecipes[Name];
+
+			return 0;
+		}
+
+		public CraftingRecipe CraftingRecipe => Recipe;
+
 		// Display
 
 		public SpriteInfo Sprite => new(Texture, SourceRectangle);

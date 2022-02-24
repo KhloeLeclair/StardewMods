@@ -37,7 +37,7 @@ namespace Leclair.Stardew.Common {
 			IEnumerable<object> inventories,
 			Func<object, IInventoryProvider> getProvider,
 			GameLocation first,
-			Farmer who
+			bool nullLocationValid = false
 		) {
 			List<LocatedInventory> result = new();
 
@@ -59,7 +59,7 @@ namespace Leclair.Stardew.Common {
 					}
 				}
 
-				if (loc != null)
+				if (loc != null || nullLocationValid)
 					result.Add(new(obj, loc));
 			}
 
@@ -72,7 +72,8 @@ namespace Leclair.Stardew.Common {
 			IEnumerable<LocatedInventory> inventories,
 			Func<object, IInventoryProvider> getProvider,
 			Farmer who,
-			Action<IList<WorkingInventory>> withLocks
+			Action<IList<WorkingInventory>> withLocks,
+			bool nullLocationValid = false
 		) {
 			WithInventories(inventories, getProvider, who, (locked, onDone) => {
 				try {
@@ -83,7 +84,7 @@ namespace Leclair.Stardew.Common {
 				}
 
 				onDone();
-			});
+			}, nullLocationValid);
 		}
 
 		public static void WithInventories(
@@ -91,7 +92,8 @@ namespace Leclair.Stardew.Common {
 			Func<object, IInventoryProvider> getProvider,
 			GameLocation location,
 			Farmer who,
-			Action<IList<WorkingInventory>> withLocks
+			Action<IList<WorkingInventory>> withLocks,
+			bool nullLocationValid = false
 		) {
 			List<LocatedInventory> located = new();
 			foreach (object obj in inventories) {
@@ -110,20 +112,24 @@ namespace Leclair.Stardew.Common {
 				}
 
 				onDone();
-			});
+			}, nullLocationValid);
 		}
 
 		public static void WithInventories(
 			IEnumerable<LocatedInventory> inventories,
 			Func<object, IInventoryProvider> getProvider,
 			Farmer who,
-			Action<IList<WorkingInventory>, Action> withLocks
+			Action<IList<WorkingInventory>, Action> withLocks,
+			bool nullLocationValid = false
 		) {
 			List<WorkingInventory> locked = new();
 			List<WorkingInventory> lockable = new();
 
 			if (inventories != null)
 				foreach (LocatedInventory loc in inventories) {
+					if (loc.Location == null && !nullLocationValid)
+						continue;
+
 					IInventoryProvider provider = getProvider(loc.Source);
 					if (provider == null || !provider.IsValid(loc.Source, loc.Location, who))
 						continue;

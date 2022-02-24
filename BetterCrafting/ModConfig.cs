@@ -17,7 +17,6 @@ namespace Leclair.Stardew.BetterCrafting {
 		public bool UseUniformGrid { get; set; } = false;
 		public bool SortBigLast { get; set; } = false;
 
-
 		// Cooking
 		public SeasoningMode UseSeasoning { get; set; } = SeasoningMode.Enabled;
 		public bool HideUnknown { get; set; } = false;

@@ -10,6 +10,10 @@ namespace Leclair.Stardew.Common.Inventory {
 
 		/// <summary>
 		/// Check to see if this object is valid for inventory operations.
+		///
+		/// If location is null, it should not be considered when determining
+		/// the validitiy of the object.
+		/// 
 		/// </summary>
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>

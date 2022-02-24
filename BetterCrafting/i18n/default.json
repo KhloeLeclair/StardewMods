@@ -38,6 +38,9 @@
 	"setting.hide-unknown": "Hide Unknown Recipes",
 	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",
 
+	// Tooltips
+	"tooltip.crafted": "Crafted {{count}} Times",
+
 	// Buttons
 	"tooltip.edit-mode": "Edit Categories",
 	"tooltip.favorites": "Only Show Favorites",

@@ -14,6 +14,10 @@ namespace Leclair.Stardew.Common.Crafting {
 		string DisplayName { get; }
 		string Description { get; }
 
+		int GetTimesCrafted(Farmer who);
+
+		CraftingRecipe CraftingRecipe { get; }
+
 		// Display
 
 		SpriteInfo Sprite { get; }

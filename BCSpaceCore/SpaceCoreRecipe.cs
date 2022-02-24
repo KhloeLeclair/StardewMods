@@ -37,6 +37,16 @@ namespace Leclair.Stardew.BCSpaceCore {
 		public string DisplayName => Recipe.Name;
 		public string Description => Recipe.Description;
 
+		public virtual int GetTimesCrafted(Farmer who) {
+			// TODO: Cooking?
+
+			if (who.craftingRecipes.ContainsKey(Name))
+				return who.craftingRecipes[Name];
+
+			return 0;
+		}
+		public CraftingRecipe CraftingRecipe => null;
+
 
 		// Display
 
