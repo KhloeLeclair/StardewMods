@@ -22,11 +22,13 @@ namespace Leclair.Stardew.BetterCrafting {
 	public class ModEntry : ModSubscriber {
 
 		public static ModEntry instance;
-		public static ModAPI API;
+		public static IBetterCrafting API;
 
 		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
+		private readonly PerScreen<Menus.BetterCraftingPage> OldCraftingPage = new();
 
 		private bool? hasBiggerBackpacks;
+		private bool? hasLoveOfCooking;
 
 		public ModConfig Config;
 
@@ -73,6 +75,35 @@ namespace Leclair.Stardew.BetterCrafting {
 			IClickableMenu menu = Game1.activeClickableMenu;
 			if (CurrentMenu.Value == menu)
 				return;
+
+			// Are we doing GMCM stuff?
+			if (OldCraftingPage.Value != null) {
+				if (menu != null) {
+					string name = menu.GetType().FullName;
+
+					// If we're on the specific page for a mod, then
+					// everything is fine and we can continue.
+					if (name.Equals("GenericModConfigMenu.Framework.SpecificModConfigMenu"))
+						return;
+
+					if (name.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
+						CommonHelper.YeetMenu(menu);
+
+						menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+							this,
+							OldCraftingPage.Value.Location,
+							OldCraftingPage.Value.Position,
+							cooking: OldCraftingPage.Value.cooking,
+							standalone_menu: true,
+							material_containers: OldCraftingPage.Value.NearbyChests,
+							silent_open: true
+						);
+					}
+				}
+
+				// Clear the old crafting page.
+				OldCraftingPage.Value = null;
+			}
 
 			// Replace crafting pages.
 			if (Config.SuppressBC?.IsDown() ?? false) { 
@@ -156,8 +187,12 @@ namespace Leclair.Stardew.BetterCrafting {
 		}
 
 		public void OpenGMCM() {
-			if (HasGMCM())
+			if (HasGMCM()) {
+				if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
+					OldCraftingPage.Value = page;
+
 				GMCMIntegration.OpenMenu();
+			}
 		}
 
 
@@ -174,15 +209,51 @@ namespace Leclair.Stardew.BetterCrafting {
 			GMCMIntegration.Register(true);
 			GMCMIntegration
 				.AddLabel(I18n.Setting_General)
-				.Add(I18n.Settings_Suppress, I18n.Settings_Suppress_Tip, c => c.SuppressBC, (c, v) => c.SuppressBC = v)
-				.Add(I18n.Setting_ReplaceCrafting, I18n.Setting_ReplaceCrafting_Tip, c => c.ReplaceCrafting, (c, val) => c.ReplaceCrafting = val)
-				.Add(I18n.Setting_ReplaceCooking, I18n.Setting_ReplaceCooking_Tip, c => c.ReplaceCooking, (c, val) => c.ReplaceCooking = val)
-				.Add(I18n.Setting_EnableCategories, I18n.Setting_EnableCategories_Tip, c => c.UseCategories, (c, val) => c.UseCategories = val);
+				.Add(
+					I18n.Setting_Settings,
+					I18n.Setting_Settings_Tip,
+					c => c.ShowSettingsButton,
+					(c, v) => c.ShowSettingsButton = v
+				)
+				.Add(
+					I18n.Setting_Suppress,
+					I18n.Setting_Suppress_Tip,
+					c => c.SuppressBC,
+					(c, v) => c.SuppressBC = v
+				)
+				.Add(
+					I18n.Setting_ReplaceCrafting,
+					I18n.Setting_ReplaceCrafting_Tip,
+					c => c.ReplaceCrafting,
+					(c, val) => c.ReplaceCrafting = val
+				)
+				.Add(
+					I18n.Setting_ReplaceCooking,
+					I18n.Setting_ReplaceCooking_Tip,
+					c => c.ReplaceCooking,
+					(c, val) => c.ReplaceCooking = val
+				)
+				.Add(
+					I18n.Setting_EnableCategories,
+					I18n.Setting_EnableCategories_Tip,
+					c => c.UseCategories,
+					(c, val) => c.UseCategories = val
+				);
 
 			GMCMIntegration
 				.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
-				.Add(I18n.Setting_UniformGrid, I18n.Setting_UniformGrid_Tip, c => c.UseUniformGrid, (c, val) => c.UseUniformGrid = val)
-				.Add(I18n.Setting_BigCraftablesLast, I18n.Setting_BigCraftablesLast_Tip, c => c.SortBigLast, (c, val) => c.SortBigLast = val);
+				.Add(
+					I18n.Setting_UniformGrid,
+					I18n.Setting_UniformGrid_Tip,
+					c => c.UseUniformGrid,
+					(c, val) => c.UseUniformGrid = val
+				)
+				.Add(
+					I18n.Setting_BigCraftablesLast,
+					I18n.Setting_BigCraftablesLast_Tip,
+					c => c.SortBigLast,
+					(c, val) => c.SortBigLast = val
+				);
 
 			GMCMIntegration
 				.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
@@ -193,10 +264,43 @@ namespace Leclair.Stardew.BetterCrafting {
 					(c, val) => c.UseSeasoning = val,
 					choices: seasoning
 				)
-				.Add(I18n.Setting_HideUnknown, I18n.Setting_HideUnknown_Tip, c => c.HideUnknown, (c, val) => c.HideUnknown = val);
+				.Add(
+					I18n.Setting_HideUnknown,
+					I18n.Setting_HideUnknown_Tip,
+					c => c.HideUnknown,
+					(c, val) => c.HideUnknown = val
+				);
+
+			GMCMIntegration
+				.AddLabel(I18n.Setting_Quality)
+				.AddParagraph(I18n.Setting_Quality_Tip)
+				.Add(
+					I18n.Setting_EnableQuality,
+					I18n.Setting_EnableQuality_Tip,
+					c => c.MaxQuality != MaxQuality.Disabled,
+					(c, v) => {
+						if (v && c.MaxQuality == MaxQuality.Disabled)
+							c.MaxQuality = MaxQuality.Iridium;
+						else if (!v && c.MaxQuality != MaxQuality.Disabled)
+							c.MaxQuality = MaxQuality.Disabled;
+					}
+				)
+				.Add(
+					I18n.Setting_SortQuality,
+					I18n.Setting_SortQuality_Tip,
+					c => c.LowQualityFirst,
+					(c, v) => c.LowQualityFirst = v
+				);
 		}
 
 		#endregion
+
+		public bool HasLoveOfCooking() {
+			if (!hasLoveOfCooking.HasValue)
+				hasLoveOfCooking = Helper.ModRegistry.IsLoaded("blueberry.LoveOfCooking");
+
+			return hasLoveOfCooking.Value;
+		}
 
 		public bool HasBiggerBackpacks() {
 			if (!hasBiggerBackpacks.HasValue)

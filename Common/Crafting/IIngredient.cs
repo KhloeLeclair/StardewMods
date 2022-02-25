@@ -10,6 +10,9 @@ using StardewValley;
 namespace Leclair.Stardew.Common.Crafting {
 	public interface IIngredient {
 
+		// Support Level
+		bool SupportsQuality { get; }
+
 		// Display
 		string DisplayName { get; }
 		Texture2D Texture { get; }
@@ -18,9 +21,9 @@ namespace Leclair.Stardew.Common.Crafting {
 		// Quantity
 		int Quantity { get; }
 
-		int GetAvailableQuantity(Farmer who, IList<Item> items, IList<WorkingInventory> inventories);
+		int GetAvailableQuantity(Farmer who, IList<Item> items, IList<IInventory> inventories, int max_quality);
 
-		void Consume(Farmer who, IList<WorkingInventory> inventories);
+		void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool low_quality_first);
 
 	}
 }

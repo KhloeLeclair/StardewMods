@@ -22,5 +22,9 @@ namespace Leclair.Stardew.BCSpaceCore {
 
 			return new SpaceCoreRecipe(recipe.name, ccr);
 		}
+
+		public IEnumerable<IRecipe> GetAdditionalRecipes(bool cooking) {
+			return null;
+		}
 	}
 }

@@ -26,6 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)InventoryHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BaseInventoryProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\ChestProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Inventory\IInventory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\IInventoryProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\TransferBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\WorkingInventory.cs" />

@@ -18,18 +18,14 @@ namespace Leclair.Stardew.Common {
 			return Enum.GetValues(typeof(T)).Cast<T>();
 		}
 
-
-		private static MethodInfo CleanupMethod;
-
 		public static void YeetMenu(IClickableMenu menu) {
-			if (CleanupMethod == null) {
-				MethodInfo info = menu.GetType().GetMethod("cleanupBeforeExit", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				if (info.GetParameters().Length == 0)
-					CleanupMethod = info;
-			}
+			if (menu == null) return;
 
+			MethodInfo CleanupMethod = menu.GetType().GetMethod("cleanupBeforeExit", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			menu.behaviorBeforeCleanup?.Invoke(menu);
-			CleanupMethod?.Invoke(menu, null);
+
+			if (CleanupMethod != null && CleanupMethod.GetParameters().Length == 0)
+				CleanupMethod.Invoke(menu, null);
 
 			if (menu.exitFunction != null) {
 				IClickableMenu.onExit exitFunction = menu.exitFunction;

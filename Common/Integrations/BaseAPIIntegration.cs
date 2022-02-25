@@ -8,6 +8,11 @@ namespace Leclair.Stardew.Common.Integrations {
 		protected T API { get; }
 
 		protected BaseAPIIntegration(M self, string modID, string minVersion, string maxVersion = null) : base(self, modID, minVersion, maxVersion) {
+			if (!IsLoaded) {
+				API = null;
+				return;
+			}
+
 			API = GetAPI();
 
 			if (API == null) {

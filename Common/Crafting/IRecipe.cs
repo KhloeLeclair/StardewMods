@@ -20,8 +20,6 @@ namespace Leclair.Stardew.Common.Crafting {
 
 		// Display
 
-		SpriteInfo Sprite { get; }
-
 		Texture2D Texture { get; }
 		Rectangle SourceRectangle { get; }
 
@@ -39,6 +37,12 @@ namespace Leclair.Stardew.Common.Crafting {
 		bool Stackable { get; }
 
 		Item CreateItem();
+
+	}
+
+	public interface IRecipeSprite {
+
+		SpriteInfo Sprite { get; }
 
 	}
 }

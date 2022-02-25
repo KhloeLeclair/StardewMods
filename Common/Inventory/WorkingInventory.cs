@@ -6,13 +6,13 @@ using StardewValley;
 using StardewValley.Network;
 
 namespace Leclair.Stardew.Common.Inventory {
-	public struct WorkingInventory {
+	public struct WorkingInventory : IInventory {
 
-		public readonly object Object;
-		public readonly IInventoryProvider Provider;
-		public readonly NetMutex Mutex;
-		public readonly GameLocation Location;
-		public readonly Farmer Player;
+		public object Object { get; }
+		public IInventoryProvider Provider { get; }
+		public NetMutex Mutex { get; }
+		public GameLocation Location { get; }
+		public Farmer Player { get; }
 
 		public WorkingInventory(object @object, IInventoryProvider provider, NetMutex mutex, GameLocation location, Farmer player) {
 			Object = @object;

@@ -2,8 +2,8 @@
 	// Settings
 	"setting.general": "General Options",
 
-	"settings.suppress": "Disable Key",
-	"settings.suppress.tip": "When this key is held and you open a crafting menu, Better Crafting will not replace it.",
+	"setting.suppress": "Disable Key",
+	"setting.suppress.tip": "When this key is held and you open a crafting menu, Better Crafting will not replace it.",
 
 	"setting.replace-crafting": "Replace Crafting Menu",
 	"setting.replace-crafting.tip": "When enabled, the crafting menu is replaced with a reimplementation.",
@@ -13,6 +13,20 @@
 
 	"setting.enable-categories": "Enable Categories",
 	"setting.enable-categories.tip": "Display category tabs in crafting menus, rather than one big list of everything.",
+
+	"setting.settings": "Show Settings Button",
+	"setting.settings.tip": "When enabled, a button to open Better Crafting's settings will be added to the Better Crafting menu.",
+
+	// Quality
+
+	"setting.quality": "Quality",
+	"setting.quality.tip": "Please note that some recipes added by other sources, such as SpaceCore, may not respect these settings due to API limitations.",
+
+	"setting.enable-quality": "Enable Quality Limit",
+	"setting.enable-quality.tip": "When enabled, a button will be displayed allowing you to choose a maximum quality of items to use when crafting.",
+
+	"setting.sort-quality": "Use Low Quality First",
+	"setting.sort-quality.tip": "When enabled, recipes will be crafted using lower quality items first.",
 
 	// Crafting
 	"setting.crafting": "Crafting",
@@ -46,6 +60,14 @@
 	"tooltip.favorites": "Only Show Favorites",
 	"tooltip.seasoning": "Use Seasoning",
 	"tooltip.uniform": "Use Uniform Grid",
+	"tooltip.settings": "Open Settings",
+
+	"tooltip.quality.none": "Only use low-quality items.",
+	"tooltip.quality.silver": "Only use low and silver quality items.",
+	"tooltip.quality.gold": "Only use low, silver, and gold quality items.",
+	"tooltip.quality.iridium": "Use any quality items.",
+
+	"tooltip.quality-unsupported": "This recipe does not support quality settings.",
 
 	// Categories
 	"category.new": "New Category",

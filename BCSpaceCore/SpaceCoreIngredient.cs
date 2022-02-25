@@ -16,7 +16,9 @@ using StardewValley.Objects;
 namespace Leclair.Stardew.BCSpaceCore {
 	public class SpaceCoreIngredient : IIngredient {
 
-		private static List<Chest> GetChests(IList<WorkingInventory> inventories) {
+		public bool SupportsQuality => false;
+
+		private static List<Chest> GetChests(IList<IInventory> inventories) {
 			return inventories
 				.Where(val => val.Object is Chest)
 				.Select(val => val.Object as Chest)
@@ -37,14 +39,14 @@ namespace Leclair.Stardew.BCSpaceCore {
 
 		public int Quantity => Matcher.Quantity;
 
-		public void Consume(Farmer who, IList<WorkingInventory> inventories) {
+		public void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool lower_quality_first) {
 			// Unfortunately, we're always going to need chests for this
 			// due to how SpaceCore is implemented.
 			if (who == Game1.player)
 				Matcher.Consume(GetChests(inventories));
 		}
 
-		public int GetAvailableQuantity(Farmer who, IList<Item> _, IList<WorkingInventory> inventories) {
+		public int GetAvailableQuantity(Farmer who, IList<Item> _, IList<IInventory> inventories, int max_quality) {
 			if (who != Game1.player)
 				return 0;
 

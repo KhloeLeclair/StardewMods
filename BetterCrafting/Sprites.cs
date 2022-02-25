@@ -22,6 +22,12 @@ namespace Leclair.Stardew.BetterCrafting {
 			public static Rectangle FAVORITE_OFF = new(32, 16, 16, 16);
 
 			public static Rectangle WRENCH = new(48, 0, 16, 16);
+			public static Rectangle SETTINGS = new(64, 0, 16, 16);
+
+			public static Rectangle QUALITY_0 = new(0, 32, 16, 16);
+			public static Rectangle QUALITY_1 = new(16, 32, 16, 16);
+			public static Rectangle QUALITY_2 = new(32, 32, 16, 16);
+			public static Rectangle QUALITY_3 = new(48, 32, 16, 16);
 		}
 
 		public static void Load(IContentHelper Helper) {

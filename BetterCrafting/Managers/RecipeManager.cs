@@ -63,6 +63,12 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 		#region Lock Helpers
 
+		private void WithRecipeProviders(Action action) {
+			lock ((Providers as ICollection).SyncRoot) {
+				action();
+			}
+		}
+
 		private void WithRecipes(Action action) {
 			lock ((CraftingRecipes as ICollection).SyncRoot) {
 				lock ((CookingRecipes as ICollection).SyncRoot) {
@@ -97,7 +103,7 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 		#region Recipe Handling
 
-		public IList<IRecipe> GetRecipes(bool cooking) {
+		public List<IRecipe> GetRecipes(bool cooking) {
 			if (CraftingCount != CraftingRecipe.craftingRecipes.Count || CookingCount != CraftingRecipe.cookingRecipes.Count) {
 				Log("Recipe count changed. Re-caching recipes.", LogLevel.Info);
 				LoadRecipes();
@@ -166,15 +172,35 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 		#region Recipe Providers
 
+		public void Invalidate() {
+			CraftingCount = CookingCount = 0;
+		}
+
 		public void AddProvider(IRecipeProvider provider) {
 			if (provider == null)
 				throw new ArgumentNullException("provider cannot be null");
 
-			if (Providers.Contains(provider))
+			WithRecipeProviders(() => {
+				if (Providers.Contains(provider))
+					return;
+
+				Providers.Add(provider);
+				Providers.Sort((a, b) => a.RecipePriority.CompareTo(b.RecipePriority));
+			});
+
+			Invalidate();
+		}
+
+		public void RemoveProvider(IRecipeProvider provider) {
+			if (provider == null)
 				return;
 
-			Providers.Add(provider);
-			Providers.Sort((a, b) => a.RecipePriority.CompareTo(b.RecipePriority));
+			WithRecipeProviders(() => {
+				if (Providers.Contains(provider))
+					Providers.Remove(provider);
+			});
+
+			Invalidate();
 		}
 
 		#endregion
@@ -184,10 +210,12 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 		public IRecipe GetProvidedRecipe(string name, bool cooking) {
 			CraftingRecipe raw = new(name, cooking);
 
-			foreach (IRecipeProvider provider in Providers) {
-				IRecipe recipe = provider.GetRecipe(raw);
-				if (recipe != null)
-					return recipe;
+			lock ((Providers as ICollection).SyncRoot) {
+				foreach (IRecipeProvider provider in Providers) {
+					IRecipe recipe = provider.GetRecipe(raw);
+					if (recipe != null)
+						return recipe;
+				}
 			}
 
 			return GetRecipe(raw);
@@ -213,6 +241,15 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 					CookingRecipes.Add(recipe);
 				}
 
+				foreach (IRecipeProvider provider in Providers) {
+					var recipes = provider.GetAdditionalRecipes(true);
+					if (recipes != null)
+						foreach(IRecipe recipe in recipes) {
+							CookingRecipesByName.Add(recipe.Name, recipe);
+							CookingRecipes.Add(recipe);
+						}
+				}
+
 				CookingRecipes.Sort((a, b) => a.SortValue.CompareTo(b.SortValue));
 
 				// Crafting
@@ -220,6 +257,15 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 					IRecipe recipe = GetProvidedRecipe(key, false);
 					CraftingRecipesByName.Add(key, recipe);
 					CraftingRecipes.Add(recipe);
+				}
+
+				foreach (IRecipeProvider provider in Providers) {
+					var recipes = provider.GetAdditionalRecipes(false);
+					if (recipes != null)
+						foreach (IRecipe recipe in recipes) {
+							CraftingRecipesByName.Add(recipe.Name, recipe);
+							CraftingRecipes.Add(recipe);
+						}
 				}
 
 				Log($"Loaded {CookingRecipes.Count} cooking recipes and {CraftingRecipes.Count} crafting recipes.", LogLevel.Debug);

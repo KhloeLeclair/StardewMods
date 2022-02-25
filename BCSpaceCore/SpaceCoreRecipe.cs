@@ -50,7 +50,7 @@ namespace Leclair.Stardew.BCSpaceCore {
 
 		// Display
 
-		public SpriteInfo Sprite => new(Texture, SourceRectangle);
+		//public SpriteInfo Sprite => new(Texture, SourceRectangle);
 
 		public Texture2D Texture => Recipe.IconTexture;
 		public Rectangle SourceRectangle => Recipe.IconSubrect ?? Texture.Bounds;

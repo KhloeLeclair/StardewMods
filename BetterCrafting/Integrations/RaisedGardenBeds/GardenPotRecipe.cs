@@ -56,7 +56,7 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 
 		// Display
 
-		public SpriteInfo Sprite => new(Texture, SourceRectangle);
+		//public SpriteInfo Sprite => new(Texture, SourceRectangle);
 
 		public Texture2D Texture => RGB.GetSprite(SpriteKey);
 

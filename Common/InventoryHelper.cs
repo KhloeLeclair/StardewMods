@@ -66,13 +66,63 @@ namespace Leclair.Stardew.Common {
 			return result;
 		}
 
+		public static List<IInventory> GetUnsafeInventories(
+			IEnumerable<object> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			GameLocation location,
+			Farmer who,
+			bool nullLocationValid = false
+		) {
+			List<LocatedInventory> located = new();
+			foreach (object obj in inventories) {
+				if (obj is LocatedInventory inv)
+					located.Add(inv);
+				else
+					located.Add(new(obj, location));
+			}
+
+			return GetUnsafeInventories(located, getProvider, who, nullLocationValid);
+		}
+
+		public static List<IInventory> GetUnsafeInventories(
+			IEnumerable<LocatedInventory> inventories,
+			Func<object, IInventoryProvider> getProvider,
+			Farmer who,
+			bool nullLocationValid = false
+		) {
+			List<IInventory> result = new();
+
+			foreach (LocatedInventory loc in inventories) {
+				if (loc.Location == null && !nullLocationValid)
+					continue;
+
+				IInventoryProvider provider = getProvider(loc.Source);
+				if (provider == null || !provider.IsValid(loc.Source, loc.Location, who))
+					continue;
+
+				// If we can't get a mutex, we can't assure safety. Abort.
+				NetMutex mutex = provider.GetMutex(loc.Source, loc.Location, who);
+				if (mutex == null)
+					continue;
+
+				// We don't care about the state of the mutex until we try
+				// using it, and this method isn't about using it, so...
+				// ignore them for now.
+
+				WorkingInventory entry = new(loc.Source, provider, mutex, loc.Location, who);
+				result.Add(entry);
+			}
+
+			return result;
+		}
+
 		#region Mutex Handling
 
 		public static void WithInventories(
 			IEnumerable<LocatedInventory> inventories,
 			Func<object, IInventoryProvider> getProvider,
 			Farmer who,
-			Action<IList<WorkingInventory>> withLocks,
+			Action<IList<IInventory>> withLocks,
 			bool nullLocationValid = false
 		) {
 			WithInventories(inventories, getProvider, who, (locked, onDone) => {
@@ -92,7 +142,7 @@ namespace Leclair.Stardew.Common {
 			Func<object, IInventoryProvider> getProvider,
 			GameLocation location,
 			Farmer who,
-			Action<IList<WorkingInventory>> withLocks,
+			Action<IList<IInventory>> withLocks,
 			bool nullLocationValid = false
 		) {
 			List<LocatedInventory> located = new();
@@ -119,11 +169,11 @@ namespace Leclair.Stardew.Common {
 			IEnumerable<LocatedInventory> inventories,
 			Func<object, IInventoryProvider> getProvider,
 			Farmer who,
-			Action<IList<WorkingInventory>, Action> withLocks,
+			Action<IList<IInventory>, Action> withLocks,
 			bool nullLocationValid = false
 		) {
-			List<WorkingInventory> locked = new();
-			List<WorkingInventory> lockable = new();
+			List<IInventory> locked = new();
+			List<IInventory> lockable = new();
 
 			if (inventories != null)
 				foreach (LocatedInventory loc in inventories) {
@@ -205,7 +255,7 @@ namespace Leclair.Stardew.Common {
 			return false;
 		}
 
-		public static void ConsumeIngredients(this CraftingRecipe recipe, Farmer who, IEnumerable<WorkingInventory> inventories) {
+		public static void ConsumeIngredients(this CraftingRecipe recipe, Farmer who, IEnumerable<IInventory> inventories) {
 			ConsumeItems(recipe.recipeList, who, inventories);
 		}
 
@@ -217,11 +267,18 @@ namespace Leclair.Stardew.Common {
 		/// <param name="items">The inventory we're searching</param>
 		/// <param name="nullified">whether or not one or more of the items in the inventory was replaced with null</param>
 		/// <returns>the remaining quantity to remove</returns>
-		public static int ConsumeItem(int id, int amount, IList<Item> items, out bool nullified) {
+		public static int ConsumeItem(int id, int amount, IList<Item> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
 			nullified = false;
+			passed_quality = false;
 
 			for (int idx = items.Count - 1; idx >= 0; --idx) {
 				Item item = items[idx];
+				int quality = item is SObject obj ? obj.Quality : 0;
+				if (quality > max_quality) {
+					passed_quality = true;
+					continue;
+				}
+
 				if (DoesItemMatchID(id, item)) {
 					int count = Math.Min(amount, item.Stack);
 					amount -= count;
@@ -246,8 +303,10 @@ namespace Leclair.Stardew.Common {
 		/// <param name="items"></param>
 		/// <param name="who"></param>
 		/// <param name="inventories"></param>
-		public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer who, IEnumerable<WorkingInventory> inventories) {
-			IList<WorkingInventory> working = (inventories as IList<WorkingInventory>) ?? inventories?.ToList();
+		/// <param name="max_quality"></param>
+		/// <param name="low_quality_first"></param>
+		public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer who, IEnumerable<IInventory> inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+			IList<IInventory> working = (inventories as IList<IInventory>) ?? inventories?.ToList();
 			bool[] modified = working == null ? null : new bool[working.Count];
 			IList<Item>[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray();
 
@@ -255,23 +314,35 @@ namespace Leclair.Stardew.Common {
 				int id = pair.Key;
 				int remaining = pair.Value;
 
-				remaining = ConsumeItem(id, remaining, who.Items, out bool m);
-				if (remaining <= 0)
-					continue;
+				int mq = max_quality;
+				if (low_quality_first)
+					mq = 0;
 
-				if (working != null)
-					for (int iidx = 0; iidx < working.Count; iidx++) {
-						IList<Item> inv = invs[iidx];
-						if (inv == null || inv.Count == 0)
-							continue;
+				for (int q = mq; q <= max_quality; q++) {
+					remaining = ConsumeItem(id, remaining, who.Items, out bool m, out bool passed, q);
+					if (remaining <= 0)
+						break;
 
-						remaining = ConsumeItem(id, remaining, inv, out bool modded);
-						if (modded)
-							modified[iidx] = true;
+					if (working != null)
+						for(int iidx = 0; iidx < working.Count; iidx++) {
+							IList<Item> inv = invs[iidx];
+							if (inv == null || inv.Count == 0)
+								continue;
 
-						if (remaining <= 0)
-							break;
-					}
+							remaining = ConsumeItem(id, remaining, inv, out bool modded, out bool p, q);
+							if (modded)
+								modified[iidx] = true;
+
+							if (p)
+								passed = true;
+
+							if (remaining <= 0)
+								break;
+						}
+
+					if (remaining <= 0 || ! passed)
+						break;
+				}
 			}
 
 			if (working != null)

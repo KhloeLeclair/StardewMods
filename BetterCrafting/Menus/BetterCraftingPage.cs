@@ -48,10 +48,11 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		public IList<Chest> NearbyChests;
 		protected IList<LocatedInventory> CachedInventories;
+		private IList<IInventory> UnsafeInventories;
 		private bool chestsOnly;
 
 		// Editing Mode
-		protected bool Editing = false;
+		public bool Editing { get; protected set; } = false;
 		public TextBox txtCategoryName;
 		public ClickableComponent btnCategoryName;
 
@@ -63,14 +64,18 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public float trashCanLidRotation;
 
 		public ClickableTextureComponent btnToggleEdit;
+		public ClickableTextureComponent btnSettings;
 		public ClickableTextureComponent btnToggleFavorites;
 		public ClickableTextureComponent btnToggleSeasoning;
+		public ClickableTextureComponent btnToggleQuality;
 		public ClickableTextureComponent btnToggleUniform;
 
 		public ClickableTextureComponent btnPageUp;
 		public ClickableTextureComponent btnPageDown;
 
 		// Recipe Tracking
+		protected IList<string> ListedRecipes;
+
 		protected List<IRecipe> Recipes = new();
 		protected Dictionary<string, IRecipe> RecipesByName = new();
 		protected List<IRecipe> Favorites = new();
@@ -126,11 +131,44 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				}
 			}
 		}
+		public Rectangle SourceQuality {
+			get {
+				switch (Mod.Config.MaxQuality) {
+					case MaxQuality.Iridium:
+						return Sprites.Buttons.QUALITY_3;
+					case MaxQuality.Gold:
+						return Sprites.Buttons.QUALITY_2;
+					case MaxQuality.Silver:
+						return Sprites.Buttons.QUALITY_1;
+					default:
+						return Sprites.Buttons.QUALITY_0;
+				};
+			}
+		}
+
+		private int Quality {
+			get {
+				switch (Mod.Config.MaxQuality) {
+					case MaxQuality.None:
+						return 0;
+					case MaxQuality.Silver:
+						return 1;
+					case MaxQuality.Gold:
+						return 2;
+					case MaxQuality.Iridium:
+					case MaxQuality.Disabled:
+					default:
+						return int.MaxValue;
+				}
+			}
+		}
+
+
 		public Rectangle SourceUniform { get => Mod.Config.UseUniformGrid ? Sprites.Buttons.UNIFORM_ON : Sprites.Buttons.UNIFORM_OFF; }
 
 		#region Lifecycle
 
-		public static BetterCraftingPage Open(ModEntry mod, GameLocation location, Vector2? position = null, int width = -1, int height = -1, bool cooking = false, bool standalone_menu = false, IList<Chest> material_containers = null, int x = -1, int y = -1) {
+		public static BetterCraftingPage Open(ModEntry mod, GameLocation location, Vector2? position = null, int width = -1, int height = -1, bool cooking = false, bool standalone_menu = false, IList<Chest> material_containers = null, int x = -1, int y = -1, bool silent_open = false, IList<string> listed_recipes = null) {
 			if (width <= 0)
 				width = 800 + borderWidth * 2;
 			if (height <= 0)
@@ -154,8 +192,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 				cooking,
 				standalone_menu,
+				silent_open,
 
-				material_containers
+				material_containers,
+				listed_recipes
 			);
 		}
 
@@ -169,8 +209,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			bool cooking = false,
 			bool standalone_menu = false,
+			bool silent_open = false,
 
-			IList<Chest> material_containers = null
+			IList<Chest> material_containers = null,
+			IList<string> listed_recipes = null
 		) : base(mod, x, y, width, height) {
 
 			Location = location ?? Game1.player.currentLocation;
@@ -178,6 +220,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			this.cooking = cooking;
 			Standalone = standalone_menu;
 			NearbyChests = material_containers;
+			ListedRecipes = listed_recipes;
 
 			chestsOnly = this.cooking && Mod.intCSkill.IsLoaded;
 
@@ -235,6 +278,17 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				rightNeighborID = ClickableComponent.ID_ignore
 			} : null;
 
+			btnSettings = (Mod.Config.ShowSettingsButton && Mod.HasGMCM()) ? new ClickableTextureComponent(
+				bounds: new Rectangle(btnX, btnY, 64, 64),
+				texture: Sprites.Buttons.Texture,
+				sourceRect: Sprites.Buttons.SETTINGS,
+				scale: 4f
+			) {
+				myID = 107,
+				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				rightNeighborID = ClickableComponent.ID_ignore
+			} : null;
+
 			btnToggleFavorites = Mod.Config.UseCategories ? null : new ClickableTextureComponent(
 				bounds: new Rectangle(btnX, btnY, 64, 64),
 				texture: Sprites.Buttons.Texture,
@@ -256,6 +310,17 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 				rightNeighborID = ClickableComponent.ID_ignore
 			} : null;
+
+			btnToggleQuality = Mod.Config.MaxQuality == MaxQuality.Disabled ? null : new ClickableTextureComponent(
+				bounds: new Rectangle(btnX, btnY, 64, 64),
+				texture: Sprites.Buttons.Texture,
+				sourceRect: SourceQuality,
+				scale: 4f
+			) {
+				myID = 105,
+				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				rightNeighborID = ClickableComponent.ID_ignore
+			};
 
 			btnToggleUniform = this.cooking ? null : new ClickableTextureComponent(
 				bounds: new Rectangle(btnX, btnY, 64, 64),
@@ -289,7 +354,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				btnToggleEdit,
 				btnToggleFavorites,
 				btnToggleSeasoning,
+				btnToggleQuality,
 				btnToggleUniform,
+				btnSettings,
 				trashCan
 			);
 
@@ -298,7 +365,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				btnToggleEdit,
 				btnToggleFavorites,
 				btnToggleSeasoning,
+				btnToggleQuality,
 				btnToggleUniform,
+				btnSettings,
 				trashCan
 			);
 
@@ -309,7 +378,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			LayoutRecipes();
 
 			// Final UX
-			if (Standalone)
+			if (Standalone && ! silent_open)
 				Game1.playSound("bigSelect");
 
 			if (Game1.options.SnappyMenus)
@@ -358,6 +427,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				btnToggleFavorites.visible = !Editing;
 			if (btnToggleSeasoning != null)
 				btnToggleSeasoning.visible = !Editing;
+			if (btnToggleQuality != null)
+				btnToggleQuality.visible = !Editing;
 			if (trashCan != null)
 				trashCan.visible = !Editing;
 
@@ -472,6 +543,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		#region Recipes and Inventory
 
+		public virtual void UpdateListedRecipes(IList<string> recipes) {
+			ListedRecipes = recipes;
+
+			// Rebuild the state from the ground up.
+			DiscoverRecipes();
+			UpdateTabs();
+			LayoutRecipes();
+		}
+
 		protected virtual void DiscoverRecipes() {
 			Recipes.Clear();
 			RecipesByName.Clear();
@@ -481,6 +561,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			foreach (IRecipe recipe in Mod.Recipes.GetRecipes(cooking)) {
 				if (!Editing && !knownRecipes.ContainsKey(recipe.Name) && (!cooking || Mod.Config.HideUnknown))
+					continue;
+
+				if (!Editing && ListedRecipes != null && !ListedRecipes.Contains(recipe.Name))
 					continue;
 
 				Recipes.Add(recipe);
@@ -686,16 +769,27 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		protected virtual void DiscoverInventories() {
 			// TODO: Integration with connection blocks?
 
+			Func<object, IInventoryProvider> provider = chestsOnly
+				? (obj => obj is Chest ? Mod.GetInventoryProvider(obj) : null)
+				: Mod.GetInventoryProvider;
+
 			// We want to locate all our inventories.
 			if (NearbyChests == null)
 				CachedInventories = new List<LocatedInventory>();
 			else
 				CachedInventories = InventoryHelper.LocateInventories(
 					NearbyChests,
-					obj => obj is Chest ? Mod.GetInventoryProvider(obj) : null,
+					provider,
 					Location,
 					true
 				);
+
+			UnsafeInventories = InventoryHelper.GetUnsafeInventories(
+				CachedInventories,
+				provider,
+				Game1.player,
+				true
+			);
 
 #if DEBUG
 			Log($"Chests: {NearbyChests?.Count ?? 0} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
@@ -724,7 +818,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return items;
 		}
 
-		protected virtual List<Item> GetActualContainerContents(IList<WorkingInventory> locked) {
+		protected virtual List<Item> GetActualContainerContents(IList<IInventory> locked) {
 			List<Item> items = new();
 			foreach (WorkingInventory inv in locked) {
 				if (!inv.CanExtractItems())
@@ -736,6 +830,26 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			}
 
 			return items;
+		}
+
+		public bool CanPerformCraft(IRecipe recipe) {
+			if (recipe == null)
+				return false;
+
+			IList<Item> items = GetEstimatedContainerContents();
+
+			if (!recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality))
+				return false;
+
+			if (HeldItem == null)
+				return true;
+
+			Item obj = recipe.CreateItem();
+
+			return (HeldItem.Name.Equals(obj.Name)
+				&& HeldItem.getOne().canStackWith(obj.getOne())
+				&& HeldItem.Stack + recipe.QuantityPerCraft <= HeldItem.maximumStackSize()
+			);
 		}
 
 		public void PerformCraft(IRecipe recipe, int times, Action<int> DoneAction = null, bool playSound = true, bool moveResultToInventory = false) {
@@ -753,7 +867,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				for (int i = 0; i < times; i++) {
 					bool made = false;
 
-					if (!recipe.HasIngredients(Game1.player, items, locked))
+					if (!recipe.HasIngredients(Game1.player, items, locked, Quality))
 						break;
 
 					Item obj = recipe.CreateItem();
@@ -777,7 +891,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 								ingredients,
 								Game1.player,
 								seasoningInventories ? items : null,
-								seasoningInventories ? locked : null
+								seasoningInventories ? locked : null,
+								Quality
 							))
 								sobj.Quality = 2;
 							else
@@ -811,7 +926,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						if (cooking && Mod.intCSkill.IsLoaded && chestsOnly && recipe.CraftingRecipe != null)
 							recipe.CraftingRecipe.consumeIngredients(chests);
 						else
-							recipe.Consume(Game1.player, locked);
+							recipe.Consume(Game1.player, locked, Quality, Mod.Config.LowQualityFirst);
 					}
 
 					// Even if consume is false, Cooking Skill may have
@@ -822,11 +937,11 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						used_additional = true;
 
 						// Consume ingredients and rebuild our item list.
-						CraftingHelper.ConsumeIngredients(ingredients, Game1.player, seasoningInventories ? locked : null);
+						CraftingHelper.ConsumeIngredients(ingredients, Game1.player, seasoningInventories ? locked : null, Quality, Mod.Config.LowQualityFirst);
 						items = GetActualContainerContents(locked);
 
 						// Show a notice if the user used their last seasoning.
-						if (!CraftingHelper.HasIngredients(ingredients, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null))
+						if (!CraftingHelper.HasIngredients(ingredients, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null, Quality))
 							Game1.showGlobalMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Seasoning_UsedLast"));
 					}
 
@@ -1218,6 +1333,21 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			snapCursorToCurrentSnappedComponent();
 		}
 
+		public IRecipe GetRecipeUnderCursor(int x, int y) {
+			if (Editing || CurrentPage == null)
+				return null;
+
+			foreach(var cmp in CurrentPage) {
+				if (cmp.containsPoint(x, y) && ComponentRecipes.TryGetValue(cmp, out IRecipe recipe)) {
+					if (!cmp.hoverText.Equals("ghosted"))
+						return recipe;
+					break;
+				}
+			}
+
+			return null;
+		}
+
 		public override void receiveLeftClick(int x, int y, bool playSound = true) {
 			base.receiveLeftClick(x, y, playSound);
 
@@ -1281,6 +1411,13 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				return;
 			}
 
+			// Settings
+			if (btnSettings != null && btnSettings.containsPoint(x, y)) {
+				Game1.playSound("smallSelect");
+				Mod.OpenGMCM();
+				return;
+			}
+
 			// Toggle Favorites
 			if (!Editing && btnToggleFavorites != null && btnToggleFavorites.containsPoint(x, y)) {
 				Game1.playSound("smallSelect");
@@ -1309,6 +1446,30 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				Mod.SaveConfig();
 				btnToggleSeasoning.sourceRect = SourceSeasoning;
 				btnToggleSeasoning.scale = btnToggleSeasoning.baseScale;
+			}
+
+			// Toggle Quality
+			if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
+				Game1.playSound("smallSelect");
+				switch (Mod.Config.MaxQuality) {
+					case MaxQuality.None:
+						Mod.Config.MaxQuality = MaxQuality.Silver;
+						break;
+					case MaxQuality.Silver:
+						Mod.Config.MaxQuality = MaxQuality.Gold;
+						break;
+					case MaxQuality.Gold:
+						Mod.Config.MaxQuality = MaxQuality.Iridium;
+						break;
+					case MaxQuality.Iridium:
+					default:
+						Mod.Config.MaxQuality = MaxQuality.None;
+						break;
+				}
+
+				Mod.SaveConfig();
+				btnToggleQuality.sourceRect = SourceQuality;
+				btnToggleQuality.scale = btnToggleQuality.baseScale;
 			}
 
 			// Toggle Uniform
@@ -1341,6 +1502,50 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			if (!Editing)
 				HeldItem = inventory.rightClick(x, y, HeldItem, playSound);
 
+			// Toggle Seasoning
+			if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
+				Game1.playSound("smallSelect");
+				switch (Mod.Config.UseSeasoning) {
+					case SeasoningMode.Disabled:
+						Mod.Config.UseSeasoning = SeasoningMode.Enabled;
+						break;
+					case SeasoningMode.InventoryOnly:
+						Mod.Config.UseSeasoning = SeasoningMode.Disabled;
+						break;
+					case SeasoningMode.Enabled:
+					default:
+						Mod.Config.UseSeasoning = SeasoningMode.InventoryOnly;
+						break;
+				}
+				Mod.SaveConfig();
+				btnToggleSeasoning.sourceRect = SourceSeasoning;
+				btnToggleSeasoning.scale = btnToggleSeasoning.baseScale;
+			}
+
+			// Toggle Quality
+			if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
+				Game1.playSound("smallSelect");
+				switch (Mod.Config.MaxQuality) {
+					case MaxQuality.None:
+						Mod.Config.MaxQuality = MaxQuality.Iridium;
+						break;
+					case MaxQuality.Silver:
+						Mod.Config.MaxQuality = MaxQuality.None;
+						break;
+					case MaxQuality.Gold:
+						Mod.Config.MaxQuality = MaxQuality.Silver;
+						break;
+					case MaxQuality.Iridium:
+					default:
+						Mod.Config.MaxQuality = MaxQuality.Gold;
+						break;
+				}
+
+				Mod.SaveConfig();
+				btnToggleQuality.sourceRect = SourceQuality;
+				btnToggleQuality.scale = btnToggleQuality.baseScale;
+			}
+
 			// Right click to favorite components
 			// TODO: Right-click to open sub-menu?
 			if (CurrentPage != null)
@@ -1350,6 +1555,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 							UpdateCategorySprite(recipe);
 
 						} else if (!cmp.hoverText.Equals("ghosted")) {
+							if (Mod.intSSR.IsLoaded && Game1.oldKBState.IsKeyDown(Keys.LeftShift))
+								return;
+
 							bool is_favorite = Favorites.Contains(recipe);
 							Game1.playSound("coin");
 							Mod.Favorites.SetFavoriteRecipe(recipe.Name, cooking, !is_favorite, Game1.player);
@@ -1457,6 +1665,12 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					mode = 0;
 			}
 
+			if (btnSettings != null) {
+				btnSettings.tryHover(x, y);
+				if (btnSettings.containsPoint(x, y))
+					mode = 5;
+			}
+
 			if (!Editing && btnToggleFavorites != null) {
 				btnToggleFavorites.tryHover(x, y);
 				if (btnToggleFavorites.containsPoint(x, y))
@@ -1469,10 +1683,16 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					mode = 2;
 			}
 
+			if (!Editing && btnToggleQuality != null) {
+				btnToggleQuality.tryHover(x, y);
+				if (btnToggleQuality.containsPoint(x, y))
+					mode = 3;
+			}
+
 			if (btnToggleUniform != null) {
 				btnToggleUniform.tryHover(x, y);
 				if (btnToggleUniform.containsPoint(x, y))
-					mode = 3;
+					mode = 4;
 			}
 
 			// If the mode changed, regenerate the fancy tool-tip.
@@ -1480,7 +1700,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				hoverMode = mode;
 				// TODO: Tooltip stuff
 
-			} else
+			} else {
+				string smode;
+
 				switch (mode) {
 					case 0:
 						hoverText = I18n.Tooltip_EditMode();
@@ -1491,7 +1713,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						break;
 					case 2:
 						// Toggle Seasoning
-						string smode;
+
 						switch (Mod.Config.UseSeasoning) {
 							case SeasoningMode.Enabled:
 								smode = I18n.Seasoning_Enabled();
@@ -1508,12 +1730,37 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						hoverText = $"{I18n.Tooltip_Seasoning()}\n{smode}";
 						break;
 					case 3:
+						// Toggle Quality
+						switch (Mod.Config.MaxQuality) {
+							case MaxQuality.Silver:
+								hoverText = I18n.Tooltip_Quality_Silver();
+								break;
+							case MaxQuality.Gold:
+								hoverText = I18n.Tooltip_Quality_Gold();
+								break;
+							case MaxQuality.Iridium:
+								hoverText= I18n.Tooltip_Quality_Iridium();
+								break;
+							case MaxQuality.None:
+							default:
+								hoverText = I18n.Tooltip_Quality_None();
+								break;
+						}
+
+						break;
+
+					case 4:
 						// Toggle Uniform
 						hoverText = I18n.Tooltip_Uniform();
+						break;
+					case 5:
+						// Open Settings
+						hoverText = I18n.Tooltip_Settings();
 						break;
 					default:
 						break;
 				}
+			}
 
 			// Trash Can
 			if (!Editing && trashCan != null) {
@@ -1570,11 +1817,13 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Buttons
 			btnToggleEdit?.draw(b);
+			btnSettings?.draw(b);
 			btnToggleUniform?.draw(b);
 
 			if (!Editing) {
 				btnToggleFavorites?.draw(b);
 				btnToggleSeasoning?.draw(b);
+				btnToggleQuality?.draw(b);
 			}
 
 			// Trash
@@ -1642,7 +1891,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						// Unlearned Recipe
 						cmp.DrawBounded(b, Color.Black * 0.35f, 0.89f);
 
-					} else if (Editing ? !in_category : !recipe.HasIngredients(Game1.player, items, null)) {
+					} else if (Editing ? !in_category : !recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality)) {
 						// Recipe without Ingredients
 						cmp.DrawBounded(b, Color.DimGray * 0.4f, 0.89f);
 						int count = recipe.QuantityPerCraft * (shifted ? 5 : 1);
@@ -1693,6 +1942,18 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			b.End();
 			b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
 
+			// Base Menu
+			base.draw(b);
+
+			if (pageIndex < Pages.Count - 1)
+				btnPageDown?.draw(b);
+			else
+				btnPageDown?.draw(b, Color.Black * 0.35f, 0.89f);
+			if (pageIndex > 0)
+				btnPageUp?.draw(b);
+			else
+				btnPageUp?.draw(b, Color.Black * 0.35f, 0.89f);
+
 			// Hover Item
 			if (hoverItem != null)
 				IClickableMenu.drawToolTip(b, hoverText, hoverTitle, hoverItem, HeldItem != null);
@@ -1706,18 +1967,6 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			// Held Item
 			if (!Editing)
 				HeldItem?.drawInMenu(b, new Vector2(Game1.getOldMouseX() + 16, Game1.getOldMouseY() + 16), 1f);
-
-			// Base Menu
-			base.draw(b);
-
-			if (pageIndex < Pages.Count - 1)
-				btnPageDown?.draw(b);
-			else
-				btnPageDown?.draw(b, Color.Black * 0.35f, 0.89f);
-			if (pageIndex > 0)
-				btnPageUp?.draw(b);
-			else
-				btnPageUp?.draw(b, Color.Black * 0.35f, 0.89f);
 
 			// TODO: Tooltip
 
@@ -1750,10 +1999,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				int craftable = int.MaxValue;
 				List<ISimpleNode> ingredients = new();
 
+				bool supports_quality = true;
+
 				foreach (var entry in hoverRecipe.Ingredients) {
-					int amount = entry.GetAvailableQuantity(Game1.player, items, null);
+					int amount = entry.GetAvailableQuantity(Game1.player, items, UnsafeInventories, Quality);
 					int quant = entry.Quantity * (shifted ? 5 : 1);
 					craftable = Math.Min(craftable, amount / entry.Quantity);
+
+					if ( ! entry.SupportsQuality)
+						supports_quality = false;
 
 					Color color = amount < entry.Quantity ?
 						Color.Red :
@@ -1809,7 +2063,17 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						Game1.content.LoadString("Strings\\StringsFromCSFiles:CraftingRecipe.cs.567"),
 						color: Game1.textColor * 0.75f
 					)
-					.AddSpacedRange(4, ingredients)
+					.AddSpacedRange(4, ingredients);
+
+				if (!supports_quality && (Mod.Config.LowQualityFirst || Mod.Config.MaxQuality != MaxQuality.Disabled))
+					builder.Flow(
+						FlowHelper.Builder()
+							.Text(
+								I18n.Tooltip_QualityUnsupported(),
+								color: Game1.textColor * 0.75f
+							).Build());
+
+				builder
 					.Divider()
 					.Flow(FlowHelper.Builder().Text(hoverRecipe.Description).Build());
 
@@ -1917,8 +2181,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		// We might want to support this for filtering out recipes
 		// that we don't want to show. But we might not?
-		private void layoutRecipes(List<string> recipes) {
-			Log($"Filtered Recipes: {recipes.Count}");
+		public void layoutRecipes(List<string> recipes) {
+			UpdateListedRecipes(recipes);
 		}
 
 #pragma warning restore IDE0051 // Remove unused private members

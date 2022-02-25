@@ -8,11 +8,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.BetterCrafting.Models {
 	public class BaseIngredient : IIngredient {
 
 		private readonly int Index;
+
+		public bool SupportsQuality => true;
 
 		public BaseIngredient(int index, int quantity) {
 			Index = index;
@@ -76,26 +79,30 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public int Quantity { get; private set; }
 
-		public void Consume(Farmer who, IList<WorkingInventory> inventories) {
+		public void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool low_quality_first) {
 			KeyValuePair<int, int>[] item = new KeyValuePair<int, int>[] {
 				new(Index, Quantity)
 			};
 
-			InventoryHelper.ConsumeItems(item, who, inventories);
+			InventoryHelper.ConsumeItems(item, who, inventories, max_quality, low_quality_first);
 		}
 
-		public int GetAvailableQuantity(Farmer who, IList<Item> items, IList<WorkingInventory> inventories) {
+		public int GetAvailableQuantity(Farmer who, IList<Item> items, IList<IInventory> inventories, int max_quality) {
 			int amount = 0;
 
 			if (who != null)
-				foreach (var item in who.Items)
-					if (InventoryHelper.DoesItemMatchID(Index, item))
+				foreach (var item in who.Items) {
+					int quality = item is SObject obj ? obj.Quality : 0;
+					if (quality <= max_quality && InventoryHelper.DoesItemMatchID(Index, item))
 						amount += item.Stack;
+				}
 
 			if (items != null)
-				foreach (var item in items)
-					if (InventoryHelper.DoesItemMatchID(Index, item))
+				foreach (var item in items) {
+					int quality = item is SObject obj ? obj.Quality : 0;
+					if (quality <= max_quality && InventoryHelper.DoesItemMatchID(Index, item))
 						amount += item.Stack;
+				}
 
 			return amount;
 		}

@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
 namespace Leclair.Stardew.BetterCrafting.Models {
-	public class BaseRecipe : IRecipe {
+	public class BaseRecipe : IRecipe, IRecipeSprite {
 
 		public readonly ModEntry Mod;
 		public readonly CraftingRecipe Recipe;
