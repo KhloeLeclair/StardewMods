@@ -43,13 +43,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		// Workbench Tracking
 		public readonly GameLocation Location;
 		public readonly Vector2? Position;
+		public readonly Rectangle? Area;
 		public readonly SObject Object;
 		public NetMutex Mutex;
 
-		public IList<Chest> NearbyChests;
+		public IList<LocatedInventory> MaterialContainers;
 		protected IList<LocatedInventory> CachedInventories;
 		private IList<IInventory> UnsafeInventories;
-		private bool chestsOnly;
+		private bool ChestsOnly;
+		public bool DiscoverContainers { get; private set; }
 
 		// Editing Mode
 		public bool Editing { get; protected set; } = false;
@@ -168,7 +170,22 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		#region Lifecycle
 
-		public static BetterCraftingPage Open(ModEntry mod, GameLocation location, Vector2? position = null, int width = -1, int height = -1, bool cooking = false, bool standalone_menu = false, IList<Chest> material_containers = null, int x = -1, int y = -1, bool silent_open = false, IList<string> listed_recipes = null) {
+		public static BetterCraftingPage Open(
+			ModEntry mod,
+			GameLocation location = null,
+			Vector2? position = null,
+			Rectangle? area = null,
+			int width = -1,
+			int height = -1,
+			bool cooking = false,
+			bool standalone_menu = false,
+			IList<LocatedInventory> material_containers = null,
+			bool discover_containers = true,
+			int x = -1,
+			int y = -1,
+			bool silent_open = false,
+			IList<string> listed_recipes = null
+		) {
 			if (width <= 0)
 				width = 800 + borderWidth * 2;
 			if (height <= 0)
@@ -189,13 +206,56 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 				location,
 				position,
+				area,
 
 				cooking,
 				standalone_menu,
 				silent_open,
+				discover_containers,
 
 				material_containers,
 				listed_recipes
+			);
+		}
+
+		public static BetterCraftingPage Open(
+			ModEntry mod,
+			GameLocation location = null,
+			Vector2? position = null,
+			Rectangle? area = null,
+			int width = -1,
+			int height = -1,
+			bool cooking = false,
+			bool standalone_menu = false,
+			IList<object> material_containers = null,
+			bool discover_containers = true,
+			int x = -1,
+			int y = -1,
+			bool silent_open = false,
+			IList<string> listed_recipes = null
+		) {
+			var located = material_containers == null ? null : InventoryHelper.LocateInventories(
+				material_containers,
+				mod.GetInventoryProvider,
+				location,
+				true
+			);
+
+			return Open(
+				mod: mod,
+				location: location,
+				position: position,
+				area: area,
+				width: width,
+				height: height,
+				x: x,
+				y: y,
+				cooking: cooking,
+				standalone_menu: standalone_menu,
+				silent_open: silent_open,
+				discover_containers: discover_containers,
+				material_containers: located,
+				listed_recipes: listed_recipes
 			);
 		}
 
@@ -206,23 +266,27 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			GameLocation location,
 			Vector2? position,
+			Rectangle? area,
 
 			bool cooking = false,
 			bool standalone_menu = false,
 			bool silent_open = false,
+			bool discover_containers = true,
 
-			IList<Chest> material_containers = null,
+			IList<LocatedInventory> material_containers = null,
 			IList<string> listed_recipes = null
 		) : base(mod, x, y, width, height) {
 
 			Location = location ?? Game1.player.currentLocation;
 			Position = position;
+			Area = area;
 			this.cooking = cooking;
 			Standalone = standalone_menu;
-			NearbyChests = material_containers;
+			DiscoverContainers = discover_containers;
+			MaterialContainers = material_containers;
 			ListedRecipes = listed_recipes;
 
-			chestsOnly = this.cooking && Mod.intCSkill.IsLoaded;
+			ChestsOnly = this.cooking && Mod.intCSkill.IsLoaded;
 
 			lastRecipeHover = new(key => hoverRecipe?.CreateItem(), () => hoverRecipe?.Name);
 
@@ -543,6 +607,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		#region Recipes and Inventory
 
+		public virtual IList<string> GetListedRecipes() {
+			return ListedRecipes;
+		}
+
 		public virtual void UpdateListedRecipes(IList<string> recipes) {
 			ListedRecipes = recipes;
 
@@ -767,22 +835,118 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 		protected virtual void DiscoverInventories() {
-			// TODO: Integration with connection blocks?
 
-			Func<object, IInventoryProvider> provider = chestsOnly
+			Func<object, IInventoryProvider> provider = ChestsOnly
 				? (obj => obj is Chest ? Mod.GetInventoryProvider(obj) : null)
 				: Mod.GetInventoryProvider;
 
+			// So, we may or may not call DiscoverInventories. And we may or
+			// may not call it with limited settings.
+
+			// We never call DiscoverInventories if the API call told us not to.
+			// We may call it if the user has it disabled.
+
+			// If we have a location, and no material_containers, and were not
+			// told to disable discovery by the API, we will at a minimum scan
+			// the eight adjacent tiles similarly to how default workbenches
+			// work.
+
+			// We also have to use separate calls if we have an area rather
+			// than just a tile position.
+
 			// We want to locate all our inventories.
-			if (NearbyChests == null)
+			if (MaterialContainers == null || MaterialContainers.Count == 0) {
+				if (DiscoverContainers && Location != null) {
+					if (Area.HasValue) {
+						if (Mod.Config.UseDiscovery)
+							CachedInventories = InventoryHelper.DiscoverInventories(
+								Area.Value,
+								Location,
+								Game1.player,
+								provider,
+								Mod.IsValidConnector,
+								distanceLimit: Mod.Config.MaxDistance,
+								scanLimit: Mod.Config.MaxCheckedTiles,
+								targetLimit: Mod.Config.MaxInventories,
+								includeSource: true,
+								includeDiagonal: Mod.Config.UseDiagonalConnections
+							);
+						else
+							CachedInventories = InventoryHelper.DiscoverInventories(
+								Area.Value,
+								Location,
+								Game1.player,
+								provider,
+								null,
+								distanceLimit: 1,
+								scanLimit: 25,
+								targetLimit: 9,
+								includeSource: true,
+								includeDiagonal: true
+							);
+
+					} else if (Position.HasValue) {
+						var pos = new AbsolutePosition(Location, Position.Value);
+						if (Mod.Config.UseDiscovery)
+							CachedInventories = InventoryHelper.DiscoverInventories(
+								pos,
+								Game1.player,
+								provider,
+								Mod.IsValidConnector,
+								distanceLimit: Mod.Config.MaxDistance,
+								scanLimit: Mod.Config.MaxCheckedTiles,
+								targetLimit: Mod.Config.MaxInventories,
+								includeSource: true,
+								includeDiagonal: Mod.Config.UseDiagonalConnections
+							);
+						else
+							CachedInventories = InventoryHelper.DiscoverInventories(
+								pos,
+								Game1.player,
+								provider,
+								null,
+								distanceLimit: 1,
+								scanLimit: 25,
+								targetLimit: 9,
+								includeSource: true,
+								includeDiagonal: true
+							);
+					}
+				}
+			} else if (DiscoverContainers && Mod.Config.UseDiscovery) {
+				if (Location != null && Area.HasValue)
+					CachedInventories = InventoryHelper.DiscoverInventories(
+						Area.Value,
+						Location,
+						MaterialContainers,
+						Game1.player,
+						provider,
+						Mod.IsValidConnector,
+						distanceLimit: Mod.Config.MaxDistance,
+						scanLimit: Mod.Config.MaxCheckedTiles,
+						targetLimit: Mod.Config.MaxInventories,
+						includeSource: true,
+						includeDiagonal: Mod.Config.UseDiagonalConnections
+					);
+				else
+					CachedInventories = InventoryHelper.DiscoverInventories(
+						MaterialContainers,
+						Game1.player,
+						provider,
+						Mod.IsValidConnector,
+						distanceLimit: Mod.Config.MaxDistance,
+						scanLimit: Mod.Config.MaxCheckedTiles,
+						targetLimit: Mod.Config.MaxInventories,
+						includeSource: true,
+						includeDiagonal: Mod.Config.UseDiagonalConnections,
+						extra: (Position.HasValue && Location != null)
+							? new AbsolutePosition[] { new(Location, Position.Value) } : null
+					);
+			} else
+				CachedInventories = MaterialContainers;
+
+			if (CachedInventories == null)
 				CachedInventories = new List<LocatedInventory>();
-			else
-				CachedInventories = InventoryHelper.LocateInventories(
-					NearbyChests,
-					provider,
-					Location,
-					true
-				);
 
 			UnsafeInventories = InventoryHelper.GetUnsafeInventories(
 				CachedInventories,
@@ -792,7 +956,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			);
 
 #if DEBUG
-			Log($"Chests: {NearbyChests?.Count ?? 0} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
+			Log($"Chests: {MaterialContainers?.Count ?? 0} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
 #endif
 		}
 
@@ -802,6 +966,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			List<Item> items = new();
 			foreach (LocatedInventory loc in CachedInventories) {
+				if (ChestsOnly && loc.Source is not Chest)
+					continue;
+
 				var provider = Mod.GetInventoryProvider(loc.Source);
 				if (provider == null || !provider.CanExtractItems(loc.Source, loc.Location, Game1.player))
 					continue;
@@ -859,7 +1026,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				bool used_additional = false;
 				List<Item> items = GetActualContainerContents(locked);
 
-				List<Chest> chests = chestsOnly ? locked
+				List<Chest> chests = ChestsOnly ? locked
 					.Where(x => x.Object is Chest)
 					.Select(x => x.Object as Chest)
 					.ToList() : null;
@@ -923,7 +1090,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						// we have a recipe and we're only operating on chests,
 						// then go ahead and use the vanilla CookingRecipe's
 						// consumeIngredients method.
-						if (cooking && Mod.intCSkill.IsLoaded && chestsOnly && recipe.CraftingRecipe != null)
+						if (cooking && Mod.intCSkill.IsLoaded && ChestsOnly && recipe.CraftingRecipe != null)
 							recipe.CraftingRecipe.consumeIngredients(chests);
 						else
 							recipe.Consume(Game1.player, locked, Quality, Mod.Config.LowQualityFirst);
@@ -2175,6 +2342,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 #pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable 0169    // ... more unused
 
 		// This only exists to stop CCS from exception-ing.
 		private List<Dictionary<ClickableTextureComponent, CraftingRecipe>> pagesOfCraftingRecipes;
@@ -2186,6 +2354,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 #pragma warning restore IDE0051 // Remove unused private members
+#pragma warning restore 0169    // ... more unused
 #pragma warning restore IDE0044 // Add readonly modifier
 
 		#endregion

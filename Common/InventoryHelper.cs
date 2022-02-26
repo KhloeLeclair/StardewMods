@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Microsoft.Xna.Framework;
+
 using Leclair.Stardew.Common.Inventory;
 
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Network;
+using StardewValley.TerrainFeatures;
 
 using SObject = StardewValley.Object;
 
@@ -33,6 +37,364 @@ namespace Leclair.Stardew.Common {
 
 	public static class InventoryHelper {
 
+		#region Discovery
+
+		public static List<LocatedInventory> DiscoverInventories(
+			Vector2 source,
+			GameLocation location,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true
+		) {
+			return DiscoverInventories(
+				new AbsolutePosition(location, source),
+				who,
+				getProvider,
+				checkConnector,
+				distanceLimit,
+				scanLimit,
+				targetLimit,
+				includeSource,
+				includeDiagonal
+			);
+		}
+
+		public static List<LocatedInventory> DiscoverInventories(
+			Rectangle source,
+			GameLocation location,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true
+		) {
+			List<AbsolutePosition> positions = new();
+
+			for (int x = 0; x < source.Width; x++) {
+				for (int y = 0; y < source.Height; y++) {
+					positions.Add(new(
+						location,
+						new(
+							source.X + x,
+							source.Y + y
+						)
+					));
+				}
+			}
+
+			return DiscoverInventories(
+				positions,
+				who,
+				getProvider,
+				checkConnector,
+				distanceLimit,
+				scanLimit,
+				targetLimit,
+				includeSource,
+				includeDiagonal
+			);
+		}
+
+		public static List<LocatedInventory> DiscoverInventories(
+			AbsolutePosition source,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true
+		) {
+			List<AbsolutePosition> potentials = new() {
+				source
+			};
+			Dictionary<AbsolutePosition, Vector2> origins = new();
+			origins[source] = source.Position;
+
+			AddPotentials(source.Position, source.Position, source.Location, potentials, origins, distanceLimit, includeDiagonal);
+
+			return WalkPotentials(
+				potentials,
+				origins,
+				includeSource ? 0 : 1,
+				who,
+				getProvider,
+				checkConnector,
+				distanceLimit,
+				scanLimit,
+				targetLimit,
+				includeDiagonal
+			);
+		}
+
+		public static List<LocatedInventory> DiscoverInventories(
+			Rectangle source,
+			GameLocation location,
+			IEnumerable<LocatedInventory> sources,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true
+		) {
+			List<AbsolutePosition> positions = new();
+
+			for (int x = 0; x < source.Width; x++) {
+				for (int y = 0; y < source.Height; y++) {
+					positions.Add(new(
+						location,
+						new(
+							source.X + x,
+							source.Y + y
+						)
+					));
+				}
+			}
+
+			return DiscoverInventories(
+				sources: sources,
+				who: who,
+				getProvider: getProvider,
+				checkConnector: checkConnector,
+				distanceLimit: distanceLimit,
+				scanLimit: scanLimit,
+				targetLimit: targetLimit,
+				includeDiagonal: includeDiagonal,
+				includeSource: includeSource,
+				extra: positions
+			);
+		}
+
+		public static List<LocatedInventory> DiscoverInventories(
+			IEnumerable<LocatedInventory> sources,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true,
+			IEnumerable<AbsolutePosition> extra = null
+		) {
+			List<AbsolutePosition> potentials = new();
+			Dictionary<AbsolutePosition, Vector2> origins = new();
+
+			if (extra != null) {
+				foreach (var entry in extra) {
+					potentials.Add(entry);
+					origins[entry] = entry.Position;
+				}
+			}
+
+			foreach (LocatedInventory source in sources) {
+				var provider = getProvider(source.Source);
+				if (provider != null && provider.IsValid(source.Source, source.Location, who)) {
+					var rect = provider.GetMultiTileRegion(source.Source, source.Location, who);
+					if (rect.HasValue) {
+						for (int x = 0; x < rect.Value.Width; x++) {
+							for (int y = 0; y < rect.Value.Height; y++) {
+								AbsolutePosition abs = new(source.Location, new(
+									rect.Value.X + x,
+									rect.Value.Y + y
+								));
+
+								potentials.Add(abs);
+								origins[abs] = abs.Position;
+							}
+						}
+
+					} else {
+						var pos = provider.GetTilePosition(source.Source, source.Location, who);
+						if (pos.HasValue) {
+							AbsolutePosition abs = new(source.Location, pos.Value);
+							potentials.Add(abs);
+							origins[abs] = abs.Position;
+						}
+					}
+				}
+			}
+
+			int count = potentials.Count;
+
+			for (int i = 0; i < count; i++) {
+				var potential = potentials[i];
+				AddPotentials(
+					potential.Position,
+					potential.Position,
+					potential.Location,
+					potentials,
+					origins,
+					distanceLimit,
+					includeDiagonal
+				);
+			}
+
+			return WalkPotentials(
+				potentials,
+				origins,
+				includeSource ? 0 : count,
+				who,
+				getProvider,
+				checkConnector,
+				distanceLimit,
+				scanLimit,
+				targetLimit,
+				includeDiagonal
+			);
+		}
+
+		public static List<LocatedInventory> DiscoverInventories(
+			IEnumerable<AbsolutePosition> sources,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit = 5,
+			int scanLimit = 100,
+			int targetLimit = 20,
+			bool includeSource = true,
+			bool includeDiagonal = true
+		) {
+			List<AbsolutePosition> potentials = new(sources);
+			Dictionary<AbsolutePosition, Vector2> origins = new();
+
+			foreach (AbsolutePosition source in potentials)
+				origins[source] = source.Position;
+
+			int count = potentials.Count;
+
+			for (int i = 0; i < count; i++) {
+				var potential = potentials[i];
+				AddPotentials(
+					potential.Position,
+					potential.Position,
+					potential.Location,
+					potentials,
+					origins,
+					distanceLimit,
+					includeDiagonal
+				);
+			}
+
+			return WalkPotentials(
+				potentials,
+				origins,
+				includeSource ? 0 : count,
+				who,
+				getProvider,
+				checkConnector,
+				distanceLimit,
+				scanLimit,
+				targetLimit,
+				includeDiagonal
+			);
+		}
+
+		private static void AddPotentials(
+			Vector2 source,
+			Vector2 origin,
+			GameLocation location,
+			IList<AbsolutePosition> potentials,
+			IDictionary<AbsolutePosition, Vector2> origins,
+			int distanceLimit,
+			bool includeDiagonal
+		) {
+			for(int x = -1; x < 2; x++) {
+				for(int y = -1; y < 2; y++) {
+					if (x == 0 && y == 0)
+						continue;
+
+					if (!includeDiagonal && x != 0 && y != 0)
+						continue;
+
+					int kx = (int) source.X + x;
+					int ky = (int) source.Y + y;
+
+					if (Math.Abs(origin.X - kx) > distanceLimit || Math.Abs(origin.Y - ky) > distanceLimit)
+						continue;
+
+					AbsolutePosition abs = new(location, new(kx, ky));
+					if (!potentials.Contains(abs)) {
+						potentials.Add(abs);
+						origins[abs] = origin;
+					}
+				}
+			}
+		}
+
+		private static List<LocatedInventory> WalkPotentials(
+			List<AbsolutePosition> potentials,
+			Dictionary<AbsolutePosition, Vector2> origins,
+			int start,
+			Farmer who,
+			Func<object, IInventoryProvider> getProvider,
+			Func<object, bool> checkConnector,
+			int distanceLimit,
+			int scanLimit,
+			int targetLimit,
+			bool includeDiagonal
+		) {
+			List<LocatedInventory> result = new();
+
+			int i = start;
+			int limit = 100;
+
+			while(i < potentials.Count && i < limit) {
+				AbsolutePosition abs = potentials[i++];
+
+				SObject obj;
+				TerrainFeature feature;
+				if (abs.Location != null) {
+					TileHelper.GetObjectAtPosition(abs.Location, abs.Position, out obj);
+					abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
+				} else {
+					feature = null;
+					obj = null;
+				}
+
+				bool want_neighbors = false;
+				IInventoryProvider provider;
+
+				if (obj != null) {
+					provider = getProvider(obj);
+					if (provider != null && provider.IsValid(obj, abs.Location, who)) {
+						result.Add(new(obj, abs.Location));
+						want_neighbors = true;
+					} else if (checkConnector != null && checkConnector(obj))
+						want_neighbors = true;
+				}
+
+				if (feature != null) {
+					provider = getProvider(feature);
+					if (provider != null && provider.IsValid(feature, abs.Location, who)) {
+						result.Add(new(feature, abs.Location));
+						want_neighbors = true;
+					} else if (!want_neighbors && checkConnector != null && checkConnector(feature))
+						want_neighbors = true;
+				}
+
+				if (result.Count >= targetLimit)
+					break;
+
+				if (want_neighbors)
+					AddPotentials(abs.Position, origins[abs], abs.Location, potentials, origins, distanceLimit, includeDiagonal);
+			}
+
+			return result;
+		}
+
 		public static List<LocatedInventory> LocateInventories(
 			IEnumerable<object> inventories,
 			Func<object, IInventoryProvider> getProvider,
@@ -48,11 +410,11 @@ namespace Leclair.Stardew.Common {
 
 				GameLocation loc = null;
 
-				if (first != null && first.Objects.Values.Contains(obj)) {
+				if (first != null && first.Objects.Values.Contains(obj) || (first is FarmHouse house && house.fridge.Value == obj)) {
 					loc = first;
 				} else {
 					foreach(GameLocation location in Game1.locations) {
-						if (location != first && location.Objects.Values.Contains(obj)) {
+						if (location != first && location.Objects.Values.Contains(obj) || (location is FarmHouse h && h.fridge.Value == obj)) {
 							loc = location;
 							break;
 						}
@@ -65,6 +427,10 @@ namespace Leclair.Stardew.Common {
 
 			return result;
 		}
+
+		#endregion
+
+		#region Unsafe Access
 
 		public static List<IInventory> GetUnsafeInventories(
 			IEnumerable<object> inventories,
@@ -115,6 +481,8 @@ namespace Leclair.Stardew.Common {
 
 			return result;
 		}
+
+		#endregion
 
 		#region Mutex Handling
 

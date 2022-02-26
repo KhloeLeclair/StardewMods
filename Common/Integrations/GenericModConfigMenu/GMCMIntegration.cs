@@ -16,15 +16,16 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 
 	public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi, M> where T : new() where M : Mod {
 
-		private bool hasRegistered = false;
-
 		private readonly Func<T> GetConfig;
 		private readonly Action ResetConfig;
 		private readonly Action SaveConfig;
 
+		private bool IsRegistered;
+
 		private IManifest Consumer { get => Self.ModManifest; }
 
 		public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.8.0") {
+			IsRegistered = false;
 
 			GetConfig = getConfig;
 			ResetConfig = resetConfig;
@@ -37,10 +38,11 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 		public GMCMIntegration<T, M> Register(bool? allowInGameChanges = null) {
 			AssertLoaded();
 
-			if (!hasRegistered) {
-				hasRegistered = true;
+			if (!IsRegistered)
 				API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue ? ! allowInGameChanges.Value : false);
-			}
+
+			// Am I a joke to you?
+			IsRegistered = true;
 
 			return this;
 		}
@@ -48,10 +50,8 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu {
 		public GMCMIntegration<T, M> Unregister() {
 			AssertLoaded();
 
-			if (hasRegistered) {
-				hasRegistered = false;
-				API.Unregister(Consumer);
-			}
+			API.Unregister(Consumer);
+			IsRegistered = false;
 
 			return this;
 		}

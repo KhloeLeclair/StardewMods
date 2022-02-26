@@ -1,8 +1,14 @@
 using System;
 using System.Reflection;
 
+using Microsoft.Xna.Framework;
+
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.Objects;
+
+using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.Common {
 	public static class CraftingPageHelper {
@@ -51,6 +57,5 @@ namespace Leclair.Stardew.Common {
 			heldItemField.SetValue(menu, item);
 			return true;
 		}
-
 	}
 }

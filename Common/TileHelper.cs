@@ -42,6 +42,10 @@ namespace Leclair.Stardew.Common {
 			if (location is FarmHouse farmHouse && position.X == farmHouse.fridgePosition.X && position.Y == farmHouse.fridgePosition.Y) {
 				obj = farmHouse.fridge.Value;
 				return obj != null;
+
+			} else if (location is IslandFarmHouse islandHouse && position.X == islandHouse.fridgePosition.X && position.Y == islandHouse.fridgePosition.Y) {
+				obj = islandHouse.fridge.Value;
+				return obj != null;
 			}
 
 			return location.objects.TryGetValue(position, out obj);
@@ -51,11 +55,37 @@ namespace Leclair.Stardew.Common {
 			if (location is FarmHouse farmHouse && farmHouse.fridge.Value == obj)
 				return new Vector2(farmHouse.fridgePosition.X, farmHouse.fridgePosition.Y);
 
+			if (location is IslandFarmHouse islandHouse && islandHouse.fridge.Value == obj)
+				return new Vector2(islandHouse.fridgePosition.X, islandHouse.fridgePosition.Y);
+
 			return obj.TileLocation;
 		}
 
 
 		// Crafting Page Stuff
+
+		public static Rectangle? GetBenchRegion(this CraftingPage menu, Farmer who = null) {
+			who ??= Game1.player;
+
+			// When using the kitchen in the farmhouse, it locks the fridge's mutex. Check
+			// to see if it's locked. If it is, then return the position one tile to the
+			// left of the fridge.
+			if (menu.IsCooking() && who.currentLocation is FarmHouse farmHouse && farmHouse.fridge.Value.GetMutex().IsLockHeld())
+				return new Rectangle(
+					farmHouse.fridgePosition.X - 4,
+					farmHouse.fridgePosition.Y,
+					4, 1
+				);
+
+			if (menu.IsCooking() && who.currentLocation is IslandFarmHouse islandHouse && islandHouse.fridge.Value.GetMutex().IsLockHeld())
+				return new Rectangle(
+					islandHouse.fridgePosition.X - 2,
+					islandHouse.fridgePosition.Y,
+					2, 1
+				);
+
+			return null;
+		}
 
 		public static Vector2? GetBenchPosition(this CraftingPage menu, Farmer who = null) {
 			who ??= Game1.player;
@@ -65,6 +95,9 @@ namespace Leclair.Stardew.Common {
 			// left of the fridge.
 			if (menu.IsCooking() && who.currentLocation is FarmHouse farmHouse && farmHouse.fridge.Value.GetMutex().IsLockHeld())
 				return new Vector2(farmHouse.fridgePosition.X - 1, farmHouse.fridgePosition.Y);
+
+			if (menu.IsCooking() && who.currentLocation is IslandFarmHouse islandHouse && islandHouse.fridge.Value.GetMutex().IsLockHeld())
+				return new Vector2(islandHouse.fridgePosition.X - 1, islandHouse.fridgePosition.Y);
 
 			// Next, scan a 3x3 region centered on the player, looking for a Workbench object
 			// that the player holds the mutex for.
