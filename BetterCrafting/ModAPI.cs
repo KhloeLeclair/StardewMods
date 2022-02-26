@@ -150,6 +150,7 @@ namespace Leclair.Stardew.BetterCrafting {
 			bool silent_open = false,
 			IList<string> listed_recipes = null
 		) {
+
 			return OpenCraftingMenu(
 				cooking: cooking,
 				containers: containers?.ToList<object>(),
@@ -171,6 +172,11 @@ namespace Leclair.Stardew.BetterCrafting {
 			bool discover_containers = true,
 			IList<string> listed_recipes = null
 		) {
+			if (listed_recipes == null)
+				listed_recipes = cooking ?
+					Mod.intCCStation.GetCookingRecipes() :
+					Mod.intCCStation.GetCraftingRecipes();
+
 			var menu = Game1.activeClickableMenu;
 			if (menu != null) {
 				if (!menu.readyToClose())
@@ -206,6 +212,11 @@ namespace Leclair.Stardew.BetterCrafting {
 			IList<Tuple<object, GameLocation>> containers = null,
 			IList<string> listed_recipes = null
 		) {
+			if (listed_recipes == null)
+				listed_recipes = cooking ?
+					Mod.intCCStation.GetCookingRecipes() :
+					Mod.intCCStation.GetCraftingRecipes();
+
 			var menu = Game1.activeClickableMenu;
 			if (menu != null) {
 				if (!menu.readyToClose())

@@ -12,7 +12,7 @@ namespace Leclair.Stardew.BCSpaceCore {
 		[Subscriber]
 		private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
 			var api = Helper.ModRegistry.GetApi<IBetterCrafting>("leclair.bettercrafting");
-			api.AddRecipeProvider(new SpaceCoreProvider());
+			api.AddRecipeProvider(new SpaceCoreProvider(this));
 		}
 
 	}

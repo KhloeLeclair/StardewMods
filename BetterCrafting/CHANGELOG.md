@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.11.0
+Released February 26th, 2022.
+
+### General
+
+* Added "Extended Workbench" feature. When enabled, Better Crafting will detect
+  chests connected to the Workbench or kitchen and make their inventories
+  available for crafting.
+* Add support for re-opening the pause menu to its crafting page after closing
+  Better Crafting's settings in GMCM.
+* Fixed the fridge in the island farmhouse not being detected properly.
+* Fixed overly-strict rules for validating chests without a set game location.
+* Fixed bug where ingredients may not be consumed in some cases.
+
+### Mod Compatibility
+
+* Improve support for CustomCraftingStations using a Harmony patch to get
+  direct access to the CCS restricted recipe list.
+* Improve support for CustomCraftingStations by replacing its crafting menu
+  with a Better Crafting menu when possible.
+
+### API Changes
+
+* Added more signatures for `OpenCraftingMenu()` adding support for more paramters.
+* Added `RegisterInventoryProvider()` method that uses `Func` and `Action` to
+  allow consumers to add custom inventory providers without consuming
+  Better Crafting's interfaces.
+* Added a separate IInventoryProvider registration method.
+* Added a method to unregister inventory providers.
+
+
 ## 0.10.0
 Released February 24th, 2022.
 

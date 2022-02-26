@@ -236,6 +236,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		) {
 			var located = material_containers == null ? null : InventoryHelper.LocateInventories(
 				material_containers,
+				mod.GetLocations(),
 				mod.GetInventoryProvider,
 				location,
 				true

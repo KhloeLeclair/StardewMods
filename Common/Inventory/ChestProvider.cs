@@ -60,12 +60,14 @@ namespace Leclair.Stardew.Common.Inventory {
 		}
 
 		public override bool IsValid(Chest obj, GameLocation location, Farmer who) {
-			Vector2? pos = GetTilePosition(obj, location, who);
-			if (!pos.HasValue)
-				return false;
+			if (location != null) {
+				Vector2? pos = GetTilePosition(obj, location, who);
+				if (!pos.HasValue)
+					return false;
 
-			if (location != null && (!TileHelper.GetObjectAtPosition(location, pos.Value, out var sobj) || sobj == null))
-				return false;
+				if (!TileHelper.GetObjectAtPosition(location, pos.Value, out var sobj) || sobj != obj)
+					return false;
+			}
 
 			return AllowedTypes.Contains(obj.SpecialChestType);
 		}

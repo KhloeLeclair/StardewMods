@@ -395,8 +395,17 @@ namespace Leclair.Stardew.Common {
 			return result;
 		}
 
+		public static bool DoesLocationContain(GameLocation location, object obj) {
+			if (location is FarmHouse farmHouse && farmHouse.fridge.Value == obj)
+				return true;
+			if (location is IslandFarmHouse islandHouse && islandHouse.fridge.Value == obj)
+				return true;
+			return location != null && location.Objects.Values.Contains(obj);
+		}
+
 		public static List<LocatedInventory> LocateInventories(
 			IEnumerable<object> inventories,
+			IEnumerable<GameLocation> locations,
 			Func<object, IInventoryProvider> getProvider,
 			GameLocation first,
 			bool nullLocationValid = false
@@ -410,11 +419,11 @@ namespace Leclair.Stardew.Common {
 
 				GameLocation loc = null;
 
-				if (first != null && first.Objects.Values.Contains(obj) || (first is FarmHouse house && house.fridge.Value == obj)) {
+				if (first != null && DoesLocationContain(first, obj))
 					loc = first;
-				} else {
-					foreach(GameLocation location in Game1.locations) {
-						if (location != first && location.Objects.Values.Contains(obj) || (location is FarmHouse h && h.fridge.Value == obj)) {
+				else {
+					foreach(GameLocation location in locations) {
+						if (location != first && DoesLocationContain(location, obj)) {
 							loc = location;
 							break;
 						}
@@ -641,6 +650,9 @@ namespace Leclair.Stardew.Common {
 
 			for (int idx = items.Count - 1; idx >= 0; --idx) {
 				Item item = items[idx];
+				if (item == null)
+					continue;
+
 				int quality = item is SObject obj ? obj.Quality : 0;
 				if (quality > max_quality) {
 					passed_quality = true;
@@ -650,12 +662,47 @@ namespace Leclair.Stardew.Common {
 				if (DoesItemMatchID(id, item)) {
 					int count = Math.Min(amount, item.Stack);
 					amount -= count;
-					item.Stack -= count;
 
-					if (item.Stack <= 0) {
+					if (item.Stack <= count) {
 						items[idx] = null;
 						nullified = true;
-					}
+
+					} else
+						item.Stack -= count;
+
+					if (amount <= 0)
+						return amount;
+				}
+			}
+
+			return amount;
+		}
+
+		public static int ConsumeItem(Func<Item, bool> matcher, int amount, IList<Item> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
+			nullified = false;
+			passed_quality = false;
+
+			for (int idx = items.Count - 1; idx >= 0; --idx) {
+				Item item = items[idx];
+				if (item == null)
+					continue;
+
+				int quality = item is SObject obj ? obj.Quality : 0;
+				if (quality > max_quality) {
+					passed_quality = true;
+					continue;
+				}
+
+				if (matcher(item)) {
+					int count = Math.Min(amount, item.Stack);
+					amount -= count;
+
+					if (item.Stack <= count) {
+						items[idx] = null;
+						nullified = true;
+
+					} else
+						item.Stack -= count;
 
 					if (amount <= 0)
 						return amount;
@@ -709,6 +756,53 @@ namespace Leclair.Stardew.Common {
 						}
 
 					if (remaining <= 0 || ! passed)
+						break;
+				}
+			}
+
+			if (working != null)
+				for (int idx = 0; idx < modified.Length; idx++) {
+					if (modified[idx])
+						working[idx].CleanInventory();
+				}
+		}
+
+		public static void ConsumeItems(IEnumerable<Tuple<Func<Item, bool>, int>> items, Farmer who, IEnumerable<IInventory> inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+			IList<IInventory> working = (inventories as IList<IInventory>) ?? inventories?.ToList();
+			bool[] modified = working == null ? null : new bool[working.Count];
+			IList<Item>[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray();
+
+			foreach (Tuple<Func<Item, bool>, int> pair in items) {
+				Func<Item, bool> matcher = pair.Item1;
+				int remaining = pair.Item2;
+
+				int mq = max_quality;
+				if (low_quality_first)
+					mq = 0;
+
+				for (int q = mq; q <= max_quality; q++) {
+					remaining = ConsumeItem(matcher, remaining, who.Items, out bool m, out bool passed, q);
+					if (remaining <= 0)
+						break;
+
+					if (working != null)
+						for (int iidx = 0; iidx < working.Count; iidx++) {
+							IList<Item> inv = invs[iidx];
+							if (inv == null || inv.Count == 0)
+								continue;
+
+							remaining = ConsumeItem(matcher, remaining, inv, out bool modded, out bool p, q);
+							if (modded)
+								modified[iidx] = true;
+
+							if (p)
+								passed = true;
+
+							if (remaining <= 0)
+								break;
+						}
+
+					if (remaining <= 0 || !passed)
 						break;
 				}
 			}

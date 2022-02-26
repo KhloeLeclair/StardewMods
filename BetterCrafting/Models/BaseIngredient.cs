@@ -14,12 +14,17 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 	public class BaseIngredient : IIngredient {
 
 		private readonly int Index;
+		private readonly KeyValuePair<int, int>[] IngList;
 
 		public bool SupportsQuality => true;
 
 		public BaseIngredient(int index, int quantity) {
 			Index = index;
 			Quantity = quantity;
+
+			IngList = new KeyValuePair<int, int>[] {
+				new(Index, Quantity)
+			};
 		}
 
 		public string DisplayName {
@@ -80,11 +85,7 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 		public int Quantity { get; private set; }
 
 		public void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool low_quality_first) {
-			KeyValuePair<int, int>[] item = new KeyValuePair<int, int>[] {
-				new(Index, Quantity)
-			};
-
-			InventoryHelper.ConsumeItems(item, who, inventories, max_quality, low_quality_first);
+			InventoryHelper.ConsumeItems(IngList, who, inventories, max_quality, low_quality_first);
 		}
 
 		public int GetAvailableQuantity(Farmer who, IList<Item> items, IList<IInventory> inventories, int max_quality) {

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 using Leclair.Stardew.Common;
@@ -10,17 +11,35 @@ using SpaceCore;
 
 using StardewValley;
 
+using Leclair.Stardew.BetterCrafting.Models;
+
 
 namespace Leclair.Stardew.BCSpaceCore {
 	class SpaceCoreRecipe : IRecipe {
 
 		public readonly CustomCraftingRecipe Recipe;
 
-		public SpaceCoreRecipe(string name, CustomCraftingRecipe recipe) {
+		public SpaceCoreRecipe(string name, CustomCraftingRecipe recipe, ModEntry mod) {
 			Recipe = recipe;
 			Name = name;
 
-			Ingredients = recipe.Ingredients.Select(val => new SpaceCoreIngredient(val)).ToArray();
+			Ingredients = recipe.Ingredients.Select<CustomCraftingRecipe.IngredientMatcher, IIngredient>(val => {
+				string cls = val.GetType().FullName;
+
+				if (cls.Equals("SpaceCore.CustomCraftingRecipe+ObjectIngredientMatcher")) {
+					int? index = mod.Helper.Reflection.GetField<int>(val, "objectIndex", false)?.GetValue();
+					if (index.HasValue)
+						return new BaseIngredient(index.Value, val.Quantity);
+
+				} else if (cls.Equals("DynamicGameAssets.DGACustomCraftingRecipe+DGAIngredientMatcher")) {
+					var matcher = mod.Helper.Reflection.GetMethod(val, "ItemMatches", false);
+					if (matcher != null)
+						return new DGAIngredient(matcher, val);
+				}
+
+				return new SpaceCoreIngredient(val);
+
+			}).ToArray();
 
 			Item example = CreateItem();
 			SortValue = example?.ParentSheetIndex ?? 0;
@@ -49,8 +68,6 @@ namespace Leclair.Stardew.BCSpaceCore {
 
 
 		// Display
-
-		//public SpriteInfo Sprite => new(Texture, SourceRectangle);
 
 		public Texture2D Texture => Recipe.IconTexture;
 		public Rectangle SourceRectangle => Recipe.IconSubrect ?? Texture.Bounds;

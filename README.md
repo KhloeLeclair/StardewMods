@@ -12,20 +12,22 @@ This repository contains all of my Stardew Valley mods, released or not. Of note
  * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/ModAPI.cs)
 
 
-## Better Crafting ([NexusMods](https://www.nexusmods.com/stardewvalley/mods/11115))
+## Better Crafting
 
 Better Crafting adds a new crafting UI with support for customizable categories,
 favorites, and a uniform grid size. It also prevents use of a workbench from
 keeping chests locked when playing in multiplayer.
 
+* [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/11115/)
 * [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/BetterCrafting)
 * [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/CHANGELOG.md)
 * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/ModAPI.cs)
 
 
-## See Me Rollin' ([NexusMods](https://www.nexusmods.com/stardewvalley/mods/10976))
+## See Me Rollin'
 
 See Me Rollin' gives your character roller shoes, letting you move faster when
 desired by holding a key. 
 
+* [NexusMods](https://www.nexusmods.com/stardewvalley/mods/10976)
 * [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/SeeMeRollin)

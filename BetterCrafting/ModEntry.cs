@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using HarmonyLib;
+
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
@@ -27,6 +29,8 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public static ModEntry instance;
 		public static IBetterCrafting API;
+
+		internal Harmony Harmony;
 
 		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
 		private readonly PerScreen<Menus.BetterCraftingPage> OldCraftingPage = new();
@@ -55,6 +59,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		internal Integrations.StackSplitRedux.SSRIntegration intSSR;
 		internal Integrations.CookingSkill.CSIntegration intCSkill;
 		internal Integrations.SpaceCore.SCIntegration intSCore;
+		internal Integrations.CustomCraftingStation.CCSIntegration intCCStation;
 
 		public Texture2D ButtonTexture;
 
@@ -63,6 +68,9 @@ namespace Leclair.Stardew.BetterCrafting {
 
 			instance = this;
 			API = new ModAPI(this);
+
+			// Harmony
+			Harmony = new Harmony(ModManifest.UniqueID);
 
 			// Read Config
 			Config = Helper.ReadConfig<ModConfig>();
@@ -140,6 +148,12 @@ namespace Leclair.Stardew.BetterCrafting {
 				OldCraftingGameMenu.Value = false;
 			}
 
+			// No menu?
+			if (menu == null) {
+				CurrentMenu.Value = null;
+				return;
+			}
+
 			// Replace crafting pages.
 			if (Config.SuppressBC?.IsDown() ?? false) { 
 				CurrentMenu.Value = menu;
@@ -158,6 +172,11 @@ namespace Leclair.Stardew.BetterCrafting {
 					var where = page.GetBenchPosition(Game1.player);
 					var area = page.GetBenchRegion(Game1.player);
 
+					// Get recipes
+					var recipes = cooking ?
+						intCCStation.GetCookingRecipes() :
+						intCCStation.GetCraftingRecipes();
+
 					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(page);
 
@@ -169,8 +188,54 @@ namespace Leclair.Stardew.BetterCrafting {
 						area: area,
 						cooking: cooking,
 						standalone_menu: true,
-						material_containers: chests
+						material_containers: chests,
+						listed_recipes: recipes
 					);
+				}
+			}
+
+			if (intCCStation.IsLoaded && menu.GetType().FullName.Equals("StardewValley.Menus.CustomCraftingMenu")) {
+				// CustomCraftingStation Menu?
+
+				// See which recipes it's using. If it's not mixed, then
+				// replace it with our menu.
+
+				var recipes = Helper.Reflection.GetField<List<Dictionary<ClickableTextureComponent, CraftingRecipe>>>(menu, "pagesOfCraftingRecipes", false).GetValue();
+				if (recipes != null) {
+					List<string> names = new();
+					int crafting = 0;
+					int cooking = 0;
+
+					foreach (var rpage in recipes) {
+						foreach (var recipe in rpage.Values) {
+							if (recipe.isCookingRecipe)
+								cooking++;
+							else
+								crafting++;
+
+							names.Add(recipe.name);
+						}
+					}
+
+					if (crafting == 0 || cooking == 0 && names.Count > 0) {
+						bool is_cooking = cooking > 0;
+
+						var chests = Helper.Reflection.GetField<List<Chest>>(menu, "_materialContainers", false).GetValue();
+						List<object> containers = chests == null ? null : new(chests);
+
+						// TODO: Find the bench
+
+						CommonHelper.YeetMenu(menu);
+
+						menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+							mod: this,
+							location: Game1.player.currentLocation,
+							cooking: is_cooking,
+							standalone_menu: true,
+							material_containers: containers,
+							listed_recipes: names
+						);
+					}
 				}
 			}
 
@@ -189,6 +254,7 @@ namespace Leclair.Stardew.BetterCrafting {
 							cooking: false,
 							standalone_menu: false,
 							material_containers: (IList<LocatedInventory>) null,
+							listed_recipes: intCCStation.GetCraftingRecipes(),
 							x: gm.xPositionOnScreen,
 							y: gm.yPositionOnScreen
 						);
@@ -214,6 +280,7 @@ namespace Leclair.Stardew.BetterCrafting {
 			intSSR = new(this);
 			intCSkill = new(this);
 			intSCore = new(this);
+			intCCStation = new(this);
 
 			// Load Data
 			Recipes.LoadRecipes();
@@ -477,6 +544,10 @@ namespace Leclair.Stardew.BetterCrafting {
 				hasBiggerBackpacks = Helper.ModRegistry.IsLoaded("spacechase0.BiggerBackpack");
 
 			return hasBiggerBackpacks.Value;
+		}
+
+		public IEnumerable<GameLocation> GetLocations() {
+			return Helper.Multiplayer.GetActiveLocations();
 		}
 
 		public int GetBackpackRows(Farmer who) {

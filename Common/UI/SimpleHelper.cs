@@ -31,6 +31,9 @@ namespace Leclair.Stardew.Common.UI {
 
 			Rectangle safeArea = Utility.getSafeArea();
 
+			// TODO: Refactor logic to allow flipping to left positioned
+			// tooltips.
+
 			if (x + width > safeArea.Right) {
 				x = safeArea.Right - width;
 				y += 16;
@@ -41,7 +44,7 @@ namespace Leclair.Stardew.Common.UI {
 				x += 16;
 
 				if (x + width > safeArea.Right)
-					x = safeArea.Right - width;
+					 x = safeArea.Right - width;
 			}
 
 			if (x < safeArea.Left)
