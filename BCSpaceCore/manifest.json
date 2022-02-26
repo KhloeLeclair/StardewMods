@@ -1,7 +1,7 @@
 {
 	"Name": "Better Crafting: SpaceCore Support",
 	"Author": "Khloe Leclair",
-	"Version": "1.0.2",
+	"Version": "1.1.0",
 	"Description": "Adds support for SpaceCore recipes to Better Crafting.",
 	"UniqueID": "leclair.bcspacecore",
 	"EntryDll": "BCSpaceCore.dll",
