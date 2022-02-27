@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -497,24 +498,31 @@ namespace Leclair.Stardew.BetterCrafting {
 			if (FloorMap != null) {
 				GMCMIntegration.AddLabel(I18n.Setting_Nearby_Floors);
 
-				foreach (var connector in FloorMap)
-					GMCMIntegration.Add(
-						connector.Value,
-						null,
-						c => c.ValidConnectors.Contains(connector.Value),
-						(c, v) => {
-							if (v)
-								c.ValidConnectors.Add(connector.Value);
-							else
-								c.ValidConnectors.Remove(connector.Value);
-						}
-					);
+				var floors = FloorMap.Values.ToList();
+				floors.Sort(StringComparer.InvariantCultureIgnoreCase);
+
+				foreach (string connector in floors)
+					if (!string.IsNullOrEmpty(connector))
+						GMCMIntegration.Add(
+							connector,
+							null,
+							c => c.ValidConnectors.Contains(connector),
+							(c, v) => {
+								if (v)
+									c.ValidConnectors.Add(connector);
+								else
+									c.ValidConnectors.Remove(connector);
+							}
+						);
 			}
 
 			if (ConnectorExamples != null) {
 				GMCMIntegration.AddLabel(I18n.Setting_Nearby_Other);
 
-				foreach (string connector in ConnectorExamples)
+				var sorted = ConnectorExamples.ToList();
+				sorted.Sort(StringComparer.InvariantCultureIgnoreCase);
+
+				foreach (string connector in sorted)
 					if ( ! string.IsNullOrEmpty(connector) )
 						GMCMIntegration.Add(
 							connector,
@@ -602,7 +610,10 @@ namespace Leclair.Stardew.BetterCrafting {
 
 				if (extra != null)
 					foreach(var entry in extra)
-						floors[entry.Key] = entry.Value;
+						if ( string.IsNullOrEmpty(entry.Value) )
+							floors.Remove(entry.Key);
+						else
+							floors[entry.Key] = entry.Value;
 			}
 
 			FloorMap = floors;
@@ -636,8 +647,16 @@ namespace Leclair.Stardew.BetterCrafting {
 				}
 
 				if (extra != null)
-					foreach(string entry in extra)
-						examples.Add(entry);
+					foreach (string entry in extra) {
+						if (string.IsNullOrEmpty(entry))
+							continue;
+						else if (entry.StartsWith("--"))
+							examples.Remove(entry[2..]);
+						else if (entry.StartsWith(" --"))
+							examples.Add(entry[1..]);
+						else
+							examples.Add(entry);
+					}
 			}
 
 			ConnectorExamples = examples;

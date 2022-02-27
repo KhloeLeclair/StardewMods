@@ -1,0 +1,15 @@
+{
+	"Name": "[BCraft] Example",
+	"Author": "Khloe Leclair",
+	"Version": "1.0.0",
+	"Description": "An example of using a content pack to modify Better Crafting's data set.",
+	"UniqueID": "leclair.bcraft.example",
+	"MinimumApiVersion": "3.7.0",
+	"Dependencies": [{
+		"UniqueID": "leclair.bettercrafting",
+		"IsRequired": true
+	}],
+	"ContentPackFor": {
+		"UniqueID": "leclair.bettercrafting"
+	}
+}

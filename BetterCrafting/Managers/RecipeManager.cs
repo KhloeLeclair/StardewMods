@@ -477,23 +477,25 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 				// Merge Recipes
 
-				IEnumerable<string> recipes = existing.Recipes;
-				bool modified = false;
-
-				// Unwanted Recipes
+				// Unwanted Recipes -- Old Style
 				if ((cat.UnwantedRecipes?.Length ?? 0) > 0) {
-					recipes = recipes.Except(cat.UnwantedRecipes);
-					modified = true;
+					foreach(string recipe in cat.UnwantedRecipes)
+						existing.Recipes.Remove(recipe);
 				}
 
 				// New Recipes
 				if ((cat.Recipes?.Count ?? 0) > 0) {
-					recipes = recipes.Concat(cat.Recipes.Except(recipes));
-					modified = true;
+					foreach (string recipe in cat.Recipes) {
+						if (string.IsNullOrEmpty(recipe))
+							continue;
+						else if (recipe.StartsWith("--"))
+							existing.Recipes.Remove(recipe[2..]);
+						else if (recipe.StartsWith(" --"))
+							existing.Recipes.Add(recipe[1..]);
+						else
+							existing.Recipes.Add(recipe);
+					}
 				}
-
-				if (modified)
-					existing.Recipes = new CaseInsensitiveHashSet(recipes);
 
 				return;
 			}

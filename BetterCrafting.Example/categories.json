@@ -1,0 +1,18 @@
+{
+	"Crafting": [
+		{
+			"Id": "decoration",
+			"Recipes": [
+				"--Scarecrow",
+				"--Deluxe Scarecrow"
+			]
+		},
+		{
+			"Id": "machinery",
+			"Recipes": [
+				"Scarecrow",
+				"Deluxe Scarecrow"
+			]
+		}
+	]
+}

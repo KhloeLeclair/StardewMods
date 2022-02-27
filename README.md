@@ -22,7 +22,7 @@ keeping chests locked when playing in multiplayer.
 * [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/BetterCrafting)
 * [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/CHANGELOG.md)
 * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/ModAPI.cs)
-
+* [ContentPack Support](https://github.com/KhloeLeclair/StardewMods/tree/main/BetterCrafting.Example)
 
 ## See Me Rollin'
 
