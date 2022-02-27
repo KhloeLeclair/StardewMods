@@ -1,7 +1,7 @@
 {
 	// Settings
 	"setting.show-adv": "Show Adv. Crafting Info",
-	"setting.show-adv.tip": "Show advanced crafting information, such as how many ingredients you have and how many times you've crafted a recipe before.\n\nThis is the same as the vanilla setting, duplicated here for convenience.",
+	"setting.show-adv.tip": "Show advanced crafting information, such as how many ingredients you have and how many times you've crafted a recipe before. This is the same as the vanilla setting, duplicated here for convenience.",
 
 	"setting.general": "General Options",
 

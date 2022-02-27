@@ -10,6 +10,7 @@ Released February 26th, 2022.
   available for crafting.
 * Add support for re-opening the pause menu to its crafting page after closing
   Better Crafting's settings in GMCM.
+* Added support for using Ctrl+Shift for bulk crafting.
 * Fixed the fridge in the island farmhouse not being detected properly.
 * Fixed overly-strict rules for validating chests without a set game location.
 * Fixed bug where ingredients may not be consumed in some cases.

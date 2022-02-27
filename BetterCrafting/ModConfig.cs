@@ -41,15 +41,13 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		// Better Workbench
 		public bool UseDiscovery { get; set; } = true;
-		public int MaxInventories { get; set; } = 50;
-		public int MaxDistance { get; set; } = 100;
+		public int MaxInventories { get; set; } = 15;
+		public int MaxDistance { get; set; } = 20;
 		public int MaxCheckedTiles { get; set; } = 500;
 
 		public bool UseDiagonalConnections { get; set; } = true;
 
-		public CaseInsensitiveHashSet ValidConnectors { get; set; } = new() {
-			"Wood Path"
-		};
+		public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();
 
 	}
 }

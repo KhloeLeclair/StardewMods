@@ -1554,6 +1554,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Clickable Recipes
 			bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift);
+			bool ctrling  = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
 
 			if (CurrentPage != null)
 				foreach (var cmp in CurrentPage) {
@@ -1563,7 +1564,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 						} else if (!cmp.hoverText.Equals("ghosted")) {
 							bool shifted = shifting && recipe.Stackable;
-							PerformCraft(recipe, shifted ? 5 : 1, moveResultToInventory: shifting);
+							PerformCraft(recipe, shifted ? (ctrling ? 25 : 5) : 1, moveResultToInventory: shifting);
 						}
 
 						cmp.scale = cmp.baseScale;
@@ -2046,6 +2047,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				items = GetEstimatedContainerContents();
 
 			bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift);
+			bool ctrling = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
 
 			if (recipes != null)
 				foreach (var cmp in recipes) {
@@ -2062,7 +2064,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					} else if (Editing ? !in_category : !recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality)) {
 						// Recipe without Ingredients
 						cmp.DrawBounded(b, Color.DimGray * 0.4f, 0.89f);
-						int count = recipe.QuantityPerCraft * (shifted ? 5 : 1);
+						int count = recipe.QuantityPerCraft * (shifted ? (ctrling ? 25 : 5) : 1);
 						if (count > 1)
 							NumberSprite.draw(
 								count,
@@ -2078,7 +2080,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					} else {
 						// Craftable Recipe
 						cmp.DrawBounded(b);
-						int count = recipe.QuantityPerCraft * (shifted ? 5 : 1);
+						int count = recipe.QuantityPerCraft * (shifted ? (ctrling ? 25 : 5) : 1);
 						if (count > 1)
 							NumberSprite.draw(
 								count,
@@ -2163,7 +2165,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			else if (!Editing) {
 				bool shifted = shifting && hoverRecipe.Stackable;
 
-				int quantity = hoverRecipe.QuantityPerCraft * (shifted ? 5 : 1);
+				int quantity = hoverRecipe.QuantityPerCraft * (shifted ? (ctrling ? 25 : 5) : 1);
 				int craftable = int.MaxValue;
 				List<ISimpleNode> ingredients = new();
 
@@ -2171,7 +2173,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 				foreach (var entry in hoverRecipe.Ingredients) {
 					int amount = entry.GetAvailableQuantity(Game1.player, items, UnsafeInventories, Quality);
-					int quant = entry.Quantity * (shifted ? 5 : 1);
+					int quant = entry.Quantity * (shifted ? (ctrling ? 25 : 5) : 1);
 					craftable = Math.Min(craftable, amount / entry.Quantity);
 
 					if ( ! entry.SupportsQuality)
