@@ -1,7 +1,7 @@
 {
 	"Farm": [
 		{
-			"Id": "999999999",
+			"Id": "11022000",
 			"Conditions": [
 				"m 1000",
 				"w sunny"
@@ -34,13 +34,47 @@
 				"pause 500",
 				"end"
 			]
+		},
+		{
+			"Id": "11022002",
+			"Conditions": [
+				"e 11022000",
+				"F",
+				"w sunny",
+				"f Wizard 500"
+			],
+			"Script": [
+				"WizardSong",
+				"64 15",
+				"farmer 64 16 2 Wizard 64 18 0",
+				"skippable",
+				"pause 1500",
+				"speak Wizard \"Hello again... @. I've been waiting for you.#$b#Here, I'd like to give you something.\"",
+				"pause 500",
+				"playSound getNewSpecialItem",
+				"message \"Received a copy of 'Magical Almanac'.\"",
+				"pause 800",
+				"speak Wizard \"As a farmer, you're familiar with forecasts.#$b#This almanac contains a spiritual forecast, penned by Welwick herself.#$b#It will help you stay safe and grow.\"",
+				"pause 500",
+				"move Wizard 0 1 2",
+				"pause 500",
+				"speak Wizard \"Now, if you'll excuse me... I have much work to do.\"",
+				"pause 1000",
+				"showFrame Wizard 16",
+				"pause 500",
+				"playSound wand",
+				"screenFlash .8",
+				"warp Wizard -3000 -3000",
+				"pause 1000",
+				"end"
+			]
 		}
 	],
 	"FishShop": [
 		{
-			"Id": "9999991",
+			"Id": "11022001",
 			"Conditions": [
-				"e 999999999",
+				"e 11022000",
 				"n willyHours"
 			],
 			"Script": [

@@ -29,6 +29,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\ChestProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\IInventory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\IInventoryProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Inventory\StorageFurnitureProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\TransferBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\WorkbenchProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\WorkingInventory.cs" />

@@ -6,9 +6,15 @@ namespace Leclair.Stardew.Almanac {
 		// General
 		public bool AlmanacAlwaysAvailable { get; set; } = false;
 
+		public bool IslandAlwaysAvailable { get; set; } = false;
+
+		public bool MagicAlwaysAvailable { get; set; } = false;
+
+		public bool ShowAlmanacButton { get; set; } = true;
+
 
 		// Bindings
-		public KeybindList UseKey { get; set; } = KeybindList.Parse("F7, ControllerStart");
+		public KeybindList UseKey { get; set; } = KeybindList.Parse("F7");
 
 
 		// Crop Page
@@ -22,6 +28,8 @@ namespace Leclair.Stardew.Almanac {
 		// Weather Page
 		public bool ShowWeather { get; set; } = true;
 		public bool EnableDeterministicWeather { get; set; } = true;
+
+		public bool EnableWeatherRules { get; set; } = true;
 
 
 		// Horoscope Page

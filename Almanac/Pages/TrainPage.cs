@@ -42,7 +42,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			FlowBuilder builder = new();
 
-			builder.Text($"{I18n.Page_Train_About()}\n\n");
+			builder.Text(I18n.Page_Train_About());
 
 			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
 				date.DayOfMonth = day;
@@ -51,8 +51,9 @@ namespace Leclair.Stardew.Almanac.Pages {
 				if (time >= 0) {
 					SDate sdate = new(day, date.Season);
 
+					builder.Text("\n\n");
 					builder.Text($"{sdate.ToLocaleString(withYear: false)}\n", font: Game1.dialogueFont);
-					builder.Text($"  {TimeHelper.FormatTime(time)}\n\n");
+					builder.Text($"  {TimeHelper.FormatTime(time)}");
 				}
 			}
 

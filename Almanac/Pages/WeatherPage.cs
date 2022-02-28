@@ -36,7 +36,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (!mod.Config.ShowWeather || !mod.Config.EnableDeterministicWeather)
 				return null;
 
-			if (!Game1.player.eventsSeen.Contains(9999991))
+			if (!mod.HasIsland(Game1.player))
 				return null;
 
 			return new(menu, mod, true);
@@ -64,7 +64,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
 				date.DayOfMonth = day;
-				int weather = Forecast[day - 1] = WeatherHelper.GetWeatherForDate(Seed, date, IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default);
+				int weather = Forecast[day - 1] = Mod.Weather.GetWeatherForDate(Seed, date, IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default);
 
 				if (IsIsland && day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather))
 					pirateDays.Add(day);
@@ -129,11 +129,14 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public override int SortKey => IsIsland ? 1000 : 1;
 
-		public override string TabSimpleTooltip => IsIsland ? I18n.Page_WeatherIsland() : I18n.Page_Weather();
+		public override string TabSimpleTooltip => IsIsland ?
+			I18n.Page_WeatherIsland() : I18n.Page_Weather();
 
-		public override Texture2D TabTexture => IsIsland ? SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors2) : Menu.background;
+		public override Texture2D TabTexture => IsIsland ?
+			SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors2) : Menu.background;
 
-		public override Rectangle? TabSource => IsIsland ? SpriteHelper.MouseIcons2.GOLDEN_NUT : WeatherHelper.GetWeatherIcon(0, null);
+		public override Rectangle? TabSource => IsIsland ?
+			SpriteHelper.MouseIcons2.GOLDEN_NUT : WeatherHelper.GetWeatherIcon(0, null);
 
 		#endregion
 
@@ -163,8 +166,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 				b,
 				Menu.background,
 				new Vector2(
-					bounds.X + (bounds.Width - 72) / 2,
-					bounds.Y + (bounds.Height - 72) / 2
+					bounds.X + (bounds.Width - 64) / 2,
+					bounds.Y + (bounds.Height - 64) / 2
 				),
 				WeatherHelper.GetWeatherIcon(Forecast[date.DayOfMonth - 1], date.Season),
 				Color.White,

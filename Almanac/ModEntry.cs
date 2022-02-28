@@ -1,26 +1,37 @@
 using System;
 using System.Collections.Generic;
 
-using Leclair.Stardew.Almanac.Crops;
-using Leclair.Stardew.Almanac.Pages;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.Common.UI.Overlay;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 
 using StardewValley;
+using StardewValley.Menus;
+
+using Leclair.Stardew.Almanac.Crops;
+using Leclair.Stardew.Almanac.Managers;
+using Leclair.Stardew.Almanac.Pages;
 
 namespace Leclair.Stardew.Almanac {
 	public class ModEntry : ModSubscriber {
 
-		public static readonly int Event_Base = 999999999;
-		public static readonly int Event_Island = 9999991;
+		public static readonly int Event_Base   = 11022000;
+		public static readonly int Event_Island = 11022001;
+		public static readonly int Event_Magic  = 11022002;
 
 		public static ModEntry instance;
 		public static ModAPI API;
 
+		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
+		private readonly PerScreen<IOverlay> CurrentOverlay = new();
+
 		public ModConfig Config;
+
+		public WeatherManager Weather;
 
 		internal AssetManager Assets;
 		internal CropManager Crops;
@@ -41,13 +52,16 @@ namespace Leclair.Stardew.Almanac {
 			// Read Config
 			Config = Helper.ReadConfig<ModConfig>();
 
+			Weather = new WeatherManager(this);
+
 			// Init
 			RegisterBuilder(CoverPage.GetPage);
 			RegisterBuilder(CropPage.GetPage);
 			RegisterBuilder(WeatherPage.GetPage);
-			RegisterBuilder(TrainPage.GetPage);
 			RegisterBuilder(WeatherPage.GetIslandPage);
+			RegisterBuilder(TrainPage.GetPage);
 			RegisterBuilder(HoroscopePage.GetPage);
+			RegisterBuilder(MinesPage.GetPage);
 		}
 
 		public override object GetApi() {
@@ -73,7 +87,10 @@ namespace Leclair.Stardew.Almanac {
 
 			// If the player hasn't seen the event where they receive the Almanac, don't
 			// let them use it unless it's always available.
-			if (!Game1.player.eventsSeen.Contains(Event_Base) && !Config.AlmanacAlwaysAvailable)
+			if (! HasAlmanac(Game1.player) )
+				return;
+
+			if (Game1.activeClickableMenu != null || Game1.CurrentEvent != null)
 				return;
 
 			Game1.activeClickableMenu = new Menus.AlmanacMenu(Game1.Date.Year);
@@ -97,7 +114,7 @@ namespace Leclair.Stardew.Almanac {
 				tomorrow.TotalDays++;
 
 				// Main Weather
-				Game1.weatherForTomorrow = WeatherHelper.GetWeatherForDate(seed, tomorrow, GameLocation.LocationContext.Default);
+				Game1.weatherForTomorrow = Weather.GetWeatherForDate(seed, tomorrow, GameLocation.LocationContext.Default);
 				if (Game1.IsMasterGame)
 					Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).weatherForTomorrow.Value = Game1.weatherForTomorrow;
 
@@ -106,7 +123,7 @@ namespace Leclair.Stardew.Almanac {
 					var ctx = GameLocation.LocationContext.Island;
 
 					Game1.netWorldState.Value.GetWeatherForLocation(ctx)
-						.weatherForTomorrow.Value = WeatherHelper
+						.weatherForTomorrow.Value = Weather
 							.GetWeatherForDate(seed, tomorrow, ctx);
 				}
 			}
@@ -120,17 +137,49 @@ namespace Leclair.Stardew.Almanac {
 
 			Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
 				Crops.Invalidate();
+				Weather.Invalidate();
 			});
 
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
 				int seed = GetBaseWorldSeed();
 				WorldDate date = new WorldDate(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
-					int weather = WeatherHelper.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
+					int weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
 					Log($"Date: {date.Localize()} -- Weather: {WeatherHelper.GetWeatherName(weather)}");
 					date.TotalDays++;
 				}
 			});
+		}
+
+		[Subscriber]
+		private void OnUpdateTicked(object sender, UpdateTickedEventArgs e) {
+			IClickableMenu menu = Game1.activeClickableMenu;
+			if (CurrentMenu.Value == menu)
+				return;
+
+			CurrentMenu.Value = menu;
+
+			if (CurrentOverlay.Value != null) {
+				CurrentOverlay.Value.Dispose();
+				CurrentOverlay.Value = null;
+			}
+
+			if (!HasAlmanac(Game1.player) || ! Config.ShowAlmanacButton)
+				return;
+
+			InventoryPage page = null;
+
+			if (menu is InventoryPage)
+				page = menu as InventoryPage;
+			else if (menu is GameMenu gm) {
+				for(int i = 0; i < gm.pages.Count; i++) {
+					if (gm.pages[i] is InventoryPage)
+						page = gm.pages[i] as InventoryPage;
+				}
+			}
+
+			if (page != null)
+				CurrentOverlay.Value = new Overlays.InventoryOverlay(page, Game1.player);
 		}
 
 		#endregion
@@ -163,45 +212,64 @@ namespace Leclair.Stardew.Almanac {
 
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Available(),
-					I18n.Settings_AvailableDesc(),
+					I18n.Settings_Button,
+					I18n.Settings_ButtonDesc,
+					c => c.ShowAlmanacButton,
+					(c, v) => c.ShowAlmanacButton = v
+				)
+				.Add(
+					I18n.Settings_Available,
+					I18n.Settings_AvailableDesc,
 					c => c.AlmanacAlwaysAvailable,
 					(c, v) => c.AlmanacAlwaysAvailable = v
+				)
+				.Add(
+					I18n.Settings_Island,
+					I18n.Settings_IslandDesc,
+					c => c.IslandAlwaysAvailable,
+					(c, v) => c.IslandAlwaysAvailable = v
+				)
+				.Add(
+					I18n.Settings_Magic,
+					I18n.Settings_MagicDesc,
+					c => c.MagicAlwaysAvailable,
+					(c, v) => c.MagicAlwaysAvailable = v
 				);
 
 			GMCMIntegration
-				.AddLabel(I18n.Settings_Controls(), null, "bindings")
-				.AddLabel(I18n.Settings_Crops(), null, "page:crop")
-				.AddLabel(I18n.Settings_Weather(), null, "page:weather")
-				.AddLabel(I18n.Settings_Train(), null, "page:train");
+				.AddLabel(I18n.Settings_Controls, null, "bindings")
+				.AddLabel(I18n.Settings_Crops, null, "page:crop")
+				.AddLabel(I18n.Settings_Weather, null, "page:weather")
+				.AddLabel(I18n.Settings_Train, null, "page:train")
+				.AddLabel(I18n.Settings_Horoscope, null, "page:horoscope");
 
-			GMCMIntegration.StartPage("bindings", I18n.Settings_Controls());
+			GMCMIntegration.StartPage("bindings", I18n.Settings_Controls);
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Controls_Almanac(),
-					I18n.Settings_Controls_AlmanacDesc(),
+					I18n.Settings_Controls_Almanac,
+					I18n.Settings_Controls_AlmanacDesc,
 					c => c.UseKey,
 					(c, v) => c.UseKey = v
 				);
 
-			GMCMIntegration.StartPage("page:crop", I18n.Settings_Crops());
+			GMCMIntegration.StartPage("page:crop", I18n.Settings_Crops);
 
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Enable(),
-					I18n.Settings_EnableDesc(),
+					I18n.Settings_Enable,
+					I18n.Settings_EnableDesc,
 					c => c.ShowCrops,
 					(c, v) => c.ShowCrops = v
 				);
 
 			GMCMIntegration.AddLabel(""); // Spacer
 
-			GMCMIntegration.AddLabel(I18n.Settings_Crops_Preview());
-			GMCMIntegration.AddParagraph(I18n.Settings_Crops_PreviewDesc());
+			GMCMIntegration.AddLabel(I18n.Settings_Crops_Preview);
+			GMCMIntegration.AddParagraph(I18n.Settings_Crops_PreviewDesc);
 
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Crops_Preview_Enable(),
+					I18n.Settings_Crops_Preview_Enable,
 					null,
 					c => c.ShowPreviews,
 					(c, v) => c.ShowPreviews = v
@@ -209,53 +277,93 @@ namespace Leclair.Stardew.Almanac {
 
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Crops_Preview_Sprite(),
-					I18n.Settings_Crops_Preview_SpriteDesc(),
+					I18n.Settings_Crops_Preview_Sprite,
+					I18n.Settings_Crops_Preview_SpriteDesc,
 					c => c.PreviewUseHarvestSprite,
 					(c, v) => c.PreviewUseHarvestSprite = v
 				);
 
 			GMCMIntegration
 				.Add(
-					I18n.Settings_Crops_Preview_Plantonfirst(),
-					I18n.Settings_Crops_Preview_PlantonfirstDesc(),
+					I18n.Settings_Crops_Preview_Plantonfirst,
+					I18n.Settings_Crops_Preview_PlantonfirstDesc,
 					c => c.PreviewPlantOnFirst,
 					(c, v) => c.PreviewPlantOnFirst = v
 				);
 
-			GMCMIntegration.StartPage("page:weather", I18n.Settings_Weather());
+			GMCMIntegration.StartPage("page:weather", I18n.Settings_Weather);
 
 			GMCMIntegration
 				.Add(
-				I18n.Settings_Enable(),
-				I18n.Settings_EnableDesc(),
-				c => c.ShowWeather,
-				(c, v) => c.ShowWeather = v
-			);
-
-			GMCMIntegration
-				.Add(
-					I18n.Settings_Weather_Deterministic(),
-					I18n.Settings_Weather_DeterministicDesc(),
-					c => c.EnableDeterministicWeather,
-					(c, v) => c.EnableDeterministicWeather = v
+					I18n.Settings_Enable,
+					I18n.Settings_EnableDesc,
+					c => c.ShowWeather,
+					(c, v) => c.ShowWeather = v
 				);
 
-			GMCMIntegration.StartPage("page:train", I18n.Settings_Train());
+			GMCMIntegration
+				.SetTitleOnly(true)
+				.Add(
+					I18n.Settings_Weather_Deterministic,
+					I18n.Settings_Weather_DeterministicDesc,
+					c => c.EnableDeterministicWeather,
+					(c, v) => c.EnableDeterministicWeather = v
+				)
+				.Add(
+					I18n.Settings_Weather_Rules,
+					I18n.Settings_Weather_RulesDesc,
+					c => c.EnableWeatherRules,
+					(c, v) => c.EnableWeatherRules = v
+				)
+				.SetTitleOnly(false);
+
+			GMCMIntegration.StartPage("page:train", I18n.Settings_Train);
 
 			GMCMIntegration
 				.Add(
-				I18n.Settings_Enable(),
-				I18n.Settings_EnableDesc(),
-				c => c.ShowTrains,
-				(c, v) => c.ShowTrains = v
-			);
+					I18n.Settings_Enable,
+					I18n.Settings_EnableDesc,
+					c => c.ShowTrains,
+					(c, v) => c.ShowTrains = v
+				);
+
+			GMCMIntegration.StartPage("page:horoscope", I18n.Settings_Horoscope);
+
+			GMCMIntegration
+				.Add(
+					I18n.Settings_Enable,
+					I18n.Settings_EnableDesc,
+					c => c.ShowHoroscopes,
+					(c, v) => c.ShowHoroscopes = v
+				);
+
+			GMCMIntegration
+				.SetTitleOnly(true)
+				.Add(
+					I18n.Settings_Horoscope_Deterministic,
+					I18n.Settings_Horoscope_DeterministicDesc,
+					c => c.EnableDeterministicLuck,
+					(c, v) => c.EnableDeterministicLuck = v
+				)
+				.SetTitleOnly(false);
 		}
 
 		#endregion
 
+		public bool HasAlmanac(Farmer who) {
+			return Config.AlmanacAlwaysAvailable || who.eventsSeen.Contains(Event_Base);
+		}
+
+		public bool HasIsland(Farmer who) {
+			return Config.IslandAlwaysAvailable || who.eventsSeen.Contains(Event_Island);
+		}
+
+		public bool HasMagic(Farmer who) {
+			return Config.MagicAlwaysAvailable || who.eventsSeen.Contains(Event_Magic);
+		}
+
 		public int GetBaseWorldSeed() {
-			// TODO: Check configuration.
+			// TODO: Check configuration?
 			return (int) Game1.uniqueIDForThisGame;
 		}
 

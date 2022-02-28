@@ -59,6 +59,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 		private WorldDate HoveredDate;
 		private Cache<ISimpleNode, WorldDate> CalendarTip;
 
+		//private SpriteInfo GardenPot;
+
 		private WorldDate ClickedDate;
 		private int ClickedIndex;
 
@@ -72,6 +74,11 @@ namespace Leclair.Stardew.Almanac.Crops {
 		}
 
 		public CropPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
+			/*GardenPot = SpriteHelper.GetSprite(
+				new SObject(Vector2.Zero, 62),
+				mod.Helper
+			);*/
+
 			// Caches
 			CalendarTip = new(date => {
 				if (date == null)
@@ -197,7 +204,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
 			};
 			tabPaddySprite = Game1.random.Next(2 * AlmanacMenu.TABS.Length);
-			spritePaddy = new(Menu.background, new Rectangle(118, 330, 16, 16));
+			spritePaddy = new(Menu.background, new Rectangle(256, 352, 16, 16));
 
 			// Cache Agriculturist status.
 			Agriculturist = Game1.player.professions.Contains(Farmer.agriculturist);
@@ -283,12 +290,38 @@ namespace Leclair.Stardew.Almanac.Crops {
 			start.DayOfMonth = 1;
 			end.DayOfMonth = WorldDate.DaysPerMonth;
 
+			bool first = true;
+
 			foreach (CropInfo crop in crops) {
 				WorldDate last = new(crop.EndDate);
 
 				int[] phases = GetActualPhaseTime(crop.Days, crop.Phases, crop.IsPaddyCrop);
 				int days = phases.Sum();
 				last.TotalDays -= days;
+
+				// Count how many times we can harvest this season.
+				int harvests = 0;
+				bool harvest_offset = !Mod.Config.PreviewPlantOnFirst && Game1.Date.SeasonIndex == Menu.Season;
+				int cur = harvest_offset ? Game1.Date.DayOfMonth : 1;
+				bool first_grow = true;
+
+				if (days > 0) {
+					int limit = crop.EndDate.TotalDays + 1 - start.TotalDays - (cur - 1);
+					cur = 1;
+
+					while (cur <= limit) {
+						if (first_grow)
+							cur += days;
+						else if (crop.Regrow > 0)
+							cur += crop.Regrow;
+						else
+							cur += days;
+
+						first_grow = false;
+						if (cur <= limit)
+							harvests++;
+					}
+				}
 
 				if (last.SeasonIndex == Menu.Season) {
 					int day = last.DayOfMonth;
@@ -309,6 +342,11 @@ namespace Leclair.Stardew.Almanac.Crops {
 				IFlowNode node = new Common.UI.FlowNode.SpriteNode(crop.Sprite, 3f, onHover: OnHover);
 				CropNodes[crop] = node;
 
+				if (first)
+					first = false;
+				else
+					builder.Text("\n\n");
+
 				builder
 					.Add(node)
 					.Text($" {crop.Name}\n", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true)
@@ -316,6 +354,15 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				if (crop.Regrow > 0)
 					builder.Text($" {I18n.Crop_RegrowTime(count: crop.Regrow)}", shadow: false);
+
+				if (harvest_offset) {
+					SDate hdate = new(Game1.Date.DayOfMonth, Game1.Date.Season);
+					builder.Text($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
+				} else if (Game1.Date.SeasonIndex > Menu.Season) {
+					SDate hdate = new(1, start.Season);
+					builder.Text($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
+				} else
+					builder.Text($" {I18n.Crop_Harvests(count: harvests)}", shadow: false);
 
 				if (crop.IsTrellisCrop)
 					builder.Text($" {I18n.Crop_TrellisNote()}", shadow: false);
@@ -326,9 +373,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				if (crop.IsGiantCrop)
 					builder.Text($" {I18n.Crop_GiantNote()}", shadow: false);
 
-				builder
-					.Text($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false)
-					.Text("\n\n");
+				builder.Text($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false);
 			}
 
 			Flow = builder.Build();
@@ -366,6 +411,11 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 			int x = Menu.xPositionOnScreen + Menu.width / 2 + 64;
 			int y = Menu.yPositionOnScreen + Menu.height - 20;
+
+			var view = Game1.uiViewport;
+			if (view.Height >= 720 && view.Height <= 795) {
+				y -= (795 - view.Height) / 2 - 8;
+			}
 
 			foreach (ClickableComponent cmp in FertComponents) {
 				cmp.bounds = new(x, y, 64, 64);
@@ -505,6 +555,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 				reflect = true;
 			}
 
+			bool upside_down = Game1.uiViewport.Height < 795;
+
 			// Tab Background
 			b.Draw(
 				Menu.background,
@@ -514,7 +566,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				1 * (float) Math.PI / 2f,
 				new Vector2(0, 16),
 				4f,
-				reflect ? SpriteEffects.FlipVertically : SpriteEffects.None,
+				upside_down ? (reflect ? SpriteEffects.FlipHorizontally | SpriteEffects.FlipVertically : SpriteEffects.FlipHorizontally) : reflect ? SpriteEffects.FlipVertically : SpriteEffects.None,
 				0.0001f
 			);
 
@@ -538,6 +590,15 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				bool tall = sprite.BaseSource.Height > sprite.BaseSource.Width;
 				int size = (tall ? 32 : 16) * 3;
+
+				/*GardenPot.Draw(
+					b,
+					new Vector2(
+						bounds.X + (bounds.Width - size) / 2,
+						bounds.Y + (bounds.Height - size) / 2 + 32
+					),
+					6f
+				);*/
 
 				sprite.Draw(
 					b,
@@ -595,16 +656,30 @@ namespace Leclair.Stardew.Almanac.Crops {
 			int width = (int) (16 * scale) * cols + (cols > 1 ? (int) (padX * scale) * cols - 1 : 0);
 			int height = (int) (16 * scale) * rows + (rows > 1 ? (int) (padY * scale) * rows - 1 : 0);
 
-			int offsetX = bounds.X + (bounds.Width - width) / 2;
-			int offsetY = bounds.Y + 24 + (bounds.Height - height - 24) / 2;
+			int offsetX = bounds.X + (bounds.Width - width) / 2 + 2;
+			int offsetY = bounds.Y + 22 + (bounds.Height - height - 22) / 2;
 
 			foreach (CropInfo crop in crops) {
-				crop.Sprite?.Draw(
+				if (crop.Sprite == null)
+					continue;
+
+				float sX = offsetX + ((16 + padX) * scale) * col;
+				float sY = offsetY + ((16 + padY) * scale) * row;
+
+				if (Menu.HoveredItem != null && Menu.HoveredItem.Equals(crop.Item)) {
+					crop.Sprite.Draw(
+						b,
+						new Vector2(sX - 2, sY + 2),
+						scale,
+						baseColor: Color.Black,
+						overlayColor: Color.Black,
+						alpha: 0.35f
+					);
+				}
+
+				crop.Sprite.Draw(
 					b,
-					new Vector2(
-						offsetX + ((16 + padX) * scale) * col,
-						offsetY + ((16 + padY) * scale) * row
-					),
+					new Vector2(sX, sY),
 					scale
 				);
 
@@ -622,32 +697,12 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 		}
 
-		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
+		private CropInfo? GetCropAt(int x, int y, WorldDate date, Rectangle bounds) {
 			List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
 
 			if (crops == null || crops.Count == 0)
-				return false;
+				return null;
 
-			// If we're using gamepad controls, loop through every crop in the tile.
-			if (Game1.options.gamepadControls) {
-				if (date != ClickedDate) {
-					ClickedDate = date;
-					ClickedIndex = -1;
-				}
-
-				ClickedIndex++;
-				if (ClickedIndex >= crops.Count)
-					ClickedIndex = 0;
-
-				if (CropNodes.TryGetValue(crops[ClickedIndex], out IFlowNode node))
-					if (Menu.ScrollFlow(node))
-						Game1.playSound("shiny4");
-
-				return true;
-			}
-
-			// If we're using mouse controls, determine which crop is at that exact
-			// position and scroll there.
 			int row = 0;
 			int col = 0;
 			float scale = 2;
@@ -687,8 +742,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 			int width = (int) (16 * scale) * cols + (cols > 1 ? (int) (padX * scale) * cols - 1 : 0);
 			int height = (int) (16 * scale) * rows + (rows > 1 ? (int) (padY * scale) * rows - 1 : 0);
 
-			int offsetX = (bounds.Width - width) / 2;
-			int offsetY = 24 + (bounds.Height - height - 24) / 2;
+			int offsetX = 2 + (bounds.Width - width) / 2;
+			int offsetY = 22 + (bounds.Height - height - 24) / 2;
 
 			foreach (CropInfo crop in crops) {
 				int startX = offsetX + (int) ((16 + padX) * scale) * col;
@@ -697,14 +752,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 				int endX = startX + (int) (16 * scale);
 				int endY = startY + (int) (16 * scale);
 
-				if (x >= startX && x <= endX && y >= startY && y <= endY) {
-					if (CropNodes.TryGetValue(crop, out IFlowNode node)) {
-						if (Menu.ScrollFlow(node))
-							Game1.playSound("shiny4");
-					}
-
-					return true;
-				}
+				if (x >= startX && x <= endX && y >= startY && y <= endY)
+					return crop;
 
 				col++;
 				if (col >= cols) {
@@ -713,6 +762,45 @@ namespace Leclair.Stardew.Almanac.Crops {
 					if (row >= rows)
 						break;
 				}
+			}
+
+			return null;
+		}
+
+		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
+			List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
+
+			if (crops == null || crops.Count == 0)
+				return false;
+
+			// If we're using gamepad controls, loop through every crop in the tile.
+			if (Game1.options.gamepadControls) {
+				if (date != ClickedDate) {
+					ClickedDate = date;
+					ClickedIndex = -1;
+				}
+
+				ClickedIndex++;
+				if (ClickedIndex >= crops.Count)
+					ClickedIndex = 0;
+
+				if (CropNodes.TryGetValue(crops[ClickedIndex], out IFlowNode node))
+					if (Menu.ScrollFlow(node))
+						Game1.playSound("shiny4");
+
+				return true;
+			}
+
+			// If we're using mouse controls, determine which crop is at that exact
+			// position and scroll there.
+			CropInfo? crop = GetCropAt(x, y, date, bounds);
+			if (crop.HasValue) {
+				if (CropNodes.TryGetValue(crop.Value, out IFlowNode node)) {
+					if (Menu.ScrollFlow(node))
+						Game1.playSound("shiny4");
+				}
+
+				return true;
 			}
 
 			return false;
@@ -725,6 +813,11 @@ namespace Leclair.Stardew.Almanac.Crops {
 		public void PerformCellHover(int x, int y, WorldDate date, Rectangle bounds) {
 			HoveredDate = date;
 			Menu.HoverNode = CalendarTip.Value;
+
+			CropInfo? crop = GetCropAt(x, y, date, bounds);
+			if (crop.HasValue) {
+				Menu.HoveredItem = crop.Value.Item;
+			}
 		}
 
 		#endregion

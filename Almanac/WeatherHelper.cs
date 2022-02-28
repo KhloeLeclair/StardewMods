@@ -63,17 +63,17 @@ namespace Leclair.Stardew.Almanac {
 				_ => 0
 			};
 
-			return new Rectangle(134, 249 + offset * 18, 18, 18);
+			return new Rectangle(448, 256 + offset * 16, 16, 16);
 		}
 
 		public static int GetWeatherForDate(int seed, WorldDate date) {
-			return GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
+			return GetRawWeatherForDate(seed, date, GameLocation.LocationContext.Default);
 		}
 
-		public static int GetWeatherForDate(int seed, WorldDate date, GameLocation.LocationContext context) {
+		public static int GetRawWeatherForDate(int seed, WorldDate date, GameLocation.LocationContext context) {
 			int offseed = seed + date.TotalDays + (context == GameLocation.LocationContext.Island ? 1 : 0);
 
-			Random rnd = new Random(offseed);
+			Random rnd = new(offseed);
 			string season = date.Season;
 			int totalDays = date.TotalDays;
 			int dayOfMonth = date.DayOfMonth;
@@ -106,14 +106,14 @@ namespace Leclair.Stardew.Almanac {
 			return Game1.getWeatherModificationsForDate(date, result);
 		}
 
-		public static int GetWeatherForDate(int seed, int day) {
-			return GetWeatherForDate(seed, day, GameLocation.LocationContext.Default);
+		public static int GetRawWeatherForDate(int seed, int day) {
+			return GetRawWeatherForDate(seed, day, GameLocation.LocationContext.Default);
 		}
 
-		public static int GetWeatherForDate(int seed, int day, GameLocation.LocationContext context) {
+		public static int GetRawWeatherForDate(int seed, int day, GameLocation.LocationContext context) {
 			WorldDate date = new();
 			date.TotalDays = day;
-			return GetWeatherForDate(seed, date, context);
+			return GetRawWeatherForDate(seed, date, context);
 		}
 
 	}
