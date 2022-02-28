@@ -8,8 +8,10 @@ This repository contains all of my Stardew Valley mods, released or not. Of note
  Almanac provides an in-game book with useful information about different subjects,
  including a long term weather forecast and when to plant crops. 
 
- * [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/Almanac)
- * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/ModAPI.cs)
+* [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/11022)
+* [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/Almanac)
+* [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/CHANGELOG.md)
+* [API](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/ModAPI.cs)
 
 
 ## Better Crafting
