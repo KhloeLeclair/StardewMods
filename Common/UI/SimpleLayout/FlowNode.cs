@@ -44,11 +44,11 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			return size;
 		}
 
-		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont) {
+		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor) {
 			SpriteFont font = defaultFont ?? Game1.smallFont;
 			CachedFlow flow = GetFlow(font, WrapText ? size.X : -1);
 
-			FlowHelper.RenderFlow(batch, flow, position, null);
+			FlowHelper.RenderFlow(batch, flow, position, defaultColor, defaultShadowColor);
 		}
 	}
 }

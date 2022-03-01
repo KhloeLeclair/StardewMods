@@ -26,7 +26,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			};
 		}
 
-		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont) {
+		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor) {
 			/* spaces don't draw ~ */
 		}
 	}

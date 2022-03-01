@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-using Leclair.Stardew.Almanac.Pages;
 using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.FlowNode;
 using Leclair.Stardew.Common.UI.SimpleLayout;
+using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,6 +14,8 @@ using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 
+using Leclair.Stardew.Almanac.Pages;
+
 namespace Leclair.Stardew.Almanac.Menus {
 	public class AlmanacMenu : IClickableMenu {
 
@@ -22,6 +24,10 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public static readonly int REGION_LEFT_PAGE = 1;
 		public static readonly int REGION_RIGHT_PAGE = 2;
 		public static readonly int REGION_TABS = 3;
+
+		public static readonly Rectangle MAGIC_BG = new Rectangle(288, 352, 15, 15);
+
+		public static readonly Color MAGIC_SHADOW_COLOR = new Color(19, 16, 57);
 
 		public static readonly Rectangle[] LEFT_BUTTON = new Rectangle[] {
 			new(0, 256, 64, 64),
@@ -123,8 +129,11 @@ namespace Leclair.Stardew.Almanac.Menus {
 		private bool FlowScrolling;
 
 		// Tooltip
+		public bool HoverMagic;
 		public ISimpleNode HoverNode;
 		public string HoverText;
+
+		private Cache<ISimpleNode, string> CachedHoverText;
 
 		// Lookup Anything support.
 		public Item HoveredItem = null;
@@ -135,6 +144,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 			Date = new(Game1.Date);
 
 			ModEntry mod = ModEntry.instance;
+
+			// CachedHoverText
+			CachedHoverText = new(
+				str => string.IsNullOrEmpty(str) ? null : SimpleHelper.Builder().Text(str).GetLayout(),
+				() => HoverText
+			);
 
 			List<IAlmanacPage> pages = new();
 			foreach (var builder in mod.PageBuilders) {
@@ -745,7 +760,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				}
 			}
 
-			if (FlowScrollBar.visible && FlowScrollBar.containsPoint(x, y)) {
+			if (FlowScrollBar.visible && FlowScrollArea.Contains(x, y)) {// FlowScrollBar.containsPoint(x, y)) {
 				FlowScrolling = true;
 				return;
 			}
@@ -829,6 +844,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 			base.performHoverAction(x, y);
 
 			HoveredItem = null;
+			HoverMagic = false;
 			HoverNode = null;
 			HoverText = null;
 
@@ -840,8 +856,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			foreach (var entry in Tabs) {
 				if (entry.Item1.containsPoint(x, y) && Pages[entry.Item2] is ITab tab) {
-					HoverText = tab.TabSimpleTooltip;
 					HoverNode = tab.TabAdvancedTooltip;
+					HoverText = tab.TabSimpleTooltip;
+					HoverMagic = tab.TabMagic;
 					break;
 				}
 			}
@@ -1106,7 +1123,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 					Flow.Value,
 					new Vector2(xPositionOnScreen + width / 2 + 40, yPositionOnScreen + 40),
 					IsMagic ? Color.White : Game1.textColor,
-					defaultShadowColor: IsMagic ? new Color(19, 16, 57) : null,
+					defaultShadowColor: IsMagic ? MAGIC_SHADOW_COLOR : null,
 					lineOffset: FlowOffset,
 					maxHeight: height - 120
 				);
@@ -1119,10 +1136,17 @@ namespace Leclair.Stardew.Almanac.Menus {
 			drawMouse(b);
 
 			// Tooltip
-			if (HoverNode != null)
-				SimpleHelper.DrawHover(HoverNode, b, Game1.smallFont);
-			else if (!string.IsNullOrEmpty(HoverText))
-				IClickableMenu.drawHoverText(b, HoverText, Game1.smallFont);
+			if (HoverNode != null || ! string.IsNullOrEmpty(HoverText))
+				SimpleHelper.DrawHover(
+					HoverNode ?? CachedHoverText.Value,
+					b,
+					Game1.smallFont,
+					bgTexture: HoverMagic ? background : null,
+					bgSource: HoverMagic ? MAGIC_BG : null,
+					bgScale: HoverMagic? 4f : 1f,
+					defaultColor: HoverMagic ? Color.White : Game1.textColor,
+					defaultShadowColor: HoverMagic ? MAGIC_SHADOW_COLOR : null
+				);
 		}
 
 		#endregion

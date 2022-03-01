@@ -47,7 +47,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return string.IsNullOrEmpty(Text);
 		}
 
-		public static Vector2 GetFancySize(string text) {
+		public static Vector2 GetSpriteTextSize(string text) {
 			return new Vector2(SpriteText.getWidthOfString(text), SpriteText.getHeightOfString(text));
 		}
 
@@ -61,10 +61,10 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				return null;
 
 			char[] seps = SEPARATORS;
-			bool fancy = Style.IsFancy();
+			bool is_sprite = Style.IsFancy() || Style.IsJunimo();
 			SpriteFont font = Style.Font ?? defaultFont;
 			float scale = Style.Scale ?? 1f;
-			Vector2 spaceSize = fancy ? GetFancySize(" ") : (font.MeasureString(" ") * scale);
+			Vector2 spaceSize = is_sprite ? GetSpriteTextSize(" ") : (font.MeasureString(" ") * scale);
 
 			string pending = null;
 			int pendingEnd = -1;
@@ -85,7 +85,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				int length = (idx + (include ? 1 : 0)) - start;
 
 				string snippet = Text.Substring(start, length);
-				Vector2 size = fancy ? GetFancySize(snippet) : (font.MeasureString(snippet) * scale);
+				Vector2 size = is_sprite ? GetSpriteTextSize(snippet) : (font.MeasureString(snippet) * scale);
 
 				// Does this fit on the line?
 				if (!had_new && (size.X + (space ? spaceSize.X : 0)) < remaining) {
@@ -131,7 +131,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				offset = 1;
 			}
 
-			Vector2 finalSize = fancy ? GetFancySize(final) : (font.MeasureString(final) * scale);
+			Vector2 finalSize = is_sprite ? GetSpriteTextSize(final) : (font.MeasureString(final) * scale);
 
 			if (finalSize.X > remaining && pending != null)
 				return new TextSlice(this, pending, start, pendingEnd, pendingSize.X + (pendingSpace ? spaceSize.X : 0), Math.Max(spaceSize.Y, pendingSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
@@ -153,7 +153,9 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 
 			string text = tslice.Text;
 
-			if (Style.IsFancy())
+			if (Style.IsJunimo())
+				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y, junimoText: true);
+			else if (Style.IsFancy())
 				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y);
 			else if (Style.IsBold())
 				Utility.drawBoldText(batch, text, font, position, color, s);
@@ -164,6 +166,26 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 					Utility.drawTextWithShadow(batch, text, font, position, color, s);
 			} else
 				batch.DrawString(font, text, position, color, 0f, Vector2.Zero, s, SpriteEffects.None, GUIHelper.GetLayerDepth(position.Y));
+
+			if (Style.IsStrikethrough())
+				Utility.drawLineWithScreenCoordinates(
+					(int) position.X,
+					(int) (position.Y + tslice.Height / 2),
+					(int) (position.X + tslice.Width),
+					(int) (position.Y + tslice.Height / 2),
+					batch,
+					color
+				);
+
+			if (Style.IsUnderline())
+				Utility.drawLineWithScreenCoordinates(
+					(int) position.X,
+					(int) (position.Y + tslice.Height * 3/4),
+					(int) (position.X + tslice.Width),
+					(int) (position.Y + tslice.Height * 3/4),
+					batch,
+					color
+				);
 
 			// TODO: Strike and Underline
 		}

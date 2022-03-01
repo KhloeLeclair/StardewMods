@@ -31,7 +31,7 @@
 
 	"crop.grow-time": "Grows in {{count}} days.",
 	"crop.harvests": "Expect {{count}} harvests this year.",
-	"crop.harvests-date":  "Expect {{count}} harvests this year when planted on {{date}}.",
+	"crop.harvests-date": "Expect {{count}} harvests this year when planted on {{date}}.",
 	"crop.last-date": "Plant no later than {{date}}.",
 	"crop.regrow-time": "Regrows every {{count}} days.",
 	"crop.paddy-note": "Grows faster near water.",
@@ -56,24 +56,28 @@
 	"weather.snow": "Snow",
 
 	"page.train": "Train Schedule",
-	"page.train.about": "Warning: Trains will be passing by the Stardew Valley station at the following times. For your safety, always remain clear of the tracks when a train is present.",
+	"page.train.about": "@BWarning:@b Trains will be passing by the Stardew Valley station at the following times. For your safety, always remain clear of the tracks when a train is present.",
 
-	"page.horoscope": "Fortune",
+	"page.train.notice": "Notice: Train service to the Stardew Valley service is suspended throughout Spring as scheduled track maintenance is performed.",
 
-	"page.horoscope.luck-awful": "Displeased spirits will make life difficult.",
-	"page.horoscope.luck-bad": "Annoyed spirits won't be bringing anyone luck.",
-	"page.horoscope.luck-neutral": "The spirits will be in perfect balance. The day, in your hands.",
-	"page.horoscope.luck-good": "Good humored spirits will bring extra luck.",
-	"page.horoscope.luck-great": "Happy spirits will shower everyone with good fortune.",
+	"page.fortune": "Fortune",
+
+	"page.fortune.luck-awful": "Displeased spirits will make life difficult.",
+	"page.fortune.luck-bad": "Annoyed spirits won't be bringing anyone luck.",
+	"page.fortune.luck-neutral": "The spirits will be in perfect balance. The day, in your hands.",
+	"page.fortune.luck-good": "Good humored spirits will bring extra luck.",
+	"page.fortune.luck-great": "Happy spirits will shower everyone with good fortune.",
 
 	"page.fortune.event.none": "Expect a peaceful season. You must find excitement within, and seek joy in your daily life.",
 
-	"page.fortune.garbage-hat":  "One's trash is another's treasure.",
+	"page.fortune.about": "Here's what might be happening in {{Season}}, or what might not be.",
+
+	"page.fortune.garbage-hat": "One's trash is another's treasure.",
 
 	"page.fortune.event.fairy": "A good natured fairy will pass through over the night. Those with good luck might find a bountiful harvest awaiting them.",
 	"page.fortune.event.witch": "Witches are expected in the area this night.",
 	"page.fortune.event.meteorite": "Meteor showers are expected throughout Ferngill.",
-	"page.fortune.event.owl":  "Shrouded in mystery, stone guardians descend on the valley.",
+	"page.fortune.event.owl": "Shrouded in mystery, stone guardians descend on the valley.",
 
 	"page.mines": "The Underground",
 	"page.mines.about": "The following is a summary of predicted monster activity in {{Season}}:",
@@ -126,10 +130,13 @@
 	"settings.crops.preview.sprite": "Use Harvest Sprites",
 	"settings.crops.preview.sprite-desc": "When enabled, an image of the harvest product will be used rather than the final growth stage, to make it more easily apparent what days the crop is harvestable.",
 
-	"settings.horoscope": "Page: Fortune",
+	"settings.fortune": "Page: Fortune",
 
-	"settings.horoscope.deterministic": "Use Deterministic Luck",
-	"settings.horoscope.deterministic-desc": "In order for the daily luck predictions of the Almanac to work, we replace the calculation for daily fortune with one that uses a predictable source of randomness. If this is causing problems, you can disable the behavior here. However, doing so will disable the daily luck forecast.",
+	"settings.fortune.deterministic": "Use Deterministic Luck",
+	"settings.fortune.deterministic-desc": "In order for the daily luck predictions of the Almanac to work, we replace the calculation for daily fortune with one that uses a predictable source of randomness. If this is causing problems, you can disable the behavior here. However, doing so will disable the daily luck forecast.",
+
+	"settings.fortune.exact": "Show Luck Percentages",
+	"settings.fortune.exact-desc": "When enabled, the exact daily luck percentage will be displayed in Fortune calendar tooltips.",
 
 	"settings.train": "Page: Train Schedule",
 

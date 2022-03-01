@@ -17,6 +17,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 		private readonly List<ICropProvider> Providers = new();
 
+		private readonly Dictionary<string, ModProvider> ModProviders = new();
+
 		public CropManager(ModEntry mod) : base(mod) {
 			Providers.Add(new VanillaProvider());
 		}
@@ -27,6 +29,31 @@ namespace Leclair.Stardew.Almanac.Crops {
 			if (ex != null)
 				Mod.Monitor.Log($"[{Name}] Details:\n{ex}", level: level);
 		}
+
+		#region Mod Providers
+
+		public ModProvider GetModProvider(IManifest manifest, bool create = true) {
+			if (!ModProviders.ContainsKey(manifest.UniqueID)) {
+				if (!create)
+					return null;
+
+				var provider = new ModProvider(manifest);
+				ModProviders.Add(manifest.UniqueID, provider);
+				Providers.Add(provider);
+				Providers.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
+				Invalidate();
+				return provider;
+			}
+				
+			return ModProviders[manifest.UniqueID];
+		}
+
+		public void SortProviders() {
+			Providers.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
+			Invalidate();
+		}
+
+		#endregion
 
 		#region Events
 
@@ -47,6 +74,14 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 			Providers.Add(provider);
 			Providers.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
+			Invalidate();
+		}
+
+		public void RemoveProvider(ICropProvider provider) {
+			if (!Providers.Contains(provider))
+				return;
+
+			Providers.Remove(provider);
 			Invalidate();
 		}
 

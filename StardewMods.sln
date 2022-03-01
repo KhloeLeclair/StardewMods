@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.202
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{CD5138FD-A686-4196-9A1F-0227EAB1F810}"
 	ProjectSection(SolutionItems) = preProject
@@ -40,6 +40,7 @@ Global
 		Common\Common.projitems*{a06575c4-b53e-418a-8f57-b3d4b984d01c}*SharedItemsImports = 5
 		Common\Common.projitems*{a7b1618b-2a44-438a-b600-771b6048b1fa}*SharedItemsImports = 5
 		Common\Common.projitems*{b107224e-dcfb-437c-86b0-bf63d4b9324b}*SharedItemsImports = 5
+		Common\Common.projitems*{bc9904a0-5cab-4f9f-9258-10f7334df1b5}*SharedItemsImports = 5
 		Common\Common.projitems*{c1067058-fe50-4819-8d93-13ad37154543}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -28,7 +28,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			return new Vector2(Source.Width * Scale, Source.Height * Scale);
 		}
 
-		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont) {
+		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor) {
 			if (Texture == null)
 				return;
 

@@ -38,7 +38,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			return new Vector2(width, height);
 		}
 
-		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont) {
+		public void Draw(SpriteBatch batch, Vector2 position, Vector2 size, Vector2 containerSize, float alpha, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor) {
 
 			float itemSize = 16 * Scale;
 			float offsetY = (size.Y - itemSize) / 2;
@@ -64,16 +64,29 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			// Draw Label
 			if (!string.IsNullOrEmpty(Label)) {
 				Vector2 labelSize = Game1.smallFont.MeasureString(Label);
-				Utility.drawTextWithShadow(
-					b: batch,
-					text: Label,
-					font: Game1.smallFont,
-					position: new Vector2(
-						position.X + itemSize + (4 * Scale),
-						position.Y + ((size.Y - labelSize.Y) / 2)
-						),
-					color: Game1.textColor * alpha
-				);
+				if (defaultShadowColor.HasValue)
+					Utility.drawTextWithColoredShadow(
+						b: batch,
+						text: Label,
+						font: Game1.smallFont,
+						position: new Vector2(
+							position.X + itemSize + (4 * Scale),
+							position.Y + ((size.Y - labelSize.Y) / 2)
+							),
+						color: (defaultColor ?? Game1.textColor) * alpha,
+						shadowColor: (defaultShadowColor.Value * alpha)
+					);
+				else
+					Utility.drawTextWithShadow(
+						b: batch,
+						text: Label,
+						font: Game1.smallFont,
+						position: new Vector2(
+							position.X + itemSize + (4 * Scale),
+							position.Y + ((size.Y - labelSize.Y) / 2)
+							),
+						color: (defaultColor ?? Game1.textColor) * alpha
+					);
 			}
 		}
 	}

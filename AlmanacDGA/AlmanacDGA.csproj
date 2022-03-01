@@ -6,15 +6,10 @@
 		<RootNamespace>Leclair.Stardew.AlmanacDGA</RootNamespace>
 		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
+
+	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />
-	<ItemGroup>
-	  <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.0" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\Almanac\Almanac.csproj">
-			<Private>false</Private>
-		</ProjectReference>
-	</ItemGroup>
+
 	<ItemGroup>
 		<Reference Include="DynamicGameAssets">
 			<HintPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\DevMods\DynamicGameAssets\DynamicGameAssets.dll</HintPath>

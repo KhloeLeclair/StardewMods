@@ -78,6 +78,32 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
+		public SimpleBuilder FormatText(string text, TextStyle style, Alignment align = Alignment.None) {
+			AssertState();
+			Nodes.Add(new SimpleLayout.FlowNode(
+				FlowHelper.FormatText(text, style),
+				wrapText: false,
+				alignment: align
+			));
+			return this;
+		}
+
+		public SimpleBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
+			TextStyle style = new TextStyle(
+				color: color,
+				prismatic: prismatic,
+				font: font,
+				fancy: fancy,
+				shadow: shadow,
+				bold: bold,
+				strikethrough: strikethrough,
+				underline: underline,
+				scale: scale
+			);
+
+			return FormatText(text, style, align);
+		}
+
 		public SimpleBuilder Text(string text, TextStyle style, Alignment align = Alignment.None) {
 			AssertState();
 			Nodes.Add(new TextNode(text, style, align));

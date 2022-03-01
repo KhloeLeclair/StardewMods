@@ -27,74 +27,6 @@
         "frameworks": {
           "net5.0": {
             "targetAlias": "net5.0",
-            "projectReferences": {
-              "F:\\Code\\Stardew\\StardewMods\\Almanac\\Almanac.csproj": {
-                "projectPath": "F:\\Code\\Stardew\\StardewMods\\Almanac\\Almanac.csproj"
-              }
-            }
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        }
-      },
-      "frameworks": {
-        "net5.0": {
-          "targetAlias": "net5.0",
-          "dependencies": {
-            "Pathoschild.Stardew.ModBuildConfig": {
-              "target": "Package",
-              "version": "[4.0.0, )"
-            },
-            "Pathoschild.Stardew.ModTranslationClassBuilder": {
-              "target": "Package",
-              "version": "[2.0.0, )"
-            }
-          },
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
-        }
-      }
-    },
-    "F:\\Code\\Stardew\\StardewMods\\Almanac\\Almanac.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "F:\\Code\\Stardew\\StardewMods\\Almanac\\Almanac.csproj",
-        "projectName": "Almanac",
-        "projectPath": "F:\\Code\\Stardew\\StardewMods\\Almanac\\Almanac.csproj",
-        "packagesPath": "C:\\Users\\Stendec\\.nuget\\packages\\",
-        "outputPath": "F:\\Code\\Stardew\\StardewMods\\Almanac\\obj\\",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "C:\\Users\\Stendec\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
-        ],
-        "originalTargetFrameworks": [
-          "net5.0"
-        ],
-        "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net5.0": {
-            "targetAlias": "net5.0",
             "projectReferences": {}
           }
         },
@@ -108,17 +40,9 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
-            "Newtonsoft.Json": {
-              "target": "Package",
-              "version": "[13.0.1, )"
-            },
             "Pathoschild.Stardew.ModBuildConfig": {
               "target": "Package",
               "version": "[4.0.0, )"
-            },
-            "Pathoschild.Stardew.ModTranslationClassBuilder": {
-              "target": "Package",
-              "version": "[2.0.0, )"
             }
           },
           "imports": [

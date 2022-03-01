@@ -62,15 +62,15 @@ namespace Leclair.Stardew.Almanac {
 
 		public static string GetLuckText(double luck) {
 			if (luck >= 0.07)
-				return I18n.Page_Horoscope_LuckGreat();
+				return I18n.Page_Fortune_LuckGreat();
 			if (luck >= 0.02)
-				return I18n.Page_Horoscope_LuckGood();
+				return I18n.Page_Fortune_LuckGood();
 			if (luck >= 0)
-				return I18n.Page_Horoscope_LuckNeutral();
+				return I18n.Page_Fortune_LuckNeutral();
 			if (luck >= -0.07)
-				return I18n.Page_Horoscope_LuckBad();
+				return I18n.Page_Fortune_LuckBad();
 
-			return I18n.Page_Horoscope_LuckAwful();
+			return I18n.Page_Fortune_LuckAwful();
 		}
 
 		public static double GetLuckForDate(int seed, WorldDate date) {

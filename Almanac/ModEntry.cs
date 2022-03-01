@@ -60,7 +60,7 @@ namespace Leclair.Stardew.Almanac {
 			RegisterBuilder(WeatherPage.GetPage);
 			RegisterBuilder(WeatherPage.GetIslandPage);
 			RegisterBuilder(TrainPage.GetPage);
-			RegisterBuilder(HoroscopePage.GetPage);
+			RegisterBuilder(FortunePage.GetPage);
 			RegisterBuilder(MinesPage.GetPage);
 		}
 
@@ -152,7 +152,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		[Subscriber]
-		private void OnUpdateTicked(object sender, UpdateTickedEventArgs e) {
+		private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
 			IClickableMenu menu = Game1.activeClickableMenu;
 			if (CurrentMenu.Value == menu)
 				return;
@@ -241,7 +241,7 @@ namespace Leclair.Stardew.Almanac {
 				.AddLabel(I18n.Settings_Crops, null, "page:crop")
 				.AddLabel(I18n.Settings_Weather, null, "page:weather")
 				.AddLabel(I18n.Settings_Train, null, "page:train")
-				.AddLabel(I18n.Settings_Horoscope, null, "page:horoscope");
+				.AddLabel(I18n.Settings_Fortune, null, "page:fortune");
 
 			GMCMIntegration.StartPage("bindings", I18n.Settings_Controls);
 			GMCMIntegration
@@ -327,21 +327,27 @@ namespace Leclair.Stardew.Almanac {
 					(c, v) => c.ShowTrains = v
 				);
 
-			GMCMIntegration.StartPage("page:horoscope", I18n.Settings_Horoscope);
+			GMCMIntegration.StartPage("page:fortune", I18n.Settings_Fortune);
 
 			GMCMIntegration
 				.Add(
 					I18n.Settings_Enable,
 					I18n.Settings_EnableDesc,
-					c => c.ShowHoroscopes,
-					(c, v) => c.ShowHoroscopes = v
+					c => c.ShowFortunes,
+					(c, v) => c.ShowFortunes = v
+				)
+				.Add(
+					I18n.Settings_Fortune_Exact,
+					I18n.Settings_Fortune_ExactDesc,
+					c => c.ShowExactLuck,
+					(c, v) => c.ShowExactLuck = v
 				);
 
 			GMCMIntegration
 				.SetTitleOnly(true)
 				.Add(
-					I18n.Settings_Horoscope_Deterministic,
-					I18n.Settings_Horoscope_DeterministicDesc,
+					I18n.Settings_Fortune_Deterministic,
+					I18n.Settings_Fortune_DeterministicDesc,
 					c => c.EnableDeterministicLuck,
 					(c, v) => c.EnableDeterministicLuck = v
 				)

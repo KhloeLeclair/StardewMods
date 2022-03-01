@@ -91,7 +91,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				SimpleBuilder builder = new();
 
-				builder.Text(I18n.Crop_LastDay());
+				builder.FormatText(I18n.Crop_LastDay());
 				builder.Divider();
 
 				foreach (CropInfo crop in crops)
@@ -276,10 +276,10 @@ namespace Leclair.Stardew.Almanac.Crops {
 			else if (fertilizer != null)
 				builder.Translate(Mod.Helper.Translation.Get("crop.using-speed"), new { fertilizer });
 			else
-				builder.Text(I18n.Crop_UsingNone());
+				builder.FormatText(I18n.Crop_UsingNone());
 
 			if (PaddyBonus)
-				builder.Text($" {I18n.Crop_UsingPaddy()}");
+				builder.FormatText($" {I18n.Crop_UsingPaddy()}");
 
 			builder.Text("\n\n");
 
@@ -350,30 +350,30 @@ namespace Leclair.Stardew.Almanac.Crops {
 				builder
 					.Add(node)
 					.Text($" {crop.Name}\n", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true)
-					.Text(I18n.Crop_GrowTime(count: days), shadow: false);
+					.FormatText(I18n.Crop_GrowTime(count: days), shadow: false);
 
 				if (crop.Regrow > 0)
-					builder.Text($" {I18n.Crop_RegrowTime(count: crop.Regrow)}", shadow: false);
+					builder.FormatText($" {I18n.Crop_RegrowTime(count: crop.Regrow)}", shadow: false);
 
 				if (harvest_offset) {
 					SDate hdate = new(Game1.Date.DayOfMonth, Game1.Date.Season);
-					builder.Text($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
+					builder.FormatText($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
 				} else if (Game1.Date.SeasonIndex > Menu.Season) {
 					SDate hdate = new(1, start.Season);
-					builder.Text($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
+					builder.FormatText($" {I18n.Crop_HarvestsDate(count: harvests, date: hdate.ToLocaleString(withYear: false))}", shadow: false);
 				} else
-					builder.Text($" {I18n.Crop_Harvests(count: harvests)}", shadow: false);
+					builder.FormatText($" {I18n.Crop_Harvests(count: harvests)}", shadow: false);
 
 				if (crop.IsTrellisCrop)
-					builder.Text($" {I18n.Crop_TrellisNote()}", shadow: false);
+					builder.FormatText($" {I18n.Crop_TrellisNote()}", shadow: false);
 
 				if (crop.IsPaddyCrop)
-					builder.Text($" {I18n.Crop_PaddyNote()}", shadow: false);
+					builder.FormatText($" {I18n.Crop_PaddyNote()}", shadow: false);
 
 				if (crop.IsGiantCrop)
-					builder.Text($" {I18n.Crop_GiantNote()}", shadow: false);
+					builder.FormatText($" {I18n.Crop_GiantNote()}", shadow: false);
 
-				builder.Text($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false);
+				builder.FormatText($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false);
 			}
 
 			Flow = builder.Build();

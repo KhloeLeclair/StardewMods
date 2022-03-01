@@ -60,7 +60,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			List<int> pirateDays = IsIsland ? new() : null;
 
 			if (!IsIsland)
-				builder.Text($"{I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex))}\n\n");
+				builder.FormatText($"{I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex))}\n\n");
 
 			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
 				date.DayOfMonth = day;
@@ -92,14 +92,14 @@ namespace Leclair.Stardew.Almanac.Pages {
 					}
 
 					builder.Text($"{name}\n", font: Game1.dialogueFont, shadow: true);
-					builder.Text($"  {I18n.Festival_Date()} ", shadow: false);
+					builder.FormatText($"  {I18n.Festival_Date()} ", shadow: false);
 					builder.Text($"{sdate.ToLocaleString(withYear: false)}\n");
 
-					builder.Text($"  {I18n.Festival_Where()} ", shadow: false);
+					builder.FormatText($"  {I18n.Festival_Where()} ", shadow: false);
 					builder.Text($"{where}\n");
 
 					if (start >= 0 && end >= 0) {
-						builder.Text($"  {I18n.Festival_When()} ", shadow: false);
+						builder.FormatText($"  {I18n.Festival_When()} ", shadow: false);
 						builder.Translate(Mod.Helper.Translation.Get("festival.when-times"), new {
 							start = TimeHelper.FormatTime(start),
 							end = TimeHelper.FormatTime(end)

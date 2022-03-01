@@ -14,7 +14,7 @@ namespace Leclair.Stardew.Common.UI {
 			return new(null, new LayoutNode(dir, null, margin, minSize, align));
 		}
 
-		public static void DrawHover(this ISimpleNode node, SpriteBatch batch, SpriteFont defaultFont, int offsetX = 0, int offsetY = 0, int overrideX = -1, int overrideY = -1, float alpha = 1f) {
+		public static void DrawHover(this ISimpleNode node, SpriteBatch batch, SpriteFont defaultFont, Color? defaultColor = null, Color? defaultShadowColor = null, int offsetX = 0, int offsetY = 0, int overrideX = -1, int overrideY = -1, float alpha = 1f, bool drawBG = true, Texture2D bgTexture = null, Rectangle? bgSource = null, float bgScale = 1) {
 			// Get the node's size.
 			Vector2 size = node.GetSize(defaultFont, Vector2.Zero);
 
@@ -61,12 +61,23 @@ namespace Leclair.Stardew.Common.UI {
 			}
 
 			// Draw the background first.
-			IClickableMenu.drawTextureBox(batch, Game1.menuTexture, new Rectangle(0, 256, 60, 60), x, y, width, height, Color.White * alpha);
+			if (drawBG)
+				IClickableMenu.drawTextureBox(
+					batch,
+					texture: bgTexture ?? Game1.menuTexture,
+					sourceRect: bgSource ?? new Rectangle(0, 256, 60, 60),
+					x: x,
+					y: y,
+					width: width,
+					height: height,
+					color: Color.White * alpha,
+					scale: bgScale
+				);
 
 			x += 16;
 			y += 16;
 
-			node.Draw(batch, new Vector2(x, y), size, size, alpha, defaultFont);
+			node.Draw(batch, new Vector2(x, y), size, size, alpha, defaultFont, defaultColor, defaultShadowColor);
 		}
 
 	}

@@ -153,7 +153,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			return size;
 		}
 
-		public void Draw(SpriteBatch batch, Vector2 position, Vector2 ownSize, Vector2 containerSize, float alpha, SpriteFont defaultFont) {
+		public void Draw(SpriteBatch batch, Vector2 position, Vector2 ownSize, Vector2 containerSize, float alpha, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor) {
 #if DEBUG
 			int d_idx = 0;
 			bool draw_debug = Game1.oldKBState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F3);
@@ -262,7 +262,9 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 					size,
 					ownSize,
 					alpha,
-					defaultFont
+					defaultFont,
+					defaultColor,
+					defaultShadowColor
 				);
 
 				// Debugging

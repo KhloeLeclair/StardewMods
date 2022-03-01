@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,6 +53,12 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
+		public FlowBuilder FormatText(string text, TextStyle style, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+			AssertState();
+			Nodes.AddRange(FlowHelper.FormatText(text, style, alignment, onClick, onHover, noComponent));
+			return this;
+		}
+
 		public FlowBuilder Text(string text, TextStyle style, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
 			AssertState();
 			Nodes.Add(new TextNode(text, style, alignment, onClick, onHover, noComponent));
@@ -62,6 +69,23 @@ namespace Leclair.Stardew.Common.UI {
 			AssertState();
 			Nodes.AddRange(FlowHelper.Translate(source, values, style, alignment));
 			return this;
+		}
+
+		public FlowBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment? align = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+			TextStyle style = new TextStyle(
+				color: color,
+				prismatic: prismatic,
+				font: font,
+				fancy: fancy,
+				shadow: shadow,
+				shadowColor: shadowColor,
+				bold: bold,
+				strikethrough: strikethrough,
+				underline: underline,
+				scale: scale
+			);
+
+			return FormatText(text, style, align, onClick, onHover, noComponent);
 		}
 
 		public FlowBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment? align = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
@@ -132,6 +156,264 @@ namespace Leclair.Stardew.Common.UI {
 			return new TextNode(obj.ToString());
 		}
 
+		private static string ReadSubString(string text, int i, out int end) {
+			char chr = text[i];
+			if (chr != '{') {
+				end = i;
+				return null;
+			}
+
+			i++;
+			int start = i;
+
+			while (i < text.Length && text[i] != '}')
+				i++;
+
+			end = i + 1;
+			return text[start..i];
+		}
+
+		private static Color? ParseColor(string input) {
+			if (string.IsNullOrEmpty(input))
+				return null;
+
+			System.Drawing.Color color;
+			try {
+				color = System.Drawing.ColorTranslator.FromHtml(input);
+			} catch(Exception) {
+				return null;
+			}
+
+			return new Color(color.R, color.G, color.B, color.A);
+		}
+
+		public static IEnumerable<IFlowNode> FormatText(string text, TextStyle? style = null, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+			return FormatText(
+				text: text,
+				out TextStyle _,
+				out Alignment __,
+				style: style,
+				alignment: alignment,
+				onClick: onClick,
+				onHover: onHover,
+				noComponent: noComponent
+			);
+		}
+
+		public static IEnumerable<IFlowNode> FormatText(string text, out TextStyle endStyle, out Alignment endAlignment, TextStyle? style = null, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
+			if (string.IsNullOrEmpty(text) || !text.Contains('@')) {
+				endStyle = style ?? TextStyle.EMPTY;
+				endAlignment = alignment ?? Alignment.None;
+
+				return new IFlowNode[]{
+					new TextNode(text, style, alignment, onClick, onHover, noComponent)
+				};
+			}
+
+			List<IFlowNode> nodes = new();
+
+			TextStyle s = style ?? TextStyle.EMPTY;
+			Alignment a = alignment ?? Alignment.None;
+
+			StringBuilder builder = new();
+
+			int i = 0;
+
+			while (i < text.Length) {
+				char chr = text[i++];
+				if (chr != '@' || i == text.Length) {
+					builder.Append(chr);
+					continue;
+				}
+
+				char next = text[i++];
+				TextStyle ns = s;
+				Alignment na = a;
+
+				Color? color;
+				int ni;
+
+				switch (next) {
+					// Alignment
+					case '^':
+						if (na == Alignment.Top)
+							continue;
+						na = Alignment.Top;
+						break;
+
+					case 'v':
+						if (na == Alignment.Bottom)
+							continue;
+						na = Alignment.Bottom;
+						break;
+
+					case '-':
+						if (na == Alignment.Middle)
+							continue;
+						na = Alignment.Middle;
+						break;
+
+					// Style
+					case '_':
+						string size = ReadSubString(text, i, out ni);
+						i = ni;
+						float? scale = null;
+						if (float.TryParse(size, out float sp))
+							scale = sp;
+						if (ns.Scale == scale)
+							continue;
+						ns = new(ns, font: ns.Font, color: ns.Color, shadowColor: ns.ShadowColor, scale: scale);
+						break;
+
+					case 'b':
+						if (!ns.IsBold())
+							continue;
+						ns = new(ns, bold: false);
+						break;
+
+					case 'B':
+						if (ns.IsBold())
+							continue;
+						ns = new(ns, bold: true);
+						break;
+
+					case 'c':
+						color = ParseColor(ReadSubString(text, i, out ni));
+						i = ni;
+						if (ns.ShadowColor == color)
+							continue;
+						ns = new(ns, font: ns.Font, color: ns.Color, shadowColor: color, scale: ns.Scale);
+						break;
+
+					case 'C':
+						color = ParseColor(ReadSubString(text, i, out ni));
+						i = ni;
+						if (ns.Color == color)
+							continue;
+						ns = new(ns, font: ns.Font, color: color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+						break;
+
+					case 'f':
+						if (!ns.IsFancy())
+							continue;
+						ns = new(ns, fancy: false);
+						break;
+
+					case 'F':
+						if (ns.IsFancy())
+							continue;
+						ns = new(ns, fancy: true);
+						break;
+
+					case 'h':
+						if (!ns.HasShadow())
+							continue;
+						ns = new(ns, shadow: false);
+						break;
+
+					case 'H':
+						if (ns.HasShadow())
+							continue;
+						ns = new(ns, shadow: true);
+						break;
+
+					case 'j':
+						if (!ns.IsJunimo())
+							continue;
+						ns = new(ns, junimo: false);
+						break;
+
+					case 'J':
+						if (ns.IsJunimo())
+							continue;
+						ns = new(ns, junimo: true);
+						break;
+
+					case 'p':
+						if (!ns.IsPrismatic())
+							continue;
+						ns = new(ns, prismatic: false);
+						break;
+
+					case 'P':
+						if (ns.IsPrismatic())
+							continue;
+						ns = new(ns, prismatic: true);
+						break;
+
+					case 's':
+						if (!ns.IsStrikethrough())
+							continue;
+						ns = new(ns, strikethrough: false);
+						break;
+
+					case 'S':
+						if (ns.IsStrikethrough())
+							continue;
+						ns = new(ns, strikethrough: true);
+						break;
+
+					case 't':
+						if (ns.Font == null)
+							continue;
+						ns = new(ns, font: null, color: ns.Color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+						break;
+
+					case 'u':
+						if (!ns.IsUnderline())
+							continue;
+						ns = new(ns, underline: false);
+						break;
+
+					case 'U':
+						if (ns.IsUnderline())
+							continue;
+						ns = new(ns, underline: true);
+						break;
+
+					default:
+						builder.Append(chr);
+						continue;
+				}
+
+				if (builder.Length > 0) {
+					nodes.Add(
+						new TextNode(
+							builder.ToString(),
+							style: s,
+							alignment: a,
+							onClick: onClick,
+							onHover: onHover,
+							noComponent: noComponent
+						)
+					);
+
+					builder.Clear();
+				}
+
+				s = ns;
+				a = na;
+			}
+
+			if (builder.Length > 0)
+				nodes.Add(
+					new TextNode(
+						builder.ToString(),
+						style: s,
+						alignment: a,
+						onClick: onClick,
+						onHover: onHover,
+						noComponent: noComponent
+					)
+				);
+
+			endStyle = s;
+			endAlignment = a;
+
+			return nodes;
+		}
+
+
 		public static IEnumerable<IFlowNode> Translate(Translation source, object values, TextStyle? style = null, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false) {
 			IDictionary<string, IFlowNode> vals = new Dictionary<string, IFlowNode>(StringComparer.OrdinalIgnoreCase);
 
@@ -164,13 +446,25 @@ namespace Leclair.Stardew.Common.UI {
 
 			bool replacement = false;
 
+			TextStyle s = style ?? TextStyle.EMPTY;
+			Alignment a = alignment ?? Alignment.None;
+
 			foreach (string bit in bits) {
 				if (replacement && !string.IsNullOrWhiteSpace(bit)) {
 					if (values.TryGetValue(bit, out IFlowNode node))
 						nodes.Add(node);
 
 				} else if (!string.IsNullOrEmpty(bit))
-					nodes.Add(new TextNode(bit, style, alignment, onClick, onHover, noComponent));
+					nodes.AddRange(FormatText(
+						text: bit,
+						out s,
+						out a,
+						style: s,
+						alignment: a,
+						onClick: onClick,
+						onHover: onHover,
+						noComponent: noComponent
+					));
 
 				replacement = !replacement;
 			}

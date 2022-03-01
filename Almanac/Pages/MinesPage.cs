@@ -82,7 +82,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			FlowBuilder builder = new();
 
-			builder.Text(
+			builder.FormatText(
 				I18n.Page_Mines_About(Utility.getSeasonNameFromNumber(date.SeasonIndex))
 			);
 
@@ -153,10 +153,11 @@ namespace Leclair.Stardew.Almanac.Pages {
 						builder.Sprite(Sprites[entry.Key], 2);
 
 					builder
-						.Text($" {Mod.Helper.Translation.Get(key)}: ");
+						.FormatText($" {Mod.Helper.Translation.Get(key)}: ", color: Color.White * 0.5f);
 
 					builder.Text(
-						string.Join(", ", entry.Value)
+						string.Join(", ", entry.Value),
+						color: Color.White * 0.75f
 					);
 
 					/*bool first = true;
