@@ -7,8 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Leclair.Stardew.Common;
 
 using StardewModdingAPI;
-
 using StardewValley;
+
+using Leclair.Stardew.Almanac.Models;
 
 namespace Leclair.Stardew.Almanac {
 
@@ -112,6 +113,103 @@ namespace Leclair.Stardew.Almanac {
 		List<CropInfo> GetSeasonCrops(string season);
 
 		void InvalidateCrops();
+
+		#region Fortunes Page
+
+		/// <summary>
+		/// Register a new hook for describing random nightly events for Almanac
+		/// to list in its Fortune page. A hook function is called whenever we
+		/// need to check what nightly events will happen on a given day, and
+		/// it's called with the unique world ID as the first parameter and the
+		/// date we want to know about as a WorldDate for the second argument.
+		///
+		/// The function is expected to return one or more tuples containing,
+		/// in order, the following:
+		///
+		/// 1. A boolean that, if true, hides the vanilla generated event for
+		///    that night.
+		///
+		/// 2. A string that is displayed to the user in the Almanac. This
+		///    supports Almanac's rich text formatting.
+		///
+		/// 3. An optional texture, with a Texture2D and source Rectangle?
+		///
+		/// 4. An optional item. The item is used for compatibility with
+		///    Lookup Anything. Users will be able to hover over the
+		///    entry and open Lookup Anything to the item.
+		///
+		///    Additionally, if no sprite is provided but an item is provider,
+		///    the item will be used as a sprite. To disable this behavior,
+		///    return Rectangle.Empty for the source rectangle.
+		/// 
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod registering a hook</param>
+		/// <param name="hook">The hook function</param>
+		void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook);
+
+		/// <summary>
+		/// Register a new hook. This is similar to the previous function, but
+		/// rather than returning a string and texture separately, here we
+		/// just return an IRichEvent using our knowledge of Almanac's interfaces.
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod registering a hook</param>
+		/// <param name="hook">The hook function</param>
+		void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook);
+
+		/// <summary>
+		/// Unregister the fortunes hook for the given mod.
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod</param>
+		void ClearFortuneHook(IManifest manifest);
+
+		#endregion
+
+		#region Notices Page
+
+		/// <summary>
+		/// Register a new hook for describing daily events for Almanac
+		/// to list in its Local Notices page. A hook function is called whenever we
+		/// need to check what daily notices should be displayed, and
+		/// it's called with the unique world ID as the first parameter and the
+		/// date we want to know about as a WorldDate for the second argument.
+		///
+		/// The function is expected to return one or more tuples containing,
+		/// in order, the following:
+		///
+		/// 1. A string that is displayed to the user in the Almanac. This
+		///    supports Almanac's rich text formatting.
+		///
+		/// 2. An optional texture, with a Texture2D and source Rectangle?
+		///
+		/// 3. An optional item. The item is used for compatibility with
+		///    Lookup Anything. Users will be able to hover over the
+		///    entry and open Lookup Anything to the item.
+		///
+		///    Additionally, if no sprite is provided but an item is provider,
+		///    the item will be used as a sprite. To disable this behavior,
+		///    return Rectangle.Empty for the source rectangle.
+		/// 
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod registering a hook</param>
+		/// <param name="hook">The hook function</param>
+		void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<string, Texture2D, Rectangle?, Item>>> hook);
+
+		/// <summary>
+		/// Register a new hook. This is similar to the previous function, but
+		/// rather than returning a string and texture separately, here we
+		/// just return an IRichEvent using our knowledge of Almanac's interfaces.
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod registering a hook</param>
+		/// <param name="hook">The hook function</param>
+		void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<IRichEvent>> hook);
+
+		/// <summary>
+		/// Unregister the notices hook for the given mod.
+		/// </summary>
+		/// <param name="manifest">The manifest of the mod</param>
+		void ClearNoticesHook(IManifest manifest);
+
+		#endregion
 	}
 
 	public class ModAPI : IAlmanacAPI {
@@ -134,6 +232,10 @@ namespace Leclair.Stardew.Almanac {
 		#endregion
 
 		#region Manual Mod Crops
+
+		public void InvalidateCrops() {
+			Mod.Crops.Invalidate();
+		}
 
 		public void SetCropPriority(IManifest manifest, int priority) {
 			var provider = Mod.Crops.GetModProvider(manifest, priority != 0);
@@ -341,9 +443,37 @@ namespace Leclair.Stardew.Almanac {
 
 		#endregion
 
-		public void InvalidateCrops() {
-			Mod.Crops.Invalidate();
+		#region Fortune Telling
+
+		public void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook) {
+			Mod.Luck.RegisterHook(manifest, hook);
 		}
+
+		public void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook) {
+			Mod.Luck.RegisterHook(manifest, hook);
+		}
+
+		public void ClearFortuneHook(IManifest manifest) {
+			Mod.Luck.ClearHook(manifest);
+		}
+
+		#endregion
+
+		#region Local Notices
+
+		public void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<string, Texture2D, Rectangle?, Item>>> hook) {
+			Mod.Notices.RegisterHook(manifest, hook);
+		}
+
+		public void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<IRichEvent>> hook) {
+			Mod.Notices.RegisterHook(manifest, hook);
+		}
+
+		public void ClearNoticesHook(IManifest manifest) {
+			Mod.Notices.ClearHook(manifest);
+		}
+
+		#endregion
 
 	}
 }

@@ -48,9 +48,9 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
-		public SimpleBuilder Divider() {
+		public SimpleBuilder Divider(Texture2D source = null, Rectangle? sourceRectVert = null, Rectangle? sourceRectHoriz = null) {
 			AssertState();
-			Nodes.Add(new DividerNode(Layout));
+			Nodes.Add(new DividerNode(Layout, source, sourceRectVert, sourceRectHoriz));
 			return this;
 		}
 

@@ -6,7 +6,7 @@ using StardewValley;
 using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.Almanac.Pages {
-	public class CoverPage : BasePage {
+	public class CoverPage : BasePage<BaseState> {
 
 		private string[] words;
 		private int wordHeight;
@@ -18,7 +18,16 @@ namespace Leclair.Stardew.Almanac.Pages {
 		}
 
 		public CoverPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
-
+			// Cache the string.
+			words = (Mod.HasIsland(Game1.player) ?
+				I18n.Almanac_CoverIsland() : I18n.Almanac_Cover()
+			).Split('\n');
+			wordHeight = 0;
+			foreach (string word in words) {
+				int height = SpriteText.getHeightOfString(word);
+				if (height > wordHeight)
+					wordHeight = height;
+			};
 		}
 
 		#endregion
@@ -36,18 +45,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 		public override void Activate() {
 			base.Activate();
 
-			// Cache the string when we activate the page.
-			// We do this here rather than when the class
-			// is instantiated to allow for reloading i18n.
-			words = (Game1.player.eventsSeen.Contains(ModEntry.Event_Island) ?
-				I18n.Almanac_CoverIsland() : I18n.Almanac_Cover()
-			).Split('\n');
-			wordHeight = 0;
-			foreach (string word in words) {
-				int height = SpriteText.getHeightOfString(word);
-				if (height > wordHeight)
-					wordHeight = height;
-			};
+			
 		}
 
 		public override void Draw(SpriteBatch b) {

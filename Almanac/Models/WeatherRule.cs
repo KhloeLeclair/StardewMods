@@ -52,6 +52,11 @@ namespace Leclair.Stardew.Almanac.Models {
 	public struct RulePatternEntry {
 		public RuleWeather Weather { get; set; }
 		public float Weight { get; set; } = 1;
+
+		public RulePatternEntry(RuleWeather weather, float weight) {
+			Weather = weather;
+			Weight = weight;
+		}
 	}
 
 	public class WeatherRule {

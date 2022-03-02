@@ -129,7 +129,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				RefreshCrops();
 
 			WorldDate start = new(1, season, 1);
-			WorldDate end = new(1, season, WorldDate.DaysPerMonth);
+			WorldDate end = new(1, season, ModEntry.DaysPerMonth);
 
 			return Crops.Where(crop => crop.StartDate <= end && crop.EndDate >= start).ToList();
 		}

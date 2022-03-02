@@ -35,6 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\WorkingInventory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipe.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipeProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LoadingHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TileHelper.cs" />

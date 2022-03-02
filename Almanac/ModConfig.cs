@@ -12,10 +12,12 @@ namespace Leclair.Stardew.Almanac {
 
 		public bool ShowAlmanacButton { get; set; } = true;
 
+		public bool RestoreAlmanacState { get; set; } = true;
+
+		public int CycleTime { get; set; } = 1000;
 
 		// Bindings
 		public KeybindList UseKey { get; set; } = KeybindList.Parse("F7");
-
 
 		// Crop Page
 		public bool ShowCrops { get; set; } = true;
@@ -40,6 +42,11 @@ namespace Leclair.Stardew.Almanac {
 		// Train Page
 		public bool ShowTrains { get; set; } = true;
 
+		// Mines Page
+		public bool ShowMines { get; set; } = true;
+
+		// Notices
+		public bool ShowNotices { get; set; } = true;
 
 	}
 }

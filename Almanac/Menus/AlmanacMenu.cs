@@ -14,10 +14,20 @@ using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 
+using StardewModdingAPI.Utilities;
+
 using Leclair.Stardew.Almanac.Pages;
 
 namespace Leclair.Stardew.Almanac.Menus {
+
+	public class MenuState {
+		public string LastPage;
+		public Dictionary<string, object> States;
+	}
+
 	public class AlmanacMenu : IClickableMenu {
+
+		public static readonly PerScreen<MenuState> PreviousState = new();
 
 		// Static Stuff
 
@@ -106,6 +116,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public WorldDate Date { get; protected set; }
 		public int Year => Date.Year;
 		public int Season => Date.SeasonIndex;
+		public int Day => Date.DayOfMonth;
+
 
 		// Pages
 		private readonly IAlmanacPage[] Pages;
@@ -120,6 +132,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 		// Flow Rendering
 		private CachedFlow? Flow;
+
 		private int FlowStep = 1;
 		private int FlowOffset;
 		private int MaxFlowOffset;
@@ -142,12 +155,13 @@ namespace Leclair.Stardew.Almanac.Menus {
 		: base(0, 0, 0, 0, true) {
 			background = ModEntry.instance.Helper.Content.Load<Texture2D>("assets/Menu.png");
 			Date = new(Game1.Date);
+			Date.DayOfMonth = 1;
 
 			ModEntry mod = ModEntry.instance;
 
 			// CachedHoverText
 			CachedHoverText = new(
-				str => string.IsNullOrEmpty(str) ? null : SimpleHelper.Builder().Text(str).GetLayout(),
+				str => string.IsNullOrEmpty(str) ? null : SimpleHelper.Builder().FormatText(str).GetLayout(),
 				() => HoverText
 			);
 
@@ -216,22 +230,71 @@ namespace Leclair.Stardew.Almanac.Menus {
 				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
 			};
 
-			ChangePage(0);
+			MenuState state = PreviousState.Value;
+			if (state != null && mod.Config.RestoreAlmanacState) {
+				int idx = 0;
+				for(int i = 0; i < Pages.Length; i++) {
+					var page = Pages[i];
+					string id = page.Id;
+					if (id == state.LastPage)
+						idx = i;
+
+					if (state.States.TryGetValue(id, out object pstate))
+						page.LoadState(pstate);	
+				}
+
+				ChangePage(idx);
+			} else
+				ChangePage(0);
+
 			Game1.playSound("bigSelect");
 		}
 
-		public bool ChangeSeason(int delta) {
-			int newSeason = Season + delta;
-			if (newSeason < 0)
-				newSeason = 0;
-			if (newSeason >= WorldDate.MonthsPerYear)
-				newSeason = WorldDate.MonthsPerYear - 1;
+		protected override void cleanupBeforeExit() {
+			base.cleanupBeforeExit();
 
-			if (Season == newSeason)
+			MenuState state = new() {
+				LastPage = CurrentPage?.Id,
+				States = new()
+			};
+
+			foreach (var page in Pages) {
+				object pstate = page.GetState();
+				if (pstate != null)
+					state.States[page.Id] = pstate;
+			}
+
+			PreviousState.Value = state;
+		}
+
+		public bool ChangeSeason(int delta) {
+			bool change_season = true;
+
+			int newSeason = Season;
+
+			// Do we have longer months?
+			int newDay = Day + (delta * 28);
+			if (newDay < 1 || newDay > ModEntry.DaysPerMonth)
+				newDay = Day;
+			else if (newDay != Day)
+				change_season = false;
+
+			if (change_season) {
+				newSeason = Season + delta;
+				if (newSeason < 0)
+					newSeason = 0;
+				if (newSeason >= WorldDate.MonthsPerYear)
+					newSeason = WorldDate.MonthsPerYear - 1;
+
+				if (Season != newSeason)
+					newDay = 1;
+			}
+
+			if (Season == newSeason && Day == newDay)
 				return false;
 
 			WorldDate oldDate = Date;
-			Date = new(Year, WeatherHelper.GetSeasonName(newSeason), 1);
+			Date = new(Year, WeatherHelper.GetSeasonName(newSeason), newDay);
 
 			foreach (IAlmanacPage page in Pages)
 				page?.DateChanged(oldDate, Date);
@@ -253,18 +316,26 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 		}
 
-		public bool PrevPage() {
+		public bool PrevPage(bool wrap = false) {
 			int tab = CurrentTab - 1;
-			if (tab < 0)
-				return false;
+			if (tab < 0) {
+				if (wrap)
+					tab = Tabs.Count - 1;
+				else
+					return false;
+			}
 
 			return ChangePage(Tabs[tab].Item2);
 		}
 
-		public bool NextPage() {
+		public bool NextPage(bool wrap = false) {
 			int tab = CurrentTab + 1;
-			if (tab >= Tabs.Count)
-				return false;
+			if (tab >= Tabs.Count) {
+				if (wrap)
+					tab = 0;
+				else
+					return false;
+			}
 
 			return ChangePage(Tabs[tab].Item2);
 		}
@@ -457,7 +528,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			if (calDays == null) {
 				calDays = new();
-				for (int day = 1; day <= WorldDate.DaysPerMonth; day++)
+				// We can only display up to 28 days at a time, so don't use
+				// the DaysPerMonth.
+				for (int day = 1; day <= 28; day++)
 					calDays.Add(new ClickableComponent(
 						Rectangle.Empty, Convert.ToString(day)
 					) {
@@ -473,7 +546,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 			int col = 0;
 			int row = 0;
 
-			for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
+			for (int day = 1; day <= 28; day++) {
 				calDays[day - 1].bounds = new Rectangle(
 						xPositionOnScreen + 64 + 76 * col,
 						yPositionOnScreen + 120 + 52 + 128 * row,
@@ -500,12 +573,21 @@ namespace Leclair.Stardew.Almanac.Menus {
 			);
 		}
 
+		public int GetFlowScroll() {
+			return FlowOffset;
+		}
+
 		public void SetFlow(IEnumerable<IFlowNode> nodes) {
 			SetFlow(nodes, 1);
 		}
 
 		public void SetFlow(IEnumerable<IFlowNode> nodes, int step) {
+			SetFlow(nodes, step, FlowOffset);
+		}
+
+		public void SetFlow(IEnumerable<IFlowNode> nodes, int step, int scroll) { 
 			FlowStep = step;
+			FlowOffset = scroll;
 
 			if (nodes == null) {
 				Flow = null;
@@ -543,14 +625,10 @@ namespace Leclair.Stardew.Almanac.Menus {
 			btnPageUp.visible = MaxFlowOffset > 0;
 			FlowScrollBar.visible = MaxFlowOffset > 0;
 
-			if (oldMax == 0)
+			if (FlowOffset < 0)
 				FlowOffset = 0;
-			else {
-				if (FlowOffset < 0)
-					FlowOffset = 0;
-				if (FlowOffset > MaxFlowOffset)
-					FlowOffset = MaxFlowOffset;
-			}
+			if (FlowOffset > MaxFlowOffset)
+				FlowOffset = MaxFlowOffset;
 
 			UpdateFlowComponents();
 		}
@@ -576,10 +654,10 @@ namespace Leclair.Stardew.Almanac.Menus {
 					maxHeight: height - 120,
 					onCreate: callbacks ? cmp => {
 						cmp.region = REGION_RIGHT_PAGE;
-						allClickableComponents.Add(cmp);
+						allClickableComponents?.Add(cmp);
 					}
 				: null,
-					onDestroy: callbacks ? cmp => allClickableComponents.Remove(cmp) : null
+					onDestroy: callbacks ? cmp => allClickableComponents?.Remove(cmp) : null
 				);
 			else {
 				foreach (ClickableComponent cmp in FlowComponents)
@@ -701,6 +779,25 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			if (CurrentPage?.ReceiveKeyPress(key) ?? false)
 				return;
+
+			if (key == Keys.Tab) {
+				if (
+					Game1.oldKBState.IsKeyDown(Keys.LeftShift) ?
+						PrevPage(true) :
+						NextPage(true)
+				)
+					Game1.playSound("smallSelect");
+			}
+
+			if (key == Keys.PageDown) {
+				if (ScrollFlow(2))
+					Game1.playSound("shiny4");
+			}
+
+			if (key == Keys.PageUp) {
+				if (ScrollFlow(-2))
+					Game1.playSound("shiny4");
+			}
 		}
 
 		public override void leftClickHeld(int x, int y) {
@@ -743,17 +840,20 @@ namespace Leclair.Stardew.Almanac.Menus {
 				return;
 
 			if (calDays != null && CurrentPage is ICalendarPage page) {
-				for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
+				for (int day = 1; day <= Math.Min(28, ModEntry.DaysPerMonth); day++) {
 					ClickableComponent cmp = calDays[day - 1];
 					if (cmp.containsPoint(x, y)) {
-						WorldDate date = new(Date);
-						date.DayOfMonth = day;
+						int oday = day + Day - 1;
+						if (oday <= ModEntry.DaysPerMonth) {
+							WorldDate date = new(Date);
+							date.DayOfMonth = oday;
 
-						int cx = x - cmp.bounds.X;
-						int cy = y - cmp.bounds.Y;
+							int cx = x - cmp.bounds.X;
+							int cy = y - cmp.bounds.Y;
 
-						if (page.ReceiveCellLeftClick(cx, cy, date, cmp.bounds))
-							return;
+							if (page.ReceiveCellLeftClick(cx, cy, date, cmp.bounds))
+								return;
+						}
 
 						break;
 					}
@@ -821,17 +921,21 @@ namespace Leclair.Stardew.Almanac.Menus {
 				return;
 
 			if (calDays != null && CurrentPage is ICalendarPage page) {
-				for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
+				for (int day = 1; day <= Math.Min(28, ModEntry.DaysPerMonth); day++) {
 					ClickableComponent cmp = calDays[day - 1];
 					if (cmp.containsPoint(x, y)) {
-						WorldDate date = new(Date);
-						date.DayOfMonth = day;
+						int oday = day + Day - 1;
 
-						int cx = x - cmp.bounds.X;
-						int cy = y - cmp.bounds.Y;
+						if (oday <= ModEntry.DaysPerMonth) {
+							WorldDate date = new(Date);
+							date.DayOfMonth = oday;
 
-						if (page.ReceiveCellRightClick(cx, cy, date, cmp.bounds))
-							return;
+							int cx = x - cmp.bounds.X;
+							int cy = y - cmp.bounds.Y;
+
+							if (page.ReceiveCellRightClick(cx, cy, date, cmp.bounds))
+								return;
+						}
 
 						break;
 					}
@@ -864,16 +968,17 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 
 			if (calDays != null && CurrentPage is ICalendarPage page) {
-				for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
+				for (int day = 1; day <= Math.Min(28, ModEntry.DaysPerMonth); day++) {
 					ClickableComponent cmp = calDays[day - 1];
 					if (cmp.containsPoint(x, y)) {
-						WorldDate date = new(Date);
-						date.DayOfMonth = day;
+						int oday = day + Day - 1;
 
-						page.PerformCellHover(x - cmp.bounds.X, y - cmp.bounds.Y, date, cmp.bounds);
+						if (oday <= ModEntry.DaysPerMonth) {
+							WorldDate date = new(Date);
+							date.DayOfMonth = day + Day - 1;
 
-						//HoverText = page.GetCellHoverText(date);
-						//HoverNode = page.GetCellHoverNode(date);
+							page.PerformCellHover(x - cmp.bounds.X, y - cmp.bounds.Y, date, cmp.bounds);
+						}
 
 						break;
 					}
@@ -984,13 +1089,19 @@ namespace Leclair.Stardew.Almanac.Menus {
 				// Days
 				ICalendarPage page = CurrentPage as ICalendarPage;
 
-				for (int day = 1; day <= WorldDate.DaysPerMonth; day++) {
-					date.DayOfMonth = day;
+				for (int day = 1; day <= 28; day++) {
+					int oday = day + Day - 1;
+					date.DayOfMonth = oday;
 					int ddays = date.TotalDays;
 
 					ClickableComponent cmp = calDays[day - 1];
 					if (cmp == null)
 						continue;
+
+					if (oday > ModEntry.DaysPerMonth) {
+						b.Draw(Game1.staminaRect, cmp.bounds, (IsMagic ? Color.Black : Color.Gray) * 0.25f);
+						continue;
+					}
 
 					if ((page?.ShouldHighlightToday ?? false) && ddays == today) {
 						int num = 4 + (int) (2.0 * Game1.dialogueButtonScale / 8.0);
@@ -1011,7 +1122,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 					b.DrawString(
 						Game1.smallFont,
-						Convert.ToString(day),
+						Convert.ToString(oday),
 						new Vector2(cmp.bounds.X, cmp.bounds.Y - 4),
 						color: IsMagic ? Color.LightSkyBlue : Game1.textColor
 					);
@@ -1019,7 +1130,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 					page?.DrawOverCell(b, date, cmp.bounds);
 
 					if ((page?.ShouldDimPastCells ?? false) && ddays < today)
-						b.Draw(Game1.staminaRect, cmp.bounds, (IsMagic ? Color.Black : Color.Gray) * 0.25f);
+						b.Draw(Game1.staminaRect, cmp.bounds,
+							IsMagic ? Color.Black * .4f : Color.Gray * 0.35f);
 				}
 			}
 

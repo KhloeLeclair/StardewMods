@@ -1,0 +1,348 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Types;
+using Leclair.Stardew.Common.UI;
+using Leclair.Stardew.Common.UI.FlowNode;
+using Leclair.Stardew.Common.UI.SimpleLayout;
+
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+using StardewModdingAPI.Utilities;
+using StardewValley;
+
+using Leclair.Stardew.Almanac.Menus;
+
+namespace Leclair.Stardew.Almanac.Pages {
+	public class NoticesPage : BasePage<BaseState>, ICalendarPage {
+
+		private IFlowNode[] Nodes;
+		private List<NPC>[] Birthdays;
+		private SpriteInfo[][] Sprites;
+		private Dictionary<NPC, SpriteInfo> Portraits = new();
+		private Dictionary<NPC, SpriteInfo> Heads = new();
+
+		//private WorldDate HoveredDate;
+		//private Cache<ISimpleNode, WorldDate> CalendarTip;
+
+		#region Lifecycle
+
+		public static NoticesPage GetPage(AlmanacMenu menu, ModEntry mod) {
+			if (! mod.Config.ShowNotices)
+				return null;
+
+			return new(menu, mod);
+		}
+
+		public NoticesPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
+			// Caches
+			/*CalendarTip = new(date => {
+				if (date == null)
+					return null;
+
+				int day = date.DayOfMonth - 1;
+
+				List<NPC> bdays = Birthdays?[day];
+
+				SimpleBuilder builder = new();
+
+				if (bdays != null) {
+					builder
+						.FormatText("Birthdays:")
+						.Divider();
+
+					foreach (NPC npc in bdays) {
+						SpriteInfo head = GetHead(npc);
+						if (head != null)
+							builder.Sprite(
+								head,
+								3f,
+								label: npc.displayName
+							);
+					}
+				}
+
+				return builder.GetLayout();
+
+			}, () => HoveredDate);*/
+
+			Update();
+		}
+
+		#endregion
+
+		#region Logic
+
+		private SpriteInfo GetPortrait(NPC npc) {
+			if (npc == null)
+				return null;
+
+			if (Portraits.TryGetValue(npc, out SpriteInfo sprite))
+				return sprite;
+
+			Texture2D texture;
+			try {
+				texture = Game1.content.Load<Texture2D>("Characters\\" + npc.getTextureName());
+			} catch(Exception) {
+				texture = npc.Sprite.Texture;
+			}
+
+			sprite = new SpriteInfo(
+				texture,
+				new Rectangle(0, 0, 16, 24)
+			);
+
+			Portraits[npc] = sprite;
+			return sprite;
+		}
+
+		private SpriteInfo GetHead(NPC npc) {
+			if (npc == null)
+				return null;
+
+			if (Heads.TryGetValue(npc, out SpriteInfo sprite))
+				return sprite;
+
+			Texture2D texture;
+			try {
+				texture = Game1.content.Load<Texture2D>("Characters\\" + npc.getTextureName());
+			} catch (Exception) {
+				texture = npc.Sprite.Texture;
+			}
+
+			Models.HeadSize info = null;
+			Mod.HeadSizes?.TryGetValue(npc.Name, out info);
+
+			sprite = new SpriteInfo(
+				texture,
+				new Rectangle(
+					info?.OffsetX ?? 0,
+					info?.OffsetY ?? 0,
+					info?.Width ?? 16,
+					info?.Height ?? 15
+				)
+			);
+
+			Heads[npc] = sprite;
+			return sprite;
+		}
+
+		public override void Update() {
+			base.Update();
+
+			Nodes = new IFlowNode[ModEntry.DaysPerMonth];
+			Birthdays = new List<NPC>[ModEntry.DaysPerMonth];
+			Sprites = new SpriteInfo[ModEntry.DaysPerMonth][];
+			WorldDate date = new(Menu.Date);
+
+			// Build a map of this month's birthdays.
+			foreach (NPC npc in Utility.getAllCharacters())
+				if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
+					int day = npc.Birthday_Day;
+					if (Birthdays[day - 1] == null)
+						Birthdays[day - 1] = new();
+
+					Birthdays[day - 1].Add(npc);
+				}
+
+			FlowBuilder builder = new();
+
+			builder.FormatText(
+					I18n.Page_Notices(),
+					fancy: true,
+					align: Alignment.Center
+				);
+
+			for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
+
+				FlowBuilder db = new();
+
+				// Other Events
+				date.DayOfMonth = day;
+				List<SpriteInfo> sprites = new();
+
+				foreach(var evt in Mod.Notices.GetEventsForDate(0, date)) {
+					if (evt == null)
+						continue;
+
+					bool has_simple = ! string.IsNullOrEmpty(evt.SimpleLabel);
+					bool has_line = has_simple || evt.AdvancedLabel != null;
+
+					Func<IFlowNodeSlice, bool> onHover = null;
+
+					if (has_line) {
+						db.Text("\n");
+						if (evt.Item != null)
+							onHover = slice => {
+								Menu.HoveredItem = evt.Item;
+								return true;
+							};
+					}
+
+					if (evt.Sprite != null) {
+						sprites.Add(evt.Sprite);
+
+						if (has_line)
+							db
+								.Sprite(evt.Sprite, 3f, onHover: onHover)
+								.Text(" ");
+					}
+
+					if (evt.AdvancedLabel != null)
+						db.AddRange(evt.AdvancedLabel);
+					else if (has_simple)
+						db.FormatText(evt.SimpleLabel, align: Alignment.Middle, onHover: onHover);
+				}
+
+				Sprites[day - 1] = sprites.Count > 0 ? sprites.ToArray() : null;
+
+				// Birthdays
+				List<NPC> birthdays = Birthdays[day - 1];
+				if (birthdays != null) {
+					foreach (NPC npc in birthdays) {
+						char last = npc.displayName.Last<char>();
+
+						bool trail_s = last == 's' ||
+							LocalizedContentManager.CurrentLanguageCode ==
+							LocalizedContentManager.LanguageCode.de &&
+								(last == 'x' || last == 'ß' || last == 'z');
+
+						var name = new Common.UI.FlowNode.TextNode(
+							npc.displayName,
+							alignment: Alignment.Middle
+						);
+
+						db
+							.Text("\n")
+							.Sprite(GetHead(npc), 3f)
+							.Text(" ")
+							.Translate(
+								Mod.Helper.Translation.Get(
+									trail_s ?
+										"page.notices.birthday.no-s" :
+										"page.notices.birthday.s"
+								),
+								new { name },
+								alignment: Alignment.Middle
+							);
+					}
+				}
+
+				if (db.Count == 0)
+					continue;
+
+				SDate sdate = new(day, date.Season);
+
+				var node = new Common.UI.FlowNode.TextNode(
+					sdate.ToLocaleString(withYear: false),
+					new TextStyle(
+						font: Game1.dialogueFont
+					),
+					onClick: slice => false
+				);
+
+				Nodes[day - 1] = node;
+
+				builder
+					.Text("\n\n")
+					.Add(node)
+					.AddRange(db.Build());
+			}
+
+			SetFlow(
+				builder.Build(),
+				4,
+				0
+			);
+		}
+
+		#endregion
+
+		#region ITab
+
+		public override int SortKey => 11;
+		public override string TabSimpleTooltip => I18n.Page_Notices();
+
+		public override Texture2D TabTexture => Game1.mouseCursors;
+		public override Rectangle? TabSource => new(208, 320, 16, 16);
+
+		#endregion
+
+		#region IAlmanacPage
+
+		#endregion
+
+		#region ICalendarPage
+
+		public bool ShouldDimPastCells => true;
+		public bool ShouldHighlightToday => true;
+
+		public void DrawUnderCell(SpriteBatch b, WorldDate date, Rectangle bounds) {
+			SpriteInfo[] sprites = Sprites?[date.DayOfMonth - 1];
+			List<NPC> bdays = Birthdays?[date.DayOfMonth - 1];
+
+			if (sprites != null) {
+				int idx = (int) (
+					Game1.currentGameTime.TotalGameTime.TotalMilliseconds
+					% (Mod.Config.CycleTime * sprites.Length)) / Mod.Config.CycleTime;
+
+				SpriteInfo sprite = sprites[idx];
+				sprite?.Draw(
+					b,
+					new Vector2(
+						bounds.X + bounds.Width - 36,
+						bounds.Y + 4
+					),
+					2f
+				);
+			}
+
+			if (bdays != null) {
+				int idx = (int) (
+					Game1.currentGameTime.TotalGameTime.TotalMilliseconds
+					% (Mod.Config.CycleTime * bdays.Count)) / Mod.Config.CycleTime;
+
+				NPC npc = bdays?[idx];
+				SpriteInfo sprite = GetPortrait(npc);
+				sprite?.Draw(
+					b,
+					new Vector2(
+						bounds.X + (bounds.Width - 72) / 2,
+						bounds.Y + bounds.Height - 72
+					),
+					3f,
+					size: 24
+				);
+			}
+		}
+
+		public void DrawOverCell(SpriteBatch b, WorldDate date, Rectangle bounds) {
+			
+		}
+
+		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
+			int day = date.DayOfMonth;
+			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollFlow(node)) {
+				Game1.playSound("shiny4");
+				return true;
+			}
+
+			return false;
+		}
+
+		public bool ReceiveCellRightClick(int x, int y, WorldDate date, Rectangle bounds) {
+			return false;
+		}
+
+		public void PerformCellHover(int x, int y, WorldDate date, Rectangle bounds) {
+			//HoveredDate = date;
+			//Menu.HoverNode = CalendarTip.Value;
+		}
+
+		#endregion
+
+	}
+}

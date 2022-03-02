@@ -27,7 +27,7 @@
 	"crop.using-agri": "The following growth times and dates assume you are an {{agriculturist}}.",
 	"crop.using-speed": "The following growth times and dates assume you are using {{fertilizer}}.",
 	"crop.using-both": "The following growth times and dates assume you are an {{agriculturist}} and that you are using {{fertilizer}}.",
-	"crop.using-paddy": "They also assume crops that benefit from it are grown near water.",
+	"crop.using-paddy": "They also assume crops that benefit from it are @Bgrown near water@b.",
 
 	"crop.grow-time": "Grows in {{count}} days.",
 	"crop.harvests": "Expect {{count}} harvests this year.",
@@ -41,12 +41,18 @@
 	"page.weather": "Weather Forecast",
 	"page.weather-island": "Ginger Island Forecast",
 
-	"festival.about": "The following festivals are scheduled to be held within the greater Pelican Town area in {{season}}:",
+	"page.weather.pirates": "The Adventurer's Guild has warned that they expect pirate activity in or around Ginger Island on the following dates:",
+
+	"festival.about": "The following festivals are scheduled to be held within the Stardew Valley area in {{season}}:",
 
 	"festival.when": "When:",
 	"festival.when-times": "{{start}} to {{end}}",
 	"festival.where": "Where:",
 	"festival.date": "Date:",
+
+	"festival.location.Town": "Pelican Town",
+	"festival.location.Beach": "The Beach",
+	"festival.location.Forest": "Cindersap Forest",
 
 	"weather.sunny": "Sunny",
 	"weather.rain": "Rain",
@@ -58,7 +64,7 @@
 	"page.train": "Train Schedule",
 	"page.train.about": "@BWarning:@b Trains will be passing by the Stardew Valley station at the following times. For your safety, always remain clear of the tracks when a train is present.",
 
-	"page.train.notice": "Notice: Train service to the Stardew Valley service is suspended throughout Spring as scheduled track maintenance is performed.",
+	"page.train.notice": "Train service to the Stardew Valley station is suspended throughout Spring as scheduled track maintenance is performed.",
 
 	"page.fortune": "Fortune",
 
@@ -88,6 +94,15 @@
 	"page.mines.type.Quarry": "Quarry",
 	"page.mines.type.InfestedQuarry": "Quarry Infestation",
 	"page.mines.type.Dino": "Cavern Dinosaurs",
+
+	"page.notices": "Local Notices",
+
+	"page.notices.season": "{{item}} season goes from {{start}} through {{end}}.",
+	"page.notices.summer": "The summer ocean currents are expected to hit Pelican Beach with extra debris from the 12th to the 14th.",
+	"page.notices.market": "The Night Market is open late from the 15th to the 17th.",
+
+	"page.notices.birthday.no-s": "It's {{name}}' birthday!",
+	"page.notices.birthday.s": "It's {{name}}'s birthday!",
 
 	// Settings
 
@@ -140,6 +155,38 @@
 
 	"settings.train": "Page: Train Schedule",
 
-	"settings.weather": "Page: Weather Forecast"
+	"settings.weather": "Page: Weather Forecast",
 
+	"settings.mines": "Page: The Underground",
+
+	"settings.notices": "Page: Notices",
+
+	"settings.restore-state": "Restore Previous State",
+	"settings.restore-state.desc": "When enabled, the Almanac will remember what state it was in when you close and re-open it.",
+
+	"settings.cycle-time": "Cycle Time",
+	"settings.cycle-time.desc": "When multiple pictures need to be shown on a given day, each picture is shown for this many seconds.",
+
+	// Events
+
+	// Pierre at Farm
+	"event.11022000.0": "Hello there, @. It seems you're settling in well!",
+	"event.11022000.1": "My shipment of this year's Farmer's Almanac just arrived. Since you're new, I thought I'd bring you a copy.",
+	"event.11022000.2": "Received a copy of 'Farmer's Almanac'.",
+	"event.11022000.3": "They're full of useful information. Weather forecasts. Crop rotations. The regional train schedule. Lots of stuff.",
+	"event.11022000.4": "Make sure to read up on what you can grow. Once you're ready to plant, you can buy seeds from my shop.#$b#Pierre's seeds are the *best* you can find.",
+
+	// Wizard at Farm
+	"event.11022002.0": "Hello again... @. I've been waiting for you.#$b#Here, I'd like to give you something.",
+	"event.11022002.1": "Received a copy of 'Magical Almanac'.",
+	"event.11022002.2": "As a farmer, you're familiar with forecasts.#$b#This almanac contains a spiritual forecast, penned by Welwick herself.#$b#It will help you stay safe and grow.",
+	"event.11022002.3": "Now, if you'll excuse me... I have much work to do.",
+
+	// Willy at FishShop
+	"event.11022001.0": "Ahoy!",
+	"event.11022001.1": "Headin' off to the island, lad?^Headin' off to the island, lass?",
+	"event.11022001.2": "Have somethin' you might want, then. Here.",
+	"event.11022001.3": "Received a copy of 'Fern Islands Almanac'.",
+	"event.11022001.4": "'s not much, but knowin' what the weather'll be is great. Some fish only come out in the rain, you know?",
+	"event.11022001.5": "Well, I best not keep yeh. Have a good day, @."
 }

@@ -104,7 +104,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			else
 				Forecast = CachedWeather;
 
-			return Forecast[date.SeasonIndex * WorldDate.DaysPerMonth + date.DayOfMonth - 1];
+			return Forecast[date.SeasonIndex * ModEntry.DaysPerMonth + date.DayOfMonth - 1];
 		}
 
 		#endregion
@@ -118,7 +118,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			CachedSeed = seed;
 			CachedYear = year;
 
-			CachedWeather = new int[WorldDate.DaysPerMonth * 4];
+			CachedWeather = new int[ModEntry.DaysPerMonth * 4];
 			CachedIslandWeather = new int[CachedWeather.Length];
 
 			bool[] RuledDates = new bool[CachedWeather.Length];
@@ -170,24 +170,27 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 			int[] seasons = rule.ValidSeasonIndices;
 
+			int daysPerYear = WorldDate.MonthsPerYear * ModEntry.DaysPerMonth;
+			int weeksPerYear = daysPerYear / 7;
+
 			if (rule.Period == RulePeriod.Year) {
 				ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
 
 			} else if (rule.Period == RulePeriod.Season) {
 				for(int i = 0; i < 4; i++) {
-					int first = (i * WorldDate.DaysPerMonth);
+					int first = (i * ModEntry.DaysPerMonth);
 
 					if (!seasons.Contains(i))
 						continue;
 
-					ArraySegment<int> weatherSeg = new(Weather, first, WorldDate.DaysPerMonth);
-					ArraySegment<bool> ruledSeg = new(RuledDates, first, WorldDate.DaysPerMonth);
+					ArraySegment<int> weatherSeg = new(Weather, first, ModEntry.DaysPerMonth);
+					ArraySegment<bool> ruledSeg = new(RuledDates, first, ModEntry.DaysPerMonth);
 
 					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
 				}
 
 			} else if (rule.Period == RulePeriod.Week) {
-				for (int i = 0; i < 16; i++) {
+				for (int i = 0; i < weeksPerYear; i++) {
 					int first = (i * 7);
 
 					if (!seasons.Contains(i / 4))

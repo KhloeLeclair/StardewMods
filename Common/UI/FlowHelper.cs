@@ -29,6 +29,16 @@ namespace Leclair.Stardew.Common.UI {
 			Node = node;
 		}
 
+		public int Count {
+			get {
+				if (Built != null)
+					return Built.Length;
+				if (Nodes != null)
+					return Nodes.Count;
+				return 0;
+			}
+		}
+
 		private void AssertState() {
 			if (Built != null) throw new ArgumentException("cannot modify built flow");
 			if (Nodes == null) Nodes = new();
@@ -39,6 +49,10 @@ namespace Leclair.Stardew.Common.UI {
 			AssertState();
 			Nodes.Add(node);
 			return this;
+		}
+
+		public FlowBuilder AddRange(FlowBuilder builder) {
+			return AddRange(builder.Build());
 		}
 
 		public FlowBuilder AddRange(IEnumerable<IFlowNode> nodes) {
@@ -143,17 +157,17 @@ namespace Leclair.Stardew.Common.UI {
 
 		public static Regex I18N_REPLACER = new("{{([ \\w\\.\\-]+)}}");
 
-		public static IFlowNode GetNode(object obj) {
+		public static IFlowNode GetNode(object obj, Alignment? alignment = null) {
 			if (obj == null)
 				return null;
 			if (obj is IFlowNode node)
 				return node;
 			if (obj is IFlowNode[] nodes)
-				return new NestedNode(nodes);
+				return new NestedNode(nodes, alignment: alignment);
 			if (obj is SpriteInfo sprite)
-				return new SpriteNode(sprite, 2f);
+				return new SpriteNode(sprite, 2f, alignment: alignment);
 
-			return new TextNode(obj.ToString());
+			return new TextNode(obj.ToString(), alignment: alignment);
 		}
 
 		private static string ReadSubString(string text, int i, out int end) {
@@ -421,14 +435,14 @@ namespace Leclair.Stardew.Common.UI {
 				foreach (DictionaryEntry entry in dictionary) {
 					string key = entry.Key?.ToString().Trim();
 					if (key != null)
-						vals[key] = GetNode(entry.Value);
+						vals[key] = GetNode(entry.Value, alignment);
 				}
 			} else {
 				Type type = values.GetType();
 				foreach (PropertyInfo prop in type.GetProperties())
-					vals[prop.Name] = GetNode(prop.GetValue(values));
+					vals[prop.Name] = GetNode(prop.GetValue(values), alignment);
 				foreach (FieldInfo field in type.GetFields())
-					vals[field.Name] = GetNode(field.GetValue(values));
+					vals[field.Name] = GetNode(field.GetValue(values), alignment);
 			}
 
 			return Translate(source, vals, style, alignment, onClick, onHover, noComponent);

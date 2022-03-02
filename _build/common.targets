@@ -16,7 +16,7 @@
 	<PropertyGroup Condition="$(Configuration) != 'Release'">
 		<DebugType>Portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
-    <CodeAnalysisRuleSet>Rules.ruleset</CodeAnalysisRuleSet>
+		<CodeAnalysisRuleSet>$(SolutionDir)\_build\Rules.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
 
 	<!-- mod build package -->

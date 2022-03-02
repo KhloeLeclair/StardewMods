@@ -117,7 +117,7 @@ namespace Leclair.Stardew.Common.UI {
 				Bold.Equals(other.Bold) &&
 				Color.Equals(other.Color) &&
 				Prismatic.Equals(other.Prismatic) &&
-				Font.Equals(other.Font) &&
+				Font == other.Font &&
 				Scale.Equals(other.Scale) &&
 				Strikethrough.Equals(other.Strikethrough) &&
 				Underline.Equals(other.Underline);

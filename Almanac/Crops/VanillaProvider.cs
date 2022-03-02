@@ -46,7 +46,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				foreach (string season in seasons) {
 					WorldDate start = new(1, season, 1);
-					WorldDate end = new(1, season, WorldDate.DaysPerMonth);
+					WorldDate end = new(1, season, ModEntry.DaysPerMonth);
 
 					if (startDate == null || startDate > start)
 						startDate = start;
@@ -55,7 +55,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				}
 
 				// Skip crops that are always active.
-				if (startDate.SeasonIndex == 0 && startDate.DayOfMonth == 1 && endDate.SeasonIndex == (WorldDate.MonthsPerYear - 1) && endDate.DayOfMonth == WorldDate.DaysPerMonth)
+				if (startDate.SeasonIndex == 0 && startDate.DayOfMonth == 1 && endDate.SeasonIndex == (WorldDate.MonthsPerYear - 1) && endDate.DayOfMonth == ModEntry.DaysPerMonth)
 					continue;
 
 				// If the sprite is 23, it's a seasonal multi-seed

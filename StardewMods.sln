@@ -17,6 +17,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{85976295-B875-40FE-B8F0-59CCA33B1FBB}"
 	ProjectSection(SolutionItems) = preProject
 		_build\common.targets = _build\common.targets
+		_build\Rules.ruleset = _build\Rules.ruleset
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoveToConnected", "MoveToConnected\MoveToConnected.csproj", "{B107224E-DCFB-437C-86B0-BF63D4B9324B}"

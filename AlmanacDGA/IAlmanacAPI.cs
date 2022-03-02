@@ -81,5 +81,6 @@ namespace Leclair.Stardew.Almanac {
 		void ClearCrops(IManifest manifest);
 
 		void InvalidateCrops();
+
 	}
 }
