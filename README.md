@@ -3,7 +3,7 @@
 This repository contains all of my Stardew Valley mods, released or not. Of note...
 
 
-## Almanac (Not Yet Released)
+## Almanac
 
  Almanac provides an in-game book with useful information about different subjects,
  including a long term weather forecast and when to plant crops. 
