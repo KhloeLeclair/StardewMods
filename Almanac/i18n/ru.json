@@ -161,8 +161,8 @@
 
 	"settings.notices": "Страница: записки",
 
-	"settings.restore-state": "Restore Previous State",
-	"settings.restore-state.desc": "When enabled, the Almanac will remember what state it was in when you close and re-open it.",
+	"settings.restore-state": "Создать закладку",
+	"settings.restore-state.desc": "Альманах будет открыт на той странице, на которой он был закрыт в последний раз.",
 
 	"settings.notices.cycle-time": "Время цикла",
 	"settings.notices.cycle-time.desc": "Когда в определенный день необходимо показать несколько изображений, каждое изображение отображается в течение этого количества секунд.",
