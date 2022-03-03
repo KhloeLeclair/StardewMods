@@ -699,6 +699,45 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 		}
 
+		public bool ScrollFlowPage(int direction) {
+			if (!Flow.HasValue)
+				return false;
+
+			int page = Flow.Value.Lines.Length - MaxFlowOffset;
+			if (direction < 0)
+				page *= -1;
+
+			int old = FlowOffset;
+			FlowOffset += page;
+			if (FlowOffset < 0)
+				FlowOffset = 0;
+			if (FlowOffset > MaxFlowOffset)
+				FlowOffset = MaxFlowOffset;
+
+			if (old != FlowOffset)
+				UpdateFlowComponents();
+
+			return old != FlowOffset;
+		}
+
+		public bool ScrollFlowStart() {
+			if (!Flow.HasValue || FlowOffset == 0)
+				return false;
+
+			FlowOffset = 0;
+			UpdateFlowComponents();
+			return true;
+		}
+
+		public bool ScrollFlowEnd() {
+			if (!Flow.HasValue || FlowOffset >= MaxFlowOffset)
+				return false;
+
+			FlowOffset = MaxFlowOffset;
+			UpdateFlowComponents();
+			return true;
+		}
+
 		public bool ScrollFlow(int direction) {
 			int old = FlowOffset;
 			FlowOffset += direction < 0 ? -FlowStep : FlowStep;
@@ -790,12 +829,22 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 
 			if (key == Keys.PageDown) {
-				if (ScrollFlow(2))
+				if (ScrollFlowPage(1))
 					Game1.playSound("shiny4");
 			}
 
 			if (key == Keys.PageUp) {
-				if (ScrollFlow(-2))
+				if (ScrollFlowPage(-1))
+					Game1.playSound("shiny4");
+			}
+
+			if (key == Keys.Home) {
+				if (ScrollFlowStart())
+					Game1.playSound("shiny4");
+			}
+
+			if (key == Keys.End) {
+				if (ScrollFlowEnd())
 					Game1.playSound("shiny4");
 			}
 		}
@@ -1070,7 +1119,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				// Headers
 				for (int day = 1; day <= 7; day++) {
 					int x = xPositionOnScreen + 64 + 76 * (day - 1);
-					int y = yPositionOnScreen + 116;
+					int y = yPositionOnScreen + 108;
 					string text = ModEntry.instance.Helper.Translation.Get($"calendar.day.{day}");
 
 					Vector2 size = Game1.dialogueFont.MeasureString(text);
@@ -1080,7 +1129,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 						text,
 						new Vector2(
 							x + (76 - size.X) / 2,
-							y
+							y + (60 - size.Y) / 2
 						),
 						color: IsMagic ? Color.SkyBlue : Game1.textColor
 					);

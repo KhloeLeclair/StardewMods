@@ -157,17 +157,78 @@ namespace Leclair.Stardew.Common.UI {
 
 		public static Regex I18N_REPLACER = new("{{([ \\w\\.\\-]+)}}");
 
-		public static IFlowNode GetNode(object obj, Alignment? alignment = null) {
+		public static IFlowNode GetNode(object obj, Alignment? alignment = null, bool format = false, IModHelper helper = null) {
 			if (obj == null)
 				return null;
 			if (obj is IFlowNode node)
 				return node;
 			if (obj is IFlowNode[] nodes)
 				return new NestedNode(nodes, alignment: alignment);
+			if (obj is Texture2D tex)
+				return new SpriteNode(
+					new SpriteInfo(tex, tex.Bounds),
+					2f,
+					alignment: alignment
+				);
+			if (obj is Tuple<Texture2D, float> twople)
+				return new SpriteNode(
+					new SpriteInfo(twople.Item1, twople.Item1.Bounds),
+					twople.Item2,
+					alignment: alignment
+				);
+			if (obj is Tuple<Texture2D, Rectangle> tuple)
+				return new SpriteNode(
+					new SpriteInfo(tuple.Item1, tuple.Item2),
+					2f,
+					alignment: alignment
+				);
+			if (obj is Tuple<Texture2D, Rectangle, float> triple)
+				return new SpriteNode(
+					new SpriteInfo(triple.Item1, triple.Item2),
+					triple.Item3,
+					alignment: alignment
+				);
 			if (obj is SpriteInfo sprite)
 				return new SpriteNode(sprite, 2f, alignment: alignment);
+			if (obj is Tuple<SpriteInfo, float> spriple)
+				return new SpriteNode(spriple.Item1, spriple.Item2, alignment: alignment);
+			if (obj is Item item && helper != null)
+				return new SpriteNode(
+					SpriteHelper.GetSprite(item, helper),
+					2f,
+					alignment: alignment
+				);
+			if (obj is Tuple<Item, float> ituple && helper != null)
+				return new SpriteNode(
+					SpriteHelper.GetSprite(ituple.Item1, helper),
+					ituple.Item2,
+					alignment: alignment
+				);
+
+			if (format) {
+				IFlowNode[] nods = FormatText(obj.ToString(), alignment: alignment)?.ToArray();
+				if (nods == null || nods.Length == 0)
+					return null;
+				if (nods.Length == 1)
+					return nods[0];
+				return new NestedNode(nods, alignment: alignment);
+			}
 
 			return new TextNode(obj.ToString(), alignment: alignment);
+		}
+
+		public static List<IFlowNode> GetNodes(object[] objs, Alignment? alignment = null, bool format = false, IModHelper helper = null) {
+			List<IFlowNode> result = new();
+
+			foreach(object obj in objs) {
+				IFlowNode node = GetNode(obj, alignment, format, helper);
+				if (node is NestedNode nn)
+					result.AddRange(nn.Nodes);
+				else if (node != null)
+					result.Add(node);
+			}
+
+			return result;
 		}
 
 		private static string ReadSubString(string text, int i, out int end) {
@@ -368,9 +429,21 @@ namespace Leclair.Stardew.Common.UI {
 						break;
 
 					case 't':
-						if (ns.Font == null)
+					case 'T':
+						string name = ReadSubString(text, i, out ni);
+						i = ni;
+						SpriteFont font = null;
+						if (!string.IsNullOrEmpty(name)) {
+							if (name.StartsWith("dialog", StringComparison.InvariantCultureIgnoreCase))
+								font = Game1.dialogueFont;
+							else if (name.Equals("small", StringComparison.InvariantCultureIgnoreCase))
+								font = Game1.smallFont;
+							else if (name.Equals("tiny", StringComparison.InvariantCultureIgnoreCase))
+								font = Game1.tinyFont;
+						}
+						if (ns.Font == font)
 							continue;
-						ns = new(ns, font: null, color: ns.Color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+						ns = new(ns, font: font, color: ns.Color, shadowColor: ns.ShadowColor, scale: ns.Scale);
 						break;
 
 					case 'u':

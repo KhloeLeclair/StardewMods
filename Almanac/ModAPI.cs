@@ -3,17 +3,74 @@ using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 using Leclair.Stardew.Common;
 
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Menus;
 
 using Leclair.Stardew.Almanac.Models;
 
 namespace Leclair.Stardew.Almanac {
 
 	public interface IAlmanacAPI {
+
+		#region Custom Pages
+
+		/*void RegisterPage(
+			IManifest manifest,
+			string id,
+			// State
+			Func<IClickableMenu, bool> Enabled = null,
+			Func<IClickableMenu, object> saveState = null,
+			Action<IClickableMenu, object> loadState = null,
+
+			// IAlmanacPage
+			bool magicTheme = false,
+			bool calendar = false,
+
+			Action<IClickableMenu> onActivate = null,
+			Action<IClickableMenu> onDeactivate = null,
+			Action<IClickableMenu, WorldDate, WorldDate> onDateChange = null,
+
+			Action<IClickableMenu> onUpdateComponents = null,
+			Func<IClickableMenu, ClickableComponent> getComponents = null,
+
+			Func<IClickableMenu, Buttons, bool> onGamePadButton = null,
+			Func<IClickableMenu, Keys, bool> onKeyPress = null,
+			Func<IClickableMenu, int, int, int, bool> onScroll = null,
+			Func<IClickableMenu, int, int, bool, bool> onLeftClick = null,
+			Func<IClickableMenu, int, int, bool, bool> onRightClick = null,
+			Action<IClickableMenu, int, int, Action<string>, Action<Item>> onHover = null,
+			Action<IClickableMenu, SpriteBatch> onDraw = null,
+
+			// ITab
+			int tabSort = 100,
+			bool? tabMagic = null,
+			Func<IClickableMenu, string> tabTooltip = null,
+			Func<IClickableMenu, Texture2D> tabTexture = null,
+			Func<IClickableMenu, Rectangle?> tabSource = null,
+			Func<IClickableMenu, float?> tabScale = null,
+
+			// ICalendar
+			Func<IClickableMenu, bool> dimPastCells = null,
+			Func<IClickableMenu, bool> highlightToday = null,
+			Action<IClickableMenu, SpriteBatch, WorldDate, Rectangle> onDrawUnderCell = null,
+			Action<IClickableMenu, SpriteBatch, WorldDate, Rectangle> onDrawOverCell = null,
+
+			Func<IClickableMenu, int, int, WorldDate, Rectangle, bool> onCellLeftClick = null,
+			Func<IClickableMenu, int, int, WorldDate, Rectangle, bool> onCellRightClick = null,
+			Action<IClickableMenu, int, int, WorldDate, Rectangle, Action<string>, Action<Item>> onCellHover = null
+		);
+
+		void UnregisterPage(IManifest manifest, string id);*/
+
+		#endregion
+
+		#region Crops Page
+
 		void AddCropProvider(ICropProvider provider);
 
 		void RemoveCropProvider(ICropProvider provider);
@@ -21,6 +78,7 @@ namespace Leclair.Stardew.Almanac {
 		void SetCropPriority(IManifest manifest, int priority);
 
 		void SetCropCallback(IManifest manifest, Action action);
+
 		void ClearCropCallback(IManifest manifest);
 
 		void AddCrop(
@@ -113,6 +171,8 @@ namespace Leclair.Stardew.Almanac {
 		List<CropInfo> GetSeasonCrops(string season);
 
 		void InvalidateCrops();
+
+		#endregion
 
 		#region Fortunes Page
 

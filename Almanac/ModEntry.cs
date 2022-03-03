@@ -31,9 +31,9 @@ namespace Leclair.Stardew.Almanac {
 		public static readonly string Mail_Has_Island = $"{Mail_Prefix}.has_island";
 		public static readonly string Mail_Has_Magic = $"{Mail_Prefix}.has_magic";
 
-		public static readonly string Mail_Seen_Base = $"{Mail_Prefix}.seen_base";
-		public static readonly string Mail_Seen_Island = $"{Mail_Prefix}.seen_island";
-		public static readonly string Mail_Seen_Magic = $"{Mail_Prefix}.seen_magic";
+		public static readonly string Mail_Seen_Base = $"{Mail_Prefix}.saw_base";
+		public static readonly string Mail_Seen_Island = $"{Mail_Prefix}.saw_island";
+		public static readonly string Mail_Seen_Magic = $"{Mail_Prefix}.saw_magic";
 
 		/*public static readonly int Event_Base   = 11022000;
 		public static readonly int Event_Island = 11022001;
@@ -87,6 +87,7 @@ namespace Leclair.Stardew.Almanac {
 			RegisterBuilder(FortunePage.GetPage);
 			RegisterBuilder(MinesPage.GetPage);
 			RegisterBuilder(NoticesPage.GetPage);
+			//RegisterBuilder(FishingPage.GetPage);
 		}
 
 		public override object GetApi() {

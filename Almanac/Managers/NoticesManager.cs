@@ -20,6 +20,7 @@ using SObject = StardewValley.Object;
 using Leclair.Stardew.Almanac.Models;
 
 namespace Leclair.Stardew.Almanac.Managers {
+
 	public class NoticesManager : BaseManager {
 
 		// This is our bush.
@@ -56,9 +57,8 @@ namespace Leclair.Stardew.Almanac.Managers {
 			Dictionary<WorldDate, List<IRichEvent>> events = new();
 
 			foreach(var cp in Mod.Helper.ContentPacks.GetOwned()) {
-
-
-
+				if (!cp.HasLocalizedAsset("notices.json", locale))
+					continue;
 			}
 
 			DataEvents = events;
