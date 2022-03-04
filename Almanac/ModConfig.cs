@@ -48,5 +48,8 @@ namespace Leclair.Stardew.Almanac {
 		// Notices
 		public bool ShowNotices { get; set; } = true;
 
+		public bool NoticesShowAnniversaries { get; set; } = true;
+		public bool NoticesShowFestivals { get; set; } = true;
+		public bool NoticesShowGathering { get; set; } = true;
 	}
 }

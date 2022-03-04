@@ -252,12 +252,6 @@ namespace Leclair.Stardew.Almanac {
 					date.TotalDays++;
 				}
 			});
-
-			Helper.ConsoleCommands.Add("al_test", "boop", (name, args) => {
-				foreach(var location in Game1.locations) {
-					Log($"  {location.Name}: {GetLocationName(location)}");
-				}
-			});
 		}
 
 		[Subscriber]
@@ -502,6 +496,27 @@ namespace Leclair.Stardew.Almanac {
 					I18n.Settings_EnableDesc,
 					c => c.ShowNotices,
 					(c, v) => c.ShowNotices = v
+				)
+
+				.AddLabel("") // Spacer
+
+				.Add(
+					I18n.Settings_Notices_Anniversaries,
+					I18n.Settings_Notices_AnniversariesDesc,
+					c => c.NoticesShowAnniversaries,
+					(c, v) => c.NoticesShowAnniversaries = v
+				)
+				.Add(
+					I18n.Settings_Notices_Festivals,
+					I18n.Settings_Notices_FestivalsDesc,
+					c => c.NoticesShowFestivals,
+					(c, v) => c.NoticesShowFestivals = v
+				)
+				.Add(
+					I18n.Settings_Notices_Gathering,
+					I18n.Settings_Notices_GatheringDesc,
+					c => c.NoticesShowGathering,
+					(c, v) => c.NoticesShowGathering = v
 				);
 		}
 

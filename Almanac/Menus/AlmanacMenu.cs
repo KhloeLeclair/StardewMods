@@ -22,6 +22,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 	public class MenuState {
 		public string LastPage;
+		public int TabScroll;
 		public Dictionary<string, object> States;
 	}
 
@@ -30,6 +31,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public static readonly PerScreen<MenuState> PreviousState = new();
 
 		// Static Stuff
+
+		public static readonly int MAX_TABS = 9;
+		public static readonly int VISIBLE_TABS = MAX_TABS - 2;
 
 		public static readonly int REGION_LEFT_PAGE = 1;
 		public static readonly int REGION_RIGHT_PAGE = 2;
@@ -128,6 +132,10 @@ namespace Leclair.Stardew.Almanac.Menus {
 		private bool IsMagic => CurrentPage?.IsMagic ?? false;
 
 		// Tabs
+		public ClickableTextureComponent btnTabsUp;
+		public ClickableTextureComponent btnTabsDown;
+		private int TabScroll = 0;
+
 		private List<Tuple<ClickableComponent, int, int, int>> Tabs = new();
 
 		// Flow Rendering
@@ -193,6 +201,36 @@ namespace Leclair.Stardew.Almanac.Menus {
 				}
 			}
 
+			if (Tabs.Count > MAX_TABS) {
+				btnTabsUp = new ClickableTextureComponent(
+					new Rectangle(0, 0, 64, 64),
+					Game1.mouseCursors,
+					UP_ARROW[0],
+					0.8f
+				) {
+					region = REGION_TABS,
+					myID = 9,
+					upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
+				};
+
+				btnTabsDown = new ClickableTextureComponent(
+					new Rectangle(0, 0, 64, 64),
+					Game1.mouseCursors,
+					DOWN_ARROW[0],
+					0.8f
+				) {
+					region = REGION_TABS,
+					myID = 11 + Pages.Length,
+					upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
+				};
+			}
+
 			Tabs.Sort((a, b) => a.Item3.CompareTo(b.Item3));
 
 			FlowScrollBar = new ClickableTextureComponent(
@@ -232,6 +270,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			MenuState state = PreviousState.Value;
 			if (state != null && mod.Config.RestoreAlmanacState) {
+				TabScroll = PreviousState.Value.TabScroll;
+
 				int idx = 0;
 				for(int i = 0; i < Pages.Length; i++) {
 					var page = Pages[i];
@@ -255,6 +295,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			MenuState state = new() {
 				LastPage = CurrentPage?.Id,
+				TabScroll = TabScroll,
 				States = new()
 			};
 
@@ -316,6 +357,42 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 		}
 
+		public bool ScrollTabs(int direction) {
+			if (Tabs.Count <= MAX_TABS || direction == 0)
+				return false;
+
+			int old = TabScroll;
+			TabScroll += (direction > 0) ? 1 : -1;
+			if (TabScroll < 0)
+				TabScroll = 0;
+			if (TabScroll > (Tabs.Count - VISIBLE_TABS))
+				TabScroll = Tabs.Count - VISIBLE_TABS;
+
+			if (TabScroll == old)
+				return false;
+
+			UpdateTabs();
+			return true;
+		}
+
+		public bool CenterTab(int index) {
+			if (Tabs.Count <= MAX_TABS)
+				return false;
+
+			int old = TabScroll;
+			TabScroll = index - (VISIBLE_TABS / 2);
+			if (TabScroll < 0)
+				TabScroll = 0;
+			if (TabScroll > (Tabs.Count - VISIBLE_TABS))
+				TabScroll = Tabs.Count - VISIBLE_TABS;
+
+			if (TabScroll == old)
+				return false;
+
+			UpdateTabs();
+			return true;
+		}
+
 		public bool PrevPage(bool wrap = false) {
 			int tab = CurrentTab - 1;
 			if (tab < 0) {
@@ -325,7 +402,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 					return false;
 			}
 
-			return ChangePage(Tabs[tab].Item2);
+			return ChangePage(Tabs[tab].Item2, true);
 		}
 
 		public bool NextPage(bool wrap = false) {
@@ -337,10 +414,10 @@ namespace Leclair.Stardew.Almanac.Menus {
 					return false;
 			}
 
-			return ChangePage(Tabs[tab].Item2);
+			return ChangePage(Tabs[tab].Item2, true);
 		}
 
-		public bool ChangePage(int index) {
+		public bool ChangePage(int index, bool center_tab = false) {
 			if (index >= Pages.Length)
 				index = Pages.Length - 1;
 			if (index < 0)
@@ -353,6 +430,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 			PageComponents = null;
 			SetFlow(null);
 			PageIndex = index;
+
+			if (center_tab)
+				CenterTab(CurrentTab);
 
 			// Apply the size of the new page type.
 			height = 185 * 4;
@@ -473,11 +553,28 @@ namespace Leclair.Stardew.Almanac.Menus {
 				offsetY += 3 * (752 - view.Height) / 2;
 			}
 
-			foreach (var entry in Tabs) {
+			if (btnTabsUp != null) {
+				btnTabsUp.bounds = new Rectangle(
+					xPositionOnScreen + width,
+					yPositionOnScreen + offsetY,
+					64, 64
+				);
+
+				offsetY += 68;
+			};
+
+			for(int i = 0; i < Tabs.Count; i++) {
+				var entry = Tabs[i];
 				ClickableComponent cmp = entry.Item1;
 				if (Pages[entry.Item2] is not ITab tab || cmp == null)
 					continue;
 
+				if (btnTabsUp != null && (i < TabScroll || i >= (TabScroll + VISIBLE_TABS))) {
+					cmp.visible = false;
+					continue;
+				}
+
+				cmp.visible = true;
 				cmp.bounds = new Rectangle(
 					xPositionOnScreen + width - 8,
 					yPositionOnScreen + offsetY,
@@ -486,6 +583,13 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 				offsetY += 68;
 			}
+
+			if (btnTabsDown != null)
+				btnTabsDown.bounds = new Rectangle(
+					xPositionOnScreen + width,
+					yPositionOnScreen + offsetY,
+					64, 64
+				);
 		}
 
 		public void UpdateCalendarComponents() {
@@ -793,21 +897,37 @@ namespace Leclair.Stardew.Almanac.Menus {
 			int x = Game1.getOldMouseX();
 			int y = Game1.getOldMouseY();
 
+			if (x > (xPositionOnScreen + width)) {
+				if (ScrollTabs(direction > 0 ? -1 : 1)) {
+					Game1.playSound("shiny4");
+					if (Game1.options.SnappyMenus)
+						snapCursorToCurrentSnappedComponent();
+				}
+
+				return;
+			}
+
 			if (CurrentPage?.ReceiveScroll(x, y, direction) ?? false)
 				return;
 
 			bool left = (x - xPositionOnScreen) < (width / 2);
 
 			if (CurrentPage?.Type == PageType.Calendar && left && !Game1.options.gamepadControls) {
-				if (ChangeSeason(direction > 0 ? -1 : 1))
+				if (ChangeSeason(direction > 0 ? -1 : 1)) {
 					Game1.playSound("shwip");
+					if (Game1.options.SnappyMenus)
+						snapCursorToCurrentSnappedComponent();
+				}
 
 				return;
 			}
 
 			if (Flow.HasValue) {
-				if (ScrollFlow(direction > 0 ? -1 : 1))
+				if (ScrollFlow(direction > 0 ? -1 : 1)) {
 					Game1.playSound("shiny4");
+					if (Game1.options.SnappyMenus)
+						snapCursorToCurrentSnappedComponent();
+				}
 
 				return;
 			}
@@ -853,12 +973,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 			base.leftClickHeld(x, y);
 
 			if (FlowScrolling) {
-				int oldY = FlowScrollBar.bounds.Y;
+				//int oldY = FlowScrollBar.bounds.Y;
 				int half = FlowScrollBar.bounds.Height / 2;
 
 				int minY = FlowScrollArea.Y + half;
 				int height = FlowScrollArea.Height - FlowScrollBar.bounds.Height;
-				int maxY = minY + height;
+				//int maxY = minY + height;
 
 				float progress = (float) (y - minY) / height;
 
@@ -939,8 +1059,20 @@ namespace Leclair.Stardew.Almanac.Menus {
 			}
 
 			// Tabs
-			foreach (var entry in Tabs) {
-				if (entry.Item1.containsPoint(x, y)) {
+			if (btnTabsDown?.containsPoint(x, y) ?? false) {
+				btnTabsDown.scale = btnTabsDown.baseScale;
+				if (ScrollTabs(1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
+			if (btnTabsUp?.containsPoint(x, y) ?? false) {
+				btnTabsUp.scale = btnTabsUp.baseScale;
+				if (ScrollTabs(-1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
+			foreach(var entry in Tabs) {
+				if (entry.Item1.visible && entry.Item1.containsPoint(x, y)) {
 					if (ChangePage(entry.Item2) && playSound)
 						Game1.playSound("smallSelect");
 					return;
@@ -1007,8 +1139,11 @@ namespace Leclair.Stardew.Almanac.Menus {
 			btnPageDown?.tryHover(x, FlowOffset < MaxFlowOffset ? y : -1);
 			btnPageUp?.tryHover(x, FlowOffset > 0 ? y : -1);
 
-			foreach (var entry in Tabs) {
-				if (entry.Item1.containsPoint(x, y) && Pages[entry.Item2] is ITab tab) {
+			btnTabsUp?.tryHover(x, y);
+			btnTabsDown?.tryHover(x, y);
+
+			foreach(var entry in Tabs) {
+				if (entry.Item1.visible && entry.Item1.containsPoint(x, y) && Pages[entry.Item2] is ITab tab) {
 					HoverNode = tab.TabAdvancedTooltip;
 					HoverText = tab.TabSimpleTooltip;
 					HoverMagic = tab.TabMagic;
@@ -1184,10 +1319,23 @@ namespace Leclair.Stardew.Almanac.Menus {
 				}
 			}
 
+			// Tabs
+			if (btnTabsDown != null) {
+				if (TabScroll + VISIBLE_TABS >= Tabs.Count)
+					btnTabsDown.draw(b, Color.Gray, 0.89f);
+				else
+					btnTabsDown.draw(b);
+
+				if (TabScroll == 0)
+					btnTabsUp.draw(b, Color.Gray, 0.89f);
+				else
+					btnTabsUp.draw(b);
+			}
+
 			for (int i = 0; i < Tabs.Count; i++) {
 				ClickableComponent cmp = Tabs[i].Item1;
 				int page = Tabs[i].Item2;
-				if (cmp != null && Pages[page] is ITab tab) {
+				if (cmp != null && cmp.visible && Pages[page] is ITab tab) {
 					int x = cmp.bounds.X - (page == PageIndex ? 16 : 0);
 
 					bool reflect = false;

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -167,10 +168,12 @@ namespace Leclair.Stardew.Almanac.Managers {
 		public IEnumerable<IRichEvent> GetVanillaEventsForDate(int seed, WorldDate date) {
 
 			// Berry Season
-			if (bush == null)
+			bool gathering = ModEntry.instance.Config.NoticesShowGathering;
+
+			if (gathering && bush == null)
 				bush = new();
 
-			if (bush.inBloom(date.Season, date.DayOfMonth)) {
+			if (gathering && bush.inBloom(date.Season, date.DayOfMonth)) {
 				SObject berry = null;
 				if (date.SeasonIndex == 0)
 					berry = new(296, 1); // Salmonberry
@@ -213,6 +216,134 @@ namespace Leclair.Stardew.Almanac.Managers {
 				}
 			}
 
+			// Festivals
+			if (ModEntry.instance.Config.NoticesShowFestivals && Utility.isFestivalDay(date.DayOfMonth, date.Season)) {
+				var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + date.DayOfMonth);
+				if (data.ContainsKey("name") && data.ContainsKey("conditions")) {
+					string name = data["name"];
+					string[] conds = data["conditions"].Split('/');
+					string where = conds.Length >= 1 ? conds[0] : null;
+
+					int start = -1;
+					int end = -1;
+
+					if (conds.Length >= 2) {
+						string[] bits = conds[1].Split(' ');
+						if (bits.Length >= 2) {
+							start = Convert.ToInt32(bits[0]);
+							end = Convert.ToInt32(bits[1]);
+						}
+					}
+
+					foreach (GameLocation loc in Game1.locations) {
+						if (loc?.Name == where) {
+							where = Mod.GetLocationName(loc);
+							break;
+						}
+					}
+
+					yield return new RichEvent(
+						null,
+						FlowHelper.Translate(
+							ModEntry.instance.Helper.Translation.Get("page.notices.festival"),
+							new {
+								name = name,
+								where = where,
+								start = TimeHelper.FormatTime(start),
+								end = TimeHelper.FormatTime(end)
+							},
+							alignment: Alignment.Middle
+						),
+						new SpriteInfo(
+							Game1.temporaryContent.Load<Texture2D>("LooseSprites\\Billboard"),
+							new Rectangle(
+								1, 398,
+								84, 12
+							),
+							baseFrames: 6
+						)
+					);
+				}
+			}
+
+			// Weddings / Anniversaries / Children
+			foreach (var who in Game1.getAllFarmers()) {
+				// Children
+				// TODO: This.
+
+				if (!ModEntry.instance.Config.NoticesShowAnniversaries)
+					continue;
+
+				// Player Weddings and Anniversaries
+				// TODO: This.
+
+				// NPC Weddings and Anniversaries
+				if ((who.isEngaged() || who.isMarried()) && who.friendshipData != null) {
+					foreach (var entry in who.friendshipData.Pairs) {
+						if (entry.Value == null || entry.Value.WeddingDate == null)
+							continue;
+
+						WorldDate wedding = entry.Value.WeddingDate;
+						if (wedding == null || wedding.SeasonIndex != date.SeasonIndex || wedding.DayOfMonth != date.DayOfMonth)
+							continue;
+
+						NPC spouse = Game1.getCharacterFromName(entry.Key);
+						if (spouse == null)
+							continue;
+
+						char last = spouse.displayName.Last<char>();
+
+						bool no_s = last == 's' ||
+							LocalizedContentManager.CurrentLanguageCode ==
+							LocalizedContentManager.LanguageCode.de &&
+								(last == 'x' || last == 'ß' || last == 'z');
+
+						var pendant = new SObject(460, 1);
+						var sprite = SpriteHelper.GetSprite(
+							pendant,
+							ModEntry.instance.Helper
+						);
+
+						// Wedding?
+						if (date.Year == wedding.Year) {
+							yield return new RichEvent(
+								null,
+								FlowHelper.Translate(
+									ModEntry.instance.Helper.Translation.Get(
+										no_s ?
+											"page.notices.wedding.no-s"
+											: "page.notices.wedding.s"
+									),
+									new {
+										name = who.displayName,
+										spouse = spouse.displayName
+									},
+									alignment: Alignment.Middle
+								),
+								sprite
+							);
+						} else {
+							yield return new RichEvent(
+								null,
+								FlowHelper.Translate(
+									ModEntry.instance.Helper.Translation.Get(
+										no_s ?
+											"page.notices.anniversary.no-s"
+											: "page.notices.anniversary.s"
+									),
+									new {
+										name = who.displayName,
+										spouse = spouse.displayName
+									},
+									alignment: Alignment.Middle
+								),
+								sprite
+							);
+						}
+					}
+				}
+			}
+
 			// Spring
 			if (date.SeasonIndex == 0) {
 
@@ -222,13 +353,13 @@ namespace Leclair.Stardew.Almanac.Managers {
 			else if (date.SeasonIndex == 1) {
 
 				// Extra Foragables
-				if (date.DayOfMonth >= 12 && date.DayOfMonth <= 14) {
+				if (gathering && date.DayOfMonth >= 12 && date.DayOfMonth <= 14) {
 					yield return new RichEvent(
 						date.DayOfMonth == 12 ?
 							I18n.Page_Notices_Summer() : null,
 						null,
 						SpriteHelper.GetSprite(
-							new SObject(372, 1),
+							new SObject(394, 1), // Rainbow Shell
 							ModEntry.instance.Helper
 						)
 					);
@@ -238,7 +369,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			// Fall
 			else if (date.SeasonIndex == 2) {
 
-				if (date.DayOfMonth >= 15 && date.DayOfMonth <= 28) {
+				if (gathering && date.DayOfMonth >= 15 && date.DayOfMonth <= 28) {
 					SObject nut = new SObject(408, 1);
 
 					yield return new RichEvent(

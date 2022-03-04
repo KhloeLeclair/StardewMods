@@ -141,6 +141,10 @@ namespace Leclair.Stardew.Almanac.Pages {
 			// Build a map of this month's birthdays.
 			foreach (NPC npc in Utility.getAllCharacters())
 				if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
+					// Don't show villagers we can't socialize with.
+					if (!npc.CanSocialize && !Game1.player.friendshipData.ContainsKey(npc.Name))
+						continue;
+
 					int day = npc.Birthday_Day;
 					if (Birthdays[day - 1] == null)
 						Birthdays[day - 1] = new();
@@ -205,7 +209,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					foreach (NPC npc in birthdays) {
 						char last = npc.displayName.Last<char>();
 
-						bool trail_s = last == 's' ||
+						bool no_s = last == 's' ||
 							LocalizedContentManager.CurrentLanguageCode ==
 							LocalizedContentManager.LanguageCode.de &&
 								(last == 'x' || last == 'ß' || last == 'z');
@@ -221,7 +225,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 							.Text(" ")
 							.Translate(
 								Mod.Helper.Translation.Get(
-									trail_s ?
+									no_s ?
 										"page.notices.birthday.no-s" :
 										"page.notices.birthday.s"
 								),
@@ -240,8 +244,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					sdate.ToLocaleString(withYear: false),
 					new TextStyle(
 						font: Game1.dialogueFont
-					),
-					onClick: slice => false
+					)
 				);
 
 				Nodes[day - 1] = node;
@@ -284,37 +287,49 @@ namespace Leclair.Stardew.Almanac.Pages {
 			SpriteInfo[] sprites = Sprites?[date.DayOfMonth - 1];
 			List<NPC> bdays = Birthdays?[date.DayOfMonth - 1];
 
-			if (sprites != null) {
-				int idx = (int) (
-					Game1.currentGameTime.TotalGameTime.TotalMilliseconds
-					% (Mod.Config.CycleTime * sprites.Length)) / Mod.Config.CycleTime;
+			double ms = Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
 
-				SpriteInfo sprite = sprites[idx];
-				sprite?.Draw(
-					b,
-					new Vector2(
-						bounds.X + bounds.Width - 36,
-						bounds.Y + 4
-					),
-					2f
-				);
+			if (sprites != null) {
+				if (sprites.Length > 1 && sprites.Length < 4 && bdays == null) {
+					for (int i = 0; i < sprites.Length; i++) {
+						sprites[i]?.Draw(
+							b,
+							new Vector2(
+								bounds.X + bounds.Width - 36,
+								bounds.Y + 4 + (i * 36)
+							),
+							2f
+						);
+					}
+
+				} else {
+					int idx = (int) (ms / Mod.Config.CycleTime) % sprites.Length;
+
+					SpriteInfo sprite = sprites[idx];
+					sprite?.Draw(
+						b,
+						new Vector2(
+							bounds.X + bounds.Width - 36,
+							bounds.Y + 4
+						),
+						2f
+					);
+				}
 			}
 
 			if (bdays != null) {
-				int idx = (int) (
-					Game1.currentGameTime.TotalGameTime.TotalMilliseconds
-					% (Mod.Config.CycleTime * bdays.Count)) / Mod.Config.CycleTime;
+				int idx = (int) (ms / Mod.Config.CycleTime) % bdays.Count;
 
 				NPC npc = bdays?[idx];
 				SpriteInfo sprite = GetPortrait(npc);
 				sprite?.Draw(
 					b,
 					new Vector2(
-						bounds.X + (bounds.Width - 72) / 2,
+						bounds.X + 4,
 						bounds.Y + bounds.Height - 72
 					),
 					3f,
-					size: 24
+					new Vector2(16, 24)
 				);
 			}
 		}

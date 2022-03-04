@@ -100,7 +100,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			}, () => HoveredDate);
 
 			CropGrowth = new(key => {
-				if (!key.HasValue)
+				if (!key.HasValue || !Mod.Config.ShowPreviews)
 					return null;
 
 				CropInfo crop = key.Value;

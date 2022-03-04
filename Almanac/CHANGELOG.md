@@ -1,6 +1,35 @@
 # Changelog
 
-### 0.10.1
+## 0.11.0
+Released March 3rd, 2022.
+
+### General
+
+* Added settings to hide different sets of notices in the Local Notices
+  page. So far, you can show or hide: Anniversaries, Gathering, and
+  Festivals separately.
+* Added festivals and anniversaries to the Local Notices page.
+* Added support for scrolling the Almanac's tabs when there are more
+  than nine tabs to display. This currently isn't important, but it
+  will be in the future as other mods add their own content to
+  Almanac (with any luck).
+* Try to snap the cursor better when scrolling with a gamepad.
+* Only display birthdays for NPCs we can socialize with on the
+  Local Notices' tab, for now. There might be a better way to handle
+  this in the future, but this seems to prevent spoilers from
+  happening?
+* When there are multiple notices on a day, and there is no NPC with
+  a birthday on that day, display up to three separate notice icons
+  before giving up and displaying a rotating icon.
+
+### Bug Fixes
+
+* Fixed an issue with the game menu overlay spamming errors when the
+  menu does not have a components list.
+* Fixed the Crop Previews setting not working to disable that feature.
+
+
+## 0.10.1
 Released March 3rd, 2022.
 
 ### General
@@ -23,7 +52,7 @@ Released March 3rd, 2022.
   end up waiting for SMAPI 3.14 for support for generics in API interfaces.
 
 
-### 0.10.0
+## 0.10.0
 Released March 2nd, 2022.
 
 ### General

@@ -55,7 +55,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 		public override void Dispose() {
 			base.Dispose();
 
-			Menu.allClickableComponents.Remove(btnAlmanac);
+			Menu.allClickableComponents?.Remove(btnAlmanac);
 		}
 
 		public bool MenuActive {
@@ -77,6 +77,9 @@ namespace Leclair.Stardew.Almanac.Overlays {
 		#region UI Updates
 
 		public virtual void AddButtonsToMenu() {
+			if (Menu.allClickableComponents == null)
+				return;
+
 			if (! Menu.allClickableComponents.Contains(btnAlmanac))
 				Menu.allClickableComponents.Add(btnAlmanac);
 		}
@@ -113,6 +116,12 @@ namespace Leclair.Stardew.Almanac.Overlays {
 
 			if (!MenuActive)
 				return;
+
+			if (Menu.allClickableComponents == null) {
+				// Something's wrong. Abort!
+				Dispose();
+				return;
+			}
 
 			AddButtonsToMenu();
 		}

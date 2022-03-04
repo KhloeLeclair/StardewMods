@@ -101,6 +101,14 @@
 	"page.notices.summer": "The summer ocean currents are expected to hit Pelican Beach with extra debris from the 12th to the 14th.",
 	"page.notices.market": "The Night Market is open late from the 15th to the 17th.",
 
+	"page.notices.anniversary.no-s": "It's {{name}} and {{spouse}}' anniversary!",
+	"page.notices.anniversary.s": "It's {{name}} and {{spouse}}'s anniversary!",
+
+	"page.notices.wedding.no-s": "It's {{name}} and {{spouse}}' wedding day!",
+	"page.notices.wedding.s": "It's {{name}} and {{spouse}}'s wedding day!",
+
+	"page.notices.festival": "It's time for the {{name}}! Join us at {{where}} from {{start}} to {{end}}.",
+
 	"page.notices.birthday.no-s": "It's {{name}}' birthday!",
 	"page.notices.birthday.s": "It's {{name}}'s birthday!",
 
@@ -159,7 +167,15 @@
 
 	"settings.mines": "Page: The Underground",
 
-	"settings.notices": "Page: Notices",
+	"settings.notices": "Page: Local Notices",
+
+	"settings.notices.anniversaries": "Show Anniversaries",
+	"settings.notices.anniversaries-desc": "When enabled, weddings and anniversaries for all farmers will be listed in the Local Notices pages.",
+
+	"settings.notices.festivals": "Show Festivals",
+	"settings.notices.festivals-desc": "When enabled, festivals will be listed in the Local Notices page.",
+	"settings.notices.gathering": "Show Gathering",
+	"settings.notices.gathering-desc": "When enabled, gathering opportunities will be listed in the Local Notices page.",
 
 	"settings.restore-state": "Restore Previous State",
 	"settings.restore-state.desc": "When enabled, the Almanac will remember what state it was in when you close and re-open it.",
