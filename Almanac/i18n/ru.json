@@ -95,11 +95,19 @@
 	"page.mines.type.InfestedQuarry": "Захвачено",
 	"page.mines.type.Dino": "Динозавры",
 
-	"page.notices": "Записки",
+	"page.notices": "Напоминалки",
 
 	"page.notices.season": "{{item}} появляется в долине, успейте ее собрать до {{end}} включительно.",
 	"page.notices.summer": "С 12 по 14 число, летние океанские течения будут выносить на пляж города Пеликан морские дары.",
 	"page.notices.market": "Ночной рынок открывается с 15 по 17 число.",
+
+	"page.notices.anniversary.no-s": "У {{name}} и {{spouse}} годовщина!",
+	"page.notices.anniversary.s": "У {{name}} и {{spouse}} годовщина!",
+
+	"page.notices.wedding.no-s": "Сегодня женитьба между {{name}} и {{spouse}}!",
+	"page.notices.wedding.s": "Сегодня женитьба {{name}} и {{spouse}}!",
+
+	"page.notices.festival": "Время для {{name}}! Присоединяйтесь к нам: {{where}}, с {{start}} до {{end}}.",
 
 	"page.notices.birthday.no-s": "У {{name}} день рождения!",
 	"page.notices.birthday.s": "У {{name}} день рождения!",
@@ -159,7 +167,15 @@
 
 	"settings.mines": "Страница: Подземелье",
 
-	"settings.notices": "Страница: записки",
+	"settings.notices": "Страница: Напоминалки",
+	
+    "settings.notices.anniversaries": "Показывать Свадьбы и Годовщины",
+	"settings.notices.anniversaries-desc": "Отображение Свадебного дня и Годовщины всех игроков на странице Напоминалки.",
+
+	"settings.notices.festivals": "Показывать Фестивали",
+	"settings.notices.festivals-desc": "Отображение Фестивалей на странице Напоминалки.",
+	"settings.notices.gathering": "Показывать Собирательство",
+	"settings.notices.gathering-desc": "Отображение морошки, радужных ракушек и подобного на странице Напоминалки.",
 
 	"settings.restore-state": "Создать закладку",
 	"settings.restore-state.desc": "Альманах будет открыт на той странице, на которой он был закрыт в последний раз.",
