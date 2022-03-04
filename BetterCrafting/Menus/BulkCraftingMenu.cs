@@ -50,7 +50,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			Menu = menu;
 			Recipe = recipe;
 
-			if (!Menu.cooking)
+			if (!Menu.cooking || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
 				Seasoning = SeasoningMode.Disabled;
 			else {
 				Item obj = Recipe.CreateItem();

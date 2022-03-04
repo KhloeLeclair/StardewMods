@@ -46,7 +46,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		public KeybindList SuppressBC { get; set; } = KeybindList.Parse("LeftShift");
 
 		public KeybindList FavoriteRecipe { get; set; } = KeybindList.Parse("F, ControllerBack");
-		public KeybindList BulkCraft { get; set; } = null;
+		public KeybindList BulkCraft { get; set; } = KeybindList.Parse("None");
 
 		// Actions
 		public ButtonAction LeftClick { get; set; } = ButtonAction.Craft;
