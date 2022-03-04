@@ -695,6 +695,19 @@ namespace Leclair.Stardew.Common.UI {
 		}
 
 
+		public static int GetMaximumScrollOffset(CachedFlow flow, int height, int step = 1) {
+			float remaining = height;
+
+			for (int i = flow.Lines.Length - 1; i >= 0; i--) {
+				remaining -= flow.Lines[i].Height;
+				if (remaining <= 0)
+					return i + (i % step);
+			}
+
+			return 0;
+		}
+
+
 		public static bool ClickFlow(CachedFlow flow, int x, int y, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
 			IFlowNodeSlice slice = GetSliceAtPoint(flow, x, y, scale, lineOffset, maxHeight);
 			return slice?.Node.OnClick?.Invoke(slice) ?? false;

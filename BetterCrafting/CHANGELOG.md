@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.12.0
+Released March 4th, 2022.
+
+### General
+
+* Added "Bulk Crafting"! This changes the default action performed when you use
+  the Use Tool key (Right-Click) on a recipe.
+* Added configuration for how the `Use Tool` and `Action` keys behave.
+* Added separate key bindings for `Favorite` and `Open Bulk Crafting`.
+* Added icon picker for categories for setting icons unrelated to icons.
+
+### Mod Compatibility
+
+* Disable the theoretical StackSplit Redux support for bulk crafting recipes,
+  since the new Bulk Crafting interface works much better for that. Still waiting
+  on SSR to accept my pull request though, so it's not like anyone is missing out.
+
+### Other Stuff
+
+* Add an update key for ModDrop to hopefully make SMAPI stop saying there's
+  an update when the update is for the SpaceCore support optional file.
+
+
 ## 0.11.0
 Released February 26th, 2022.
 

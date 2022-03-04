@@ -184,6 +184,10 @@ namespace Leclair.Stardew.Common {
 					return Projectile.projectileSheet;
 				case GameTexture.Wallpaper:
 					return Game1.content.Load<Texture2D>("Maps\\walls_and_floors");
+				case GameTexture.Emoji:
+					if (ChatBox.emojiTexture == null)
+						ChatBox.emojiTexture = Game1.content.Load<Texture2D>("LooseSprites\\emojis");
+					return ChatBox.emojiTexture;
 			}
 
 			return null;
@@ -230,6 +234,18 @@ namespace Leclair.Stardew.Common {
 				case SButton.ControllerY:
 					source = Game1.getSourceRectForStandardTileSheet(texture, 48, 16, 16);
 					source.Width = source.Height = 11;
+					break;
+
+				case SButton.ControllerBack:
+					LoadKeyTexture(helper);
+					texture = KeyTexture;
+					source = Game1.getSourceRectForStandardTileSheet(texture, 3, 11, 11);
+					break;
+
+				case SButton.ControllerStart:
+					LoadKeyTexture(helper);
+					texture = KeyTexture;
+					source = Game1.getSourceRectForStandardTileSheet(texture, 4, 11, 11);
 					break;
 
 				default:

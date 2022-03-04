@@ -8,7 +8,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 
 		public LayoutNode Parent { get; }
 
-		public Alignment Alignment => Alignment.None;
+		public Alignment Alignment => Alignment.Top;
 
 		public bool DeferSize => false;
 

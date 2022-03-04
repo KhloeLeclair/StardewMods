@@ -28,11 +28,16 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.StackSplitRedux {
 						return null;
 					return Self.Helper.Reflection.GetField<Item>(bcp, "HeldItem");
 				},
-				(page, point) => {
+				null
+				/*(page, point) => { 
+
 					if (page is not BetterCraftingPage bcp)
 						return null;
 
 					if (bcp.Editing)
+						return null;
+
+					if (bcp.GetChildMenu() != null)
 						return null;
 
 					var recipe = bcp.GetRecipeUnderCursor(point.X, point.Y);
@@ -50,7 +55,7 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.StackSplitRedux {
 							times
 						);
 					});
-				}
+				}*/
 			);
 		}
 	}

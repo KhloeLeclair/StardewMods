@@ -14,6 +14,19 @@ namespace Leclair.Stardew.BetterCrafting {
 		Iridium
 	};
 
+	public enum ButtonAction {
+		None,
+		Craft,
+		BulkCraft,
+		Favorite
+	};
+
+	public enum TTWhen {
+		Never,
+		ForController,
+		Always
+	};
+
 	public class ModConfig {
 
 		public bool ReplaceCooking { get; set; } = true;
@@ -28,7 +41,17 @@ namespace Leclair.Stardew.BetterCrafting {
 		public bool LowQualityFirst { get; set; } = true;
 
 		// Bindings
+		public TTWhen ShowKeybindTooltip { get; set; } = TTWhen.ForController;
+
 		public KeybindList SuppressBC { get; set; } = KeybindList.Parse("LeftShift");
+
+		public KeybindList FavoriteRecipe { get; set; } = KeybindList.Parse("F, ControllerBack");
+		public KeybindList BulkCraft { get; set; } = null;
+
+		// Actions
+		public ButtonAction LeftClick { get; set; } = ButtonAction.Craft;
+		public ButtonAction RightClick { get; set; } = ButtonAction.BulkCraft;
+
 
 		// Standard Crafting
 		public bool UseUniformGrid { get; set; } = false;

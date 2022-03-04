@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -361,12 +362,6 @@ namespace Leclair.Stardew.BetterCrafting {
 					(c, v) => c.ShowSettingsButton = v
 				)
 				.Add(
-					I18n.Setting_Suppress,
-					I18n.Setting_Suppress_Tip,
-					c => c.SuppressBC,
-					(c, v) => c.SuppressBC = v
-				)
-				.Add(
 					I18n.Setting_ReplaceCrafting,
 					I18n.Setting_ReplaceCrafting_Tip,
 					c => c.ReplaceCrafting,
@@ -384,6 +379,9 @@ namespace Leclair.Stardew.BetterCrafting {
 					c => c.UseCategories,
 					(c, val) => c.UseCategories = val
 				);
+
+			GMCMIntegration
+				.AddLabel(I18n.Setting_Bindings, I18n.Setting_Bindings_Tip, "page:bindings");
 
 			GMCMIntegration
 				.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
@@ -463,6 +461,67 @@ namespace Leclair.Stardew.BetterCrafting {
 					"page:conn"
 				);
 
+
+			Dictionary<TTWhen, Func<string>> whens = new() {
+				[TTWhen.Never] = I18n.Setting_Ttwhen_Never,
+				[TTWhen.ForController] = I18n.Setting_Ttwhen_ForController,
+				[TTWhen.Always] = I18n.Setting_Ttwhen_Always,
+			};
+
+			Dictionary<ButtonAction, Func<string>> actions = new() {
+				[ButtonAction.None] = I18n.Setting_Action_None,
+				[ButtonAction.Craft] = I18n.Setting_Action_Craft,
+				[ButtonAction.BulkCraft] = I18n.Setting_Action_BulkCraft,
+				[ButtonAction.Favorite] = I18n.Setting_Action_Favorite
+			};
+
+			GMCMIntegration
+				.StartPage("page:bindings", I18n.Setting_Bindings)
+				.AddChoice(
+					I18n.Setting_Key_Tooltip,
+					I18n.Setting_Key_Tooltip_Tip,
+					c => c.ShowKeybindTooltip,
+					(c, v) => c.ShowKeybindTooltip = v,
+					whens
+				)
+				.Add(
+					I18n.Setting_Suppress,
+					I18n.Setting_Suppress_Tip,
+					c => c.SuppressBC,
+					(c, v) => c.SuppressBC = v
+				)
+				.AddLabel("")
+				.Add(
+					I18n.Setting_Key_Favorite,
+					I18n.Setting_Key_Favorite_Tip,
+					c => c.FavoriteRecipe,
+					(c, v) => c.FavoriteRecipe = v
+				)
+				.Add(
+					I18n.Setting_Key_Bulk,
+					I18n.Setting_Key_Bulk_Tip,
+					c => c.BulkCraft,
+					(c, v) => c.BulkCraft = v
+				)
+				.AddLabel("");
+
+			// Use Tool
+			GMCMIntegration
+				.AddChoice(
+					I18n.Setting_Key_Behavior_Left,
+					I18n.Setting_Key_Behavior_Left_Tip,
+					c => c.LeftClick,
+					(c, v) => c.LeftClick = v,
+					actions
+				)
+				.AddChoice(
+					I18n.Setting_Key_Behavior_Right,
+					I18n.Setting_Key_Behavior_Right_Tip,
+					c => c.RightClick,
+					(c, v) => c.RightClick = v,
+					actions
+				);
+
 			GMCMIntegration
 				.StartPage("page:perf", I18n.Setting_Nearby_Performance)
 				.AddParagraph(I18n.Setting_Nearby_Performance_Tip)
@@ -536,6 +595,10 @@ namespace Leclair.Stardew.BetterCrafting {
 							}
 						);
 			}
+		}
+
+		public static string GetInputLabel(InputButton[] buttons) {
+			return string.Join(", ", buttons.Reverse().Select(btn => btn.ToString()));
 		}
 
 		#endregion

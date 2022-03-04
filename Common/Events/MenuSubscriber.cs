@@ -31,6 +31,13 @@ namespace Leclair.Stardew.Common.Events {
 
 		private Dictionary<MethodInfo, RegisteredEvent> Events;
 
+		public MenuSubscriber(T mod, bool registerImmediate = true) : base() {
+			Mod = mod;
+
+			if (registerImmediate)
+				RegisterEvents();
+		}
+
 		public MenuSubscriber(T mod, int x, int y, int width, int height, bool registerImmediate = true) : base(x, y, width, height) {
 			Mod = mod;
 

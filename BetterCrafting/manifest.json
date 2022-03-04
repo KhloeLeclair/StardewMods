@@ -7,6 +7,7 @@
 	"EntryDll": "BetterCrafting.dll",
 	"MinimumApiVersion": "3.0.0",
 	"UpdateKeys": [
-		"Nexus:11115@Main"
+		"Nexus:11115@Main",
+		"ModDrop:1115749@Main"
 	]
 }
