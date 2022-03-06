@@ -5,8 +5,8 @@
 
 	"setting.general": "Основные настройки",
 
-	"setting.suppress": "Клавиша отключения",
-	"setting.suppress.tip": "При открывании меню с зажатой клавишей, Better Crafting не будет его заменять.",
+	"setting.alphabetic": "Сортировать по алфавиту",
+	"setting.alphabetic.tip": "Рецепты будут сортироваться в алфавитном порядке, а не по умолчанию.",
 
 	"setting.replace-crafting": "Заменить меню Изготовление предметов",
 	"setting.replace-crafting.tip": "Замена старого меню на улучшенное.",
@@ -19,6 +19,38 @@
 
 	"setting.settings": "Отображение Настроек",
 	"setting.settings.tip": "В меню будет добавлена кнопка для открытия настроек Better Crafting.",
+
+	"setting.bindings": "Управление клавишами",
+	"setting.bindings.tip": "Настройте горячие клавиши так, как вам удобно.",
+
+	"setting.suppress": "Клавиша отключения",
+	"setting.suppress.tip": "При открывании меню с зажатой клавишей, Better Crafting не будет его заменять.",
+
+"setting.key.search": "Клавиша Поиска",
+	"setting.key.search.tip": "Нажмите эту клавишу, чтобы открыть поиск для фильтрации рецептов.",
+
+	"setting.key.favorite": "Клавиша Избранное",
+	"setting.key.favorite.tip": "Нажмите эту клавишу, чтобы пометить рецепт как избранный.",
+
+	"setting.key.bulk": "Клавиша Масс. создание",
+	"setting.key.bulk.tip": "Нажмите эту клавишу на рецепте, чтобы открыть меню Изготовить в количестве.",
+
+	"setting.key.behavior.left": "Левый клик / Кнопка A",
+	"setting.key.behavior.left.tip": "Сделайте левый клик мыши (или нажмите A на контроллере) по рецепту, чтобы выполнить действие.",
+	"setting.key.behavior.right": "Правый клик / Кнопка X",
+	"setting.key.behavior.right.tip": "Сделайте левый клик мыши (или нажмите X на контроллере) по рецепту, чтобы выполнить действие.",
+
+	"setting.key.tooltip": "Показывать клавиши в подсказках",
+	"setting.key.tooltip.tip": "Горячие клавиши будут отображаться в нижней части всплывающих подсказок Better Crafting",
+
+	"setting.ttwhen.Never": "Никогда",
+	"setting.ttwhen.ForController": "При использовании контроллера",
+	"setting.ttwhen.Always": "Всегда",
+
+	"setting.action.None": "Ничего",
+	"setting.action.Craft": "Создать",
+	"setting.action.Favorite": "В Избранное",
+	"setting.action.BulkCraft": "Изготовить в кол-ве",
 
 	"setting.nearby": "Расширенное создание",
 	"setting.nearby.tip": "Эта функция позволяет верстакам и вашей кухне взаимодействовать с большим количеством сундуков одновременно Вы можете создавать цепочки сундуков или использовать соединители для лучшего взаимодействия.",
@@ -83,6 +115,9 @@
 
 	// Tooltips
 	"tooltip.crafted": "Создано {{count}} раз(а)",
+	
+	"tooltip.toggle-recipe": "Добавить во Вкладку",
+	"tooltip.use-as-icon": "Выбрать иконку",
 
 	// Buttons
 	"tooltip.edit-mode": "Редактировать",
@@ -91,12 +126,27 @@
 	"tooltip.uniform": "Равномерное расположение",
 	"tooltip.settings": "Настройки",
 
+	"tooltip.search": "Искать рецепт",
+	"tooltip.search.tip": "Поставьте \"@B{{prefix}}@b\" в начале, чтобы искать по ингредиентам. Например: @B!уголь@b.",
+
+	"search.ingredient-prefix": "!",
+
+	"search.none": "Ничего не найдено.",
+	"search.none.category": "В этой вкладке нет подходящего рецепта.",
+
+	"tooltip.select-icon": "Выбрать иконку",
+
 	"tooltip.quality.none": "Использовать предметы обычного качества.",
 	"tooltip.quality.silver": "Использовать предметы обычного и серебряного качества.",
 	"tooltip.quality.gold": "Использовать предметы обычного, серебряного и золотого качества.",
 	"tooltip.quality.iridium": "Использовать предметы любого качества.",
 
 	"tooltip.quality-unsupported": "Этот рецепт не поддерживает настройки качества.",
+
+	// Bulk Crafting
+	"bulk.crafting": "Изготовление",
+	"bulk.craftable": "Макс. {{count}}",
+	"bulk.craft": "Изготовить {{count}} {{name}}",
 
 	// Categories
 	"category.new": "Новая вкладка",
