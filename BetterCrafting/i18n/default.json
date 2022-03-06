@@ -127,6 +127,9 @@
 	"tooltip.settings": "Open Settings",
 
 	"tooltip.search": "Search Recipes",
+	"tooltip.search.tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients.",
+
+	"search.ingredient-prefix": "!",
 
 	"search.none": "There are no matching recipes.",
 	"search.none.category": "There are no matching recipes in this category.",

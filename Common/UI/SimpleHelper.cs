@@ -35,14 +35,15 @@ namespace Leclair.Stardew.Common.UI {
 			int width = (int) contSize.X + 32;
 			int height = (int) contSize.Y + 32;
 
-			int x = overrideX < 0 ? Game1.getOldMouseX() + 32 + offsetX : overrideX;
-			int y = overrideY < 0 ? Game1.getOldMouseY() + 32 + offsetY : overrideY;
+			int mx = Game1.getOldMouseX();
+			int my = Game1.getOldMouseY();
+
+			int x = overrideX < 0 ? mx + 32 + offsetX : overrideX;
+			int y = overrideY < 0 ? my + 32 + offsetY : overrideY;
 
 			Rectangle safeArea = Utility.getSafeArea();
 
-			// TODO: Refactor logic to allow flipping to left positioned
-			// tooltips.
-
+			// Make sure we're in the safe area.
 			if (x + width > safeArea.Right) {
 				x = safeArea.Right - width;
 				y += 16;
@@ -68,6 +69,32 @@ namespace Leclair.Stardew.Common.UI {
 					y += 16 + 32;
 				}
 			}
+
+			// Flip to the other side?
+			// Don't flip if we have override coordinates.
+			if (overrideX < 0 && overrideY < 0 && x < mx + 32 + offsetX && y < my + 32 + offsetY) {
+				int tx = mx - width - 16;
+				bool moved = false;
+				if (tx < safeArea.Left) {
+					if (safeArea.Left + width < mx) {
+						x = safeArea.Left;
+						moved = true;
+					}
+				} else {
+					x = tx;
+					moved = true;
+				}
+
+				if (!moved && y < my + 32 + offsetY) {
+					int ty = my - height - 16;
+					if (ty < safeArea.Top) {
+						if (safeArea.Top + height < my)
+							y = safeArea.Top;
+					} else
+						y = ty;
+				}
+			}
+
 
 			// Draw the background first.
 			if (drawBG)

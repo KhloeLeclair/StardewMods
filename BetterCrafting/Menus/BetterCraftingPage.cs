@@ -1544,7 +1544,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			string old = Filter;
 			if (old != null && FilterIngredients)
-				old = $"!{old}";
+				old = $"{I18n.Search_IngredientPrefix()}{old}";
 
 			var search = new SearchBox(
 				Mod,
@@ -1573,9 +1573,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public bool UpdateFilter(string filter) {
 			if (!string.IsNullOrEmpty(filter)) {
 				filter = filter.Trim();
-				FilterIngredients = filter.StartsWith('!');
+				string prefix = I18n.Search_IngredientPrefix();
+				FilterIngredients = filter.StartsWith(prefix);
 				if (FilterIngredients)
-					filter = filter[1..].TrimStart();
+					filter = filter.Substring(prefix.Length).TrimStart();
 			}
 
 			if (string.IsNullOrEmpty(filter)) {
@@ -2222,7 +2223,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				if (mode == 8) {
 					string filter = Filter;
 					if (filter != null && FilterIngredients)
-						filter = $"!{filter}";
+						filter = $"{I18n.Search_IngredientPrefix()}{filter}";
 
 					hoverNode = SimpleHelper.Builder()
 						.Text(I18n.Tooltip_Search())
@@ -2294,7 +2295,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						break;
 					case 7:
 						// Search
-						string ing = FilterIngredients ? "!" : "";
+						string ing = FilterIngredients ? I18n.Search_IngredientPrefix() : "";
 
 						hoverText = Filter == null
 							? I18n.Tooltip_Search()

@@ -194,7 +194,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			if (! kb_open)
 				SimpleHelper.Builder()
 					.FormatText(
-						"Tip: Start your search with a \"@B!@b\" to also search by ingredients.",
+						I18n.Tooltip_Search_Tip(I18n.Search_IngredientPrefix()),
 						wrapText: true,
 						minWidth: width
 					)

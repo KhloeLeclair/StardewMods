@@ -1,5 +1,15 @@
 # Changelog
 
+## In-Dev
+Not yet released.
+
+### General
+
+* Add support for localizations overriding the ingredient search character.
+* Fix the search pop-up's tip not having localization support.
+* Improve tool-tip positioning logic to avoid covering the cursor.
+
+
 ## 0.13.0
 Released March 6th, 2022.
 
