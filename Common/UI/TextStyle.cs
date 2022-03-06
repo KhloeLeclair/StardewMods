@@ -13,25 +13,29 @@ namespace Leclair.Stardew.Common.UI {
 		public bool? Shadow { get; }
 		public Color? ShadowColor { get; }
 		public bool? Bold { get; }
+		public bool? Invert { get; }
 		public Color? Color { get; }
+		public Color? BackgroundColor { get; }
 		public bool? Prismatic { get; }
 		public SpriteFont Font { get; }
 		public bool? Strikethrough { get; }
 		public bool? Underline { get; }
 		public float? Scale { get; }
 
-		public TextStyle(Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? junimo = null, bool? shadow = null, Color? shadowColor = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, float? scale = null) {
+		public TextStyle(Color? color = null, Color? backgroundColor = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? junimo = null, bool? shadow = null, Color? shadowColor = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, bool? invert = null, float? scale = null) {
 			Fancy = fancy;
 			Junimo = junimo;
 			Bold = bold;
 			Shadow = shadow;
 			ShadowColor = shadowColor;
 			Color = color;
+			BackgroundColor = backgroundColor;
 			Prismatic = prismatic;
 			Font = font;
 			Scale = scale;
 			Strikethrough = strikethrough;
 			Underline = underline;
+			Invert = invert;
 		}
 
 		/// <summary>
@@ -44,36 +48,44 @@ namespace Leclair.Stardew.Common.UI {
 		/// <param name="font"></param>
 		/// <param name="color"></param>
 		/// <param name="shadowColor"></param>
-		public TextStyle(TextStyle existing, SpriteFont font, Color? color, Color? shadowColor, float? scale) {
+		public TextStyle(TextStyle existing, SpriteFont font, Color? color, Color? backgroundColor, Color? shadowColor, float? scale) {
 			Fancy = existing.Fancy;
 			Junimo = existing.Junimo;
 			Bold = existing.Bold;
 			Shadow = existing.Shadow;
 			ShadowColor = shadowColor;
 			Color = color;
+			BackgroundColor = backgroundColor;
 			Prismatic = existing.Prismatic;
 			Font = font;
 			Scale = scale;
 			Strikethrough = existing.Strikethrough;
 			Underline = existing.Underline;
+			Invert = existing.Invert;
 		}
 
-		public TextStyle(TextStyle existing, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? junimo = null, bool? shadow = null, Color? shadowColor = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, float? scale = null) {
+		public TextStyle(TextStyle existing, Color? color = null, Color? backgroundColor = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? junimo = null, bool? shadow = null, Color? shadowColor = null, bool? bold = null, bool? strikethrough = null, bool? underline = null, bool? invert = null, float? scale = null) {
 			Fancy = fancy ?? existing.Fancy;
 			Junimo = junimo ?? existing.Junimo;
 			Bold = bold ?? existing.Bold;
 			Shadow = shadow ?? existing.Shadow;
 			ShadowColor = shadowColor ?? existing.ShadowColor;
 			Color = color ?? existing.Color;
+			BackgroundColor = backgroundColor ?? existing.BackgroundColor;
 			Prismatic = prismatic ?? existing.Prismatic;
 			Font = font ?? existing.Font;
 			Scale = scale ?? existing.Scale;
 			Strikethrough = strikethrough ?? existing.Strikethrough;
 			Underline = underline ?? existing.Underline;
+			Invert = invert ?? existing.Invert;
 		}
 
 		public bool HasShadow() {
 			return Shadow ?? true;
+		}
+
+		public bool IsInverted() {
+			return Invert ?? false;
 		}
 
 		public bool IsFancy() {
@@ -116,11 +128,13 @@ namespace Leclair.Stardew.Common.UI {
 				ShadowColor.Equals(other.ShadowColor) &&
 				Bold.Equals(other.Bold) &&
 				Color.Equals(other.Color) &&
+				BackgroundColor.Equals(other.BackgroundColor) &&
 				Prismatic.Equals(other.Prismatic) &&
 				Font == other.Font &&
 				Scale.Equals(other.Scale) &&
 				Strikethrough.Equals(other.Strikethrough) &&
-				Underline.Equals(other.Underline);
+				Underline.Equals(other.Underline) &&
+				Invert.Equals(other.Invert);
 		}
 
 		public override int GetHashCode() {
@@ -131,10 +145,12 @@ namespace Leclair.Stardew.Common.UI {
 			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(ShadowColor);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Bold);
 			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(Color);
+			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(BackgroundColor);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Prismatic);
 			hashCode = hashCode * -1521134295 + EqualityComparer<SpriteFont>.Default.GetHashCode(Font);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Strikethrough);
 			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Underline);
+			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Invert);
 			hashCode = hashCode * -1521134295 + EqualityComparer<float?>.Default.GetHashCode(Scale);
 			return hashCode;
 		}

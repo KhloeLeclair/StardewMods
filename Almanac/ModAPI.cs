@@ -358,7 +358,7 @@ namespace Leclair.Stardew.Almanac {
 				id: id,
 				item: item,
 				name: name,
-				sprite: item == null ? null : SpriteHelper.GetSprite(item, Mod.Helper),
+				sprite: item == null ? null : SpriteHelper.GetSprite(item),
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
 				isPaddyCrop: isPaddyCrop,

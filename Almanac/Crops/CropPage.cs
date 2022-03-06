@@ -175,7 +175,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				SObject obj = id == -1 ? null : new(FERTILIZERS[i].Item1, 1);
 				Item item = obj?.getOne();
-				SpriteInfo sprite = item == null ? null : SpriteHelper.GetSprite(item, Mod.Helper);
+				SpriteInfo sprite = item == null ? null : SpriteHelper.GetSprite(item);
 
 				Fertilizers.Add(new(item, sprite, FERTILIZERS[i].Item2, Game1.random.Next(2 * AlmanacMenu.TABS.Length)));
 				FertComponents.Add(new(new Rectangle(0, 0, 64, 64), (string) null) {

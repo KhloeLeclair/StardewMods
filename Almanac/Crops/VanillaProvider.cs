@@ -114,7 +114,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					Convert.ToString(entry.Key),
 					item,
 					item.DisplayName,
-					SpriteHelper.GetSprite(item, ModEntry.instance.Helper),
+					SpriteHelper.GetSprite(item),
 					giant,
 					trellisCrop,
 					phases,

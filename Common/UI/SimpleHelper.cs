@@ -14,17 +14,26 @@ namespace Leclair.Stardew.Common.UI {
 			return new(null, new LayoutNode(dir, null, margin, minSize, align));
 		}
 
-		public static void DrawHover(this ISimpleNode node, SpriteBatch batch, SpriteFont defaultFont, Color? defaultColor = null, Color? defaultShadowColor = null, int offsetX = 0, int offsetY = 0, int overrideX = -1, int overrideY = -1, float alpha = 1f, bool drawBG = true, Texture2D bgTexture = null, Rectangle? bgSource = null, float bgScale = 1) {
+		public static void DrawHover(this ISimpleNode node, SpriteBatch batch, SpriteFont defaultFont, Color? defaultColor = null, Color? defaultShadowColor = null, int offsetX = 0, int offsetY = 0, int overrideX = -1, int overrideY = -1, float alpha = 1f, bool drawBG = true, Texture2D bgTexture = null, Rectangle? bgSource = null, float bgScale = 1, Vector2? minSize = null) {
 			// Get the node's size.
-			Vector2 size = node.GetSize(defaultFont, Vector2.Zero);
+			Vector2 size = node.GetSize(defaultFont, minSize ?? Vector2.Zero);
+
+			Vector2 contSize = size;
+
+			if (minSize.HasValue) {
+				if (contSize.X < minSize.Value.X)
+					contSize.X = minSize.Value.X;
+				if (contSize.Y < minSize.Value.Y)
+					contSize.Y = minSize.Value.Y;
+			}
 
 			// If we have no size, we have nothing to draw.
-			if (size.X <= 0 || size.Y <= 0)
+			if (contSize.X <= 0 || contSize.Y <= 0)
 				return;
 
 			// Add padding around the menu.
-			int width = (int) size.X + 32;
-			int height = (int) size.Y + 32;
+			int width = (int) contSize.X + 32;
+			int height = (int) contSize.Y + 32;
 
 			int x = overrideX < 0 ? Game1.getOldMouseX() + 32 + offsetX : overrideX;
 			int y = overrideY < 0 ? Game1.getOldMouseY() + 32 + offsetY : overrideY;
@@ -77,7 +86,7 @@ namespace Leclair.Stardew.Common.UI {
 			x += 16;
 			y += 16;
 
-			node.Draw(batch, new Vector2(x, y), size, size, alpha, defaultFont, defaultColor, defaultShadowColor);
+			node.Draw(batch, new Vector2(x, y), size, contSize, alpha, defaultFont, defaultColor, defaultShadowColor);
 		}
 
 	}

@@ -82,7 +82,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			Vector2 size = new Vector2(width, height);
 
 			bool initial = true;
-			int count = _Children.Length;
+			int count = _Children?.Length ?? 0;
 			Sizes = new Vector2[count];
 			bool had_deferred = false;
 			bool deferred = false;
@@ -161,7 +161,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 
 			// Draw our children.
 			bool initial = true;
-			int count = _Children.Length;
+			int count = _Children?.Length ?? 0;
 
 			float x = position.X;
 			float y = position.Y;
@@ -179,7 +179,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 					break;
 			}
 
-			if (extra > 0) {
+			if (extra > 0 && _Children != null) {
 				int spaces = 0;
 				foreach (ISimpleNode node in _Children)
 					if (node is SpaceNode space && space.Expand)

@@ -139,10 +139,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 								entry.Item3 ?? entry.Item2.Bounds
 							);
 						else if (entry.Item4 != null)
-							sprite = SpriteHelper.GetSprite(
-								entry.Item4,
-								ModEntry.instance.Helper
-							);
+							sprite = SpriteHelper.GetSprite(entry.Item4);
 						else
 							sprite = null;
 
@@ -207,10 +204,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 								},
 								alignment: Alignment.Middle
 							) : null,
-						SpriteHelper.GetSprite(
-							berry,
-							ModEntry.instance.Helper
-						),
+						SpriteHelper.GetSprite(berry),
 						berry
 					);
 				}
@@ -299,10 +293,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 								(last == 'x' || last == 'ß' || last == 'z');
 
 						var pendant = new SObject(460, 1);
-						var sprite = SpriteHelper.GetSprite(
-							pendant,
-							ModEntry.instance.Helper
-						);
+						var sprite = SpriteHelper.GetSprite(pendant);
 
 						// Wedding?
 						if (date.Year == wedding.Year) {
@@ -359,8 +350,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							I18n.Page_Notices_Summer() : null,
 						null,
 						SpriteHelper.GetSprite(
-							new SObject(394, 1), // Rainbow Shell
-							ModEntry.instance.Helper
+							new SObject(394, 1) // Rainbow Shell
 						)
 					);
 				}
@@ -384,10 +374,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							},
 							alignment: Alignment.Middle
 						) : null,
-						SpriteHelper.GetSprite(
-							nut,
-							ModEntry.instance.Helper
-						),
+						SpriteHelper.GetSprite(nut),
 						nut
 					);
 				}

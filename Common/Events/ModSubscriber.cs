@@ -11,6 +11,7 @@ namespace Leclair.Stardew.Common.Events {
 		private Dictionary<MethodInfo, RegisteredEvent> Events;
 
 		public override void Entry(IModHelper helper) {
+			SpriteHelper.SetModHelper(helper);
 			RegisterEvents();
 		}
 

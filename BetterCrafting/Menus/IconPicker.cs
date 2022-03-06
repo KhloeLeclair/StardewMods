@@ -3,22 +3,16 @@ using System.Collections.Generic;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
-using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
-using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.FlowNode;
-using Leclair.Stardew.Common.UI.SimpleLayout;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 using StardewValley;
 using StardewValley.Menus;
-
-using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.BetterCrafting.Menus {
 	public class IconPicker : MenuSubscriber<ModEntry> {

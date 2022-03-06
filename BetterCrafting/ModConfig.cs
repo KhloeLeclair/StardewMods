@@ -45,8 +45,9 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public KeybindList SuppressBC { get; set; } = KeybindList.Parse("LeftShift");
 
-		public KeybindList FavoriteRecipe { get; set; } = KeybindList.Parse("F, ControllerBack");
-		public KeybindList BulkCraft { get; set; } = KeybindList.Parse("None");
+		public KeybindList FavoriteKey { get; set; } = KeybindList.Parse("F, ControllerBack");
+		public KeybindList BulkCraftKey { get; set; } = KeybindList.Parse("None");
+		public KeybindList SearchKey { get; set; } = KeybindList.Parse("F3");
 
 		// Actions
 		public ButtonAction LeftClick { get; set; } = ButtonAction.Craft;
@@ -56,10 +57,12 @@ namespace Leclair.Stardew.BetterCrafting {
 		// Standard Crafting
 		public bool UseUniformGrid { get; set; } = false;
 		public bool SortBigLast { get; set; } = false;
+		public bool CraftingAlphabetic { get; set; } = false;
 
 		// Cooking
 		public SeasoningMode UseSeasoning { get; set; } = SeasoningMode.Enabled;
 		public bool HideUnknown { get; set; } = false;
+		public bool CookingAlphabetic { get; set; } = false;
 
 
 		// Better Workbench

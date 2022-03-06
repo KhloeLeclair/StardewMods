@@ -217,14 +217,17 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				.Text(I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.Center)
 				//.Divider()
 				.Group(margin: 8)
+					.Space()
 					.Sprite(
 						new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
 						quantity: Quantity
 					)
+					.Space(expand: false)
 					.Group()
 						.Text(Recipe.DisplayName)
 						.Text(I18n.Bulk_Craftable(Craftable), color: Game1.textColor * .75f)
 					.EndGroup()
+					.Space()
 				.EndGroup()
 				.Divider();
 

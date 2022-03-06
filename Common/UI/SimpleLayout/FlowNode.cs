@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Leclair.Stardew.Common.UI.FlowNode;
@@ -13,12 +14,14 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 		public Alignment Alignment { get; }
 		public IEnumerable<IFlowNode> Nodes { get; }
 		public bool WrapText { get; }
+		public float MinWidth { get; }
 
 		private CachedFlow? Flow;
 
-		public FlowNode(IEnumerable<IFlowNode> nodes, bool wrapText = true, Alignment alignment = Alignment.None) {
+		public FlowNode(IEnumerable<IFlowNode> nodes, bool wrapText = true, float minWidth = -1, Alignment alignment = Alignment.None) {
 			Nodes = nodes;
 			WrapText = wrapText;
+			MinWidth = minWidth;
 			Alignment = alignment;
 		}
 
@@ -35,11 +38,11 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 
 		public Vector2 GetSize(SpriteFont defaultFont, Vector2 containerSize) {
 			SpriteFont font = defaultFont ?? Game1.smallFont;
-			CachedFlow flow = GetFlow(font, WrapText ? containerSize.X : -1);
+			CachedFlow flow = GetFlow(font, WrapText ? Math.Max(MinWidth, containerSize.X) : -1);
 
-			Vector2 size = new Vector2(flow.Width, flow.Height);
+			Vector2 size = new(flow.Width, flow.Height);
 			if (WrapText)
-				size.X = containerSize.X;
+				size.X = Math.Max(MinWidth, containerSize.X);
 
 			return size;
 		}

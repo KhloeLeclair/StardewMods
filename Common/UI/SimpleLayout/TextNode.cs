@@ -49,9 +49,29 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			float scale = Style.Scale ?? 1f;
 			SpriteFont font = Style.Font ?? defaultFont ?? Game1.smallFont;
 			Color color = Style.Color ?? defaultColor ?? Game1.textColor;
+			Color background = Style.BackgroundColor ?? Color.Transparent;
 			Color? shadowColor = Style.ShadowColor ?? defaultShadowColor;
 			if (Style.IsPrismatic())
 				color = Utility.GetPrismaticColor();
+
+			if (Style.IsInverted()) {
+				Color third = background;
+				background = color;
+				color = third;
+			}
+
+			if (background.A > 0) {
+				float a = (float) background.A / 255;
+
+				batch.Draw(
+					Game1.fadeToBlackRect,
+					new Rectangle(
+						(int) position.X, (int) position.Y,
+						(int) size.X, (int) size.Y
+					),
+					background * a
+				);
+			}
 
 			if (Style.IsJunimo())
 				SpriteText.drawString(batch, Text, (int) position.X, (int) position.Y, junimoText: true);

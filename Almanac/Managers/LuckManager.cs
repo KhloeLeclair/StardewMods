@@ -159,10 +159,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 								entry.Item4 ?? entry.Item3.Bounds
 							);
 						else if (entry.Item5 != null)
-							sprite = SpriteHelper.GetSprite(
-								entry.Item5,
-								ModEntry.instance.Helper
-							);
+							sprite = SpriteHelper.GetSprite(entry.Item5);
 						else
 							sprite = null;
 
@@ -207,7 +204,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 					continue;
 
 				Item item = (Item) new Hat(66);
-				SpriteInfo sprite = SpriteHelper.GetSprite(item, ModEntry.instance.Helper);
+				SpriteInfo sprite = SpriteHelper.GetSprite(item);
 
 				return new RichEvent(
 					I18n.Page_Fortune_GarbageHat(),
@@ -265,7 +262,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 				return new RichEvent(
 					I18n.Page_Fortune_Event_Owl(),
 					null,
-					SpriteHelper.GetSprite(new SObject(Vector2.Zero, 95), ModEntry.instance.Helper)
+					SpriteHelper.GetSprite(new SObject(Vector2.Zero, 95))
 				);
 
 			// Don't track Strange Capsule, because that relies on whether

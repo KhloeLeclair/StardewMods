@@ -194,13 +194,13 @@ namespace Leclair.Stardew.Common.UI {
 				return new SpriteNode(spriple.Item1, spriple.Item2, alignment: alignment);
 			if (obj is Item item && helper != null)
 				return new SpriteNode(
-					SpriteHelper.GetSprite(item, helper),
+					SpriteHelper.GetSprite(item),
 					2f,
 					alignment: alignment
 				);
 			if (obj is Tuple<Item, float> ituple && helper != null)
 				return new SpriteNode(
-					SpriteHelper.GetSprite(ituple.Item1, helper),
+					SpriteHelper.GetSprite(ituple.Item1),
 					ituple.Item2,
 					alignment: alignment
 				);
@@ -337,7 +337,7 @@ namespace Leclair.Stardew.Common.UI {
 							scale = sp;
 						if (ns.Scale == scale)
 							continue;
-						ns = new(ns, font: ns.Font, color: ns.Color, shadowColor: ns.ShadowColor, scale: scale);
+						ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: scale);
 						break;
 
 					case 'b':
@@ -357,7 +357,7 @@ namespace Leclair.Stardew.Common.UI {
 						i = ni;
 						if (ns.ShadowColor == color)
 							continue;
-						ns = new(ns, font: ns.Font, color: ns.Color, shadowColor: color, scale: ns.Scale);
+						ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: color, scale: ns.Scale);
 						break;
 
 					case 'C':
@@ -365,7 +365,7 @@ namespace Leclair.Stardew.Common.UI {
 						i = ni;
 						if (ns.Color == color)
 							continue;
-						ns = new(ns, font: ns.Font, color: color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+						ns = new(ns, font: ns.Font, color: color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: ns.Scale);
 						break;
 
 					case 'f':
@@ -392,6 +392,18 @@ namespace Leclair.Stardew.Common.UI {
 						ns = new(ns, shadow: true);
 						break;
 
+					case 'i':
+						if (!ns.IsInverted())
+							continue;
+						ns = new(ns, invert: false);
+						break;
+
+					case 'I':
+						if (ns.IsInverted())
+							continue;
+						ns = new(ns, invert: true);
+						break;
+
 					case 'j':
 						if (!ns.IsJunimo())
 							continue;
@@ -414,6 +426,15 @@ namespace Leclair.Stardew.Common.UI {
 						if (ns.IsPrismatic())
 							continue;
 						ns = new(ns, prismatic: true);
+						break;
+
+					case 'r':
+					case 'R':
+						color = ParseColor(ReadSubString(text, i, out ni));
+						i = ni;
+						if (ns.BackgroundColor == color)
+							continue;
+						ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: color, shadowColor: ns.ShadowColor, scale: ns.Scale);
 						break;
 
 					case 's':
@@ -443,7 +464,7 @@ namespace Leclair.Stardew.Common.UI {
 						}
 						if (ns.Font == font)
 							continue;
-						ns = new(ns, font: font, color: ns.Color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+						ns = new(ns, font: font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: ns.Scale);
 						break;
 
 					case 'u':

@@ -36,19 +36,15 @@ namespace Leclair.Stardew.Almanac.Pages {
 			Sprites = new();
 
 			Sprites[LevelType.Mushroom] = SpriteHelper.GetSprite(
-				new Object(420, 1), // Red Mushroom
-				Mod.Helper
+				new Object(420, 1) // Red Mushroom
 			);
 
 			Sprites[LevelType.InfestedMonster] = SpriteHelper.GetSprite(
-				new StardewValley.Tools.MeleeWeapon(0), // Rusty Sword
-				//new Object(109, 1), // Ancient Sword
-				Mod.Helper
+				new StardewValley.Tools.MeleeWeapon(0) // Rusty Sword
 			);
 
 			Sprites[LevelType.InfestedSlime] = SpriteHelper.GetSprite(
-				new Object(766, 1), // Slime
-				Mod.Helper
+				new Object(766, 1) // Slime
 			);
 
 			Sprites[LevelType.Quarry] = new SpriteInfo(
@@ -62,8 +58,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			);
 
 			Sprites[LevelType.Dino] = SpriteHelper.GetSprite(
-				new Object(107, 1), // Dino Egg
-				Mod.Helper
+				new Object(107, 1) // Dino Egg
 			);
 
 			Update();

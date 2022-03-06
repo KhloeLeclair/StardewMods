@@ -392,6 +392,12 @@ namespace Leclair.Stardew.BetterCrafting {
 					(c, val) => c.UseUniformGrid = val
 				)
 				.Add(
+					I18n.Setting_Alphabetic,
+					I18n.Setting_Alphabetic_Tip,
+					c => c.CraftingAlphabetic,
+					(c,v) => c.CraftingAlphabetic = v
+				)
+				.Add(
 					I18n.Setting_BigCraftablesLast,
 					I18n.Setting_BigCraftablesLast_Tip,
 					c => c.SortBigLast,
@@ -400,6 +406,12 @@ namespace Leclair.Stardew.BetterCrafting {
 
 			GMCMIntegration
 				.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
+				.Add(
+					I18n.Setting_Alphabetic,
+					I18n.Setting_Alphabetic_Tip,
+					c => c.CookingAlphabetic,
+					(c, v) => c.CookingAlphabetic = v
+				)
 				.AddChoice(
 					I18n.Setting_Seasoning,
 					I18n.Setting_Seasoning_Tip,
@@ -492,16 +504,22 @@ namespace Leclair.Stardew.BetterCrafting {
 				)
 				.AddLabel("")
 				.Add(
+					I18n.Setting_Key_Search,
+					I18n.Setting_Key_Search_Tip,
+					c => c.SearchKey,
+					(c, v) => c.SearchKey = v
+				)
+				.Add(
 					I18n.Setting_Key_Favorite,
 					I18n.Setting_Key_Favorite_Tip,
-					c => c.FavoriteRecipe,
-					(c, v) => c.FavoriteRecipe = v
+					c => c.FavoriteKey,
+					(c, v) => c.FavoriteKey = v
 				)
 				.Add(
 					I18n.Setting_Key_Bulk,
 					I18n.Setting_Key_Bulk_Tip,
-					c => c.BulkCraft,
-					(c, v) => c.BulkCraft = v
+					c => c.BulkCraftKey,
+					(c, v) => c.BulkCraftKey = v
 				)
 				.AddLabel("");
 

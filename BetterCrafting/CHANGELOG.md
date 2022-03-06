@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.13.0
+Released March 6th, 2022.
+
+### General
+
+* Added a search button to the crafting menu! Search by recipe name, description,
+  and optionally its ingredients.
+* When searching, the matching bits of text in tool-tips are highlighted.
+* Added an option to sort recipes alphabetically. I might need to change the way
+  this is handled to make sense in other languages. Let me know if so!
+* When editing a category, you can now hold shift to view an item's full tooltip.
+  This should make it easier to double check where you want to put something,
+  especially when categorizing foods.
+* Center parts of the Bulk Crafting menu to make it look nicer.
+
+
 ## 0.12.0
 Released March 4th, 2022.
 

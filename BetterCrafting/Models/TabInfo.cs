@@ -10,6 +10,7 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 		public Category Category;
 		public ClickableComponent Component;
 		public List<IRecipe> Recipes;
+		public List<IRecipe> FilteredRecipes;
 		public SpriteInfo Sprite;
 	}
 }

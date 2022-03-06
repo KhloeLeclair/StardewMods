@@ -147,11 +147,31 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			float s = scale * (Style.Scale ?? 1f);
 			SpriteFont font = Style.Font ?? defaultFont;
 			Color color = Style.Color ?? defaultColor ?? Game1.textColor;
+			Color background = Style.BackgroundColor ?? Color.Transparent;
 			Color? shadowColor = Style.ShadowColor ?? defaultShadowColor;
 			if (Style.IsPrismatic())
 				color = Utility.GetPrismaticColor();
 
 			string text = tslice.Text;
+
+			if (Style.IsInverted()) {
+				Color third = background;
+				background = color;
+				color = third;
+			}
+
+			if (background.A > 0) {
+				float alpha = (float) background.A / 255;
+
+				batch.Draw(
+					Game1.fadeToBlackRect,
+					new Rectangle(
+						(int) position.X, (int) position.Y,
+						(int) slice.Width, (int) slice.Height
+					),
+					background * alpha
+				);
+			}
 
 			if (Style.IsJunimo())
 				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y, junimoText: true);
