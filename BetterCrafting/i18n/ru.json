@@ -127,6 +127,9 @@
 	"tooltip.settings": "Настройки",
 
 	"tooltip.search": "Искать рецепт",
+	"tooltip.search.tip": "Поставьте \"@B{{prefix}}@b\" в начале, чтобы искать по ингредиентам. Например: @B!уголь@b.",
+
+	"search.ingredient-prefix": "!",
 
 	"search.none": "Ничего не найдено.",
 	"search.none.category": "В этой вкладке нет подходящего рецепта.",
