@@ -5,6 +5,9 @@
 
 	"setting.general": "Opciones generales",
 
+	"setting.alphabetic": "Ordenar alfabéticamente",
+	"setting.alphabetic.tip": "Cuando está habilitado, las recetas se ordenarán alfabéticamente en lugar de usar el orden predeterminado.",
+
 	"setting.replace-crafting": "Reemplazar menú de fabricación",
 	"setting.replace-crafting.tip": "Cuando está habilitado, el menú de fabricación se reemplaza con una reimplementación.",
 
@@ -22,6 +25,9 @@
 
 	"setting.suppress": "Botón de deshabilitación",
 	"setting.suppress.tip": "Cuando se mantiene presionado este botón y se abre el menú de fabricación, Better Crafting no la reemplazará.",
+
+	"setting.key.search": "Botón de Búsqueda",
+	"setting.key.search.tip": "Presione esta tecla para abrir una búsqueda para filtrar las recetas mostradas.",
 
 	"setting.key.favorite": "Receta favorita",
 	"setting.key.favorite.tip": "Presione este botón en una receta para marcarla como favorita o para quitarla de favorita.",
@@ -119,6 +125,14 @@
 	"tooltip.seasoning": "usar Condimento Qi",
 	"tooltip.uniform": "Usar cuadrícula uniforme",
 	"tooltip.settings": "Abrir Configuración",
+	
+	"tooltip.search": "Buscar Recetas",
+	"tooltip.search.tip": "Tip: Comience su búsqueda con \"@B{{prefix}}@b\" para buscar también por ingredientes.",	
+
+	"search.ingredient-prefix": "!",
+
+	"search.none": "No hay recetas coincidentes.",
+	"search.none.category": "No hay recetas coincidentes en esta categoría.",
 
 	"tooltip.select-icon": "Seleccionar icono",
 
