@@ -1,13 +1,35 @@
 # Changelog
 
-## In-Dev
-Not yet released.
+## 0.13.2
+Released March 7th, 2022.
+
+### General
+
+* Fixed issue where custom categories for cooking recipes would not be saved.
+* Do not display the GMCM Settings button on the crafting menu for split-screen
+  players. The GMCM menu is not controller accessible and opening it may
+  soft lock that player.
+* Play a sound when opening the icon picker.
+* Make it easier to navigate to the category name and icon picker controls when
+  using a controller for input.
+
+### Translation
+
+* Improved Spanish language support.
+
+
+## 0.13.1
+Released March 6th, 2022.
 
 ### General
 
 * Add support for localizations overriding the ingredient search character.
 * Fix the search pop-up's tip not having localization support.
 * Improve tool-tip positioning logic to avoid covering the cursor.
+
+### Translation
+
+* Improved Russian language support.
 
 
 ## 0.13.0

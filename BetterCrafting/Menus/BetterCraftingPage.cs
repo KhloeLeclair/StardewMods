@@ -369,7 +369,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				rightNeighborID = ClickableComponent.ID_ignore
 			} : null;
 
-			btnSettings = (Mod.Config.ShowSettingsButton && Mod.HasGMCM()) ? new ClickableTextureComponent(
+			btnSettings = (Mod.Config.ShowSettingsButton && Mod.HasGMCM() && (!Context.IsOnHostComputer || Context.IsMainPlayer)) ? new ClickableTextureComponent(
 				bounds: new Rectangle(btnX, btnY, 64, 64),
 				texture: Sprites.Buttons.Texture,
 				sourceRect: Sprites.Buttons.SETTINGS,
@@ -1379,6 +1379,16 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					}
 				}
 
+				// Update the upNeighborID as appropriate to help
+				// make snapping easier
+				if (y == 0 && Editing && btnCategoryName != null) {
+					if (x < 2 && btnCategoryIcon != null)
+						cmp.upNeighborID = btnCategoryIcon.myID;
+					else
+						cmp.upNeighborID = btnCategoryName.myID;
+				} else
+					cmp.upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+
 				// TODO: Start using GridHeight and GridWidth.
 				cmp.bounds = new Rectangle(
 					offsetX + x * (64 + marginX),
@@ -1781,6 +1791,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						snapCursorToCurrentSnappedComponent();
 				};
 
+				Game1.playSound("bigSelect");
 				SetChildMenu(picker);
 				return;
 			}

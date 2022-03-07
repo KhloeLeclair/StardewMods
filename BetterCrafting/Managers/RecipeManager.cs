@@ -321,11 +321,11 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 					Category[] valid = entry.Value.Where(cat => {
 						return
-							(cat.Recipes == null || cat.Recipes.Count == 0) &&
+							!((cat.Recipes == null || cat.Recipes.Count == 0) &&
 							cat.Name.Equals(newName) &&
 							(cat.Icon == null ||
 								(cat.Icon.Type == CategoryIcon.IconType.Item
-								&& !string.IsNullOrEmpty(cat.Icon.RecipeName)));
+								&& !string.IsNullOrEmpty(cat.Icon.RecipeName))));
 					}).ToArray();
 
 					if (valid.Length == 0)

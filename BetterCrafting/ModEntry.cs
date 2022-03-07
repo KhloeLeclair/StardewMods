@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -67,6 +66,7 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public override void Entry(IModHelper helper) {
 			base.Entry(helper);
+			SpriteHelper.SetModHelper(helper);
 
 			instance = this;
 			API = new ModAPI(this);
