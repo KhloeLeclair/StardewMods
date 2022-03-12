@@ -32,7 +32,7 @@
 	"crop.grow-time": "Растет {{count}} дней.",
 	"crop.harvests": "Количество урожаев за год {{count}}.",
 	"crop.harvests-date": "Количество урожаев {{count}}, если посадить {{date}}.",
-	"crop.last-date": "Садить не позже {{date}}.",
+	"crop.last-date": "Сажать не позже {{date}}.",
 	"crop.regrow-time": "Дает урожай каждые {{count}} дня.",
 	"crop.paddy-note": "Растет быстрее вблизи воды.",
 	"crop.giant-note": "Может вырасти до гигантских размеров.",
@@ -45,9 +45,9 @@
 
 	"festival.about": "{{season}}, а это означает, что следующие фестивали будут проведены в долине Стардью:",
 
-	"festival.when": "Где:",
+	"festival.when": "Когда:",
 	"festival.when-times": "{{start}} до {{end}}",
-	"festival.where": "Когда:",
+	"festival.where": "Где:",
 	"festival.date": "Дата:",
 
 	"festival.location.Town": "Город Пеликан",
