@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewValley.Menus;
+
 namespace Leclair.Stardew.Common.UI.FlowNode {
 	public struct SpriteNode : IFlowNode {
 		public SpriteInfo Sprite { get; }
@@ -13,16 +15,29 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		public Alignment Alignment { get; }
 
 		public bool NoComponent { get; }
-		public Func<IFlowNodeSlice, bool> OnClick { get; }
-		public Func<IFlowNodeSlice, bool> OnHover { get; }
+		public ClickableComponent UseComponent => null;
+		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
+		public Func<IFlowNodeSlice, int, int, bool> OnHover { get; }
+		public Func<IFlowNodeSlice, int, int, bool> OnRightClick { get; }
 
-		public SpriteNode(SpriteInfo sprite, float scale, Alignment? alignment = null, Func<IFlowNodeSlice, bool> onClick = null, Func<IFlowNodeSlice, bool> onHover = null, bool noComponent = false, float size = 16, int frame = -1) {
+		public SpriteNode(
+			SpriteInfo sprite,
+			float scale,
+			Alignment? alignment = null,
+			Func<IFlowNodeSlice, int, int, bool> onClick = null,
+			Func<IFlowNodeSlice, int, int, bool> onHover = null,
+			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
+			bool noComponent = false,
+			float size = 16,
+			int frame = -1
+		) {
 			Sprite = sprite;
 			Scale = scale;
 			Size = size;
 			Alignment = alignment ?? Alignment.None;
 			OnClick = onClick;
 			OnHover = onHover;
+			OnRightClick = onRightClick;
 			NoComponent = noComponent;
 			Frame = frame;
 		}
@@ -53,8 +68,9 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				   Alignment == node.Alignment &&
 				   NoComponent == node.NoComponent &&
 				   Frame == node.Frame &&
-				   EqualityComparer<Func<IFlowNodeSlice, bool>>.Default.Equals(OnClick, node.OnClick) &&
-				   EqualityComparer<Func<IFlowNodeSlice, bool>>.Default.Equals(OnHover, node.OnHover);
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick);
 		}
 
 		public override int GetHashCode() {
@@ -65,8 +81,9 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			hashCode = hashCode * -1521134295 + Alignment.GetHashCode();
 			hashCode = hashCode * -1521134295 + NoComponent.GetHashCode();
 			hashCode = hashCode * -1521134295 + Frame.GetHashCode();
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, bool>>.Default.GetHashCode(OnClick);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, bool>>.Default.GetHashCode(OnHover);
+			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnClick);
+			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnHover);
+			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnRightClick);
 			return hashCode;
 		}
 	}

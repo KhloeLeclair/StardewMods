@@ -71,7 +71,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 				date.DayOfMonth = day;
 				SpriteInfo sprite;
 				if (HasLuck) {
-					double luck = Mod.Luck.GetLuckForDate(Seed, date);
+					double luck = Mod.Luck.GetModifiedLuckForDate(Seed, date);
 					sprite = Sprites[day - 1] = Mod.Luck.GetLuckSprite(luck);
 					Luck[day - 1] = luck;
 				} else
@@ -87,12 +87,12 @@ namespace Leclair.Stardew.Almanac.Pages {
 					bool has_simple = !string.IsNullOrEmpty(evt.SimpleLabel);
 					bool has_line = has_simple || evt.AdvancedLabel != null;
 
-					Func<IFlowNodeSlice, bool> onHover = null;
+					Func<IFlowNodeSlice, int, int, bool> onHover = null;
 
 					if (has_line) {
 						db.Text("\n");
 						if (evt.Item != null)
-							onHover = slice => {
+							onHover = (_,_,_) => {
 								Menu.HoveredItem = evt.Item;
 								return true;
 							};
@@ -138,7 +138,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					.Text("\n\n")
 					.FormatText(I18n.Page_Fortune_Event_None());
 
-			SetFlow(builder, 2);
+			SetRightFlow(builder, 2);
 		}
 
 		#endregion
@@ -207,7 +207,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
 			IFlowNode node = Nodes?[date.DayOfMonth - 1];
 			if (node != null) {
-				if (Menu.ScrollFlow(node)) {
+				if (Menu.ScrollRightFlow(node)) {
 					Game1.playSound("shiny4");
 					return true;
 				}

@@ -919,8 +919,20 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			// We also have to use separate calls if we have an area rather
 			// than just a tile position.
 
+			// Sanity check the list of material containers. There are mods
+			// passing garbage data around, so we use a try/catch to avoid
+			// our menu breaking entirely.
+			int count;
+
+			try {
+				count = MaterialContainers?.Count ?? 0;
+			} catch(Exception ex) {
+				Log("We received a bad material container list. Ignoring.", LogLevel.Warn, ex);
+				count = 0;
+			}
+
 			// We want to locate all our inventories.
-			if (MaterialContainers == null || MaterialContainers.Count == 0) {
+			if (count == 0) {
 				if (DiscoverContainers && Location != null) {
 					if (Area.HasValue) {
 						if (Mod.Config.UseDiscovery)
@@ -1021,7 +1033,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			);
 
 #if DEBUG
-			Log($"Chests: {MaterialContainers?.Count ?? 0} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
+			Log($"Chests: {count} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
 #endif
 		}
 

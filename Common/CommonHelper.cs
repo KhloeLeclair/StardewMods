@@ -14,6 +14,27 @@ namespace Leclair.Stardew.Common {
 			return value;
 		}
 
+		public static T Cycle<T>(T current, int direction = 1) {
+			var values = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
+
+			int idx = -1;
+
+			for (int i = 0; i < values.Length; i++) {
+				if (current == null || current.Equals(values[i])) {
+					idx = i + direction;
+					break;
+				}
+			}
+
+			if (idx < 0)
+				return values.Last();
+
+			if (idx >= values.Length)
+				return values[0];
+
+			return values[idx];
+		}
+
 		public static IEnumerable<T> GetValues<T>() {
 			return Enum.GetValues(typeof(T)).Cast<T>();
 		}

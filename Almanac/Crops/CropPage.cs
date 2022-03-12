@@ -248,7 +248,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 			while (remove > 0 && tries < 3) {
 				for (int i = 0; i < result.Length; i++) {
-					if ((i > 0 || result[i] > 1) && result[i] != 99999) {
+					if ((i > 0 || result[i] > 1) && result[i] != Crop.finalPhaseLength) {
 						result[i]--;
 						remove--;
 					}
@@ -278,18 +278,36 @@ namespace Leclair.Stardew.Almanac.Crops {
 				.Text($" {AgriculturistName()}", bold: true, color: Color.ForestGreen)
 				.Build() : null;
 
-			var fertilizer = Fertilizer == null || Fertilizer.Item1 == null ? null : FlowHelper.Builder()
-				.Sprite(Fertilizer.Item2, 2)
-				.Text($" {Fertilizer.Item1.DisplayName}", bold: true)
-				.Build();
+			IFlowNode[] fertilizer;
+			if (Fertilizer?.Item1 == null)
+				fertilizer = null;
+			else {
+				bool onHover(IFlowNodeSlice slice, int x, int y) {
+					Menu.HoveredItem = Fertilizer.Item1;
+					return true;
+				}
 
+				fertilizer = FlowHelper.Builder()
+					.Sprite(Fertilizer.Item2, 2, onHover: onHover)
+					.Text($" {Fertilizer.Item1.DisplayName}", bold: true, onHover: onHover)
+					.Build();
+			}
 
 			if (Agriculturist && fertilizer != null)
-				builder.Translate(Mod.Helper.Translation.Get("crop.using-both"), new { agriculturist, fertilizer });
+				builder.Translate(
+					Mod.Helper.Translation.Get("crop.using-both"),
+					new { agriculturist, fertilizer }
+				);
 			else if (Agriculturist)
-				builder.Translate(Mod.Helper.Translation.Get("crop.using-agri"), new { agriculturist });
+				builder.Translate(
+					Mod.Helper.Translation.Get("crop.using-agri"),
+					new { agriculturist }
+				);
 			else if (fertilizer != null)
-				builder.Translate(Mod.Helper.Translation.Get("crop.using-speed"), new { fertilizer });
+				builder.Translate(
+					Mod.Helper.Translation.Get("crop.using-speed"),
+					new { fertilizer }
+				);
 			else
 				builder.FormatText(I18n.Crop_UsingNone());
 
@@ -346,7 +364,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					LastDays[day - 1].Add(crop);
 				}
 
-				bool OnHover(IFlowNodeSlice slice) {
+				bool OnHover(IFlowNodeSlice slice, int x, int y) {
 					HoverCrop = crop;
 					Menu.HoveredItem = crop.Item;
 					return true;
@@ -385,13 +403,48 @@ namespace Leclair.Stardew.Almanac.Crops {
 				if (crop.IsPaddyCrop)
 					builder.FormatText($" {I18n.Crop_PaddyNote()}", shadow: false);
 
-				if (crop.IsGiantCrop)
-					builder.FormatText($" {I18n.Crop_GiantNote()}", shadow: false);
+				if (crop.IsGiantCrop) {
+					var link = FlowHelper.FormatText(
+						I18n.Crop_GiantHover(),
+						onHover: (_,_,_) => {
+							if (crop.GiantSprite == null)
+								return false;
+
+							Menu.HoverNode = SimpleHelper.Builder(LayoutDirection.Horizontal)
+								.Sprite(crop.GiantSprite, scale: 8)
+								.GetLayout();
+
+							return true;
+						}
+					);
+
+					builder
+						.Text(" ")
+						.Translate(
+							Mod.Helper.Translation.Get("crop.giant-note"),
+							new {
+								link = link
+							},
+							new TextStyle(shadow: false)
+						);
+					/*builder.FormatText($" {I18n.Crop_GiantNote()}", shadow: false, onHover: (_,_,_) => {
+						if (crop.GiantSprite == null)
+							return false;
+
+						Menu.HoverNode = SimpleHelper.Builder(LayoutDirection.Horizontal)
+							//.Space()
+							.Sprite(crop.GiantSprite, scale: 8)
+							//.Space()
+							.GetLayout();
+
+						return true;
+					});*/
+				}
 
 				builder.FormatText($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false);
 			}
 
-			SetFlow(builder, 2);
+			SetRightFlow(builder, 2);
 
 			if (Active)
 				CropGrowth.Invalidate();
@@ -476,6 +529,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			for (int i = 0; i < FertComponents.Count; i++) {
 				ClickableComponent cmp = FertComponents[i];
 				if (cmp.containsPoint(x, y)) {
+					Menu.HoveredItem = Fertilizers[i].Item1;
 					Menu.HoverText = Fertilizers[i].Item1?.DisplayName ?? "???";
 					return;
 				}
@@ -776,7 +830,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				return false;
 
 			// If we're using gamepad controls, loop through every crop in the tile.
-			if (Game1.options.gamepadControls) {
+			if (Game1.options.gamepadControls && Game1.options.SnappyMenus) {
 				if (date != ClickedDate) {
 					ClickedDate = date;
 					ClickedIndex = -1;
@@ -787,7 +841,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					ClickedIndex = 0;
 
 				if (CropNodes.TryGetValue(crops[ClickedIndex], out IFlowNode node))
-					if (Menu.ScrollFlow(node))
+					if (Menu.ScrollRightFlow(node))
 						Game1.playSound("shiny4");
 
 				return true;
@@ -798,7 +852,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			CropInfo? crop = GetCropAt(x, y, date, bounds);
 			if (crop.HasValue) {
 				if (CropNodes.TryGetValue(crop.Value, out IFlowNode node)) {
-					if (Menu.ScrollFlow(node))
+					if (Menu.ScrollRightFlow(node))
 						Game1.playSound("shiny4");
 				}
 

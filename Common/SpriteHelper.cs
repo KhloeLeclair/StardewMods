@@ -22,7 +22,7 @@ namespace Leclair.Stardew.Common {
 		// Helper
 		private static IModHelper modHelper;
 
-		public static void SetModHelper(IModHelper helper) {
+		public static void SetHelper(IModHelper helper) {
 			modHelper = helper;
 		}
 

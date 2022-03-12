@@ -242,18 +242,18 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 				if (align == Alignment.None && Direction == LayoutDirection.Horizontal)
 					align = Alignment.Middle;
 
-				if (AlignmentHelper.HasFlag(align, Alignment.Left)) {
+				if (align.HasFlag(Alignment.Left)) {
 					/* nothing ~ */
-				} else if (AlignmentHelper.HasFlag(align, Alignment.Center))
+				} else if (align.HasFlag(Alignment.Center))
 					offsetX += (ownSize.X - size.X) / 2;
-				else if (AlignmentHelper.HasFlag(align, Alignment.Right))
+				else if (align.HasFlag(Alignment.Right))
 					offsetX += ownSize.X - size.X;
 
-				if (AlignmentHelper.HasFlag(align, Alignment.Top)) {
+				if (align.HasFlag(Alignment.Top)) {
 					/* nothing ~ */
-				} else if (AlignmentHelper.HasFlag(align, Alignment.Middle))
+				} else if (align.HasFlag(Alignment.Middle))
 					offsetY += (ownSize.Y - size.Y) / 2;
-				else if (AlignmentHelper.HasFlag(align, Alignment.Bottom))
+				else if (align.HasFlag(Alignment.Bottom))
 					offsetY += ownSize.Y - size.Y;
 
 				node.Draw(

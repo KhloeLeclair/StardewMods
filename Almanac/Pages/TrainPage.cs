@@ -60,7 +60,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (date.SeasonIndex == 0 && date.Year == 1)
 				builder.FormatText($"\n\n{I18n.Page_Train_Notice()}", color: Color.Red);
 
-			SetFlow(builder, 2);
+			SetRightFlow(builder, 2);
 		}
 
 		#endregion

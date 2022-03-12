@@ -17,6 +17,8 @@ namespace Leclair.Stardew.Almanac {
 
 	public interface IAlmanacAPI {
 
+		int DaysPerMonth { get; }
+
 		#region Custom Pages
 
 		/*void RegisterPage(
@@ -89,22 +91,19 @@ namespace Leclair.Stardew.Almanac {
 			Item item,
 			string name,
 
-			bool isTrellisCrop,
+			int regrow,
 			bool isGiantCrop,
 			bool isPaddyCrop,
-
-			IList<int> phases,
-			IList<Texture2D> phaseSpriteTextures,
-			IList<Rectangle?> phaseSpriteSources,
-			IList<Color?> phaseSpriteColors,
-			IList<Texture2D> phaseSpriteOverlayTextures,
-			IList<Rectangle?> phaseSpriteOverlaySources,
-			IList<Color?> phaseSpriteOverlayColors,
-
-			int regrow,
+			bool isTrellisCrop,
 
 			WorldDate start,
-			WorldDate end
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
 		);
 
 		void AddCrop(
@@ -115,51 +114,19 @@ namespace Leclair.Stardew.Almanac {
 			Item item,
 			string name,
 
-			Texture2D spriteTexture,
-			Rectangle? spriteSource,
-			Color? spriteColor,
-			Texture2D spriteOverlayTexture,
-			Rectangle? spriteOverlaySource,
-			Color? spriteOverlayColor,
-
-			bool isTrellisCrop,
+			int regrow,
 			bool isGiantCrop,
 			bool isPaddyCrop,
-
-			IList<int> phases,
-			IList<Texture2D> phaseSpriteTextures,
-			IList<Rectangle?> phaseSpriteSources,
-			IList<Color?> phaseSpriteColors,
-			IList<Texture2D> phaseSpriteOverlayTextures,
-			IList<Rectangle?> phaseSpriteOverlaySources,
-			IList<Color?> phaseSpriteOverlayColors,
-
-			int regrow,
+			bool isTrellisCrop,
 
 			WorldDate start,
-			WorldDate end
-		);
+			WorldDate end,
 
-		void AddCrop(
-			IManifest manifest,
-
-			string id,
-
-			Item item,
-			string name,
 			SpriteInfo sprite,
+			SpriteInfo giantSprite,
 
-			bool isTrellisCrop,
-			bool isGiantCrop,
-			bool isPaddyCrop,
-
-			IEnumerable<int> phases,
-			IEnumerable<SpriteInfo> phaseSprites,
-
-			int regrow,
-
-			WorldDate start,
-			WorldDate end
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<SpriteInfo> phaseSprites
 		);
 
 		void RemoveCrop(IManifest manifest, string id);
@@ -279,6 +246,8 @@ namespace Leclair.Stardew.Almanac {
 			Mod = mod;
 		}
 
+		public int DaysPerMonth => ModEntry.DaysPerMonth;
+
 		#region Crop Providers
 
 		public void AddCropProvider(ICropProvider provider) {
@@ -315,59 +284,30 @@ namespace Leclair.Stardew.Almanac {
 			SetCropCallback(manifest, null);
 		}
 
-		public void AddCrop(
-			IManifest manifest,
+		private SpriteInfo HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
+			if (input?.Item1 == null)
+				return null;
 
-			string id,
+			return new SpriteInfo(
+				texture: input.Item1,
+				baseSource: input.Item2 ?? input.Item1.Bounds,
+				baseColor: input.Item3,
+				overlayTexture: input.Item4,
+				overlaySource: input.Item5,
+				overlayColor: input.Item6
+			);
+		}
 
-			Item item,
-			string name,
+		private List<SpriteInfo> HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
+			if (input == null)
+				return null;
 
-			bool isTrellisCrop,
-			bool isGiantCrop,
-			bool isPaddyCrop,
-
-			IList<int> phases,
-			IList<Texture2D> phaseSpriteTextures,
-			IList<Rectangle?> phaseSpriteSources,
-			IList<Color?> phaseSpriteColors,
-			IList<Texture2D> phaseSpriteOverlayTextures,
-			IList<Rectangle?> phaseSpriteOverlaySources,
-			IList<Color?> phaseSpriteOverlayColors,
-
-			int regrow,
-
-			WorldDate start,
-			WorldDate end
-		) {
-			List<SpriteInfo> phaseSprites = new();
-
-			for(int i = 0; i < phases.Count; i++) {
-				phaseSprites.Add(new(
-					texture: phaseSpriteTextures[i],
-					baseSource: phaseSpriteSources[i] ?? phaseSpriteTextures[i].Bounds,
-					baseColor: phaseSpriteColors?[i],
-					overlayTexture: phaseSpriteOverlayTextures?[i],
-					overlaySource: phaseSpriteOverlaySources?[i],
-					overlayColor: phaseSpriteOverlayColors?[i]
-				));
+			List<SpriteInfo> result = new();
+			foreach (var def in input) {
+				result.Add(HydrateSprite(def));
 			}
 
-			AddCrop(
-				manifest: manifest,
-				id: id,
-				item: item,
-				name: name,
-				sprite: item == null ? null : SpriteHelper.GetSprite(item),
-				isTrellisCrop: isTrellisCrop,
-				isGiantCrop: isGiantCrop,
-				isPaddyCrop: isPaddyCrop,
-				phases: phases,
-				phaseSprites: phaseSprites,
-				regrow: regrow,
-				start: start,
-				end: end
-			);
+			return result;
 		}
 
 		public void AddCrop(
@@ -378,66 +318,38 @@ namespace Leclair.Stardew.Almanac {
 			Item item,
 			string name,
 
-			Texture2D spriteTexture,
-			Rectangle? spriteSource,
-			Color? spriteColor,
-			Texture2D spriteOverlayTexture,
-			Rectangle? spriteOverlaySource,
-			Color? spriteOverlayColor,
-
-			bool isTrellisCrop,
+			int regrow,
 			bool isGiantCrop,
 			bool isPaddyCrop,
-
-			IList<int> phases,
-			IList<Texture2D> phaseSpriteTextures,
-			IList<Rectangle?> phaseSpriteSources,
-			IList<Color?> phaseSpriteColors,
-			IList<Texture2D> phaseSpriteOverlayTextures,
-			IList<Rectangle?> phaseSpriteOverlaySources,
-			IList<Color?> phaseSpriteOverlayColors,
-
-			int regrow,
+			bool isTrellisCrop,
 
 			WorldDate start,
-			WorldDate end
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
 		) {
-			List<SpriteInfo> phaseSprites = new();
-
-			for (int i = 0; i < phases.Count; i++) {
-				phaseSprites.Add(new(
-					texture: phaseSpriteTextures[i],
-					baseSource: phaseSpriteSources[i] ?? phaseSpriteTextures[i].Bounds,
-					baseColor: phaseSpriteColors?[i],
-					overlayTexture: phaseSpriteOverlayTextures?[i],
-					overlaySource: phaseSpriteOverlaySources?[i],
-					overlayColor: phaseSpriteOverlayColors?[i]
-				));
-			}
-
-			AddCrop(
-				manifest: manifest,
+			var provider = Mod.Crops.GetModProvider(manifest);
+			provider.AddCrop(
 				id: id,
 				item: item,
 				name: name,
-				sprite: new SpriteInfo(
-					spriteTexture,
-					spriteSource ?? spriteTexture.Bounds,
-					spriteColor,
-					overlayTexture: spriteOverlayTexture,
-					overlaySource: spriteOverlaySource,
-					overlayColor: spriteOverlayColor
-				),
+				sprite: sprite == null ? (item == null ? null : SpriteHelper.GetSprite(item)) : HydrateSprite(sprite),
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
+				giantSprite: HydrateSprite(giantSprite),
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
-				phaseSprites: phaseSprites,
+				phaseSprites: HydrateSprites(phaseSprites),
 				regrow: regrow,
 				start: start,
 				end: end
 			);
 		}
+
 
 		public void AddCrop(
 			IManifest manifest,
@@ -446,19 +358,20 @@ namespace Leclair.Stardew.Almanac {
 
 			Item item,
 			string name,
+
+			int regrow,
+			bool isGiantCrop,
+			bool isPaddyCrop,
+			bool isTrellisCrop,
+
+			WorldDate start,
+			WorldDate end,
+
 			SpriteInfo sprite,
+			SpriteInfo giantSprite,
 
-			bool isTrellisCrop,
-			bool isGiantCrop,
-			bool isPaddyCrop,
-
-			IEnumerable<int> phases,
-			IEnumerable<SpriteInfo> phaseSprites,
-
-			int regrow,
-
-			WorldDate start,
-			WorldDate end
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<SpriteInfo> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
 			provider.AddCrop(
@@ -468,6 +381,7 @@ namespace Leclair.Stardew.Almanac {
 				sprite: sprite,
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
+				giantSprite: giantSprite,
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
 				phaseSprites: phaseSprites,

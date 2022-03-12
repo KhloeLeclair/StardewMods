@@ -43,7 +43,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				Rectangle rect = new(10 * i, 428, 10, 10);
 				SpriteInfo sprite = new(Game1.mouseCursors, rect);
 
-				builder.Sprite(sprite, scale: 3, onClick: slice => {
+				builder.Sprite(sprite, scale: 3, onClick: (_,_,_) => {
 					Pick(GameTexture.MouseCursors, rect);
 					return true;
 				});
@@ -54,7 +54,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					Rectangle rect = new(ix * 16, 624 + iy * 16, 16, 16);
 					SpriteInfo sprite = new(Game1.mouseCursors, rect);
 
-					builder.Sprite(sprite, scale: 3, onClick: slice => {
+					builder.Sprite(sprite, scale: 3, onClick: (_, _, _) => {
 						Pick(GameTexture.MouseCursors, rect);
 						return true;
 					});
@@ -66,7 +66,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					Rectangle rect = new(ix * 9, iy * 9, 9, 9);
 					SpriteInfo sprite = new(SpriteHelper.GetTexture(GameTexture.Emoji), rect);
 
-					builder.Sprite(sprite, scale: 3, onClick: slice => {
+					builder.Sprite(sprite, scale: 3, onClick: (_, _, _) => {
 						Pick(GameTexture.Emoji, rect);
 						return true;
 					});

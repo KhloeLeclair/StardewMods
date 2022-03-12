@@ -36,6 +36,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipe.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipeProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoadingHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RenderHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TileHelper.cs" />
@@ -51,8 +52,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\CachedFlow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\CachedFlowLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Alignment.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\ComponentNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\DividerNode.cs" />
+    <Compile Include="..\Common\UI\FlowNode\SelectableNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\BaseOverlay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\IOverlay.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\ScrollableFlow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\DividerNode.cs" />

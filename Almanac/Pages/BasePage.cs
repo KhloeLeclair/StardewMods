@@ -18,8 +18,10 @@ using StardewValley.Menus;
 namespace Leclair.Stardew.Almanac.Pages {
 
 	public class BaseState {
-		public int FlowScroll;
-		public int FlowStep;
+		public int LeftFlowScroll;
+		public int LeftFlowStep;
+		public int RightFlowScroll;
+		public int RightFlowStep;
 	}
 
 	public abstract class BasePage<T> : IAlmanacPage, ITab where T : BaseState, new() {
@@ -31,10 +33,15 @@ namespace Leclair.Stardew.Almanac.Pages {
 		public readonly ModEntry Mod;
 
 		// Flow State
-		private IEnumerable<IFlowNode> Flow;
-		private int FlowStep;
-		private int FlowScroll;
-		private bool FlowScrollRestore = false;
+		private IEnumerable<IFlowNode> LeftFlow;
+		private int LeftFlowStep;
+		private int LeftFlowScroll;
+		private bool LeftFlowRestore = false;
+
+		private IEnumerable<IFlowNode> RightFlow;
+		private int RightFlowStep;
+		private int RightFlowScroll;
+		private bool RightFlowRestore = false;
 
 		// Update State
 		protected WorldDate LastDate;
@@ -61,21 +68,38 @@ namespace Leclair.Stardew.Almanac.Pages {
 			LastDate = new(Menu.Date);
 		}
 
-		public void SetFlow(FlowBuilder builder, int step = 1, int scroll = 0) {
-			SetFlow(builder.Build(), step, scroll);
+		public void SetLeftFlow(FlowBuilder builder, int step = 4, int scroll = 0) {
+			SetLeftFlow(builder.Build(), step, scroll);
 		}
 
-		public void SetFlow(IEnumerable<IFlowNode> flow, int step = 1, int scroll = 0) {
-			Flow = flow;
-			FlowStep = step;
+		public void SetLeftFlow(IEnumerable<IFlowNode> flow, int step = 4, int scroll = 0) {
+			LeftFlow = flow;
+			LeftFlowStep = step;
 
-			if (FlowScrollRestore)
-				FlowScrollRestore = false;
+			if (LeftFlowRestore)
+				LeftFlowRestore = false;
 			else if (scroll >= 0)
-				FlowScroll = scroll;
+				LeftFlowScroll = scroll;
 
 			if (Active)
-				Menu.SetFlow(Flow, FlowStep, FlowScroll);
+				Menu.SetLeftFlow(LeftFlow, LeftFlowStep, LeftFlowScroll);
+		}
+
+		public void SetRightFlow(FlowBuilder builder, int step = 4, int scroll = 0) {
+			SetRightFlow(builder?.Build(), step, scroll);
+		}
+
+		public void SetRightFlow(IEnumerable<IFlowNode> flow, int step = 4, int scroll = 0) {
+			RightFlow = flow;
+			RightFlowStep = step;
+
+			if (RightFlowRestore)
+				RightFlowRestore = false;
+			else if (scroll >= 0)
+				RightFlowScroll = scroll;
+
+			if (Active)
+				Menu.SetRightFlow(RightFlow, RightFlowStep, RightFlowScroll);
 		}
 
 		public object GetState() {
@@ -83,12 +107,16 @@ namespace Leclair.Stardew.Almanac.Pages {
 		}
 
 		public virtual T SaveState() {
-			if (Active)
-				FlowScroll = Menu.GetFlowScroll();
+			if (Active) {
+				LeftFlowScroll = Menu.GetLeftFlowScroll();
+				RightFlowScroll = Menu.GetRightFlowScroll();
+			}
 
 			return new T() {
-				FlowScroll = FlowScroll,
-				FlowStep = FlowStep,
+				LeftFlowScroll = LeftFlowScroll,
+				LeftFlowStep = LeftFlowStep,
+				RightFlowScroll = RightFlowScroll,
+				RightFlowStep = RightFlowStep,
 			};
 		}
 
@@ -98,12 +126,17 @@ namespace Leclair.Stardew.Almanac.Pages {
 		}
 
 		public virtual void LoadState(T state) {
-			FlowStep = state.FlowStep;
-			FlowScroll = state.FlowScroll;
-			FlowScrollRestore = true;
+			LeftFlowStep = state.LeftFlowStep;
+			LeftFlowScroll = state.LeftFlowScroll;
+			RightFlowStep = state.RightFlowStep;
+			RightFlowScroll = state.RightFlowScroll;
+			LeftFlowRestore = true;
+			RightFlowRestore = true;
 
-			if (Active)
-				Menu.SetFlow(Flow, FlowStep, FlowScroll);
+			if (Active) {
+				Menu.SetLeftFlow(LeftFlow, LeftFlowStep, LeftFlowScroll);
+				Menu.SetRightFlow(RightFlow, RightFlowStep, RightFlowScroll);
+			}
 		}
 
 		#endregion
@@ -119,14 +152,20 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (LastDate != Menu.Date && (WantDateUpdates || Menu.Date.Season != LastDate?.Season))
 				Update();
 
-			if (Flow != null)
-				Menu.SetFlow(Flow, FlowStep, FlowScroll);
+			if (LeftFlow != null)
+				Menu.SetLeftFlow(LeftFlow, LeftFlowStep, LeftFlowScroll);
+
+			if (RightFlow != null)
+				Menu.SetRightFlow(RightFlow, RightFlowStep, RightFlowScroll);
 		}
 
 		public virtual void Deactivate() {
 			Active = false;
-			if (Flow != null)
-				FlowScroll = Menu.GetFlowScroll();
+			if (LeftFlow != null)
+				LeftFlowScroll = Menu.GetLeftFlowScroll();
+
+			if (RightFlow != null)
+				RightFlowScroll = Menu.GetRightFlowScroll();
 		}
 
 		public virtual void DateChanged(WorldDate oldDate, WorldDate newDate) {

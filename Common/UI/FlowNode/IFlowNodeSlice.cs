@@ -1,3 +1,5 @@
+using System;
+
 namespace Leclair.Stardew.Common.UI.FlowNode {
 	public interface IFlowNodeSlice {
 
@@ -12,6 +14,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 
 	}
 
+	[Flags]
 	public enum WrapMode {
 		None,
 		ForceBefore,

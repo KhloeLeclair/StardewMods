@@ -7,6 +7,8 @@ namespace Leclair.Stardew.Common.UI {
 	public struct TextStyle {
 
 		public readonly static TextStyle EMPTY = new();
+		public readonly static TextStyle BOLD = new(bold: true);
+		public readonly static TextStyle FANCY = new(fancy: true);
 
 		public bool? Fancy { get; }
 		public bool? Junimo { get; }

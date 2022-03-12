@@ -4,6 +4,7 @@ using System.Reflection;
 
 using Newtonsoft.Json.Linq;
 
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.UI.Overlay;
@@ -17,6 +18,7 @@ using StardewValley.Locations;
 using StardewValley.Menus;
 
 using Leclair.Stardew.Almanac.Crops;
+using Leclair.Stardew.Almanac.Fish;
 using Leclair.Stardew.Almanac.Managers;
 using Leclair.Stardew.Almanac.Pages;
 
@@ -52,9 +54,10 @@ namespace Leclair.Stardew.Almanac {
 		public WeatherManager Weather;
 		public LuckManager Luck;
 		public NoticesManager Notices;
+		internal CropManager Crops;
+		internal FishManager Fish;
 
 		internal AssetManager Assets;
-		internal CropManager Crops;
 
 		internal readonly List<Func<Menus.AlmanacMenu, ModEntry, IAlmanacPage>> PageBuilders = new();
 
@@ -62,8 +65,15 @@ namespace Leclair.Stardew.Almanac {
 
 		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
 
+		internal Integrations.LuckSkill.LSIntegration intLS;
+		internal Integrations.JsonAssets.JAIntegration intJA;
+		internal Integrations.MoreGiantCrops.MGCIntegration intMGC;
+
 		public override void Entry(IModHelper helper) {
 			base.Entry(helper);
+			SpriteHelper.SetHelper(helper);
+			RenderHelper.SetHelper(helper);
+
 			instance = this;
 			API = new(this);
 
@@ -74,6 +84,8 @@ namespace Leclair.Stardew.Almanac {
 			// Read Config
 			Config = Helper.ReadConfig<ModConfig>();
 
+			Crops = new(this);
+			Fish = new(this);
 			Weather = new(this);
 			Luck = new(this);
 			Notices = new(this);
@@ -87,7 +99,7 @@ namespace Leclair.Stardew.Almanac {
 			RegisterBuilder(FortunePage.GetPage);
 			RegisterBuilder(MinesPage.GetPage);
 			RegisterBuilder(NoticesPage.GetPage);
-			//RegisterBuilder(FishingPage.GetPage);
+			RegisterBuilder(FishingPage.GetPage);
 		}
 
 		public override object GetApi() {
@@ -180,6 +192,9 @@ namespace Leclair.Stardew.Almanac {
 
 		[Subscriber]
 		private void OnButton(object sender, ButtonPressedEventArgs e) {
+			if (!Context.IsWorldReady)
+				return;
+
 			if (Game1.activeClickableMenu != null || !(Config.UseKey?.JustPressed() ?? false))
 				return;
 
@@ -231,15 +246,19 @@ namespace Leclair.Stardew.Almanac {
 
 		[Subscriber]
 		private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
-			// Load Data
+			// Integrations
+			intLS = new(this);
+			intJA = new(this);
+			intMGC = new(this);
 
 			// More Init
-			Crops = new(this);
 			RegisterConfig();
 
+			// Commands
 			Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
 				Assets.Invalidate();
 				Crops.Invalidate();
+				Fish.Invalidate();
 				Weather.Invalidate();
 			});
 
@@ -266,6 +285,9 @@ namespace Leclair.Stardew.Almanac {
 				CurrentOverlay.Value.Dispose();
 				CurrentOverlay.Value = null;
 			}
+
+			// TODO: Add our pages to shop menus, if we have pages that are
+			// to be added to shops.
 
 			if (!HasAlmanac(Game1.player) || ! Config.ShowAlmanacButton)
 				return;
@@ -378,6 +400,7 @@ namespace Leclair.Stardew.Almanac {
 				.AddLabel(I18n.Settings_Crops, null, "page:crop")
 				.AddLabel(I18n.Settings_Weather, null, "page:weather")
 				.AddLabel(I18n.Settings_Train, null, "page:train")
+				.AddLabel(I18n.Settings_Fish, null, "page:fishing")
 				.AddLabel(I18n.Settings_Notices, null, "page:notices")
 				.AddLabel(I18n.Settings_Fortune, null, "page:fortune")
 				.AddLabel(I18n.Settings_Mines, null, "page:mines");
@@ -454,6 +477,30 @@ namespace Leclair.Stardew.Almanac {
 					I18n.Settings_EnableDesc,
 					c => c.ShowTrains,
 					(c, v) => c.ShowTrains = v
+				);
+
+			GMCMIntegration
+				.StartPage("page:fishing", I18n.Settings_Fish)
+				.Add(
+					I18n.Settings_Enable,
+					I18n.Settings_EnableDesc,
+					c => c.ShowFishing,
+					(c, v) => c.ShowFishing = v
+				)
+
+				.AddLabel("") // Spacer
+
+				.Add(
+					I18n.Settings_Fish_ShowTank,
+					I18n.Settings_Fish_ShowTankDesc,
+					c => c.ShowFishTank,
+					(c, v) => c.ShowFishTank = v
+				)
+				.Add(
+					I18n.Settings_Fish_DecorateTank,
+					I18n.Settings_Fish_DecorateTankDesc,
+					c => c.DecorateFishTank,
+					(c, v) => c.DecorateFishTank = v
 				);
 
 			GMCMIntegration
@@ -610,8 +657,42 @@ namespace Leclair.Stardew.Almanac {
 			return ForLocale != null && ForLocale.ContainsKey(key);
 		}
 
+		public string GetSubLocationName(Models.SubLocation sub) {
+			if (sub.Area == -1)
+				return I18n.Location_SubAny();
+
+			string name = sub.Key;
+			string key = $"location.{name}.{sub.Area}";
+			if (DoesTranslationExist(key))
+				return Helper.Translation.Get(key).ToString();
+
+			switch(name) {
+				case "Forest":
+					if (sub.Area == 0)
+						return I18n.Location_Forest_River();
+					if (sub.Area == 1)
+						return I18n.Location_Forest_Pond();
+					break;
+
+				case "IslandWest":
+					if (sub.Area == 1)
+						return I18n.Location_Island_Ocean();
+					if (sub.Area == 2)
+						return I18n.Location_Island_Freshwater();
+					break;
+			}
+
+			return sub.Area.ToString();
+		}
+
 		public string GetLocationName(GameLocation location) {
-			string name = location.Name;
+			return GetLocationName(location?.Name, location);
+		}
+
+		public string GetLocationName(string name, GameLocation location) {
+			if (location == null && string.IsNullOrEmpty(name))
+				return null;
+
 			string key = $"location.{name}";
 			if (DoesTranslationExist(key))
 				return Helper.Translation.Get(key).ToString();

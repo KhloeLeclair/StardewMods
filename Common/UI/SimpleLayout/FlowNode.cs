@@ -51,7 +51,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			SpriteFont font = defaultFont ?? Game1.smallFont;
 			CachedFlow flow = GetFlow(font, WrapText ? size.X : -1);
 
-			FlowHelper.RenderFlow(batch, flow, position, defaultColor, defaultShadowColor);
+			FlowHelper.RenderFlow(batch, flow, position, defaultColor, defaultShadowColor, lineOffset: 0);
 		}
 	}
 }

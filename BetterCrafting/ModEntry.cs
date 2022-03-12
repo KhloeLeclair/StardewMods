@@ -66,7 +66,7 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public override void Entry(IModHelper helper) {
 			base.Entry(helper);
-			SpriteHelper.SetModHelper(helper);
+			SpriteHelper.SetHelper(helper);
 
 			instance = this;
 			API = new ModAPI(this);

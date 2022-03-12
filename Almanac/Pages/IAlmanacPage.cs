@@ -40,6 +40,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 	public enum PageType {
 		Blank,
+		Seasonal,
 		Calendar,
 		Cover
 	}

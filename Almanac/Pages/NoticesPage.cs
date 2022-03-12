@@ -69,7 +69,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			}, () => HoveredDate);*/
 
-			Update();
+			//Update();
 		}
 
 		#endregion
@@ -175,12 +175,12 @@ namespace Leclair.Stardew.Almanac.Pages {
 					bool has_simple = ! string.IsNullOrEmpty(evt.SimpleLabel);
 					bool has_line = has_simple || evt.AdvancedLabel != null;
 
-					Func<IFlowNodeSlice, bool> onHover = null;
+					Func<IFlowNodeSlice, int, int, bool> onHover = null;
 
 					if (has_line) {
 						db.Text("\n");
 						if (evt.Item != null)
-							onHover = slice => {
+							onHover = (_,_,_) => {
 								Menu.HoveredItem = evt.Item;
 								return true;
 							};
@@ -255,7 +255,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					.AddRange(db.Build());
 			}
 
-			SetFlow(
+			SetRightFlow(
 				builder.Build(),
 				4,
 				0
@@ -340,7 +340,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
 			int day = date.DayOfMonth;
-			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollFlow(node)) {
+			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollRightFlow(node)) {
 				Game1.playSound("shiny4");
 				return true;
 			}

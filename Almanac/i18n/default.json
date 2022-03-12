@@ -35,7 +35,8 @@
 	"crop.last-date": "Plant no later than {{date}}.",
 	"crop.regrow-time": "Regrows every {{count}} days.",
 	"crop.paddy-note": "Grows faster near water.",
-	"crop.giant-note": "Able to grow to giant size.",
+	"crop.giant-note": "Able to grow to {{link}}.",
+	"crop.giant-hover": "@Bgiant size@b",
 	"crop.trellis-note": "Requires a trellis.",
 
 	"page.weather": "Weather Forecast",
@@ -49,10 +50,6 @@
 	"festival.when-times": "{{start}} to {{end}}",
 	"festival.where": "Where:",
 	"festival.date": "Date:",
-
-	"festival.location.Town": "Pelican Town",
-	"festival.location.Beach": "The Beach",
-	"festival.location.Forest": "Cindersap Forest",
 
 	"weather.sunny": "Sunny",
 	"weather.rain": "Rain",
@@ -84,6 +81,7 @@
 	"page.fortune.event.witch": "Witches are expected in the area this night.",
 	"page.fortune.event.meteorite": "Meteor showers are expected throughout Ferngill.",
 	"page.fortune.event.owl": "Shrouded in mystery, stone guardians descend on the valley.",
+	"page.fortune.event.ufo": "Strange beings from beyond the sky ride over Ferngill.",
 
 	"page.mines": "The Underground",
 	"page.mines.about": "The following is a summary of predicted monster activity in {{Season}}:",
@@ -111,6 +109,48 @@
 
 	"page.notices.birthday.no-s": "It's {{name}}' birthday!",
 	"page.notices.birthday.s": "It's {{name}}'s birthday!",
+
+	// Fishing Page
+
+	"page.fish": "Fishing",
+	"page.fish.aquarium.none": "This cannot be placed in a fish tank.",
+	"page.fish.caught": "You have caught @B{{count}}@b of this.",
+	"page.fish.caught.not": "You have not caught this before.",
+
+	// TL Note: You can use {{big_cm}}, {{min_cm}}, and {{max_cm}} instead of _inch.
+	"page.fish.size": "Your biggest catch is @B{{big_inch}}\"@b.",
+	"page.fish.size.range": "It grows from @B{{min_inch}}\"@b to @B{{max_inch}}\"@b.",
+
+	"page.fish.weather.Sunny": "{{fish}} is only active during @Bsunny@b weather.",
+	"page.fish.weather.Rainy": "{{fish}} is only active during @Brainy@b weather.",
+	"page.fish.weather.Any": "{{fish}} is always active, rain or shine.",
+	"page.fish.level": "You need a {{skill}} level of @B{{level}}@b to catch this.",
+	"page.fish.time.all": "It stays active at all times of day.",
+	"page.fish.time": "It stays active from @B{{start}}@b to @B{{end}}@b.",
+	"page.fish.time.many": "It stays active over the following time spans: {{spans}}.",
+	"page.fish.time.range": "@B{{start}}@b to @B{{end}}@b",
+	"page.fish.locations": "Locations",
+	"page.fish.seasons.all": "All Seasons",
+	"page.fish.locations.none": "This fish has no location data.",
+	"page.fish.pond": "Fish Farming",
+	"page.fish.pond.none": "{{fish}} cannot be placed in a fish pond.",
+	"page.fish.pond.start": "",
+	"page.fish.filter.weather": "Filter by Weather",
+	"page.fish.filter.none": "Unfiltered",
+	"page.fish.none": "There are no fish that match your current filters.",
+	"page.fish.nothing": "Nothing to see here...",
+	"fish.weather.Any": "Any",
+	"fish.weather.Rainy": "Rainy",
+	"fish.weather.Sunny": "Sunny",
+	"page.fish.filter.type": "Filter by Type",
+	"page.fish.filter.type.trap": "Trapping (Crab Pot)",
+	"page.fish.filter.type.caught": "Fishing (Rod)",
+	"page.fish.filter.caught": "Filter by Caught",
+	"page.fish.filter.true": "Yes",
+	"page.fish.filter.false": "No",
+	"page.fish.filter.location": "Filter by Current Location",
+	"page.fish.location.fresh": "{{fish}} lives in fresh water.",
+	"page.fish.location.ocean": "{{fish}} lives in salt water.",
 
 	// Settings
 
@@ -167,6 +207,13 @@
 
 	"settings.mines": "Page: The Underground",
 
+	"settings.fish": "Page: Fishing",
+	"settings.fish.show-tank": "Show Tank Preview",
+	"settings.fish.show-tank-desc": "When enabled, the Fishing page will show previews of what each fish looks like in a fish tank.",
+
+	"settings.fish.decorate-tank": "Decorate Tank",
+	"settings.fish.decorate-tank-desc": "When enabled, the tank preview will contain a few decorative items in addition to the fish.",
+
 	"settings.notices": "Page: Local Notices",
 
 	"settings.notices.anniversaries": "Show Anniversaries",
@@ -204,5 +251,45 @@
 	"event.11022001.2": "Have somethin' you might want, then. Here.",
 	"event.11022001.3": "Received a copy of 'Fern Islands Almanac'.",
 	"event.11022001.4": "'s not much, but knowin' what the weather'll be is great. Some fish only come out in the rain, you know?",
-	"event.11022001.5": "Well, I best not keep yeh. Have a good day, @."
+	"event.11022001.5": "Well, I best not keep yeh. Have a good day, @.",
+
+	// Locations
+
+	"location.WitchSwamp": "Witch's Swamp",
+	"location.BugLand": "Mutant Bug Lair",
+
+	"location.IslandWest": "West Ginger Island",
+	"location.IslandNorth": "North Ginger Island",
+	"location.IslandSouth": "South Ginger Island",
+	"location.IslandSouthEast": "Southeast Ginger Island",
+	"location.IslandSouthEastCave": "Southeast Ginger Island (Cave)",
+	"location.IslandEast": "East Ginger Island",
+
+	"location.sub-any": "Any",
+
+	"location.Forest.River": "River",
+	"location.Forest.Pond": "Pond",
+
+	"location.Island.Ocean": "Ocean",
+	"location.Island.Freshwater": "Freshwater",
+
+	// Maps: Stardew Aquarium
+	"location.ExteriorMuseum": "Stardew Aquarium",
+
+	// Maps: Stardew Valley Expanded
+	"location.Custom_AdventurerSummit": "Adventurer Summit",
+	"location.Custom_BlueMoonVineyard": "Blue Moon Vineyard",
+	"location.Custom_BlueMoonVineyard.0": "Ocean",
+	"location.Custom_BlueMoonVineyard.1": "River",
+	"location.Custom_CrimsonBadlands": "Crimson Badlands",
+	"location.Custom_FableReef": "Fable Reef",
+	"location.Custom_ForestWest": "West Cindersap Forest",
+	"location.Custom_Highlands": "The Highlands",
+	"location.Custom_Highlands.0": "Ruins",
+	"location.Custom_Highlands.1": "River",
+	"location.Custom_HighlandsCavern": "The Highlands (Cavern)",
+	"location.Custom_JunimoWoods": "Junimo Woods",
+	//"location.Custom_MorrisProperty": "",
+	"location.Custom_ShearwaterBridge": "Shearwater Bridge",
+	"location.Custom_SpriteSpring2": "Sprite Spring"
 }

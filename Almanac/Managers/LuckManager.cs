@@ -117,6 +117,32 @@ namespace Leclair.Stardew.Almanac.Managers {
 			return Math.Min(0.100000001490116, (double) rnd.Next(-100, 101) / 1000.0);
 		}
 
+		public double GetModifiedLuckForDate(int seed, WorldDate date) {
+			double result = GetLuckForDate(seed, date);
+
+			// Luck Skill
+			if (Mod.intLS.IsLoaded) {
+				foreach (var who in Game1.getAllFarmers()) {
+					// Fortunate players add 0.01 to their team's sharedDailyLuck.
+					if (Mod.intLS.HasFortunate(who))
+						result += 0.01;
+
+					// Lucky players have a 20% chance of maximum daily luck.
+					if (Mod.intLS.HasLucky(who)) {
+						Random rnd = new(seed + date.TotalDays * 3);
+						if (rnd.NextDouble() <= 0.20)
+							result = 0.12;
+					}
+
+					// UnUnLucky
+					if (Mod.intLS.HasUnUnlucky(who) & result < 0)
+						result = 0;
+				}
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Events
@@ -176,6 +202,22 @@ namespace Leclair.Stardew.Almanac.Managers {
 			var evt = do_vanilla ? GetVanillaEventForDate(seed, date) : null;
 			if (evt != null)
 				yield return evt;
+
+			if (evt == null && Mod.intLS.IsLoaded) {
+				// Do any players have the Luck Skill mod profession "Shooting Star"?
+				bool shooting = false;
+
+				foreach (var farmer in Game1.getAllFarmers()) {
+					if (Mod.intLS.HasShootingStar(farmer)) {
+						shooting = true;
+						break;
+					}
+				}
+
+				evt = shooting ? GetLuckSkillEventForDate(seed, date) : null;
+				if (evt != null)
+					yield return evt;
+			}
 
 			evt = GetTrashEvent(seed, date);
 			if (evt != null)
@@ -256,6 +298,74 @@ namespace Leclair.Stardew.Almanac.Managers {
 						SpriteHelper.GetTexture(Common.Enums.GameTexture.Object),
 						new Rectangle(352, 400, 32, 32)
 					)
+				);
+
+			if (rnd.NextDouble() < 0.005)
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Owl(),
+					null,
+					SpriteHelper.GetSprite(new SObject(Vector2.Zero, 95))
+				);
+
+			// Don't track Strange Capsule, because that relies on whether
+			// or not the player has already seen it.
+			/*if (rnd.NextDouble() < 0.008 && date.Year > 1 && ! Game1.MasterPlayer.mailReceived.Contains("Got_Capsule"))
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Ufo(),
+					null,
+					SpriteHelper.GetSprite(new SObject(Vector2.Zero, 96))
+				);*/
+
+			return null;
+		}
+
+		private IRichEvent GetLuckSkillEventForDate(int seed, WorldDate date) {
+			int days = date.TotalDays + 1 + 999999;
+
+			if (days == 31)
+				return null;
+
+			Random rnd = new(days + (int) (seed / 2));
+
+			// Don't track any of the Community Center / Joja events because
+			// those all rely on game state and are not random based on the
+			// date they happen on. Same with weddings preventing events.
+
+			if (rnd.NextDouble() < 0.01 && !date.Season.Equals("winter"))
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Fairy(),
+					null,
+					new SpriteInfo(
+						SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors),
+						new Rectangle(16, 592, 16, 16)
+					)
+				);
+
+			if (rnd.NextDouble() < 0.01)
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Witch(),
+					null,
+					new SpriteInfo(
+						SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors),
+						new Rectangle(277, 1886, 34, 29)
+					)
+				);
+
+			if (rnd.NextDouble() < 0.01)
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Meteorite(),
+					null,
+					new SpriteInfo(
+						SpriteHelper.GetTexture(Common.Enums.GameTexture.Object),
+						new Rectangle(352, 400, 32, 32)
+					)
+				);
+
+			if (rnd.NextDouble() < 0.01 && date.Year > 1)
+				return new RichEvent(
+					I18n.Page_Fortune_Event_Ufo(),
+					null,
+					SpriteHelper.GetSprite(new SObject(Vector2.Zero, 96))
 				);
 
 			if (rnd.NextDouble() < 0.005)

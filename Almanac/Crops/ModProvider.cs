@@ -22,6 +22,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 			Crops = new();
 		}
 
+		public string Name => Manifest.Name;
+
 		public int Priority { get; set; } = 0;
 
 		public void SetCallback(Action action) {
@@ -51,6 +53,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 			bool isTrellisCrop,
 			bool isGiantCrop,
+			SpriteInfo giantSprite,
 			bool isPaddyCrop,
 
 			IEnumerable<int> phases,
@@ -67,6 +70,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				name,
 				sprite,
 				isGiantCrop,
+				giantSprite,
 				isTrellisCrop,
 				phases.ToArray(),
 				regrow,

@@ -9,8 +9,10 @@ using StardewModdingAPI.Events;
 
 using StardewValley;
 
+using Leclair.Stardew.Almanac.Managers;
+
 namespace Leclair.Stardew.Almanac.Crops {
-	public class CropManager : EventSubscriber<ModEntry> {
+	public class CropManager : BaseManager {
 
 		public List<CropInfo> Crops = new();
 		private bool Loaded = false;
@@ -20,14 +22,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 		private readonly Dictionary<string, ModProvider> ModProviders = new();
 
 		public CropManager(ModEntry mod) : base(mod) {
-			Providers.Add(new VanillaProvider());
-		}
-
-		protected void Log(string message, LogLevel level = LogLevel.Debug, Exception ex = null) {
-			string Name = GetType().Name;
-			Mod.Monitor.Log($"[{Name}] {message}", level: level);
-			if (ex != null)
-				Mod.Monitor.Log($"[{Name}] Details:\n{ex}", level: level);
+			Providers.Add(new VanillaProvider(mod));
 		}
 
 		#region Mod Providers
@@ -97,7 +92,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				try {
 					crops = provider.GetCrops();
 				} catch (Exception ex) {
-					Log($"An error occurred getting crops from provider {provider.GetType().Name}.", LogLevel.Error, ex);
+					Log($"An error occurred getting crops from provider {provider.Name}.", LogLevel.Error, ex);
 					continue;
 				}
 
@@ -108,7 +103,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					}
 				}
 
-				Log($"Loaded {provided} crops from {provider.GetType().Name}");
+				Log($"Loaded {provided} crops from {provider.Name}");
 				if (provided > 0)
 					providers++;
 			}

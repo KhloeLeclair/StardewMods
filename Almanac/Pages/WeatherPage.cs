@@ -127,7 +127,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 							font: Game1.dialogueFont,
 							shadow: true
 						),
-						onClick: slice => false
+						onClick: (_,_,_) => false
 					);
 
 					Nodes[day - 1] = node;
@@ -167,7 +167,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 				}
 			}
 
-			SetFlow(builder, 2);
+			SetRightFlow(builder, 2);
 		}
 
 		#endregion
@@ -248,7 +248,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
 			int day = date.DayOfMonth;
-			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollFlow(node)) {
+			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollRightFlow(node)) {
 				Game1.playSound("shiny4");
 				return true;
 			}
