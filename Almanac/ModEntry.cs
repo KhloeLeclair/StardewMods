@@ -406,6 +406,15 @@ namespace Leclair.Stardew.Almanac {
 				.AddLabel(I18n.Settings_Mines, null, "page:mines");
 
 			GMCMIntegration
+				.AddLabel("")
+				.Add(
+					I18n.Settings_Debug,
+					I18n.Settings_Debug_Desc,
+					c => c.DebugMode,
+					(c, v) => c.DebugMode = v
+				);
+
+			GMCMIntegration
 				.StartPage("bindings", I18n.Settings_Controls)
 				.Add(
 					I18n.Settings_Controls_Almanac,
@@ -814,11 +823,19 @@ namespace Leclair.Stardew.Almanac {
 					case "Town":
 						key = "Strings\\StringsFromCSFiles:MapPage.cs.11190";
 						break;
+					case "Sewer":
+						key = @"Strings\StringsFromCSFiles:MapPage.cs.11089";
+						break;
 				}
 			}
 
 			if (key != null)
 				return Game1.content.LoadString(key);
+
+			Monitor.LogOnce($"Unable to locate translation key for GameLocation: {name}", LogLevel.Debug);
+
+			if (Config.DebugMode)
+				return $"(no-i18n: {name})";
 
 			return name;
 		}

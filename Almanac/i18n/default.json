@@ -230,6 +230,9 @@
 	"settings.cycle-time": "Cycle Time",
 	"settings.cycle-time.desc": "When multiple pictures need to be shown on a given day, each picture is shown for this many seconds.",
 
+	"settings.debug": "Debug Mode",
+	"settings.debug.desc": "When enabled, some additional information may be displayed in the Almanac useful for debugging.",
+
 	// Events
 
 	// Pierre at Farm

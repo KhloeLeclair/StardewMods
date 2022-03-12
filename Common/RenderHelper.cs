@@ -290,20 +290,22 @@ namespace Leclair.Stardew.Common
 
 			b.GraphicsDevice.ScissorRectangle = Rectangle.Intersect(rectangle, old_scissor);
 
-			action?.Invoke();
+			try {
+				action?.Invoke();
+			} finally {
+				b.End();
+				b.Begin(
+					sortMode: old_sort,
+					blendState: old_blend,
+					samplerState: old_sampler,
+					depthStencilState: old_depth,
+					rasterizerState: old_rasterizer,
+					effect: old_effect,
+					transformMatrix: null
+				);
 
-			b.End();
-			b.Begin(
-				sortMode: old_sort,
-				blendState: old_blend,
-				samplerState: old_sampler,
-				depthStencilState: old_depth,
-				rasterizerState: old_rasterizer,
-				effect: old_effect,
-				transformMatrix: null
-			);
-
-			b.GraphicsDevice.ScissorRectangle = old_scissor;
+				b.GraphicsDevice.ScissorRectangle = old_scissor;
+			}
 		}
 
 

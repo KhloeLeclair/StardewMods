@@ -35,8 +35,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\WorkingInventory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipe.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecipeProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoadingHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RenderHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\ItemConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\RectangleConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TileHelper.cs" />

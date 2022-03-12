@@ -398,8 +398,8 @@ namespace Leclair.Stardew.Almanac.Fish {
 							b2.Translate(
 								Mod.Helper.Translation.Get("page.fish.time.range"),
 								new {
-									start = TimeHelper.FormatTime(caught.Times[0].Start),
-									end = TimeHelper.FormatTime(caught.Times[0].End)
+									start = TimeHelper.FormatTime(t.Start),
+									end = TimeHelper.FormatTime(t.End)
 								}
 							);
 						}
@@ -488,6 +488,10 @@ namespace Leclair.Stardew.Almanac.Fish {
 							.FormatText(key, color: color, shadowColor: shadow)
 							.Text("\n    ");
 
+						if (Mod.Config.DebugMode)
+							b3.Text($"id: {pair.Key.Key}:{pair.Key.Area}", shadow: false, color: Game1.textColor * 0.5f)
+							.Text("\n    ");
+
 						if (all_seasons)
 							b3.FormatText(I18n.Page_Fish_Seasons_All(), shadow: false, color: color);
 						else {
@@ -522,7 +526,6 @@ namespace Leclair.Stardew.Almanac.Fish {
 					builder
 						.FormatText(I18n.Page_Fish_Locations_None());
 			}
-
 
 			return builder.Build();
 		}
@@ -589,6 +592,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 					FlowHelper.Builder()
 						.Sprite(fish.Sprite, 4f, Alignment.Middle)
 						.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Middle)
+						.Text(Mod.Config.DebugMode ? $" (#{fish.Id})" : null)
 						.Build(),
 
 					onHover: (_, _, _) => {
@@ -820,7 +824,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				if (HereOnly)
 					builder.FormatText(I18n.Page_Fish_Filter_True(), color: Game1.textColor * 0.4f);
 				else
-					builder.FormatText(I18n.Page_Fish_Filter_False(), color: Game1.textColor * 0.4f);
+					builder.FormatText(I18n.Page_Fish_Filter_None(), color: Game1.textColor * 0.4f);
 
 				Menu.HoverNode = builder.GetLayout();
 			}

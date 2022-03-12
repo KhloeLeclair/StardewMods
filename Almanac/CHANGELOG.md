@@ -1,7 +1,28 @@
 # Changelog
 
+## 0.12.1
+Released March 12th, 2022.
+
+### General
+
+* The Current Location filter for fishing now says "Unfiltered" rather than
+  "No" when inactive. This should make it more clear that it's not active.
+* Added a "Debug Mode" setting. Currently, this doesn't do a lot. The idea
+  is that this will start showing more IDs and other internal information in
+  the Almanac that would be useful for modders or translators working with it.
+
+### Fixes
+
+* Fish with multiple time ranges now show their time ranges correctly, rather
+  than just repeating the first range.
+
+## Translation
+
+* Add a Chinese translation. Thank you, ninthalley!
+
+
 ## 0.12.0
-Unreleased.
+Released March 12th, 2022.
 
 ### General
 
