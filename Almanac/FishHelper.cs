@@ -107,7 +107,7 @@ namespace Leclair.Stardew.Almanac {
 		public static Dictionary<int, List<int>> GetLocationFish(int season, string data) {
 			Dictionary<int, List<int>> result = new();
 
-			string[] entries = data.Split('/')[4 + season].Split(' ');
+			string[] entries = data.Split('/')[4 + season].Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
 			for (int i = 0; (i + 1) < entries.Length; i += 2) {
 				if (int.TryParse(entries[i], out int fish) && int.TryParse(entries[i + 1], out int zone))
@@ -115,6 +115,8 @@ namespace Leclair.Stardew.Almanac {
 						list.Add(fish);
 					else
 						result.Add(zone, new() { fish });
+				else
+					ModEntry.instance.Log($"Invalid fish data entry for season {season} (Fish ID:{entries[i]}, Zone:{entries[i + 1]})", LogLevel.Warn);
 			}
 
 			return result;
