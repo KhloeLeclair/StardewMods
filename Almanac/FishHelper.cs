@@ -110,13 +110,11 @@ namespace Leclair.Stardew.Almanac {
 			string[] entries = data.Split('/')[4 + season].Split(' ');
 
 			for (int i = 0; (i + 1) < entries.Length; i += 2) {
-				int fish = Convert.ToInt32(entries[i]);
-				int zone = Convert.ToInt32(entries[i + 1]);
-
-				if (result.TryGetValue(zone, out List<int> list))
-					list.Add(fish);
-				else
-					result.Add(zone, new() { fish });
+				if (int.TryParse(entries[i], out int fish) && int.TryParse(entries[i + 1], out int zone))
+					if (result.TryGetValue(zone, out List<int> list))
+						list.Add(fish);
+					else
+						result.Add(zone, new() { fish });
 			}
 
 			return result;
