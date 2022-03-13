@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using StardewValley;
+using StardewModdingAPI;
 
 using SObject = StardewValley.Object;
 
@@ -107,16 +108,16 @@ namespace Leclair.Stardew.Almanac {
 		public static Dictionary<int, List<int>> GetLocationFish(int season, string data) {
 			Dictionary<int, List<int>> result = new();
 
-			string[] entries = data.Split('/')[4 + season].Split(' ');
+			string[] entries = data.Split('/')[4 + season].Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
 			for (int i = 0; (i + 1) < entries.Length; i += 2) {
-				int fish = Convert.ToInt32(entries[i]);
-				int zone = Convert.ToInt32(entries[i + 1]);
-
-				if (result.TryGetValue(zone, out List<int> list))
-					list.Add(fish);
+				if (int.TryParse(entries[i], out int fish) && int.TryParse(entries[i + 1], out int zone))
+					if (result.TryGetValue(zone, out List<int> list))
+						list.Add(fish);
+					else
+						result.Add(zone, new() { fish });
 				else
-					result.Add(zone, new() { fish });
+					ModEntry.instance.Log($"Invalid fish data entry for season {season} (Fish ID:{entries[i]}, Zone:{entries[i + 1]})", LogLevel.Warn);
 			}
 
 			return result;

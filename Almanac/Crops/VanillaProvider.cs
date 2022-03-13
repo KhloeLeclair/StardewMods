@@ -60,7 +60,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			if (!Game1.objectInformation.ContainsKey(harvest))
 				return null;
 
-			string[] seasons = bits[1].Split(' ');
+			string[] seasons = bits[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
 			WorldDate startDate = null;
 			WorldDate endDate = null;
