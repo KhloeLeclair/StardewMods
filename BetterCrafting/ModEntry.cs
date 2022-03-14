@@ -67,6 +67,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		public override void Entry(IModHelper helper) {
 			base.Entry(helper);
 			SpriteHelper.SetHelper(helper);
+			RenderHelper.SetHelper(helper);
 
 			instance = this;
 			API = new ModAPI(this);
@@ -86,6 +87,8 @@ namespace Leclair.Stardew.BetterCrafting {
 			Favorites = new FavoriteManager(this);
 
 			Sprites.Load(Helper.Content);
+
+			CheckRecommendedIntegrations();
 		}
 
 		public override object GetApi() {
@@ -114,10 +117,20 @@ namespace Leclair.Stardew.BetterCrafting {
 					if (name.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
 						CommonHelper.YeetMenu(menu);
 
-						menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+						GameMenu game = null;
+						if (OldCraftingGameMenu.Value) {
+							game = new GameMenu(false);
+							menu = Game1.activeClickableMenu = game;
+						}
+
+						var bcm = Menus.BetterCraftingPage.Open(
 							mod: this,
 							location: OldCraftingPage.Value.Location,
 							position: OldCraftingPage.Value.Position,
+							width: game?.width ?? -1,
+							height: game?.height ?? -1,
+							x: game?.xPositionOnScreen ?? -1,
+							y: game?.yPositionOnScreen ?? -1,
 							area: OldCraftingPage.Value.Area,
 							cooking: OldCraftingPage.Value.cooking,
 							standalone_menu: !OldCraftingGameMenu.Value,
@@ -127,12 +140,8 @@ namespace Leclair.Stardew.BetterCrafting {
 							listed_recipes: OldCraftingPage.Value.GetListedRecipes()
 						);
 
-						if (OldCraftingGameMenu.Value) {
-							var bcm = menu;
-							var game = new GameMenu(false);
-							menu = Game1.activeClickableMenu = game;
-
-							for(int i = 0; i < game.pages.Count; i++) {
+						if (game != null) {
+							for(int i =0; i < game.pages.Count; i++) {
 								if (game.pages[i] is CraftingPage cp) {
 									CommonHelper.YeetMenu(cp);
 
@@ -141,7 +150,9 @@ namespace Leclair.Stardew.BetterCrafting {
 									break;
 								}
 							}
-						}
+
+						} else
+							Game1.activeClickableMenu = bcm;
 					}
 				}
 
@@ -283,6 +294,12 @@ namespace Leclair.Stardew.BetterCrafting {
 			intCSkill = new(this);
 			intSCore = new(this);
 			intCCStation = new(this);
+
+			// Commands
+			Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
+				Recipes.Invalidate();
+				Log($"Invalided 1 cache.");
+			});
 
 			// Load Data
 			Recipes.LoadRecipes();

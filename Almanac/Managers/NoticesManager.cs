@@ -399,6 +399,59 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 			}
 
+
+			// Traveling Merchant
+			if (Mod.Config.NoticesShowMerchant != MerchantMode.Disabled && date.DayOfMonth % 7 % 5 == 0) {
+				var sprite = new SpriteInfo(
+					Game1.mouseCursors,
+					new Rectangle(193, 1412, 18, 18)
+				);
+
+				if (Mod.Config.NoticesShowMerchant == MerchantMode.Visit)
+					yield return new RichEvent(
+						null,
+						FlowHelper.Builder()
+							.FormatText(I18n.Page_Notices_Merchant(), align: Alignment.Middle)
+							.Build(),
+						sprite
+					);
+
+				else {
+					var stock = Utility.getTravelingMerchantStock((int) ((long) Game1.uniqueIDForThisGame + date.TotalDays + 1));
+					if (stock.Count > 0) {
+						var builder = FlowHelper.Builder()
+							.FormatText(I18n.Page_Notices_Merchant_Stock(), align: Alignment.Middle)
+							.Text("\n  ");
+
+						bool first = true;
+
+						foreach (var pair in stock) {
+							var item = pair.Key;
+							if (item.Stack < 1 && !item.IsInfiniteStock())
+								continue;
+
+							if (first)
+								first = false;
+							else
+								builder.Text(", ", shadow: false);
+
+							if (item is SObject sobj)
+								builder
+									.Sprite(SpriteHelper.GetSprite(sobj), scale: 2, alignment: Alignment.Middle)
+									.Text(" ");
+
+							builder.Text(item.DisplayName, shadow: false);
+						}
+
+
+						yield return new RichEvent(
+							null,
+							builder.Build(),
+							sprite: sprite
+						);
+					}
+				}
+			}
 		}
 
 		#endregion

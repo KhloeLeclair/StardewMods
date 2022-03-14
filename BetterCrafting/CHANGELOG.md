@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.14.1
+Released March 14th, 2022.
+
+### Fixes
+
+* When opening settings from the game menu and closing it, the menu could
+  appear with a strange offset in some situations.
+
+### Translation
+
+* Added Chinese language support.
+
+
+## 0.14.0
+Released March 12th, 2022.
+
+### General
+
+* Added support for scrolling the category tabs.
+* Removed the limit on the number of categories.
+* Added a console command to clear the recipe cache.
+* Add a warning in the console when DynamicGameAssets is detected but
+  our compatibility mod is not.
+
+### Fixes
+
+* Use separate recipe caches for each player in split-screen, as certain
+  recipe adjustments may only affect one player.
+* Clear the recipe cache at the start of every new day in case recipes
+  have been adjusted due to levelling up, etc.
+* Use integer positioning for all UI elements to avoid odd rendering of
+  text and sprites.
+
 ## 0.13.2
 Released March 7th, 2022.
 

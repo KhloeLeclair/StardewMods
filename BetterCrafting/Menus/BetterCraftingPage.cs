@@ -29,6 +29,9 @@ using SObject = StardewValley.Object;
 namespace Leclair.Stardew.BetterCrafting.Menus {
 	public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
+		public static readonly int MAX_TABS = 8;
+		public static readonly int VISIBLE_TABS = 8;
+
 		// TODO: Stop hard-coding seasoning.
 		public static readonly IIngredient[] SEASONING_RECIPE = new IIngredient[] {
 			new BaseIngredient(917, 1)
@@ -96,6 +99,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		protected Dictionary<ClickableTextureComponent, IRecipe> ComponentRecipes = new();
 
 		// Tabs
+		public ClickableTextureComponent btnTabsUp;
+		public ClickableTextureComponent btnTabsDown;
+		private int TabScroll = 0;
+
 		private int tabIndex = 0;
 		protected List<TabInfo> Tabs = new();
 		protected TabInfo CurrentTab { get => (tabIndex >= 0 && Tabs.Count > tabIndex) ? Tabs[tabIndex] : Tabs[0]; }
@@ -584,7 +591,11 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 		public void SaveCategories() {
-			Mod.Recipes.SetCategories(Game1.player, Tabs.Select(val => val.Category), cooking);
+			var categories = Tabs
+				.Select(val => val.Category)
+				.Where(val =>  (val?.Recipes?.Count ?? 0) > 0);
+
+			Mod.Recipes.SetCategories(Game1.player, categories, cooking);
 			Mod.Recipes.SaveCategories();
 		}
 
@@ -781,8 +792,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 					// We continue rather than break in case there is a valid
 					// misc tab to use.
-					if (count > (misc == cat ? 7 : 6))
-						continue;
+					//if (count > (misc == cat ? 7 : 6))
+					//	continue;
 
 					List<IRecipe> recipes = new();
 
@@ -804,7 +815,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// If we're editing and don't have enough categories, add a bunch.
 			if (Editing && Mod.Config.UseCategories) {
-				while (count < (misc != null ? 8 : 7)) {
+				//while (count < (misc != null ? 8 : 7)) {
 					count++;
 
 					categories.Add(new Category() {
@@ -816,7 +827,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						},
 						Recipes = new()
 					}, new());
-				}
+				//}
 			}
 
 			// Add any remaining, uncategorized items to a Misc. category.
@@ -846,14 +857,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Build the components
 			int idx = 0;
-			int offsetY = 120;
+			//int offsetY = 120;
 
 			foreach (KeyValuePair<Category, List<IRecipe>> entry in categories) {
 				Category cat = entry.Key;
 				SpriteInfo sprite = GetSpriteFromIcon(cat.Icon, entry.Value);
 
 				ClickableComponent tab = new ClickableComponent(
-					bounds: new Rectangle(xPositionOnScreen - 48, yPositionOnScreen + offsetY + (64 * idx), 64, 64),
+					bounds: Rectangle.Empty, // new Rectangle(xPositionOnScreen - 48, yPositionOnScreen + offsetY + (64 * idx), 64, 64),
 					name: entry.Key.Id,
 					label: string.IsNullOrEmpty(entry.Key.I18nKey) ? entry.Key.Name : Mod.Helper.Translation.Get(entry.Key.I18nKey)
 				) {
@@ -897,7 +908,122 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			// If we did change tabs, reset the current page.
 			if (string.IsNullOrEmpty(oldTab) || !oldTab.Equals(newTab))
 				pageIndex = 0;
+
+			// Add our buttons or not
+			if (Tabs.Count > MAX_TABS) {
+				btnTabsUp = new ClickableTextureComponent(
+					bounds: Rectangle.Empty,
+					texture: Game1.mouseCursors,
+					sourceRect: Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 12),
+					scale: 0.8f
+				) {
+					myID = 999,
+					upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					downNeighborID = 1000,
+					rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					leftNeighborID = ClickableComponent.SNAP_AUTOMATIC
+				};
+
+				btnTabsDown = new ClickableTextureComponent(
+					bounds: Rectangle.Empty,
+					texture: Game1.mouseCursors,
+					sourceRect: Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 11),
+					scale: 0.8f
+				) {
+					myID = 1001 + Tabs.Count,
+					upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+					rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
+				};
+
+			} else {
+				btnTabsDown = null;
+				btnTabsUp = null;
+			}
+
+			PositionTabs();
 		}
+
+		public void PositionTabs() {
+			int offsetY = 120;
+
+			if (btnTabsUp != null) {
+				btnTabsUp.bounds = new Rectangle(
+					xPositionOnScreen - 48,
+					yPositionOnScreen + offsetY - 64,
+					64, 64
+				);
+				//offsetY += 64;
+			} else
+				offsetY = 120;
+
+			for(int i = 0; i < Tabs.Count; i++) {
+				var entry = Tabs?[i];
+				ClickableComponent cmp = entry?.Component;
+				if (cmp == null)
+					continue;
+
+				if (btnTabsUp != null && (i < TabScroll || i >= (TabScroll + VISIBLE_TABS))) {
+					cmp.visible = false;
+					continue;
+				}
+
+				cmp.visible = true;
+				cmp.bounds = new Rectangle(
+					xPositionOnScreen - 48,
+					yPositionOnScreen + offsetY,
+					64, 64
+				);
+
+				offsetY += 64;
+			}
+
+			if (btnTabsDown != null) {
+				btnTabsDown.bounds = new Rectangle(
+					xPositionOnScreen - 48,
+					yPositionOnScreen + offsetY,
+					64, 64
+				);
+			}
+		}
+
+		public bool ScrollTabs(int direction) {
+			if (Tabs.Count <= MAX_TABS || direction == 0)
+				return false;
+
+			int old = TabScroll;
+			TabScroll += (direction > 0) ? 1 : -1;
+			if (TabScroll < 0)
+				TabScroll = 0;
+			if (TabScroll > (Tabs.Count - VISIBLE_TABS))
+				TabScroll = Tabs.Count - VISIBLE_TABS;
+
+			if (TabScroll == old)
+				return false;
+
+			PositionTabs();
+			return true;
+		}
+
+		public bool CenterTab(int index) {
+			if (Tabs.Count <= MAX_TABS)
+				return false;
+
+			int old = TabScroll;
+			TabScroll = index - (VISIBLE_TABS / 2);
+			if (TabScroll < 0)
+				TabScroll = 0;
+			if (TabScroll > (Tabs.Count - VISIBLE_TABS))
+				TabScroll = Tabs.Count - VISIBLE_TABS;
+
+			if (TabScroll == old)
+				return false;
+
+			UpdateTabs();
+			return true;
+		}
+
 
 		protected virtual void DiscoverInventories() {
 
@@ -1676,11 +1802,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			}
 
 			if (b.Equals(Buttons.LeftShoulder)) {
-				if (ChangeTab(-1))
+				if (ChangeTab(-1)) {
+					CenterTab(tabIndex);
 					Game1.playSound("smallSelect");
+				}
 			} else if (b.Equals(Buttons.RightShoulder)) {
-				if (ChangeTab(1))
+				if (ChangeTab(1)) {
+					CenterTab(tabIndex);
 					Game1.playSound("smallSelect");
+				}
 			}
 		}
 
@@ -1737,6 +1867,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			}
 
 			base.receiveScrollWheelAction(direction);
+
+			if (Game1.getOldMouseX() < (xPositionOnScreen + 16 + 8)) {
+				if (ScrollTabs(direction > 0 ? -1 : 1))
+					Game1.playSound("shwip");
+
+				return;
+			}
+
 			int change;
 
 			if (direction > 0 && pageIndex > 0)
@@ -1771,6 +1909,24 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return null;
 		}
 
+		public override void releaseLeftClick(int x, int y) {
+			if (GetChildMenu() is IClickableMenu menu) {
+				if (!Standalone)
+					menu.releaseLeftClick(x, y);
+			}
+
+			base.releaseLeftClick(x, y);
+		}
+
+		public override void leftClickHeld(int x, int y) {
+			if (GetChildMenu() is IClickableMenu menu) {
+				if (!Standalone)
+					menu.leftClickHeld(x, y);
+			}
+
+			base.leftClickHeld(x, y);
+		}
+
 		public override void receiveLeftClick(int x, int y, bool playSound = true) {
 			if (GetChildMenu() is IClickableMenu menu) {
 				if (!Standalone)
@@ -1803,7 +1959,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						snapCursorToCurrentSnappedComponent();
 				};
 
-				Game1.playSound("bigSelect");
+				if (playSound)
+					Game1.playSound("bigSelect");
 				SetChildMenu(picker);
 				return;
 			}
@@ -1811,28 +1968,43 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			// Pagination
 			if (btnPageUp != null && btnPageUp.containsPoint(x, y) && pageIndex > 0) {
 				ChangePage(-1);
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				btnPageUp.scale = btnPageUp.baseScale;
 				return;
 			}
 
 			if (btnPageDown != null && btnPageDown.containsPoint(x, y) && pageIndex < Pages.Count - 1) {
 				ChangePage(+1);
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				btnPageDown.scale = btnPageDown.baseScale;
 				return;
 			}
 
 			// Tabs
+			if (btnTabsUp?.containsPoint(x, y) ?? false) {
+				btnTabsUp.scale = btnTabsUp.baseScale;
+				if (ScrollTabs(-1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
+			if (btnTabsDown?.containsPoint(x, y) ?? false) {
+				btnTabsDown.scale = btnTabsDown.baseScale;
+				if (ScrollTabs(1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
 			if (Tabs.Count > 1)
 				for (int i = 0; i < Tabs.Count; i++) {
 					ClickableComponent cmp = Tabs[i].Component;
-					if (cmp.containsPoint(x, y) && tabIndex != i) {
+					if (cmp.visible && cmp.containsPoint(x, y) && tabIndex != i) {
 						if (!Editing && Tabs[i].FilteredRecipes.Count == 0)
 							return;
 
 						SetTab(i);
-						Game1.playSound("smallSelect");
+						if (playSound)
+							Game1.playSound("smallSelect");
 						return;
 					}
 				}
@@ -1843,6 +2015,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					if (cmp.containsPoint(x, y) && ComponentRecipes.TryGetValue(cmp, out IRecipe recipe)) {
 						if (Editing) {
 							UpdateRecipeInCategory(recipe);
+							if (playSound)
+								Game1.playSound("smallSelect");
 
 						} else if (!cmp.hoverText.Equals("ghosted")) {
 							PerformAction(recipe, Mod.Config.LeftClick, playSound);
@@ -1863,7 +2037,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Editing
 			if (btnToggleEdit != null && btnToggleEdit.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				ToggleEditMode();
 				btnToggleEdit.scale = btnToggleEdit.baseScale;
 				return;
@@ -1871,14 +2046,16 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Settings
 			if (btnSettings != null && btnSettings.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				Mod.OpenGMCM();
 				return;
 			}
 
 			// Toggle Favorites
 			if (!Editing && btnToggleFavorites != null && btnToggleFavorites.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				FavoritesOnly = !FavoritesOnly;
 				LayoutRecipes();
 				btnToggleFavorites.sourceRect = SourceFavorites;
@@ -1888,7 +2065,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Seasoning
 			if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				switch (Mod.Config.UseSeasoning) {
 					case SeasoningMode.Disabled:
 						Mod.Config.UseSeasoning = SeasoningMode.InventoryOnly;
@@ -1908,7 +2086,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Quality
 			if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				switch (Mod.Config.MaxQuality) {
 					case MaxQuality.None:
 						Mod.Config.MaxQuality = MaxQuality.Silver;
@@ -1932,7 +2111,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Uniform
 			if (btnToggleUniform != null && btnToggleUniform.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				Mod.Config.UseUniformGrid = !Mod.Config.UseUniformGrid;
 				Mod.SaveConfig();
 				LayoutRecipes();
@@ -1949,7 +2129,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toss Item
 			if (!Editing && !isWithinBounds(x, y) && (HeldItem?.canBeTrashed() ?? false)) {
-				Game1.playSound("throwDownITem");
+				if (playSound)
+					Game1.playSound("throwDownITem");
 				Game1.createItemDebris(HeldItem, Game1.player.getStandingPosition(), Game1.player.FacingDirection);
 				HeldItem = null;
 				return;
@@ -1968,7 +2149,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Seasoning
 			if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				switch (Mod.Config.UseSeasoning) {
 					case SeasoningMode.Disabled:
 						Mod.Config.UseSeasoning = SeasoningMode.Enabled;
@@ -1988,7 +2170,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			// Toggle Quality
 			if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
-				Game1.playSound("smallSelect");
+				if (playSound)
+					Game1.playSound("smallSelect");
 				switch (Mod.Config.MaxQuality) {
 					case MaxQuality.None:
 						Mod.Config.MaxQuality = MaxQuality.Iridium;
@@ -2016,6 +2199,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					if (cmp.containsPoint(x, y) && ComponentRecipes.TryGetValue(cmp, out IRecipe recipe)) {
 						if (Editing) {
 							UpdateCategorySprite(recipe);
+							if (playSound)
+								Game1.playSound("smallSelect");
 
 						} else if (!cmp.hoverText.Equals("ghosted")) {
 							PerformAction(recipe, Mod.Config.RightClick, playSound);
@@ -2164,7 +2349,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				bool hover_tabs = false;
 				for (int i = 0; i < Tabs.Count; i++) {
 					TabInfo tab = Tabs[i];
-					if (tab.Component.containsPoint(x, y)) {
+					if (tab.Component.visible && tab.Component.containsPoint(x, y)) {
 						hover_tabs = true;
 
 						if (! Editing && Filter != null && tab.FilteredRecipes.Count == 0) {
@@ -2180,13 +2365,26 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					Tabs.RemoveAt(0);
 					tabIndex--;
 
-					foreach (TabInfo tab in Tabs)
-						tab.Component.bounds.Y -= 64;
+					if (Tabs.Count <= MAX_TABS && btnTabsDown != null) {
+						allClickableComponents?.Remove(btnTabsUp);
+						allClickableComponents?.Remove(btnTabsDown);
+
+						btnTabsDown = null;
+						btnTabsUp = null;
+					}
+
+					PositionTabs();
 				}
 			}
 
 
 			// Navigation Buttons
+			if (btnTabsDown != null)
+				btnTabsDown.tryHover(x, (TabScroll + VISIBLE_TABS) >= Tabs.Count ? -1 : y);
+
+			if (btnTabsUp != null)
+				btnTabsUp.tryHover(x, TabScroll > 0 ? y : -1);
+
 			if (btnPageUp != null)
 				btnPageUp.tryHover(x, pageIndex > 0 ? y : -1);
 
@@ -2415,12 +2613,28 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 
 			// Tabs
+
+			if (btnTabsDown != null) {
+				if (TabScroll + VISIBLE_TABS >= Tabs.Count)
+					btnTabsDown.draw(b, Color.Gray, 0.89f);
+				else
+					btnTabsDown.draw(b);
+
+				if (TabScroll == 0)
+					btnTabsUp.draw(b, Color.Gray, 0.89f);
+				else
+					btnTabsUp.draw(b);
+			}
+
 			b.End();
 			b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
 
 			if (Editing || Tabs.Count > 1)
 				for (int i = 0; i < Tabs.Count; i++) {
 					TabInfo tab = Tabs[i];
+					if (tab == null || tab.Component == null || !tab.Component.visible)
+						continue;
+
 					int x = tab.Component.bounds.X + (tabIndex == i ? 8 : 0);
 
 					bool filtered = !Editing && Filter != null && tab.FilteredRecipes.Count == 0;

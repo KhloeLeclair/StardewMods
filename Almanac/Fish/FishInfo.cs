@@ -19,9 +19,11 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 	};
 
+	[Flags]
 	public enum WaterType {
-		Freshwater,
-		Ocean
+		None       = 0,
+		Freshwater = 1,
+		Ocean      = 2
 	};
 
 	public enum FishWeather {
@@ -52,6 +54,8 @@ namespace Leclair.Stardew.Almanac.Fish {
 		string Name,
 		string Description,
 		SpriteInfo Sprite,
+
+		bool Legendary,
 
 		// Sizes
 		int MinSize,

@@ -1,13 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 using StardewModdingAPI;
+
+using Leclair.Stardew.Common.Types;
 
 namespace Leclair.Stardew.Common
 {
     public static class LoadingHelper
     {
+
+		public static void CheckIntegrations(Mod mod, IEnumerable<RecommendedIntegration> integrations, LogLevel level = LogLevel.Warn) {
+			if (integrations == null)
+				return;
+
+			var registry = mod.Helper.ModRegistry;
+
+			foreach (RecommendedIntegration itg in integrations) {
+				if (registry.IsLoaded(itg.Id) || itg.Mods == null)
+					continue;
+
+				string[] mods = itg.Mods
+					.Where(id => registry.IsLoaded(id))
+					.Select(id => registry.Get(id))
+					.Select(info => info.Manifest.Name)
+					.ToArray();
+
+				if (mods.Length == 0)
+					continue;
+
+				mod.Monitor.Log(
+					$"Please install {itg.Name} ({itg.Url}) to improve support for: {string.Join(", ", mods)}",
+					level
+				);
+			}
+		}
+
 
 		public static bool HasLocalizedAsset(this IContentPack pack, string key, string locale) {
 			int idx = string.IsNullOrEmpty(locale) ? -1 : key.LastIndexOf('.');

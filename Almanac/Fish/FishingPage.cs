@@ -11,6 +11,7 @@ using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.FlowNode;
 
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Objects;
 
@@ -27,8 +28,14 @@ namespace Leclair.Stardew.Almanac.Fish {
 		public FishWeather Weather = FishWeather.None;
 		public FishType FType = FishType.None;
 		public CaughtStatus CStatus = CaughtStatus.None;
-		public bool HereOnly = false;
+		public LocationFilter LFilter = LocationFilter.Off;
 	}
+
+	public enum LocationFilter {
+		Off,
+		On,
+		Now
+	};
 
 	public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
@@ -49,6 +56,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		public static readonly Rectangle LOCATION_FALSE = new(464, 272, 16, 16);
 		public static readonly Rectangle LOCATION_TRUE = new(464, 288, 16, 16);
+		public static readonly Rectangle LOCATION_NOW = new(464, 256, 16, 16);
 
 		private readonly MenuFishTank Tank;
 
@@ -69,7 +77,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 		public FishWeather Weather = FishWeather.None;
 		public FishType FType = FishType.None;
 		public CaughtStatus CStatus = CaughtStatus.None;
-		public bool HereOnly = false;
+		public LocationFilter LFilter = LocationFilter.Off;
 
 		// Sprites
 		public Rectangle SourceWeather => Weather switch {
@@ -94,7 +102,12 @@ namespace Leclair.Stardew.Almanac.Fish {
 			_ => Rectangle.Empty
 		};
 
-		public Rectangle SourceLocation => HereOnly ? LOCATION_TRUE : LOCATION_FALSE;
+		public Rectangle SourceLocation => LFilter switch {
+			LocationFilter.Off => LOCATION_FALSE,
+			LocationFilter.On => LOCATION_TRUE,
+			LocationFilter.Now => LOCATION_NOW,
+			_ => Rectangle.Empty
+		};
 
 		#region Life Cycle
 
@@ -194,7 +207,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			state.Weather = Weather;
 			state.FType = FType;
 			state.CStatus = CStatus;
-			state.HereOnly = HereOnly;
+			state.LFilter = LFilter;
 
 			return state;
 		}
@@ -215,7 +228,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			Weather = state.Weather;
 			FType = state.FType;
 			CStatus = state.CStatus;
-			HereOnly = state.HereOnly;
+			LFilter = state.LFilter;
 		}
 
 		public IFlowNode[] BuildRightPage(FishInfo? _info) {
@@ -262,7 +275,14 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 			builder
 				.Sprite(info.Sprite, 4f, Alignment.Center, onHover: OnHover, noComponent: true)
-				.Text($" {info.Name}\n", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true);
+				.Text(
+					$" {info.Name}\n",
+					fancy: info.Legendary,
+					font: Game1.dialogueFont,
+					align: Alignment.Middle,
+					onHover: OnHover,
+					noComponent: true
+				);
 
 			if (!string.IsNullOrEmpty(info.Description))
 				builder
@@ -271,13 +291,14 @@ namespace Leclair.Stardew.Almanac.Fish {
 					.Text("\n\n");
 
 			if (Tank?.CanBeDeposited(info.Item) ?? false && Mod.Config.ShowFishTank) {
-				FillTank(info.Item);
+				int amount = info.Legendary ? 1 : -1;
+				FillTank(info.Item, amount);
 
 				builder.Add(new ComponentNode(
 					tankComponent,
 					wrapping: WrapMode.ForceBefore | WrapMode.ForceAfter,
 					onClick: (_, _, _) => {
-						FillTank(info.Item);
+						FillTank(info.Item, amount);
 						return true;
 					},
 					onDraw: (b, pos, scale, _, _, _) => {
@@ -318,6 +339,14 @@ namespace Leclair.Stardew.Almanac.Fish {
 				builder.FormatText(I18n.Page_Fish_Caught_Not());
 
 			builder.Text("\n\n");
+
+			if (info.Legendary)
+				builder
+					.Translate(
+						Mod.Helper.Translation.Get("page.fish.legendary"),
+						new { fish = info.Name }
+					)
+					.Text("\n\n");
 
 			// Depending on whether this is a trap fish or a caught
 			// fish, we show different info. Support both because
@@ -546,6 +575,9 @@ namespace Leclair.Stardew.Almanac.Fish {
 			});
 
 			foreach (var fish in sorted) {
+				if (fish.Legendary && !Mod.Config.FishShowLegendary)
+					continue;
+
 				if (Weather != FishWeather.None) {
 					FishWeather fw = fish.CatchInfo?.Weather ?? FishWeather.Any;
 					if (fw != Weather)
@@ -566,18 +598,34 @@ namespace Leclair.Stardew.Almanac.Fish {
 						continue;
 				}
 
-				if (HereOnly && fish.CatchInfo.HasValue) {
-					var locations = fish.CatchInfo.Value.Locations;
-					if (locations == null)
-						continue;
-
+				if (LFilter != LocationFilter.Off) {
 					bool found = false;
 
-					foreach (var sl in locations.Keys) {
-						if (sl.Location != null && sl.Location.Equals(Game1.currentLocation)) {
-							found = true;
-							break;
+					if (fish.CatchInfo.HasValue) {
+						var locations = fish.CatchInfo.Value.Locations;
+						if (locations == null)
+							continue;
+
+						string name = Game1.currentLocation.Name;
+						if (Game1.currentLocation is MineShaft shaft)
+							name = "UndergroundMine";
+
+						foreach(var lp in locations) {
+							if (lp.Key.Key.Equals(name)) {
+								if (
+									LFilter == LocationFilter.On ||
+									lp.Value.Contains(Menu.Date.SeasonIndex)
+								) {
+									found = true;
+									break;
+								}
+							}
 						}
+					}
+
+					if (fish.TrapInfo.HasValue) {
+						if (FishHelper.GetTrapWaterType(Game1.currentLocation).HasFlag(fish.TrapInfo.Value.Location))
+							found = true;
 					}
 
 					if (!found)
@@ -746,7 +794,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				tankComponent.bounds.X,
 				tankComponent.bounds.Y,
 				Menu.width / 2 - 112,
-				tankComponent.bounds.Height
+				192
 			);
 
 			UpdateTank();
@@ -821,10 +869,12 @@ namespace Leclair.Stardew.Almanac.Fish {
 				var builder = SimpleHelper.Builder()
 					.FormatText(I18n.Page_Fish_Filter_Location());
 
-				if (HereOnly)
+				if (LFilter == LocationFilter.Off)
+					builder.FormatText(I18n.Page_Fish_Filter_None(), color: Game1.textColor * 0.4f);
+				else if (LFilter == LocationFilter.On)
 					builder.FormatText(I18n.Page_Fish_Filter_True(), color: Game1.textColor * 0.4f);
 				else
-					builder.FormatText(I18n.Page_Fish_Filter_None(), color: Game1.textColor * 0.4f);
+					builder.FormatText(I18n.Page_Fish_Filter_Now(), color: Game1.textColor * 0.4f);
 
 				Menu.HoverNode = builder.GetLayout();
 			}
@@ -866,7 +916,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			}
 
 			if (btnFilterLocation.containsPoint(x, y)) {
-				HereOnly = !HereOnly;
+				LFilter = CommonHelper.Cycle(LFilter);
 
 				Update();
 				btnFilterLocation.scale = btnFilterLocation.baseScale;
@@ -915,7 +965,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			}
 
 			if (btnFilterLocation.containsPoint(x, y)) {
-				HereOnly = !HereOnly;
+				LFilter = CommonHelper.Cycle(LFilter, -1);
 
 				Update();
 				btnFilterLocation.scale = btnFilterLocation.baseScale;

@@ -22,20 +22,38 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		public List<ClickableComponent> FlowComponents;
 
-		private IEnumerable<IFlowNode> Flow;
+		public ClickableTextureComponent btnPageUp;
+		public ClickableTextureComponent btnPageDown;
+
+		private ScrollableFlow Flow;
+
+		/*private IEnumerable<IFlowNode> Flow;
 		private CachedFlow CachedFlow;
 
 		private int FlowOffset;
 		private int MaxFlowOffset;
 
 		private ClickableTextureComponent btnPageUp;
-		private ClickableTextureComponent btnPageDown;
+		private ClickableTextureComponent btnPageDown;*/
 
 		public IconPicker(ModEntry mod, int x, int y, int width, int height, Action<CategoryIcon> onPick)
 		: base(mod) {
 
-			FlowComponents = new();
 			this.onPick = onPick;
+
+			initialize(x, y, width, height);
+
+			Flow = new(
+				this,
+				(int) Math.Ceiling(xPositionOnScreen + 16.0),
+				(int) Math.Ceiling(yPositionOnScreen + 16.0),
+				(int) Math.Ceiling(width - 16.0),
+				(int) Math.Ceiling(height - 32.0)
+			);
+
+			btnPageUp = Flow.btnPageUp;
+			btnPageDown = Flow.btnPageDown;
+			FlowComponents = Flow.DynamicComponents;
 
 			var builder = FlowHelper.Builder();
 
@@ -73,60 +91,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				}
 			}
 
-
-			Flow = builder.Build();
-
-			CachedFlow = FlowHelper.CalculateFlow(
-				Flow,
-				width - 64,
-				Game1.smallFont
-			);
-
-			if (CachedFlow.Height + 32 < height)
-				height = (int) CachedFlow.Height + 32;
-
-			MaxFlowOffset = FlowHelper.GetMaximumScrollOffset(
-				CachedFlow,
-				height - 48
-			);
-
-			initialize(x, y, width, height);
-
-			btnPageUp = new ClickableTextureComponent(
-				new Rectangle(
-					xPositionOnScreen + width - 64,
-					yPositionOnScreen + 16,
-					64, 64
-				),
-				Game1.mouseCursors,
-				new Rectangle(64, 64, 64, 64),
-				.8f
-			) {
-				myID = 1,
-				upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
-				downNeighborID = 2,
-				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
-				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC
-			};
-
-			btnPageDown = new ClickableTextureComponent(
-				new Rectangle(
-					xPositionOnScreen + width - 64,
-					yPositionOnScreen + height - 64,
-					64, 64
-				),
-				Game1.mouseCursors,
-				new Rectangle(0, 64, 64, 64),
-				.8f
-			) {
-				myID = 2,
-				upNeighborID = 1,
-				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
-				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
-				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
-			};
-
-			UpdateFlowComponents();
+			Flow.Set(builder.Build());
 
 			if (Game1.options.SnappyMenus)
 				snapToDefaultClickableComponent();
@@ -142,38 +107,6 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			exitThisMenu();
 		}
 
-		private void UpdateFlowComponents() {
-			FlowHelper.UpdateComponentsForFlow(
-				CachedFlow,
-				FlowComponents,
-				xPositionOnScreen + 16,
-				yPositionOnScreen + 16,
-				lineOffset: FlowOffset,
-				maxHeight: height - 48,
-				onCreate: cmp => {
-					allClickableComponents?.Add(cmp);
-				},
-				onDestroy: cmp => {
-					allClickableComponents?.Remove(cmp);
-				}
-			);
-		}
-
-		private bool Scroll(int direction) {
-			int old = FlowOffset;
-			FlowOffset += direction;
-			if (FlowOffset < 0)
-				FlowOffset = 0;
-			if (FlowOffset > MaxFlowOffset)
-				FlowOffset = MaxFlowOffset;
-
-			if (old == FlowOffset)
-				return false;
-
-			UpdateFlowComponents();
-			return true;
-		}
-
 		public override void snapToDefaultClickableComponent() {
 			currentlySnappedComponent = FlowComponents.Count > 0 ? FlowComponents[0] : null;
 			if (currentlySnappedComponent != null)
@@ -183,31 +116,26 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public override void receiveScrollWheelAction(int direction) {
 			base.receiveScrollWheelAction(direction);
 
-			if (Scroll(direction > 0 ? -1 : 1))
+			if (Flow.Scroll(direction > 0 ? -1 : 1))
 				Game1.playSound("shwip");
+		}
+
+		public override void releaseLeftClick(int x, int y) {
+			base.releaseLeftClick(x, y);
+
+			Flow.ReleaseLeftClick(x, y);
+		}
+
+		public override void leftClickHeld(int x, int y) {
+			base.leftClickHeld(x, y);
+			Flow.LeftClickHeld(x, y);
 		}
 
 		public override void receiveLeftClick(int x, int y, bool playSound = true) {
 			base.receiveLeftClick(x, y, playSound);
 
-			if (FlowHelper.ClickFlow(
-				CachedFlow,
-				x - xPositionOnScreen - 16,
-				y - yPositionOnScreen - 16,
-				lineOffset: FlowOffset,
-				maxHeight: height - 48
-			))
+			if (Flow.ReceiveLeftClick(x, y, playSound))
 				return;
-
-			if (btnPageUp.containsPoint(x, y)) {
-				if (Scroll(-1))
-					Game1.playSound("smallSelect");
-			}
-
-			if (btnPageDown.containsPoint(x, y)) {
-				if (Scroll(1))
-					Game1.playSound("smallSelect");
-			}
 
 			if (x < xPositionOnScreen || x > (xPositionOnScreen + width) || y < yPositionOnScreen || y > (yPositionOnScreen + height))
 				exitThisMenu();
@@ -216,8 +144,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public override void performHoverAction(int x, int y) {
 			base.performHoverAction(x, y);
 
-			btnPageDown.tryHover(x, FlowOffset >= MaxFlowOffset ? -1 : y);
-			btnPageUp.tryHover(x, FlowOffset > 0 ? y : -1);
+			if (Flow.PerformMiddleScroll(x, y))
+				return;
+
+			Flow.PerformHover(x, y);
 		}
 
 		public override void draw(SpriteBatch b) {
@@ -237,27 +167,12 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				scale: 1f
 				);
 
-			FlowHelper.RenderFlow(
-				b,
-				CachedFlow,
-				new Vector2(xPositionOnScreen + 16, yPositionOnScreen + 16),
-				(Color?) null,
-				lineOffset: FlowOffset,
-				maxHeight: height - 48
-			);
-
-			if (FlowOffset >= MaxFlowOffset)
-				btnPageDown.draw(b, Color.Black * 0.35f, 0.89f);
-			else
-				btnPageDown.draw(b);
-
-			if (FlowOffset == 0)
-				btnPageUp.draw(b, Color.Black * 0.35f, 0.89f);
-			else
-				btnPageUp.draw(b);
+			Flow.Draw(b);
 
 			// Base Menu
 			base.draw(b);
+
+			Flow.DrawMiddleScroll(b);
 
 			// Mouse
 			Game1.mouseCursorTransparency = 1f;

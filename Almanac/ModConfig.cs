@@ -80,6 +80,7 @@ namespace Leclair.Stardew.Almanac {
 		public bool ShowFishing { get; set; } = true;
 		public bool ShowFishTank { get; set; } = true;
 		public bool DecorateFishTank { get; set; } = true;
+		public bool FishShowLegendary { get; set; } = false;
 
 
 		// Fortune Page
@@ -99,5 +100,12 @@ namespace Leclair.Stardew.Almanac {
 		public bool NoticesShowAnniversaries { get; set; } = true;
 		public bool NoticesShowFestivals { get; set; } = true;
 		public bool NoticesShowGathering { get; set; } = true;
+		public MerchantMode NoticesShowMerchant { get; set; } = MerchantMode.Visit;
 	}
+
+	public enum MerchantMode {
+		Disabled,
+		Visit,
+		Stock
+	};
 }

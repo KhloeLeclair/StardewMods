@@ -110,6 +110,9 @@
 	"page.notices.birthday.no-s": "It's {{name}}' birthday!",
 	"page.notices.birthday.s": "It's {{name}}'s birthday!",
 
+	"page.notices.merchant": "The Traveling Merchant will be in town.",
+	"page.notices.merchant.stock": "The Traveling Merchant will be selling:",
+
 	// Fishing Page
 
 	"page.fish": "Fishing",
@@ -125,6 +128,7 @@
 	"page.fish.weather.Rainy": "{{fish}} is only active during @Brainy@b weather.",
 	"page.fish.weather.Any": "{{fish}} is always active, rain or shine.",
 	"page.fish.level": "You need a {{skill}} level of @B{{level}}@b to catch this.",
+	"page.fish.legendary": "{{fish}} is a legendary fish.",
 	"page.fish.time.all": "It stays active at all times of day.",
 	"page.fish.time": "It stays active from @B{{start}}@b to @B{{end}}@b.",
 	"page.fish.time.many": "It stays active over the following time spans: {{spans}}.",
@@ -149,6 +153,7 @@
 	"page.fish.filter.true": "Yes",
 	"page.fish.filter.false": "No",
 	"page.fish.filter.location": "Filter by Current Location",
+	"page.fish.filter.now": "Yes, This Season",
 	"page.fish.location.fresh": "{{fish}} lives in fresh water.",
 	"page.fish.location.ocean": "{{fish}} lives in salt water.",
 
@@ -214,6 +219,9 @@
 	"settings.fish.decorate-tank": "Decorate Tank",
 	"settings.fish.decorate-tank-desc": "When enabled, the tank preview will contain a few decorative items in addition to the fish.",
 
+	"settings.fish.legendary": "Include Legendary Fish",
+	"settings.fish.legendary-desc": "When enabled, legendary fish will be listed in the Almanac as well.",
+
 	"settings.notices": "Page: Local Notices",
 
 	"settings.notices.anniversaries": "Show Anniversaries",
@@ -223,6 +231,12 @@
 	"settings.notices.festivals-desc": "When enabled, festivals will be listed in the Local Notices page.",
 	"settings.notices.gathering": "Show Gathering",
 	"settings.notices.gathering-desc": "When enabled, gathering opportunities will be listed in the Local Notices page.",
+
+	"settings.notices.merchant": "Show Traveling Merchant",
+	"settings.notices.merchant-desc": "When enabled, visits from the Traveling Merchant will be listed in Local Notices. If you wish, we can show the items they'll have as well.",
+	"settings.notices.merchant.Disabled": "Disabled",
+	"settings.notices.merchant.Visit": "Show Visits Only",
+	"settings.notices.merchant.Stock": "Show Visits and Stock",
 
 	"settings.restore-state": "Restore Previous State",
 	"settings.restore-state.desc": "When enabled, the Almanac will remember what state it was in when you close and re-open it.",
@@ -261,6 +275,7 @@
 	"location.WitchSwamp": "Witch's Swamp",
 	"location.BugLand": "Mutant Bug Lair",
 
+	"location.Caldera": "Ginger Island (Volcano Caldera)",
 	"location.IslandWest": "West Ginger Island",
 	"location.IslandNorth": "North Ginger Island",
 	"location.IslandSouth": "South Ginger Island",
@@ -269,6 +284,7 @@
 	"location.IslandEast": "East Ginger Island",
 
 	"location.sub-any": "Any",
+	"location.sub-floor": "Floor {{floor}}",
 
 	"location.Forest.River": "River",
 	"location.Forest.Pond": "Pond",
@@ -277,6 +293,7 @@
 	"location.Island.Freshwater": "Freshwater",
 
 	// Maps: Stardew Aquarium
+	"location.Custom_ExteriorMuseum": "Stardew Aquarium",
 	"location.ExteriorMuseum": "Stardew Aquarium",
 
 	// Maps: Stardew Valley Expanded

@@ -500,6 +500,15 @@ namespace Leclair.Stardew.Almanac {
 				.AddLabel("") // Spacer
 
 				.Add(
+					I18n.Settings_Fish_Legendary,
+					I18n.Settings_Fish_LegendaryDesc,
+					c => c.FishShowLegendary,
+					(c, v) => c.FishShowLegendary = v
+				)
+
+				.AddLabel("") // Spacer
+
+				.Add(
 					I18n.Settings_Fish_ShowTank,
 					I18n.Settings_Fish_ShowTankDesc,
 					c => c.ShowFishTank,
@@ -573,6 +582,17 @@ namespace Leclair.Stardew.Almanac {
 					I18n.Settings_Notices_GatheringDesc,
 					c => c.NoticesShowGathering,
 					(c, v) => c.NoticesShowGathering = v
+				)
+				.AddChoice(
+					I18n.Settings_Notices_Merchant,
+					I18n.Settings_Notices_MerchantDesc,
+					c => c.NoticesShowMerchant,
+					(c, v) => c.NoticesShowMerchant = v,
+					new Dictionary<MerchantMode, Func<string>> {
+						[MerchantMode.Disabled] = I18n.Settings_Notices_Merchant_Disabled,
+						[MerchantMode.Visit] = I18n.Settings_Notices_Merchant_Visit,
+						[MerchantMode.Stock] = I18n.Settings_Notices_Merchant_Stock
+					}
 				);
 		}
 
@@ -676,6 +696,9 @@ namespace Leclair.Stardew.Almanac {
 				return Helper.Translation.Get(key).ToString();
 
 			switch(name) {
+				case "UndergroundMine":
+					return I18n.Location_SubFloor(sub.Area);
+
 				case "Forest":
 					if (sub.Area == 0)
 						return I18n.Location_Forest_River();

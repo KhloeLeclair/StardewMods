@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.13.0
+Released March 14th, 2022.
+
+### General
+
+* Added an option for displaying legendary fish on the fishing guide.
+* Added an option for displaying Traveling Merchant visits on the Local Notices
+  page. Optionally, you can also display what stock the merchant is expected
+  to be selling.
+* Add all the hard-coded fish from the base game to the fishing guide, such
+  as those caught in the mines.
+
+### Fixes
+
+* Improve handling of malformed input data for fish and crops.
+* When using the Current Location filter and displaying trapped fish, check to
+  see if we can actually catch those fish in a Crab Pot on the current map.
+  Currently, we're not checking every single tile for salt-water status but
+  hopefully the logic will be good enough. The ocean is pretty big, so we
+  shouldn't need to check every tile, in theory?
+
+
 ## 0.12.1
 Released March 12th, 2022.
 

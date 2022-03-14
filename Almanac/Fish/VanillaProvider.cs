@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Tools;
 using StardewModdingAPI;
 
 using Leclair.Stardew.Almanac.Models;
@@ -18,7 +19,7 @@ using SObject = StardewValley.Object;
 namespace Leclair.Stardew.Almanac.Fish {
 	public class VanillaProvider : IFishProvider {
 
-		public static readonly Regex WHITESPACE_REGEX = new(@"\s\s+", RegexOptions.Compiled);
+		public static readonly Regex WHITESPACE_REGEX = new(@"\s\s+|\n", RegexOptions.Compiled);
 
 		public readonly ModEntry Mod;
 
@@ -33,7 +34,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			Dictionary<int, string> data = Game1.content.Load<Dictionary<int, string>>(@"Data\Fish");
 			List<FishInfo> result = new();
 
-			Dictionary<int, Dictionary<SubLocation, List<int>>> locations = FishHelper.GetFishLocations();
+			Dictionary<int, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
 
 			foreach (var entry in data) {
 				locations.TryGetValue(entry.Key, out Dictionary<SubLocation, List<int>> locs);
@@ -52,6 +53,9 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		private FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations) {
 			if (string.IsNullOrEmpty(data))
+				return null;
+
+			if (FishHelper.SkipFish(Game1.player, id))
 				return null;
 
 			string[] bits = data.Split('/');
@@ -143,6 +147,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				Name: obj.DisplayName,
 				Description: desc,
 				Sprite: SpriteHelper.GetSprite(obj),
+				Legendary: FishingRod.isFishBossFish(id),
 				MinSize: minSize,
 				MaxSize: maxSize,
 				NumberCaught: who => {

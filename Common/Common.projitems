@@ -24,6 +24,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventSubscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\Subscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IIngredient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\RecommendIntegrations.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InventoryHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BaseInventoryProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\ChestProvider.cs" />

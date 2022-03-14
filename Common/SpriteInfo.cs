@@ -167,7 +167,20 @@ namespace Leclair.Stardew.Common {
 			if (!baseColor.HasValue && IsPrismatic && ! overlay.HasValue)
 				color = Utility.GetPrismaticColor();
 
-			batch.Draw(Texture, new Vector2(location.X + offsetX, location.Y + offsetY), source, color * alpha, 0f, Vector2.Zero, bs, SpriteEffects.None, 1f);
+			batch.Draw(
+				Texture,
+				new Vector2(
+					(float) Math.Floor(location.X + offsetX),
+					(float) Math.Floor(location.Y + offsetY)
+				),
+				source,
+				color * alpha,
+				0f,
+				Vector2.Zero,
+				bs,
+				SpriteEffects.None,
+				1f
+			);
 
 			if (OverlaySource != null) {
 				float os = s * OverlayScale;
@@ -178,7 +191,20 @@ namespace Leclair.Stardew.Common {
 				if (! overlayColor.HasValue && IsPrismatic)
 					color = Utility.GetPrismaticColor();
 
-				batch.Draw(OverlayTexture ?? Texture, new Vector2(location.X + offsetX, location.Y + offsetY), overlay.Value, color * alpha, 0f, Vector2.Zero, os, SpriteEffects.None, 1f);
+				batch.Draw(
+					OverlayTexture ?? Texture,
+					new Vector2(
+						(float) Math.Floor(location.X + offsetX),
+						(float) Math.Floor(location.Y + offsetY)
+					),
+					overlay.Value,
+					color * alpha,
+					0f,
+					Vector2.Zero,
+					os,
+					SpriteEffects.None,
+					1f
+				);
 			}
 		}
 
@@ -211,7 +237,20 @@ namespace Leclair.Stardew.Common {
 			if (!baseColor.HasValue && IsPrismatic && !overlay.HasValue)
 				color = Utility.GetPrismaticColor();
 
-			batch.Draw(Texture, new Vector2(location.X + offsetX, location.Y + offsetY), source, color * alpha, 0f, Vector2.Zero, bs, SpriteEffects.None, 1f);
+			batch.Draw(
+				Texture,
+				new Vector2(
+					(float) Math.Floor(location.X + offsetX),
+					(float) Math.Floor(location.Y + offsetY)
+				),
+				source,
+				color * alpha,
+				0f,
+				Vector2.Zero,
+				bs,
+				SpriteEffects.None,
+				1f
+			);
 
 			if (OverlaySource != null) {
 				float os = s * OverlayScale;
@@ -222,7 +261,20 @@ namespace Leclair.Stardew.Common {
 				if (!overlayColor.HasValue && IsPrismatic)
 					color = Utility.GetPrismaticColor();
 
-				batch.Draw(OverlayTexture ?? Texture, new Vector2(location.X + offsetX, location.Y + offsetY), overlay.Value, color * alpha, 0f, Vector2.Zero, os, SpriteEffects.None, 1f);
+				batch.Draw(
+					OverlayTexture ?? Texture,
+					new Vector2(
+						(float) Math.Floor(location.X + offsetX),
+						(float) Math.Floor(location.Y + offsetY)
+					),
+					overlay.Value,
+					color * alpha,
+					0f,
+					Vector2.Zero,
+					os,
+					SpriteEffects.None,
+					1f
+				);
 			}
 		}
 	}
