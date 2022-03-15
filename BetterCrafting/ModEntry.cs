@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
+using Leclair.Stardew.Common.UI;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -62,7 +64,8 @@ namespace Leclair.Stardew.BetterCrafting {
 		internal Integrations.SpaceCore.SCIntegration intSCore;
 		internal Integrations.CustomCraftingStation.CCSIntegration intCCStation;
 
-		public Texture2D ButtonTexture;
+		internal ThemeManager<Models.Theme> ThemeManager;
+		internal Models.Theme Theme => ThemeManager.Theme;
 
 		public override void Entry(IModHelper helper) {
 			base.Entry(helper);
@@ -86,7 +89,11 @@ namespace Leclair.Stardew.BetterCrafting {
 			Recipes = new RecipeManager(this);
 			Favorites = new FavoriteManager(this);
 
-			Sprites.Load(Helper.Content);
+			ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
+			ThemeManager.ThemeChanged += OnThemeChanged;
+			ThemeManager.Discover();
+
+			//Sprites.Load(Helper.Content, Helper.ModRegistry);
 
 			CheckRecommendedIntegrations();
 		}
@@ -97,6 +104,10 @@ namespace Leclair.Stardew.BetterCrafting {
 
 
 		#region Events
+
+		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
+			Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+		}
 
 		[Subscriber]
 		private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
@@ -301,6 +312,11 @@ namespace Leclair.Stardew.BetterCrafting {
 				Log($"Invalided 1 cache.");
 			});
 
+			Helper.ConsoleCommands.Add("bc_retheme", "Reload all themes.", (name, args) => {
+				ThemeManager.Discover();
+				Log($"Reloaded themes. You may need to reopen menus.");
+			});
+
 			// Load Data
 			Recipes.LoadRecipes();
 			Recipes.LoadDefaults();
@@ -372,6 +388,16 @@ namespace Leclair.Stardew.BetterCrafting {
 
 			GMCMIntegration
 				.AddLabel(I18n.Setting_General)
+				.AddChoice(
+					I18n.Setting_Theme,
+					I18n.Setting_ThemeDesc,
+					c => c.Theme,
+					(c,v) => {
+						c.Theme = v;
+						ThemeManager.SelectTheme(v);
+					},
+					ThemeManager.GetThemeChoices()
+				)
 				.Add(
 					I18n.Setting_Settings,
 					I18n.Setting_Settings_Tip,

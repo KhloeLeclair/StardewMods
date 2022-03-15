@@ -29,6 +29,8 @@ namespace Leclair.Stardew.BetterCrafting {
 
 	public class ModConfig {
 
+		public string Theme { get; set; } = "Automatic";
+
 		public bool ReplaceCooking { get; set; } = true;
 		public bool ReplaceCrafting { get; set; } = true;
 

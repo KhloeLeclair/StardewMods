@@ -593,7 +593,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public void SaveCategories() {
 			var categories = Tabs
 				.Select(val => val.Category)
-				.Where(val =>  (val?.Recipes?.Count ?? 0) > 0);
+				.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0);
 
 			Mod.Recipes.SetCategories(Game1.player, categories, cooking);
 			Mod.Recipes.SaveCategories();
@@ -1661,7 +1661,13 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			if (FilterRegex == null || is_ingredient && !FilterIngredients)
 				return text;
 
-			return FilterRegex.Replace(text, match => $"@h@r{{#50FFD700}}{match.Value}@r@H");
+			string color = "#50FFD700";
+			if (Mod.Theme.SearchHighlightColor.HasValue) {
+				Color c = Mod.Theme.SearchHighlightColor.Value;
+				color = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+			}
+
+			return FilterRegex.Replace(text, match => $"@h@r{{{color}}}{match.Value}@r@H");
 		}
 
 		private bool DoesRecipeMatchFilter(IRecipe recipe) {
@@ -2877,10 +2883,16 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					supports_quality = false;
 
 				Color color = amount < entry.Quantity ?
-					Color.Red :
+					(Mod.Theme.QuantityCriticalTextColor ?? Color.Red) :
 					amount < quant ?
-						Color.OrangeRed :
+						(Mod.Theme.QuantityWarningTextColor ?? Color.OrangeRed) :
 							Game1.textColor;
+
+				Color? shadow = amount < entry.Quantity ?
+					Mod.Theme.QuantityCriticalShadowColor :
+					amount < quant ?
+						Mod.Theme.QuantityWarningShadowColor :
+							null;
 
 				var ebuilder = SimpleHelper
 					.Builder(LayoutDirection.Horizontal, margin: 8)
@@ -2896,6 +2908,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						.FormatText(
 							HighlightSearchTerms(entry.DisplayName, true),
 							color: color,
+							shadowColor: shadow,
 							align: Alignment.Middle
 						);
 				else
@@ -2903,6 +2916,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						.Text(
 							entry.DisplayName,
 							color: color,
+							shadowColor: shadow,
 							align: Alignment.Middle
 						);
 

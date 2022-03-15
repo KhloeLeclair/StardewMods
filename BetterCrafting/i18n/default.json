@@ -5,6 +5,12 @@
 
 	"setting.general": "General Options",
 
+	"setting.theme": "UI Theme",
+	"setting.theme-desc": "This UI theme will be used for Better Crafting's buttons. Note that most of Better Crafting's UI is drawn from standard game textures.",
+
+	"theme.automatic": "Automatic",
+	"theme.default": "Default",
+
 	"setting.alphabetic": "Sort Alphabetically",
 	"setting.alphabetic.tip": "When this is enabled, recipes will be sorted alphabetically rather than using the default order.",
 

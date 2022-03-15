@@ -33,9 +33,5 @@ namespace Leclair.Stardew.BetterCrafting {
 			public readonly static Rectangle QUALITY_3 = new(48, 32, 16, 16);
 		}
 
-		public static void Load(IContentHelper Helper) {
-			Buttons.Texture = Helper.Load<Texture2D>("assets/buttons.png");
-		}
-
 	}
 }

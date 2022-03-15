@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.15.0
+Unreleased.
+
+### Mod Compatibility
+
+* Added built-in support for Vintage Interface 2, Overgrown Flowery Interface,
+  and Starry Sky Interface.
+
+### API Changes
+
+* Added a `bc_retheme` command to reload all themes. Useful for development.
+* We now have support for themes. Themes allow you to replace the buttons
+  texture, as well as set custom colors for a few things in the menu. See
+  the Vintage Interface 2 theme for an idea. Content packs can add a theme
+  by including a theme.json.
+
+
 ## 0.14.1
 Released March 14th, 2022.
 
