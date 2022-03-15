@@ -7,6 +7,10 @@ Released March 15th, 2022.
 
 * Added built-in support for Vintage Interface 2.
 
+## Translation
+
+* Improve Chinese translation coverage.
+
 ### API Changes
 
 * Added an `al_theme` command to list all themes, or change the current theme
