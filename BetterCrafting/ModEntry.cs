@@ -317,6 +317,13 @@ namespace Leclair.Stardew.BetterCrafting {
 				Log($"Reloaded themes. You may need to reopen menus.");
 			});
 
+			Helper.ConsoleCommands.Add("bc_theme", "List all themes, or switch to a new theme.", (name, args) => {
+				if (ThemeManager.OnThemeCommand(args)) {
+					Config.Theme = ThemeManager.ThemeKey;
+					SaveConfig();
+				}
+			});
+
 			// Load Data
 			Recipes.LoadRecipes();
 			Recipes.LoadDefaults();

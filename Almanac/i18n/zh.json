@@ -110,6 +110,9 @@
 	"page.notices.birthday.no-s": "这是{{name}}的生日！",
 	"page.notices.birthday.s": "是{{name}}的生日！",
 
+	"page.notices.merchant": "旅行商人会来到镇上。",
+	"page.notices.merchant.stock": "旅行商人将出售：",
+
 	// Fishing Page
 
 	"page.fish": "钓鱼",
@@ -125,6 +128,7 @@
 	"page.fish.weather.Rainy": "{{fish}}只在@Brainy@b的天气可钓到。",
 	"page.fish.weather.Any": "{{fish}}任何天气都能钓，风雨无阻。 ",
 	"page.fish.level": "你需要{{skill}}的@B{{level}}@b级别才能钓到这种鱼。",
+	"page.fish.legendary": "{{fish}}是传说鱼类。",
 	"page.fish.time.all": "它在一天中的任何时候都可钓到。",
 	"page.fish.time": "它在@B{{start}}@b至@B{{end}}@b可钓到。",
 	"page.fish.time.many": "它在以下时间跨度内可钓到：{{spans}}。",
@@ -149,6 +153,7 @@
 	"page.fish.filter.true": "确定",
 	"page.fish.filter.false": "取消",
 	"page.fish.filter.location": "按位置筛选",
+	"page.fish.filter.now": "当季",
 	"page.fish.location.fresh": "{{fish}}生活在淡水区域。",
 	"page.fish.location.ocean": "{{fish}}生活在海水区域。",
 
@@ -214,6 +219,9 @@
 	"settings.fish.decorate-tank": "装饰鱼缸",
 	"settings.fish.decorate-tank-desc": "启用（enabled）后，除了鱼之外，鱼缸预览还将包含一些装饰物品。",
 
+	"settings.fish.legendary": "包含传说鱼类",
+	"settings.fish.legendary-desc": "启用（enabled）后，传说鱼类也将被列入年历之中。",
+
 	"settings.notices": "页面：本地公告牌",
 
 	"settings.notices.anniversaries": "显示周年纪念日",
@@ -224,11 +232,20 @@
 	"settings.notices.gathering": "显示收集请求",
 	"settings.notices.gathering-desc": "启用（enabled）后，收集机会将在本地公告牌页面中列出。",
 
+	"settings.notices.merchant": "显示旅行商人",
+	"settings.notices.merchant-desc": "启用（enabled）后，旅行商人的来访将会在本地公告牌中列出。如果你想，我们也可以展示他们将出售的物品。",
+	"settings.notices.merchant.Disabled": "已禁用",
+	"settings.notices.merchant.Visit": "仅显示来访时间",
+	"settings.notices.merchant.Stock": "显示来访时间和出售物品",
+
 	"settings.restore-state": "恢复以前的状态",
 	"settings.restore-state.desc": "启用（enabled）后，当你重新打开和关闭的时候，年历会记得它的状态。",
 
 	"settings.cycle-time": "周期时间",
 	"settings.cycle-time.desc": "当需要在给定的一天显示多个图像时，每个图像都会显示该秒数。",
+
+	"settings.debug": "调试模式",
+	"settings.debug.desc": "启用（enabled）后，一些附加信息可能会显示在年历中，对调试很有帮助。",
 
 	// Events
 
@@ -258,6 +275,7 @@
 	"location.WitchSwamp": "女巫的沼泽",
 	"location.BugLand": "突变虫穴",
 
+	"location.Caldera": "姜岛（火山地牢）",
 	"location.IslandWest": "姜岛西部",
 	"location.IslandNorth": "姜岛北部",
 	"location.IslandSouth": "姜岛南部",
@@ -266,6 +284,7 @@
 	"location.IslandEast": "姜岛东部",
 
 	"location.sub-any": "任何地点",
+	"location.sub-floor": "{{floor}}层",
 
 	"location.Forest.River": "河边",
 	"location.Forest.Pond": "池塘",
@@ -274,6 +293,7 @@
 	"location.Island.Freshwater": "淡水区",
 
 	// Maps: Stardew Aquarium
+	"location.Custom_ExteriorMuseum": "星露谷水族馆",
 	"location.ExteriorMuseum": "星露谷水族馆",
 
 	// Maps: Stardew Valley Expanded

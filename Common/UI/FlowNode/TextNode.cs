@@ -173,7 +173,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			}
 
 			if (background.A > 0) {
-				float alpha = (float) background.A / 255;
+				float alpha = (float) background.A / 255f;
 
 				batch.Draw(
 					Game1.fadeToBlackRect,
@@ -185,10 +185,18 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				);
 			}
 
-			if (Style.IsJunimo())
-				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y, junimoText: true);
+			if (Style.IsJunimo() || Style.IsFancy())
+				RenderHelper.DrawSpriteText(
+					batch,
+					text,
+					(int) position.X, (int) position.Y,
+					junimoText: Style.IsJunimo(),
+					color: color
+				);
+
+				/*SpriteText.drawString(batch, text, (int) position.X, (int) position.Y, junimoText: true);
 			else if (Style.IsFancy())
-				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y);
+				SpriteText.drawString(batch, text, (int) position.X, (int) position.Y);*/
 			else if (Style.IsBold())
 				Utility.drawBoldText(batch, text, font, position, color, s);
 			else if (Style.HasShadow()) {

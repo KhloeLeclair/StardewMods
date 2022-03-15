@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.14.0
+Released March 15th, 2022.
+
+### Mod Compatibility
+
+* Added built-in support for Vintage Interface 2.
+
+### API Changes
+
+* Added an `al_theme` command to list all themes, or change the current theme
+  if called with an argument. `al_theme reload` will reload all themes,
+  including the active theme. `al_retheme` can be used as a shortcut for that.
+* We now have support for themes. Themes replace the menu texture (currently
+  only the entire texture, sorry) and also allow you to override certain
+  colors used by Almanac, such as the text color and text shadow color. There
+  is a theme template with all the "default" values, but also see the Vintage
+  Interface 2 theme for an idea on how things work, especially with regards
+  to a custom scrollbar for the standard page theme.
+
+
 ## 0.13.0
 Released March 14th, 2022.
 

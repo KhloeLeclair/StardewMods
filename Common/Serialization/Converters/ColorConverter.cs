@@ -22,7 +22,7 @@ namespace Leclair.Stardew.Common.Serialization.Converters {
 				case JsonToken.String:
 					return ReadString(JToken.Load(reader).Value<string>(), path);
 				case JsonToken.StartObject:
-					return ReadObject(JObject.Load(reader));
+					return ReadObject(JObject.Load(reader), path);
 				default:
 					throw new JsonReaderException($"Can't parse Color? from {reader.TokenType} node (path: {reader.Path}).");
 			}
@@ -48,18 +48,24 @@ namespace Leclair.Stardew.Common.Serialization.Converters {
 			return CommonHelper.ParseColor(value);
 		}
 
-		private Color? ReadObject(JObject obj) {
+		private Color? ReadObject(JObject obj, string path) {
+			try {
+				if (!obj.TryGetValueIgnoreCase("R", out int R) ||
+					!obj.TryGetValueIgnoreCase("G", out int G) ||
+					!obj.TryGetValueIgnoreCase("B", out int B)
+				)
+					return null;
 
-			if (!obj.TryGetValueIgnoreCase("R", out byte R) ||
-				!obj.TryGetValueIgnoreCase("G", out byte G) ||
-				!obj.TryGetValueIgnoreCase("B", out byte B)
-			)
-				return null;
+				if (obj.TryGetValueIgnoreCase("A", out int A))
+					return new Color(R, G, B, A);
 
-			if (obj.TryGetValueIgnoreCase("A", out byte A))
-				return new Color(R, G, B, A);
+				return new Color(R, G, B);
 
-			return new Color(R, G, B);
+			} catch(Exception ex) {
+				throw new JsonReaderException($"Can't parse Color? from JSON object node (path: {path}).", ex);
+			}
+
+			return null;
 		}
 	}
 }

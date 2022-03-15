@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.15.0
-Unreleased.
+Released March 15th, 2022.
 
 ### Mod Compatibility
 
@@ -10,7 +10,9 @@ Unreleased.
 
 ### API Changes
 
-* Added a `bc_retheme` command to reload all themes. Useful for development.
+* Added a `bc_theme` command to list all themes, or change the current theme
+  if called with an argument. `bc_theme reload` will reload all themes,
+  including the active theme. `bc_retheme` can be used as a shortcut for that.
 * We now have support for themes. Themes allow you to replace the buttons
   texture, as well as set custom colors for a few things in the menu. See
   the Vintage Interface 2 theme for an idea. Content packs can add a theme

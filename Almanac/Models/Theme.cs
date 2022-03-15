@@ -9,23 +9,29 @@ using Leclair.Stardew.Common.UI;
 namespace Leclair.Stardew.Almanac.Models {
 	public class Theme : BaseThemeData {
 
-		public int CoverTextColor { get; set; } = -1;
-		public int CoverYearColor { get; set; } = -1;
+		[JsonConverter(typeof(ColorConverter))]
+		public Color? CoverTextColor { get; set; }
+
+		[JsonConverter(typeof(ColorConverter))]
+		public Color? CoverYearColor { get; set; }
 
 
 		public Style Standard { get; set; } = new Style {
-			SeasonTextColor = -1
+			CustomScroll = false
 		};
 
 		public Style Magic { get; set; } = new Style {
-			SeasonTextColor = 4
+			CustomScroll = true
 		};
 
 	}
 
 	public class Style {
 
-		public int SeasonTextColor { get; set; }
+		public bool CustomScroll { get; set; }
+
+		[JsonConverter(typeof(ColorConverter))]
+		public Color? SeasonTextColor { get; set; }
 
 		[JsonConverter(typeof(ColorConverter))]
 		public Color? CalendarLabelColor { get; set; }
@@ -35,6 +41,7 @@ namespace Leclair.Stardew.Almanac.Models {
 
 		[JsonConverter(typeof(ColorConverter))]
 		public Color? CalendarDimColor { get; set; }
+		public float? CalendarDimOpacity { get; set; }
 
 		[JsonConverter(typeof(ColorConverter))]
 		public Color? CalendarHighlightColor { get; set; }

@@ -1,9 +1,12 @@
-using Leclair.Stardew.Almanac.Menus;
-
+using System;
 using Microsoft.Xna.Framework.Graphics;
+
+using Leclair.Stardew.Common;
 
 using StardewValley;
 using StardewValley.BellsAndWhistles;
+
+using Leclair.Stardew.Almanac.Menus;
 
 namespace Leclair.Stardew.Almanac.Pages {
 	public class CoverPage : BasePage<BaseState> {
@@ -44,8 +47,6 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public override void Activate() {
 			base.Activate();
-
-			
 		}
 
 		public override void Draw(SpriteBatch b) {
@@ -57,24 +58,24 @@ namespace Leclair.Stardew.Almanac.Pages {
 			int y = Menu.yPositionOnScreen + (Menu.height - (titleHeight + 60 + wordHeight)) / 2;
 
 			foreach (string word in words) {
-				SpriteText.drawStringHorizontallyCenteredAt(
+				RenderHelper.DrawCenteredSpriteText(
 					b,
 					word,
 					center,
 					y,
-					color: Mod.Theme?.CoverTextColor ?? -1
+					color: Mod.Theme?.CoverTextColor ?? null
 				);
 
 				y += wordHeight;
 			}
 
-			SpriteText.drawStringHorizontallyCenteredAt(
+			RenderHelper.DrawCenteredSpriteText(
 				b,
 				Game1.content.LoadString("Strings\\UI:Billboard_Year", Menu.Year),
 				center,
 				y + 60,
-				color: Mod.Theme?.CoverYearColor ?? 2
-				);
+				color: Mod.Theme?.CoverYearColor ?? SpriteText.getColorFromIndex(2)
+			);
 		}
 
 		#endregion

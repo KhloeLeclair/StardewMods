@@ -61,6 +61,58 @@ namespace Leclair.Stardew.Common.UI {
 
 		#endregion
 
+		#region Commands
+
+		public bool OnThemeCommand(string[] args) {
+			if (args.Length > 0 && !string.IsNullOrEmpty(args[0])) {
+				string key = args[0].Trim();
+
+				if (key.Equals("reload", StringComparison.OrdinalIgnoreCase)) {
+					Discover();
+					Log($"Reloaded themes. You may need to reopen menus.", LogLevel.Info);
+					return false;
+				}
+
+				string selected = null;
+
+				foreach (var pair in Themes) {
+					if (pair.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) {
+						selected = pair.Key;
+						break;
+					}
+				}
+
+				if (selected == null)
+					foreach (var pair in Themes) {
+						if (pair.Key.Contains(key, StringComparison.OrdinalIgnoreCase)) {
+							selected = pair.Key;
+							break;
+						}
+					}
+
+				if (selected == null)
+					foreach (var pair in Themes) {
+						if (GetThemeName(pair.Key).Contains(key, StringComparison.OrdinalIgnoreCase)) {
+							selected = pair.Key;
+							break;
+						}
+					}
+
+				SelectTheme(selected);
+				return true;
+			}
+
+			Log($"Available Themes:", LogLevel.Info);
+			foreach (var pair in GetThemeChoices()) {
+				string selection = pair.Key == ThemeKey ? ">" : " ";
+				Log($" {selection} [{pair.Key}]: {pair.Value()}", LogLevel.Info);
+			}
+
+			return false;
+		}
+
+		#endregion
+
 		#region Theme Discovery
 
 		private IEnumerable<IContentPack> CheckAssets(IEnumerable<IContentPack> packs) {

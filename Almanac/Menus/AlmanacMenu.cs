@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.FlowNode;
 using Leclair.Stardew.Common.UI.SimpleLayout;
@@ -44,66 +45,26 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 		public static readonly Color MAGIC_SHADOW_COLOR = new(19, 16, 57);
 
-		public static readonly Rectangle[] LEFT_BUTTON = new Rectangle[] {
-			new(0, 256, 64, 64),
-			new(208, 352, 16, 16)
-		};
-
-		public static readonly Rectangle[] RIGHT_BUTTON = new Rectangle[] {
-			new(0, 192, 64, 64),
-			new(224, 352, 16, 16)
-		};
-
-		public static readonly Rectangle[] UP_ARROW = new Rectangle[] {
-			new(64, 64, 64, 64),
-			new(176, 352, 16, 16)
-		};
-
-		public static readonly Rectangle[] DOWN_ARROW = new Rectangle[] {
-			new(0, 64, 64, 64),
-			new(192, 352, 16, 16)
-		};
-
-		public static readonly Rectangle[] SCROLL_BG = new Rectangle[] {
-			new(403, 383, 6, 6),
-			new(160, 352, 6, 6)
-		};
-
-		public static readonly Rectangle[] SCROLL_THUMB = new Rectangle[] {
-			new(435, 463, 6, 10),
-			new(160, 358, 6, 10)
-		};
-
-		public static readonly Rectangle COVER = new(0, 185, 160, 185);
+		public static readonly Rectangle COVER = Sprites.COVER_PAGE;
 
 		public static readonly Rectangle[] OPEN_PAGES = new Rectangle[] {
-			new(0, 0, 320, 185),
-			new(320, 0, 320, 185)
+			Sprites.OPEN_PAGE,
+			Sprites.MAGIC_PAGE
 		};
 
 		public static readonly Rectangle[] CALENDAR = new Rectangle[] {
-			new(160, 192, 144, 160),
-			new(304, 192, 144, 160)
+			Sprites.CALENDAR,
+			Sprites.MAGIC_CALENDAR
 		};
 
 		public static readonly Rectangle[][] TABS = new Rectangle[][] {
-			new Rectangle[] {
-				new(448, 192, 16, 16),
-				new(448, 208, 16, 16),
-				new(448, 224, 16, 16),
-				new(448, 240, 16, 16),
-			},
-			new Rectangle[] {
-				new(464, 192, 16, 16),
-				new(464, 208, 16, 16),
-				new(464, 224, 16, 16),
-				new(464, 240, 16, 16),
-			},
+			Sprites.TABS,
+			Sprites.MAGIC_TABS
 		};
 
 		// Rendering Stuff
 
-		public readonly Texture2D background;
+		public Texture2D background;
 		public readonly ModEntry Mod;
 
 		// Buttons
@@ -205,7 +166,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				btnTabsUp = new ClickableTextureComponent(
 					new Rectangle(0, 0, 64, 64),
 					Game1.mouseCursors,
-					UP_ARROW[0],
+					Sprites.UP_ARROW,
 					0.8f
 				) {
 					region = REGION_TABS,
@@ -219,7 +180,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				btnTabsDown = new ClickableTextureComponent(
 					new Rectangle(0, 0, 64, 64),
 					Game1.mouseCursors,
-					DOWN_ARROW[0],
+					Sprites.DOWN_ARROW,
 					0.8f
 				) {
 					region = REGION_TABS,
@@ -442,63 +403,69 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			CurrentPage?.Activate();
 			Recenter();
+			UpdateScrollComponents();
 
+			return true;
+		}
+
+		public void UpdateScrollComponents() {
 			// Update component textures, source rects, and scales.
 			bool is_magic = IsMagic;
+			bool custom_scroll = Style?.CustomScroll ?? is_magic;
+			ScrollbarTheme stheme = custom_scroll ?
+				(is_magic ? Sprites.MAGIC_SCROLL : Sprites.STANDARD_SCROLL) : null;
 
-			LeftFlow.ScrollAreaTexture = is_magic ? background : Game1.mouseCursors;
-			LeftFlow.ScrollAreaSource = SCROLL_BG[is_magic ? 1 : 0];
+			LeftFlow.ScrollAreaTexture = custom_scroll ? background : Game1.mouseCursors;
+			LeftFlow.ScrollAreaSource = stheme?.SCROLL_BG ?? Sprites.SCROLL_BG;
 
-			RightFlow.ScrollAreaTexture = is_magic ? background : Game1.mouseCursors;
-			RightFlow.ScrollAreaSource = SCROLL_BG[is_magic ? 1 : 0];
+			RightFlow.ScrollAreaTexture = custom_scroll ? background : Game1.mouseCursors;
+			RightFlow.ScrollAreaSource = stheme?.SCROLL_BG ?? Sprites.SCROLL_BG;
 
 			if (LeftFlow.ScrollBar != null) {
-				LeftFlow.ScrollBar.texture = is_magic ? background : Game1.mouseCursors;
-				LeftFlow.ScrollBar.sourceRect = SCROLL_THUMB[is_magic ? 1 : 0];
+				LeftFlow.ScrollBar.texture = custom_scroll ? background : Game1.mouseCursors;
+				LeftFlow.ScrollBar.sourceRect = stheme?.SCROLL_THUMB ?? Sprites.SCROLL_THUMB;
 			}
 
 			if (RightFlow.ScrollBar != null) {
-				RightFlow.ScrollBar.texture = is_magic ? background : Game1.mouseCursors;
-				RightFlow.ScrollBar.sourceRect = SCROLL_THUMB[is_magic ? 1 : 0];
+				RightFlow.ScrollBar.texture = custom_scroll ? background : Game1.mouseCursors;
+				RightFlow.ScrollBar.sourceRect = stheme?.SCROLL_THUMB ?? Sprites.SCROLL_THUMB;
 			}
 
 			if (btnLeftPageDown != null) {
-				btnLeftPageDown.texture = is_magic ? background : Game1.mouseCursors;
-				btnLeftPageDown.scale = btnLeftPageDown.baseScale = is_magic ? 3.2f : 0.8f;
-				btnLeftPageDown.sourceRect = DOWN_ARROW[is_magic ? 1 : 0];
+				btnLeftPageDown.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnLeftPageDown.scale = btnLeftPageDown.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnLeftPageDown.sourceRect = stheme?.DOWN_ARROW ?? Sprites.DOWN_ARROW;
 			}
 
 			if (btnLeftPageUp != null) {
-				btnLeftPageUp.texture = is_magic ? background : Game1.mouseCursors;
-				btnLeftPageUp.scale = btnLeftPageUp.baseScale = is_magic ? 3.2f : 0.8f;
-				btnLeftPageUp.sourceRect = UP_ARROW[is_magic ? 1 : 0];
+				btnLeftPageUp.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnLeftPageUp.scale = btnLeftPageUp.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnLeftPageUp.sourceRect = stheme?.UP_ARROW ?? Sprites.UP_ARROW;
 			}
 
 			if (btnRightPageDown != null) {
-				btnRightPageDown.texture = is_magic ? background : Game1.mouseCursors;
-				btnRightPageDown.scale = btnRightPageDown.baseScale = is_magic ? 3.2f : 0.8f;
-				btnRightPageDown.sourceRect = DOWN_ARROW[is_magic ? 1 : 0];
+				btnRightPageDown.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnRightPageDown.scale = btnRightPageDown.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnRightPageDown.sourceRect = stheme?.DOWN_ARROW ?? Sprites.DOWN_ARROW;
 			}
 
 			if (btnRightPageUp != null) {
-				btnRightPageUp.texture = is_magic ? background : Game1.mouseCursors;
-				btnRightPageUp.scale = btnRightPageUp.baseScale = is_magic ? 3.2f : 0.8f;
-				btnRightPageUp.sourceRect = UP_ARROW[is_magic ? 1 : 0];
+				btnRightPageUp.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnRightPageUp.scale = btnRightPageUp.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnRightPageUp.sourceRect = stheme?.UP_ARROW ?? Sprites.UP_ARROW;
 			}
 
 			if (btnPrevious != null) {
-				btnPrevious.texture = is_magic ? background : Game1.mouseCursors;
-				btnPrevious.scale = btnPrevious.baseScale = is_magic ? 3.2f : 0.8f;
-				btnPrevious.sourceRect = LEFT_BUTTON[is_magic ? 1 : 0];
+				btnPrevious.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnPrevious.scale = btnPrevious.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnPrevious.sourceRect = stheme?.LEFT_ARROW ?? Sprites.LEFT_ARROW;
 			}
 
 			if (btnNext != null) {
-				btnNext.texture = is_magic ? background : Game1.mouseCursors;
-				btnNext.scale = btnNext.baseScale = is_magic ? 3.2f : 0.8f;
-				btnNext.sourceRect = RIGHT_BUTTON[is_magic ? 1 : 0];
+				btnNext.texture = custom_scroll ? background : Game1.mouseCursors;
+				btnNext.scale = btnNext.baseScale = custom_scroll ? 3.2f : 0.8f;
+				btnNext.sourceRect = stheme?.RIGHT_ARROW ?? Sprites.RIGHT_ARROW;
 			}
-
-			return true;
 		}
 
 		public void Recenter() {
@@ -651,12 +618,17 @@ namespace Leclair.Stardew.Almanac.Menus {
 				return;
 			}
 
+			bool is_magic = IsMagic;
+			bool custom_scroll = Style?.CustomScroll ?? is_magic;
+			ScrollbarTheme stheme = custom_scroll ?
+				(is_magic ? Sprites.MAGIC_SCROLL : Sprites.STANDARD_SCROLL) : null;
+
 			if (btnPrevious == null)
 				btnPrevious = new ClickableTextureComponent(
 					Rectangle.Empty,
-					IsMagic ? background : Game1.mouseCursors,
-					LEFT_BUTTON[IsMagic ? 1 : 0],
-					IsMagic ? 3.2f : 0.8f
+					custom_scroll ? background : Game1.mouseCursors,
+					stheme?.LEFT_ARROW ?? Sprites.LEFT_ARROW,
+					custom_scroll ? 3.2f : 0.8f
 				) {
 					region = REGION_LEFT_PAGE,
 					myID = 88,
@@ -669,9 +641,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 			if (btnNext == null)
 				btnNext = new ClickableTextureComponent(
 					Rectangle.Empty,
-					IsMagic ? background : Game1.mouseCursors,
-					RIGHT_BUTTON[IsMagic ? 1 : 0],
-					IsMagic ? 3.2f : 0.8f
+					custom_scroll ? background : Game1.mouseCursors,
+					stheme?.RIGHT_ARROW ?? Sprites.RIGHT_ARROW,
+					custom_scroll ? 3.2f : 0.8f
 				) {
 					region = REGION_LEFT_PAGE,
 					myID = 89,
@@ -729,6 +701,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 				yPositionOnScreen + 34,
 				64, 64
 			);
+
+			UpdateScrollComponents();
 		}
 
 		public int GetLeftFlowScroll() {
@@ -1160,7 +1134,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			// Title
 			if (type == PageType.Calendar || type == PageType.Seasonal) {
-				SpriteText.drawStringHorizontallyCenteredAt(
+				RenderHelper.DrawCenteredSpriteText(
 					b,
 					I18n.Calendar_When(
 						season: Utility.getSeasonNameFromNumber(date.SeasonIndex),
@@ -1168,7 +1142,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 					),
 					xPositionOnScreen + (width / 4),
 					yPositionOnScreen + 40,
-					color: Style?.SeasonTextColor ?? (IsMagic ? 4 : -1)
+					color: Style?.SeasonTextColor ??
+						(IsMagic ? Color.White : null)
 				);
 
 				// Navigation
@@ -1253,7 +1228,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 						b.Draw(
 							Game1.staminaRect,
 							cmp.bounds,
-							Style?.CalendarDimColor ??
+							Style?.CalendarDimColor != null ?
+								(Style.CalendarDimColor.Value * (Style.CalendarDimOpacity ?? 1f)) :
 								(IsMagic ? Color.Black * .4f : Color.Gray * 0.35f)
 						);
 				}

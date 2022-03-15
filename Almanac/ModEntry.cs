@@ -4,6 +4,8 @@ using System.Reflection;
 
 using Newtonsoft.Json.Linq;
 
+using Microsoft.Xna.Framework.Graphics;
+
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
@@ -199,7 +201,10 @@ namespace Leclair.Stardew.Almanac {
 		#region Events
 
 		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
-			
+			if (Game1.activeClickableMenu is Menus.AlmanacMenu menu) {
+				menu.background = ThemeManager.Load<Texture2D>("Menu.png");
+				menu.UpdateScrollComponents();
+			}
 		}
 
 		[Subscriber]
@@ -277,6 +282,13 @@ namespace Leclair.Stardew.Almanac {
 			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", (name, args) => {
 				ThemeManager.Discover();
 				Log($"Reloaded themes. You may need to reopen menus.");
+			});
+
+			Helper.ConsoleCommands.Add("al_theme", "List all themes, or switch to a new theme.", (name, args) => {
+				if (ThemeManager.OnThemeCommand(args)) {
+					Config.Theme = ThemeManager.ThemeKey;
+					SaveConfig();
+				}
 			});
 
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {

@@ -4,16 +4,20 @@
 		"ManaKirel.VintageInterface2"
 	],
 
-	"CoverTextColor": 8,
-	"CoverYearColor": 4,
+	"CoverTextColor": "#3c3c3c",
+	"CoverYearColor": "white",
 
 	"Standard": {
+		"CustomScroll": true,
+		"SeasonTextColor": "#3c3c3c",
+
 		"TextColor": "#382f29",
 		"TextShadowColor": "#D4C8AF"
 	},
 
 	"Magic": {
-		"SeasonTextColor": 4,
+		"CustomScroll": true,
+		"SeasonTextColor": "white",
 
 		"CalendarLabelColor": "#8073D1",
 		"CalendarDayColor": "#9c8cff",
