@@ -105,8 +105,27 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		#region Events
 
+		private void UpdateTextures(Texture2D oldTex, Texture2D newTex, IClickableMenu menu) {
+			if (menu.allClickableComponents != null)
+				foreach(var cmp in menu.allClickableComponents) {
+					if (cmp is ClickableTextureComponent tp && tp.texture == oldTex)
+						tp.texture = newTex;
+				}
+		}
+
 		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
-			Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+			var oldTex = Sprites.Buttons.Texture;
+			var newTex = Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+
+			if (Game1.activeClickableMenu is GameMenu gm) {
+				foreach(var gmp in gm.pages) {
+					if (gmp is Menus.BetterCraftingPage)
+						UpdateTextures(oldTex, newTex, gmp);
+				}
+			}
+
+			if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
+				UpdateTextures(oldTex, newTex, page);
 		}
 
 		[Subscriber]

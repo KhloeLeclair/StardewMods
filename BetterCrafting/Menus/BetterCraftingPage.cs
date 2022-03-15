@@ -1662,7 +1662,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				return text;
 
 			string color = "#50FFD700";
-			if (Mod.Theme.SearchHighlightColor.HasValue) {
+			if (Mod.Theme?.SearchHighlightColor != null) {
 				Color c = Mod.Theme.SearchHighlightColor.Value;
 				color = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
 			}
@@ -2883,15 +2883,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					supports_quality = false;
 
 				Color color = amount < entry.Quantity ?
-					(Mod.Theme.QuantityCriticalTextColor ?? Color.Red) :
+					(Mod.Theme?.QuantityCriticalTextColor ?? Color.Red) :
 					amount < quant ?
-						(Mod.Theme.QuantityWarningTextColor ?? Color.OrangeRed) :
+						(Mod.Theme?.QuantityWarningTextColor ?? Color.OrangeRed) :
 							Game1.textColor;
 
 				Color? shadow = amount < entry.Quantity ?
-					Mod.Theme.QuantityCriticalShadowColor :
+					Mod.Theme?.QuantityCriticalShadowColor :
 					amount < quant ?
-						Mod.Theme.QuantityWarningShadowColor :
+						Mod.Theme?.QuantityWarningShadowColor :
 							null;
 
 				var ebuilder = SimpleHelper

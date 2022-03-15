@@ -38,6 +38,7 @@ namespace Leclair.Stardew.Common.UI {
 
 		private Tuple<DataT, IContentPack> BaseThemeData = null;
 		public string ThemeKey { get; private set; } = null;
+		public string UsedThemeKey { get; private set; } = null;
 
 		public DataT Theme => BaseThemeData?.Item1;
 
@@ -104,7 +105,13 @@ namespace Leclair.Stardew.Common.UI {
 
 			Log($"Available Themes:", LogLevel.Info);
 			foreach (var pair in GetThemeChoices()) {
-				string selection = pair.Key == ThemeKey ? ">" : " ";
+				bool selected = pair.Key == ThemeKey;
+				bool used = pair.Key == UsedThemeKey;
+
+				string selection = selected ?
+					(used ? "=>" : " >") :
+					(used ? "= " : "  ");
+
 				Log($" {selection} [{pair.Key}]: {pair.Value()}", LogLevel.Info);
 			}
 
@@ -202,6 +209,7 @@ namespace Leclair.Stardew.Common.UI {
 
 			BaseThemeData = null;
 			ThemeKey = null;
+			UsedThemeKey = null;
 
 			SelectTheme(oldKey);
 		}
@@ -283,6 +291,7 @@ namespace Leclair.Stardew.Common.UI {
 			}
 
 			// Now emit our event.
+			UsedThemeKey = actual;
 			Log($"Selected Theme: {ThemeKey} => {GetThemeName(actual)} ({actual})");
 			ThemeChanged?.Invoke(this, new(old_key, old_data?.Item1, ThemeKey, BaseThemeData?.Item1));
 		}

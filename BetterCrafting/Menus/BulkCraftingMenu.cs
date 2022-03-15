@@ -276,15 +276,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			int quant = ing.Quantity * crafts;
 
 			Color color = available < ing.Quantity ?
-				(Mod.Theme.QuantityCriticalTextColor ?? Color.Red) :
+				(Mod.Theme?.QuantityCriticalTextColor ?? Color.Red) :
 				available < quant ?
-					(Mod.Theme.QuantityWarningTextColor ?? Color.OrangeRed) :
+					(Mod.Theme?.QuantityWarningTextColor ?? Color.OrangeRed) :
 						Game1.textColor;
 
 			Color? shadow = available < ing.Quantity ?
-				Mod.Theme.QuantityCriticalShadowColor :
+				Mod.Theme?.QuantityCriticalShadowColor :
 				available < quant ?
-					Mod.Theme.QuantityWarningShadowColor :
+					Mod.Theme?.QuantityWarningShadowColor :
 						null;
 
 			return SimpleHelper
