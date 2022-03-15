@@ -91,8 +91,8 @@ namespace Leclair.Stardew.Common
 			return pack.LoadAsset<T>(key);
 		}
 
-		public static T LoadLocalized<T>(this IContentHelper helper, string key, ContentSource source = ContentSource.ModFolder) {
-			string locale = helper.CurrentLocale;
+		public static T LoadLocalized<T>(this IContentHelper helper, string key, string locale = null, ContentSource source = ContentSource.ModFolder) {
+			locale ??= helper.CurrentLocale;
 			int idx = string.IsNullOrEmpty(locale) ? -1 : key.LastIndexOf('.');
 
 			// If we have an index, let's try loading various language versions.

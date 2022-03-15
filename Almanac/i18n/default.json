@@ -159,6 +159,12 @@
 
 	// Settings
 
+	"settings.theme": "UI Theme",
+	"settings.theme-desc": "This UI theme will be used for Almanac's menu.",
+
+	"theme.automatic": "Automatic",
+	"theme.default": "Default",
+
 	"settings.button": "Show Almanac Button",
 	"settings.button-desc": "When enabled, a button to open the Almanac will be added to the inventory menu.",
 

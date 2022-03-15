@@ -24,6 +24,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventSubscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\Subscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IIngredient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\ColorConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TranslationHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\RecommendIntegrations.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InventoryHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BaseInventoryProvider.cs" />
@@ -58,6 +60,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\Alignment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\ComponentNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\DividerNode.cs" />
+    <Compile Include="..\Common\UI\BaseThemeData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\ThemeManager.cs" />
     <Compile Include="..\Common\UI\FlowNode\SelectableNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\BaseOverlay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\IOverlay.cs" />

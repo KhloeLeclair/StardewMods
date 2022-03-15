@@ -368,20 +368,6 @@ namespace Leclair.Stardew.Common.UI {
 			return text[start..i];
 		}
 
-		private static Color? ParseColor(string input) {
-			if (string.IsNullOrEmpty(input))
-				return null;
-
-			System.Drawing.Color color;
-			try {
-				color = System.Drawing.ColorTranslator.FromHtml(input);
-			} catch(Exception) {
-				return null;
-			}
-
-			return new Color(color.R, color.G, color.B, color.A);
-		}
-
 		public static IEnumerable<IFlowNode> FormatText(
 			string text,
 			TextStyle? style = null,
@@ -510,7 +496,7 @@ namespace Leclair.Stardew.Common.UI {
 						break;
 
 					case 'c':
-						color = ParseColor(ReadSubString(text, i, out ni));
+						color = CommonHelper.ParseColor(ReadSubString(text, i, out ni));
 						i = ni;
 						if (ns.ShadowColor == color)
 							continue;
@@ -518,7 +504,7 @@ namespace Leclair.Stardew.Common.UI {
 						break;
 
 					case 'C':
-						color = ParseColor(ReadSubString(text, i, out ni));
+						color = CommonHelper.ParseColor(ReadSubString(text, i, out ni));
 						i = ni;
 						if (ns.Color == color)
 							continue;
@@ -587,7 +573,7 @@ namespace Leclair.Stardew.Common.UI {
 
 					case 'r':
 					case 'R':
-						color = ParseColor(ReadSubString(text, i, out ni));
+						color = CommonHelper.ParseColor(ReadSubString(text, i, out ni));
 						i = ni;
 						if (ns.BackgroundColor == color)
 							continue;

@@ -70,5 +70,15 @@ namespace Leclair.Stardew.Common
 				? token.Value<T>()
 				: default;
 		}
+
+		public static bool TryGetValueIgnoreCase<T>(this JObject obj, string field, out T result) {
+			if (obj.TryGetValue(field, out var token)) {
+				result = obj.Value<T>();
+				return true;
+			} else {
+				result = default;
+				return false;
+			}
+		}
 	}
 }

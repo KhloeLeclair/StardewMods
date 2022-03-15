@@ -16,6 +16,8 @@ using StardewValley;
 namespace Leclair.Stardew.Almanac.Pages {
 	public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 
+		public static readonly Rectangle WEATHER_ICON = new(384, 352, 16, 16);
+
 		private readonly int Seed;
 		private IFlowNode[] Nodes;
 		private int[] Forecast;
@@ -183,7 +185,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			SpriteHelper.GetTexture(Common.Enums.GameTexture.MouseCursors2) : Menu.background;
 
 		public override Rectangle? TabSource => IsIsland ?
-			SpriteHelper.MouseIcons2.GOLDEN_NUT : WeatherHelper.GetWeatherIcon(0, null);
+			SpriteHelper.MouseIcons2.GOLDEN_NUT : WEATHER_ICON; // WeatherHelper.GetWeatherIcon(0, null);
 
 		#endregion
 

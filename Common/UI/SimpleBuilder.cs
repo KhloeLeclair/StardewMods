@@ -89,13 +89,14 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
-		public SimpleBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, bool? strikethrough = null, bool? underline = null, float? scale = null, bool wrapText = false, float minWidth = -1, Alignment align = Alignment.None) {
+		public SimpleBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, bool wrapText = false, float minWidth = -1, Alignment align = Alignment.None) {
 			TextStyle style = new TextStyle(
 				color: color,
 				prismatic: prismatic,
 				font: font,
 				fancy: fancy,
 				shadow: shadow,
+				shadowColor: shadowColor,
 				bold: bold,
 				strikethrough: strikethrough,
 				underline: underline,
@@ -111,13 +112,14 @@ namespace Leclair.Stardew.Common.UI {
 			return this;
 		}
 
-		public SimpleBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
+		public SimpleBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
 			TextStyle style = new TextStyle(
 				color: color,
 				prismatic: prismatic,
 				font: font,
 				fancy: fancy,
 				shadow: shadow,
+				shadowColor: shadowColor,
 				bold: bold,
 				strikethrough: strikethrough,
 				underline: underline,

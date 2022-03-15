@@ -33,6 +33,8 @@ namespace Leclair.Stardew.Almanac {
 
 	public class ModConfig {
 
+		public string Theme { get; set; } = "automatic";
+
 		public bool DebugMode { get; set; } = false;
 
 		// General

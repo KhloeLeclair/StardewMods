@@ -104,6 +104,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 		// Rendering Stuff
 
 		public readonly Texture2D background;
+		public readonly ModEntry Mod;
 
 		// Buttons
 		public ClickableTextureComponent btnPrevious;
@@ -125,7 +126,8 @@ namespace Leclair.Stardew.Almanac.Menus {
 		private int PageIndex = -1;
 		private IAlmanacPage CurrentPage => (Pages == null || PageIndex < 0 || PageIndex >= Pages.Length) ? null : Pages[PageIndex];
 
-		private bool IsMagic => CurrentPage?.IsMagic ?? false;
+		public bool IsMagic => CurrentPage?.IsMagic ?? false;
+		public Models.Style Style => IsMagic ? Mod.Theme?.Magic : Mod.Theme?.Standard;
 
 		// Tabs
 		public ClickableTextureComponent btnTabsUp;
@@ -158,13 +160,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 		// Lookup Anything support.
 		public Item HoveredItem = null;
 
-		public AlmanacMenu(int year)
+		public AlmanacMenu(ModEntry mod, int year)
 		: base(0, 0, 0, 0, true) {
-			background = ModEntry.instance.Helper.Content.Load<Texture2D>("assets/Menu.png");
+			Mod = mod;
+			background = Mod.ThemeManager.Load<Texture2D>("Menu.png");
 			Date = new(Game1.Date);
 			Date.DayOfMonth = 1;
-
-			ModEntry mod = ModEntry.instance;
 
 			// CachedHoverText
 			CachedHoverText = new(
@@ -1167,7 +1168,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 					),
 					xPositionOnScreen + (width / 4),
 					yPositionOnScreen + 40,
-					color: IsMagic ? 4 : -1
+					color: Style?.SeasonTextColor ?? (IsMagic ? 4 : -1)
 				);
 
 				// Navigation
@@ -1188,7 +1189,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				for (int day = 1; day <= 7; day++) {
 					int x = xPositionOnScreen + 64 + 76 * (day - 1);
 					int y = yPositionOnScreen + 108;
-					string text = ModEntry.instance.Helper.Translation.Get($"calendar.day.{day}");
+					string text = Mod.Helper.Translation.Get($"calendar.day.{day}");
 
 					Vector2 size = Game1.dialogueFont.MeasureString(text);
 
@@ -1199,8 +1200,9 @@ namespace Leclair.Stardew.Almanac.Menus {
 							x + (76 - size.X) / 2,
 							y + (60 - size.Y) / 2
 						),
-						color: IsMagic ? Color.SkyBlue : Game1.textColor
-					);
+						color: Style?.CalendarLabelColor ??
+							(IsMagic ? Color.SkyBlue : Game1.textColor)
+					) ;
 				}
 
 				// Days
@@ -1230,7 +1232,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 							cmp.bounds.Y - num,
 							cmp.bounds.Width + num * 2,
 							cmp.bounds.Height + num * 2,
-							Color.Blue,
+							Style?.CalendarHighlightColor ?? Color.Blue,
 							4f, false
 						);
 					}
@@ -1241,14 +1243,19 @@ namespace Leclair.Stardew.Almanac.Menus {
 						Game1.smallFont,
 						Convert.ToString(oday),
 						new Vector2(cmp.bounds.X, cmp.bounds.Y - 4),
-						color: IsMagic ? Color.LightSkyBlue : Game1.textColor
+						color: Style?.CalendarDayColor ??
+							(IsMagic ? Color.LightSkyBlue : Game1.textColor)
 					);
 
 					page?.DrawOverCell(b, date, cmp.bounds);
 
 					if ((page?.ShouldDimPastCells ?? false) && ddays < today)
-						b.Draw(Game1.staminaRect, cmp.bounds,
-							IsMagic ? Color.Black * .4f : Color.Gray * 0.35f);
+						b.Draw(
+							Game1.staminaRect,
+							cmp.bounds,
+							Style?.CalendarDimColor ??
+								(IsMagic ? Color.Black * .4f : Color.Gray * 0.35f)
+						);
 				}
 			}
 
@@ -1322,15 +1329,15 @@ namespace Leclair.Stardew.Almanac.Menus {
 			if (LeftFlow.HasValue)
 				LeftFlow.Draw(
 					b,
-					IsMagic ? Color.White : Game1.textColor,
-					IsMagic ? MAGIC_SHADOW_COLOR : null
+					Style?.TextColor ?? (IsMagic ? Color.White : Game1.textColor),
+					Style?.TextShadowColor ?? (IsMagic ? MAGIC_SHADOW_COLOR : null)
 				);
 
 			if (RightFlow.HasValue)
 				RightFlow.Draw(
 					b,
-					IsMagic ? Color.White : Game1.textColor,
-					IsMagic ? MAGIC_SHADOW_COLOR : null
+					Style?.TextColor ?? (IsMagic ? Color.White : Game1.textColor),
+					Style?.TextShadowColor ?? (IsMagic ? MAGIC_SHADOW_COLOR : null)
 				);
 
 			base.draw(b);
@@ -1351,8 +1358,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 					bgTexture: HoverMagic ? background : null,
 					bgSource: HoverMagic ? MAGIC_BG : null,
 					bgScale: HoverMagic? 4f : 1f,
-					defaultColor: HoverMagic ? Color.White : Game1.textColor,
-					defaultShadowColor: HoverMagic ? MAGIC_SHADOW_COLOR : null
+					defaultColor: HoverMagic ?
+						(Mod.Theme?.Magic?.TextColor ?? Color.White) :
+						(Mod.Theme?.Standard?.TextColor ?? Game1.textColor),
+					defaultShadowColor: HoverMagic ?
+						(Mod.Theme?.Magic?.TextShadowColor ?? MAGIC_SHADOW_COLOR) :
+						(Mod.Theme?.Standard?.TextShadowColor ?? null)
 				);
 		}
 

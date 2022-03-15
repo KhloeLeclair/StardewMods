@@ -61,7 +61,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 					b,
 					word,
 					center,
-					y
+					y,
+					color: Mod.Theme?.CoverTextColor ?? -1
 				);
 
 				y += wordHeight;
@@ -72,7 +73,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 				Game1.content.LoadString("Strings\\UI:Billboard_Year", Menu.Year),
 				center,
 				y + 60,
-				color: 2
+				color: Mod.Theme?.CoverYearColor ?? 2
 				);
 		}
 

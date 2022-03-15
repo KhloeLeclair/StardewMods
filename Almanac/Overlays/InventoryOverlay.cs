@@ -37,7 +37,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 					64,
 					64
 				),
-				ModEntry.instance.Helper.Content.Load<Texture2D>("assets/Menu.png"),
+				ModEntry.instance.ThemeManager.Load<Texture2D>("Menu.png"),
 				new Rectangle(240, 352, 16, 16),
 				4f
 			) {
@@ -137,7 +137,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 				Game1.playSound("bigSelect");
 
 				if (Menu.readyToClose())
-					Game1.activeClickableMenu = new Menus.AlmanacMenu(Game1.Date.Year);
+					Game1.activeClickableMenu = new Menus.AlmanacMenu(ModEntry.instance, Game1.Date.Year);
 
 				return true;
 			}

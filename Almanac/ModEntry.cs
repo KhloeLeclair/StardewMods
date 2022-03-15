@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.Overlay;
 
 using StardewModdingAPI;
@@ -59,6 +60,9 @@ namespace Leclair.Stardew.Almanac {
 
 		internal AssetManager Assets;
 
+		internal ThemeManager<Models.Theme> ThemeManager;
+		internal Models.Theme Theme => ThemeManager.Theme;
+
 		internal readonly List<Func<Menus.AlmanacMenu, ModEntry, IAlmanacPage>> PageBuilders = new();
 
 		internal Dictionary<string, Models.HeadSize> HeadSizes;
@@ -89,6 +93,10 @@ namespace Leclair.Stardew.Almanac {
 			Weather = new(this);
 			Luck = new(this);
 			Notices = new(this);
+
+			ThemeManager = new(this, Config.Theme);
+			ThemeManager.ThemeChanged += OnThemeChanged;
+			ThemeManager.Discover();
 
 			// Init
 			RegisterBuilder(CoverPage.GetPage);
@@ -190,6 +198,10 @@ namespace Leclair.Stardew.Almanac {
 
 		#region Events
 
+		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
+			
+		}
+
 		[Subscriber]
 		private void OnButton(object sender, ButtonPressedEventArgs e) {
 			if (!Context.IsWorldReady)
@@ -208,7 +220,7 @@ namespace Leclair.Stardew.Almanac {
 			if (Game1.activeClickableMenu != null || Game1.CurrentEvent != null)
 				return;
 
-			Game1.activeClickableMenu = new Menus.AlmanacMenu(Game1.Date.Year);
+			Game1.activeClickableMenu = new Menus.AlmanacMenu(this, Game1.Date.Year);
 		}
 
 
@@ -260,6 +272,11 @@ namespace Leclair.Stardew.Almanac {
 				Crops.Invalidate();
 				Fish.Invalidate();
 				Weather.Invalidate();
+			});
+
+			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", (name, args) => {
+				ThemeManager.Discover();
+				Log($"Reloaded themes. You may need to reopen menus.");
 			});
 
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
@@ -374,6 +391,16 @@ namespace Leclair.Stardew.Almanac {
 					min: 0.25f,
 					max: 10f,
 					interval: 0.25f
+				)
+				.AddChoice(
+					I18n.Settings_Theme,
+					I18n.Settings_ThemeDesc,
+					c => c.Theme,
+					(c, v) => {
+						c.Theme = v;
+						ThemeManager.SelectTheme(v);
+					},
+					ThemeManager.GetThemeChoices()
 				)
 				.AddLabel("") // Spacer
 				.Add(
@@ -663,27 +690,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		public bool DoesTranslationExist(string key) {
-			// SMAPI's translation API is very opaque.
-			// But SMAPI's reflection helper is here to help with SMAPI.
-			// Thank you, SMAPI.
-			FieldInfo field = Helper.Translation.GetType()
-				.GetField("Translator", BindingFlags.Instance | BindingFlags.NonPublic);
-
-			if (field == null)
-				return false;
-
-			object Translator = field.GetValue(Helper.Translation);
-			if (Translator == null)
-				return false;
-
-			FieldInfo flfield = Translator.GetType()
-				.GetField("ForLocale", BindingFlags.Instance | BindingFlags.NonPublic);
-
-			if (flfield == null)
-				return false;
-
-			IDictionary<string, Translation> ForLocale = flfield.GetValue(Translator) as IDictionary<string, Translation>;
-			return ForLocale != null && ForLocale.ContainsKey(key);
+			return Helper.Translation.ContainsKey(key);
 		}
 
 		public string GetSubLocationName(Models.SubLocation sub) {

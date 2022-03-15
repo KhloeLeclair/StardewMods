@@ -1,0 +1,22 @@
+{
+	"Name": "Vintage Interface 2",
+	"For": [
+		"ManaKirel.VintageInterface2"
+	],
+
+	"CoverTextColor": 8,
+	"CoverYearColor": 4,
+
+	"Standard": {
+		"TextColor": "#382f29",
+		"TextShadowColor": "#D4C8AF"
+	},
+
+	"Magic": {
+		"SeasonTextColor": 4,
+
+		"CalendarLabelColor": "#8073D1",
+		"CalendarDayColor": "#9c8cff",
+		"CalendarHighlightColor": "#ccc"
+	}
+}

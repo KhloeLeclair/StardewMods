@@ -995,7 +995,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 					4
 				),
 				new Rectangle(16, 272, 28, 28),
-				new Color(0xE0, 0x96, 0x50)
+				Menu.Style?.TextShadowColor ?? new Color(0xE0, 0x96, 0x50)
 			);
 
 			b.Draw(
@@ -1007,7 +1007,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 					4
 				),
 				new Rectangle(16, 272, 28, 28),
-				new Color(0x56, 0x16, 0x0C)
+				Menu.Style?.TextColor ?? new Color(0x56, 0x16, 0x0C)
 			);
 
 
