@@ -105,6 +105,17 @@ public class NoticesManager : BaseManager {
 		return events;
 	}
 
+			foreach (var entry in data) {
+				entry.Value.Translation = cp.Translation;
+				entry.Value.ModContent = cp.ModContent;
+				if (!events.ContainsKey(entry.Key))
+					events[entry.Key] = entry.Value;
+			}
+		}
+
+		return events;
+	}
+
 	[MemberNotNull(nameof(DataEvents))]
 	private void Load() {
 		if (Loaded && DataEvents != null)
