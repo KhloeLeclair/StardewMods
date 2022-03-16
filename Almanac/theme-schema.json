@@ -1,0 +1,118 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"$id": "/schemas/theme",
+	"type": "object",
+	"title": "Almanac Theme",
+	"description": "A theme for the Almanac mod for Stardew Valley.",
+	"default": {},
+	"required": [
+		"Name",
+		"For"
+	],
+	"properties": {
+		"Name": {
+			"type": "string",
+			"title": "Name",
+			"description": "A friendly name for the theme, to be displayed in the game.",
+			"examples": [
+				"My Cool Theme"
+			]
+		},
+		"For": {
+			"type": "array",
+			"title": "For Mods",
+			"description": "An array of mod IDs for which this theme should be selected when the user has theme set to Automatic.",
+			"examples": [
+				[
+					"Some.Mod.Id.Here",
+					"You.Can.Have.More.Than.One"
+				]
+			],
+			"additionalItems": true,
+			"items": {
+				"type": "string"
+			}
+		},
+		"CoverTextColor": {
+			"$ref": "#/schemas/color",
+			"description": "CoverTextColor changes the color of the Almanac's name on the front cover."
+		},
+		"CoverYearColor": {
+			"$ref": "#/schemas/color",
+			"description": "CoverYearColor changes the color of the year on the front cover of the Almanac."
+		},
+		"Standard": {
+			"$ref": "#/schemas/style",
+			"title": "Standard Style",
+			"description": "The style of a standard, non-magical Almanac page."
+		},
+		"Magic": {
+			"$ref": "#/schemas/style",
+			"title": "Magic Style",
+			"description": "The style of a magical Almanac page."
+		}
+	},
+	"additionalProperties": true,
+	"$defs": {
+		"style": {
+			"$id": "#/schemas/style",
+			"type": "object",
+			"properties": {
+				"CustomScroll": {
+					"type": "boolean"
+				},
+				"SeasonTextColor": { "$ref": "#/schemas/color" },
+				"CalendarLabelColor": { "$ref": "#/schemas/color" },
+				"CalendarDayColor": { "$ref": "#/schemas/color" },
+				"CalendarDimColor": { "$ref": "#/schemas/color" },
+				"CalendarDimOpacity": {
+					"type": "number",
+					"min": 0,
+					"max": 1
+				},
+				"CalendarHighlightColor": { "$ref": "#/schemas/color" },
+				"TextColor": { "$ref": "#/schemas/color" },
+				"TextShadowColor": { "$ref": "#/schemas/color" }
+			},
+			"additionalProperties": false
+		},
+		"color": {
+			"$id": "#/schemas/color",
+			"anyOf": [
+				{
+					"type": "null"
+				},
+				{
+					"type": "string"
+				},
+				{
+					"type": "object",
+					"properties": {
+						"R": {
+							"type": "integer",
+							"min": 0,
+							"max": 255
+						},
+						"G": {
+							"type": "integer",
+							"min": 0,
+							"max": 255
+						},
+						"B": {
+							"type": "integer",
+							"min": 0,
+							"max": 255
+						},
+						"A": {
+							"type": "integer",
+							"min": 0,
+							"max": 255
+						}
+					},
+					"required": [ "R", "G", "B" ],
+					"additionalProperties": false
+				}
+			]
+		}
+	}
+}

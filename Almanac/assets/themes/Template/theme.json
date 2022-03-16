@@ -1,4 +1,5 @@
 {
+	"$schema": "https://raw.githubusercontent.com/khloeleclair/StardewMods/master/src/Almanac/theme-schema.json",
 	"Name": "Theme Template",
 	"For": [
 		"Some.Mod.Id.Here",
