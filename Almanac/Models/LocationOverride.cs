@@ -1,25 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+#nullable enable
 
-namespace Leclair.Stardew.Almanac.Models {
+using Leclair.Stardew.Common.Enums;
 
-	public enum Season {
-		All = -1,
-		Spring = 0,
-		Summer = 1,
-		Fall = 2,
-		Winter = 3
-	}
+namespace Leclair.Stardew.Almanac.Models;
 
-	public class LocationOverride {
-		public string Map;
-		public int Zone { get; set; } = -1;
-		public Season Season { get; set; } = Season.All;
+public class LocationOverride {
+	public string? Map { get; set; }
+	public int Zone { get; set; } = -1;
+	public Season Season { get; set; } = Season.All;
 
-		public string[] AddFish { get; set; } = null;
-		public string[] RemoveFish { get; set; } = null;
-	}
+	public string[]? AddFish { get; set; } = null;
+	public string[]? RemoveFish { get; set; } = null;
 }

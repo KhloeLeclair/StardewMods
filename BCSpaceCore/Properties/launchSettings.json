@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "BCSpaceCore": {
-      "commandName": "Project",
-      "commandLineArgs": "--mods-path \"DevMods\""
-    }
-  }
-}

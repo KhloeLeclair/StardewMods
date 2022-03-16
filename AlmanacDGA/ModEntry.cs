@@ -21,10 +21,13 @@ using StardewValley;
 namespace Leclair.Stardew.AlmanacDGA {
 	public class ModEntry : ModSubscriber {
 
+		IDynamicGameAssetsApi dgAPI;
 		IAlmanacAPI API;
 
 		[Subscriber]
 		private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
+
+			dgAPI = DynamicGameAssets.Mod.instance.GetApi() as IDynamicGameAssetsApi;
 
 			API = Helper.ModRegistry.GetApi<IAlmanacAPI>("leclair.almanac");
 			if (API == null)
@@ -94,7 +97,7 @@ namespace Leclair.Stardew.AlmanacDGA {
 							return null;
 
 						cval = cond.Value?.Trim()?.ToLowerInvariant() == "true";
-						choices = c.Substring(9).Split(',').Select(x => x.Trim()).ToArray();
+						choices = c[9..].Split(',').Select(x => x.Trim()).ToArray();
 					}
 
 					switch(token) {
@@ -185,7 +188,7 @@ namespace Leclair.Stardew.AlmanacDGA {
 			return new Tuple<WorldDate, WorldDate>(start, end);
 		}
 
-		private void ProcessCrop(CropPackData crop, ContentPack pack) {
+		private void ProcessCrop(CropPackData crop, ContentPack pack, Dictionary<string, List<Item>> seedMap) {
 			var dates = ParseConditions(crop.DynamicFields);
 			if (dates == null && !crop.CanGrowNow)
 				return;
@@ -279,17 +282,26 @@ namespace Leclair.Stardew.AlmanacDGA {
 				}
 			}
 
-			Log($"Registering: {crop.ID}", LogLevel.Trace);
+			string id = $"{pack.GetManifest().UniqueID}/{crop.ID}";
+
+			Log($"Registering: {id}", LogLevel.Trace);
+
+			Item[] seeds;
+			if (seedMap.TryGetValue(id, out var slist))
+				seeds = slist.ToArray();
+			else
+				seeds = null;
 
 			API.AddCrop(
 				ModManifest,
-				id: crop.ID,
+				id: id,
 				item: citem,
 				name: citem?.DisplayName ?? "???",
 				regrow: regrow,
 				isGiantCrop: giant,
 				isPaddyCrop: crop.Type == CropPackData.CropType.Paddy,
 				isTrellisCrop: trellis,
+				seeds: seeds,
 				start: earliest,
 				end: latest,
 				sprite: null,
@@ -303,6 +315,29 @@ namespace Leclair.Stardew.AlmanacDGA {
 			Log("Called UpdateCrops", LogLevel.Trace);
 			API.ClearCrops(ModManifest);
 
+			Dictionary<string, List<Item>> seeds = new();
+
+			foreach (var pack in DynamicGameAssets.Mod.GetPacks()) {
+				foreach (var item in pack.GetItems()) {
+					if (!item.Enabled)
+						continue;
+
+					if (item is not ObjectPackData obj)
+						continue;
+
+					if (string.IsNullOrEmpty(obj.Plants))
+						continue;
+
+					if (dgAPI.SpawnDGAItem($"{pack.GetManifest().UniqueID}/{obj.ID}") is not Item itm)
+						continue;
+
+					if (seeds.TryGetValue(obj.Plants, out var list))
+						list.Add(itm);
+					else
+						seeds.Add(obj.Plants, new List<Item> { itm });
+				}
+			}
+
 			foreach (var pack in DynamicGameAssets.Mod.GetPacks()) {
 				foreach (var item in pack.GetItems()) {
 					if (!item.Enabled)
@@ -312,7 +347,7 @@ namespace Leclair.Stardew.AlmanacDGA {
 						continue;
 
 					try {
-						ProcessCrop(crop, pack);
+						ProcessCrop(crop, pack, seeds);
 					} catch (Exception ex) {
 						Log($"Encountered an error while loading: {pack.GetManifest().UniqueID}/{crop.ID}", LogLevel.Warn, ex);
 					}

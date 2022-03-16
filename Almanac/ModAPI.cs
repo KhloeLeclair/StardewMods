@@ -10,6 +10,7 @@ using Leclair.Stardew.Common;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Locations;
 
 using Leclair.Stardew.Almanac.Models;
 
@@ -17,6 +18,11 @@ namespace Leclair.Stardew.Almanac {
 
 	public interface IAlmanacAPI {
 
+		/// <summary>
+		/// The detected number of days in a month, used when drawing calendar
+		/// pages. Some mods can change the length of a month, though Almanac
+		/// itself doesn't have the ability.
+		/// </summary>
 		int DaysPerMonth { get; }
 
 		#region Custom Pages
@@ -119,6 +125,32 @@ namespace Leclair.Stardew.Almanac {
 			bool isPaddyCrop,
 			bool isTrellisCrop,
 
+			Item[] seeds,
+
+			WorldDate start,
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
+		);
+
+
+		void AddCrop(
+			IManifest manifest,
+
+			string id,
+
+			Item item,
+			string name,
+
+			int regrow,
+			bool isGiantCrop,
+			bool isPaddyCrop,
+			bool isTrellisCrop,
+
 			WorldDate start,
 			WorldDate end,
 
@@ -172,7 +204,7 @@ namespace Leclair.Stardew.Almanac {
 		/// </summary>
 		/// <param name="manifest">The manifest of the mod registering a hook</param>
 		/// <param name="hook">The hook function</param>
-		void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook);
+		void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook);
 
 		/// <summary>
 		/// Register a new hook. This is similar to the previous function, but
@@ -181,7 +213,7 @@ namespace Leclair.Stardew.Almanac {
 		/// </summary>
 		/// <param name="manifest">The manifest of the mod registering a hook</param>
 		/// <param name="hook">The hook function</param>
-		void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook);
+		void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook);
 
 		/// <summary>
 		/// Unregister the fortunes hook for the given mod.
@@ -237,6 +269,25 @@ namespace Leclair.Stardew.Almanac {
 		void ClearNoticesHook(IManifest manifest);
 
 		#endregion
+
+		#region Weather
+
+		/// <summary>
+		/// Get the weather for a specific date, within the location context for the
+		/// given location.
+		/// </summary>
+		/// <param name="date">The date we want weather for.</param>
+		/// <param name="location">The location we want weather for.</param>
+		string GetWeatherForDate(WorldDate date, GameLocation location);
+
+		/// <summary>
+		/// Get the weather for a specific date, within a specific location context.
+		/// </summary>
+		/// <param name="date">The date we want weather for.</param>
+		/// <param name="context">The context we want weather for.</param>
+		string GetWeatherForDate(WorldDate date, string context = "Default");
+
+		#endregion
 	}
 
 	public class ModAPI : IAlmanacAPI {
@@ -274,7 +325,7 @@ namespace Leclair.Stardew.Almanac {
 			}
 		}
 
-		public void SetCropCallback(IManifest manifest, Action action) {
+		public void SetCropCallback(IManifest manifest, Action? action) {
 			var provider = Mod.Crops.GetModProvider(manifest, action != null);
 			if (provider != null)
 				provider.SetCallback(action);
@@ -284,7 +335,7 @@ namespace Leclair.Stardew.Almanac {
 			SetCropCallback(manifest, null);
 		}
 
-		private SpriteInfo HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
+		private static SpriteInfo? HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
 			if (input?.Item1 == null)
 				return null;
 
@@ -298,11 +349,11 @@ namespace Leclair.Stardew.Almanac {
 			);
 		}
 
-		private List<SpriteInfo> HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
+		private static List<SpriteInfo?>? HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
 			if (input == null)
 				return null;
 
-			List<SpriteInfo> result = new();
+			List<SpriteInfo?> result = new();
 			foreach (var def in input) {
 				result.Add(HydrateSprite(def));
 			}
@@ -333,7 +384,7 @@ namespace Leclair.Stardew.Almanac {
 			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
-			provider.AddCrop(
+			provider!.AddCrop(
 				id: id,
 				item: item,
 				name: name,
@@ -341,6 +392,51 @@ namespace Leclair.Stardew.Almanac {
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
 				giantSprite: HydrateSprite(giantSprite),
+				seeds: null,
+				isPaddyCrop: isPaddyCrop,
+				phases: phases,
+				phaseSprites: HydrateSprites(phaseSprites),
+				regrow: regrow,
+				start: start,
+				end: end
+			);
+		}
+
+
+		public void AddCrop(
+			IManifest manifest,
+
+			string id,
+
+			Item item,
+			string name,
+
+			int regrow,
+			bool isGiantCrop,
+			bool isPaddyCrop,
+			bool isTrellisCrop,
+
+			Item[] seeds,
+
+			WorldDate start,
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
+		) {
+			var provider = Mod.Crops.GetModProvider(manifest);
+			provider!.AddCrop(
+				id: id,
+				item: item,
+				name: name,
+				sprite: sprite == null ? (item == null ? null : SpriteHelper.GetSprite(item)) : HydrateSprite(sprite),
+				isTrellisCrop: isTrellisCrop,
+				isGiantCrop: isGiantCrop,
+				giantSprite: HydrateSprite(giantSprite),
+				seeds: seeds,
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
 				phaseSprites: HydrateSprites(phaseSprites),
@@ -374,7 +470,7 @@ namespace Leclair.Stardew.Almanac {
 			IReadOnlyCollection<SpriteInfo> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
-			provider.AddCrop(
+			provider!.AddCrop(
 				id: id,
 				item: item,
 				name: name,
@@ -382,6 +478,7 @@ namespace Leclair.Stardew.Almanac {
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
 				giantSprite: giantSprite,
+				seeds: null,
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
 				phaseSprites: phaseSprites,
@@ -419,11 +516,11 @@ namespace Leclair.Stardew.Almanac {
 
 		#region Fortune Telling
 
-		public void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook) {
+		public void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook) {
 			Mod.Luck.RegisterHook(manifest, hook);
 		}
 
-		public void SetFortuneHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook) {
+		public void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>> hook) {
 			Mod.Luck.RegisterHook(manifest, hook);
 		}
 
@@ -445,6 +542,54 @@ namespace Leclair.Stardew.Almanac {
 
 		public void ClearNoticesHook(IManifest manifest) {
 			Mod.Notices.ClearHook(manifest);
+		}
+
+		#endregion
+
+		#region Weather
+
+		public string GetWeatherForDate(WorldDate date, GameLocation location) {
+			if (location is null)
+				throw new ArgumentNullException(nameof(location));
+
+			string val;
+
+			if (location is Desert)
+				val = "Desert";
+			else {
+				GameLocation.LocationContext ctx = location.GetLocationContext();
+				switch(ctx) {
+					case GameLocation.LocationContext.Default:
+						val = "Default";
+						break;
+					case GameLocation.LocationContext.Island:
+						val = "Island";
+						break;
+					default:
+						throw new ArgumentException("Invalid location context");
+				}
+			}
+
+			return GetWeatherForDate(date, val);
+		}
+
+		public string GetWeatherForDate(WorldDate date, string context = "Default") {
+			GameLocation.LocationContext ctx;
+			switch(context) {
+				case "Default":
+					ctx = GameLocation.LocationContext.Default;
+					break;
+				case "Island":
+					ctx = GameLocation.LocationContext.Island;
+					break;
+				case "Desert":
+					return "Sun";
+				default:
+					throw new ArgumentException("Invalid location context");
+			}
+
+			int weather = Mod.Weather.GetWeatherForDate(Mod.GetBaseWorldSeed(), date, ctx);
+			return WeatherHelper.GetWeatherStringID(weather);
 		}
 
 		#endregion

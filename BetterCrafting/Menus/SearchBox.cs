@@ -1,8 +1,10 @@
+#nullable enable
+
 using System;
 
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.UI.SimpleLayout;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,225 +13,225 @@ using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace Leclair.Stardew.BetterCrafting.Menus {
-	public class SearchBox : MenuSubscriber<ModEntry> {
+namespace Leclair.Stardew.BetterCrafting.Menus;
 
-		public readonly Action<string> onSearch;
+public class SearchBox : MenuSubscriber<ModEntry> {
 
-		public ClickableTextureComponent btnSearch;
+	public readonly Action<string?> onSearch;
 
-		public TextBox txtInput;
-		public ClickableComponent btnInput;
+	public ClickableTextureComponent btnSearch;
 
-		public bool UsingKB = false;
+	public TextBox txtInput;
+	public ClickableComponent btnInput;
 
-		public SearchBox(ModEntry mod, int x, int y, int width, int height, Action<string> onSearch, string old = null)
-		: base(mod) {
+	public bool UsingKB = false;
 
-			initialize(x, y, width, height, true);
+	public SearchBox(ModEntry mod, int x, int y, int width, int height, Action<string?> onSearch, string? old = null)
+	: base(mod) {
 
-			this.onSearch = onSearch;
+		initialize(x, y, width, height, true);
 
-			txtInput = new TextBox(
-				textBoxTexture: Game1.content.Load<Texture2D>("LooseSprites\\textBox"),
-				null,
-				Game1.smallFont,
-				Game1.textColor
-			) {
-				X = 0,
-				Y = 0,
-				Width = width - 64 - 16 - 16 - 16,
-				Text = old ?? ""
-			};
+		this.onSearch = onSearch;
 
-			txtInput.OnEnterPressed += sender => {
-				sender.Selected = false;
-				DoSearch();
-			};
-			txtInput.OnTabPressed += sender => {
-				sender.Selected = false;
-				currentlySnappedComponent = btnSearch;
-				snapCursorToCurrentSnappedComponent();
-			};
+		txtInput = new TextBox(
+			textBoxTexture: Game1.content.Load<Texture2D>("LooseSprites\\textBox"),
+			null,
+			Game1.smallFont,
+			Game1.textColor
+		) {
+			X = 0,
+			Y = 0,
+			Width = width - 64 - 16 - 16 - 16,
+			Text = old ?? ""
+		};
 
-			btnInput = new ClickableComponent(
-				bounds: new Rectangle(0, 0, txtInput.Width, txtInput.Height),
-				name: ""
-			) {
-				myID = 1,
-				upNeighborID = ClickableComponent.ID_ignore,
-				leftNeighborID = ClickableComponent.ID_ignore,
-				rightNeighborID = 2,
-				downNeighborID = ClickableComponent.ID_ignore
-			};
-
-			btnSearch = new ClickableTextureComponent(
-				new Rectangle(0, 0, 64, 64),
-				Sprites.Buttons.Texture,
-				Sprites.Buttons.SEARCH_ON,
-				4f
-			) {
-				myID = 2,
-				upNeighborID = ClickableComponent.ID_ignore,
-				leftNeighborID = 1,
-				rightNeighborID = ClickableComponent.ID_ignore,
-				downNeighborID = ClickableComponent.ID_ignore
-			};
-
-			UpdateComponents();
-
-			txtInput.Selected = true;
-
-			if (Game1.options.SnappyMenus) {
-				snapToDefaultClickableComponent();
-
-				if (Game1.options.gamepadControls && !Game1.lastCursorMotionWasMouse) {
-					Game1.showTextEntry(txtInput);
-					UsingKB = true;
-				}
-			}
-		}
-
-		private void DoSearch() {
-			string text = txtInput.Text;
-			if (string.IsNullOrEmpty(text) || text.Trim() == "")
-				text = null;
-
-			onSearch(text);
-			exitThisMenu();
-		}
-
-		public override void snapToDefaultClickableComponent() {
-			currentlySnappedComponent = btnInput;
+		txtInput.OnEnterPressed += sender => {
+			sender.Selected = false;
+			DoSearch();
+		};
+		txtInput.OnTabPressed += sender => {
+			sender.Selected = false;
+			currentlySnappedComponent = btnSearch;
 			snapCursorToCurrentSnappedComponent();
-		}
+		};
 
-		public void UpdateComponents() {
-			if (upperRightCloseButton != null) {
-				upperRightCloseButton.bounds.X = xPositionOnScreen + width + 16;
-				upperRightCloseButton.bounds.Y = yPositionOnScreen + (height - upperRightCloseButton.bounds.Height) / 2;
+		btnInput = new ClickableComponent(
+			bounds: new Rectangle(0, 0, txtInput.Width, txtInput.Height),
+			name: ""
+		) {
+			myID = 1,
+			upNeighborID = ClickableComponent.ID_ignore,
+			leftNeighborID = ClickableComponent.ID_ignore,
+			rightNeighborID = 2,
+			downNeighborID = ClickableComponent.ID_ignore
+		};
+
+		btnSearch = new ClickableTextureComponent(
+			new Rectangle(0, 0, 64, 64),
+			Sprites.Buttons.Texture,
+			Sprites.Buttons.SEARCH_ON,
+			4f
+		) {
+			myID = 2,
+			upNeighborID = ClickableComponent.ID_ignore,
+			leftNeighborID = 1,
+			rightNeighborID = ClickableComponent.ID_ignore,
+			downNeighborID = ClickableComponent.ID_ignore
+		};
+
+		UpdateComponents();
+
+		txtInput.Selected = true;
+
+		if (Game1.options.SnappyMenus) {
+			snapToDefaultClickableComponent();
+
+			if (Game1.options.gamepadControls && !Game1.lastCursorMotionWasMouse) {
+				Game1.showTextEntry(txtInput);
+				UsingKB = true;
 			}
+		}
+	}
 
-			btnSearch.bounds.X = xPositionOnScreen + width - btnSearch.bounds.Width - 16;
-			btnSearch.bounds.Y = yPositionOnScreen + (height - btnSearch.bounds.Height) / 2;
+	private void DoSearch() {
+		string? text = txtInput.Text;
+		if (string.IsNullOrEmpty(text) || text.Trim() == "")
+			text = null;
 
-			txtInput.X = xPositionOnScreen + 16;
-			txtInput.Y = yPositionOnScreen + (height - txtInput.Height) / 2;
+		onSearch(text);
+		exitThisMenu();
+	}
 
-			btnInput.bounds.X = txtInput.X;
-			btnInput.bounds.Y = txtInput.Y;
+	public override void snapToDefaultClickableComponent() {
+		currentlySnappedComponent = btnInput;
+		snapCursorToCurrentSnappedComponent();
+	}
+
+	public void UpdateComponents() {
+		if (upperRightCloseButton != null) {
+			upperRightCloseButton.bounds.X = xPositionOnScreen + width + 16;
+			upperRightCloseButton.bounds.Y = yPositionOnScreen + (height - upperRightCloseButton.bounds.Height) / 2;
 		}
 
-		#region Events and Input
+		btnSearch.bounds.X = xPositionOnScreen + width - btnSearch.bounds.Width - 16;
+		btnSearch.bounds.Y = yPositionOnScreen + (height - btnSearch.bounds.Height) / 2;
 
-		public override void receiveGamePadButton(Buttons b) {
-			base.receiveGamePadButton(b);
+		txtInput.X = xPositionOnScreen + 16;
+		txtInput.Y = yPositionOnScreen + (height - txtInput.Height) / 2;
 
-			if (txtInput.Selected) {
-				switch (b) {
-					case Buttons.DPadUp:
-					case Buttons.DPadDown:
-					case Buttons.DPadLeft:
-					case Buttons.DPadRight:
-					case Buttons.LeftThumbstickUp:
-					case Buttons.LeftThumbstickDown:
-					case Buttons.LeftThumbstickLeft:
-					case Buttons.LeftThumbstickRight:
-					case Buttons.B:
-						txtInput.Selected = false;
-						break;
-				}
+		btnInput.bounds.X = txtInput.X;
+		btnInput.bounds.Y = txtInput.Y;
+	}
+
+	#region Events and Input
+
+	public override void receiveGamePadButton(Buttons b) {
+		base.receiveGamePadButton(b);
+
+		if (txtInput.Selected) {
+			switch (b) {
+				case Buttons.DPadUp:
+				case Buttons.DPadDown:
+				case Buttons.DPadLeft:
+				case Buttons.DPadRight:
+				case Buttons.LeftThumbstickUp:
+				case Buttons.LeftThumbstickDown:
+				case Buttons.LeftThumbstickLeft:
+				case Buttons.LeftThumbstickRight:
+				case Buttons.B:
+					txtInput.Selected = false;
+					break;
 			}
 		}
+	}
 
-		public override void receiveKeyPress(Keys key) {
-			if (key == Keys.Escape && Game1.options.doesInputListContain(Game1.options.menuButton, key) && readyToClose()) {
-				exitThisMenu();
-				return;
-			}
-
-			if (txtInput.Selected)
-				return;
-
-			base.receiveKeyPress(key);
+	public override void receiveKeyPress(Keys key) {
+		if (key == Keys.Escape && Game1.options.doesInputListContain(Game1.options.menuButton, key) && readyToClose()) {
+			exitThisMenu();
+			return;
 		}
 
-		public override void receiveLeftClick(int x, int y, bool playSound = true) {
-			base.receiveLeftClick(x, y, playSound);
+		if (txtInput.Selected)
+			return;
 
-			if (btnSearch.containsPoint(x, y)) {
-				DoSearch();
-				return;
-			}
+		base.receiveKeyPress(key);
+	}
 
-			txtInput.Update();
+	public override void receiveLeftClick(int x, int y, bool playSound = true) {
+		base.receiveLeftClick(x, y, playSound);
 
-			if (x < xPositionOnScreen || x > (xPositionOnScreen + width) || y < yPositionOnScreen || y > (yPositionOnScreen + height))
-				exitThisMenu();
+		if (btnSearch.containsPoint(x, y)) {
+			DoSearch();
+			return;
 		}
 
-		public override void performHoverAction(int x, int y) {
-			base.performHoverAction(x, y);
+		txtInput.Update();
 
-			btnSearch.tryHover(x, y);
-			txtInput.Hover(x, y);
+		if (x < xPositionOnScreen || x > (xPositionOnScreen + width) || y < yPositionOnScreen || y > (yPositionOnScreen + height))
+			exitThisMenu();
+	}
+
+	public override void performHoverAction(int x, int y) {
+		base.performHoverAction(x, y);
+
+		btnSearch.tryHover(x, y);
+		txtInput.Hover(x, y);
+	}
+
+	#endregion
+
+	#region Drawing
+
+	public override void draw(SpriteBatch b) {
+		if (UsingKB && Game1.textEntry == null) {
+			exitThisMenu();
+			return;
 		}
 
-		#endregion
+		// Dim the Background
+		b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
-		#region Drawing
+		// Tip
+		bool kb_open = Game1.textEntry != null;
 
-		public override void draw(SpriteBatch b) {
-			if (UsingKB && Game1.textEntry == null) {
-				exitThisMenu();
-				return;
-			}
-
-			// Dim the Background
-			b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
-
-			// Tip
-			bool kb_open = Game1.textEntry != null;
-
-			if (! kb_open)
-				SimpleHelper.Builder()
-					.FormatText(
-						I18n.Tooltip_Search_Tip(I18n.Search_IngredientPrefix()),
-						wrapText: true,
-						minWidth: width
-					)
-					.GetLayout()
-					.DrawHover(
-						b,
-						Game1.smallFont,
-						overrideX: xPositionOnScreen,
-						overrideY: yPositionOnScreen + height + 16
-					);
-
-			// Background
-			IClickableMenu.drawTextureBox(
-				b,
-				texture: Game1.menuTexture,
-				sourceRect: new Rectangle(0, 256, 60, 60),
-				x: xPositionOnScreen,
-				y: yPositionOnScreen,
-				width: width,
-				height: height,
-				color: Color.White,
-				scale: 1f
+		if (! kb_open)
+			SimpleHelper.Builder()
+				.FormatText(
+					I18n.Tooltip_Search_Tip(FlowHelper.EscapeFormatText(I18n.Search_IngredientPrefix()), FlowHelper.EscapeFormatText(I18n.Search_LikePrefix()), FlowHelper.EscapeFormatText(I18n.Search_LovePrefix())),
+					wrapText: true,
+					minWidth: width
+				)
+				.GetLayout()
+				.DrawHover(
+					b,
+					Game1.smallFont,
+					overrideX: xPositionOnScreen,
+					overrideY: yPositionOnScreen + height + 16
 				);
 
-			txtInput.Draw(b);
-			btnSearch.draw(b);
+		// Background
+		RenderHelper.DrawBox(
+			b,
+			texture: Game1.menuTexture,
+			sourceRect: new Rectangle(0, 256, 60, 60),
+			x: xPositionOnScreen,
+			y: yPositionOnScreen,
+			width: width,
+			height: height,
+			color: Color.White,
+			scale: 1f
+		);
 
-			base.draw(b);
+		txtInput.Draw(b);
+		btnSearch.draw(b);
 
-			// Mouse
-			Game1.mouseCursorTransparency = 1f;
-			drawMouse(b);
-		}
+		base.draw(b);
 
-		#endregion
-
+		// Mouse
+		Game1.mouseCursorTransparency = 1f;
+		drawMouse(b);
 	}
+
+	#endregion
+
 }

@@ -1,0 +1,19 @@
+{
+	"ID": "DayTimeMoneyBox",
+
+	"ColorVariables": {
+		"$DayTimeAfterMidnight": "$ErrorText"
+	},
+
+	"Patches": {
+		"#DayTimeMoneyBox:draw(SpriteBatch)": {
+			"Colors": {
+				"Red": { "*": "$DayTimeAfterMidnight" }
+			},
+
+			"Fields": {
+				"Game1:textColor": { "*": "$DayTimeText" }
+			}
+		}
+	}
+}

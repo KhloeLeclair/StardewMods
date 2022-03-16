@@ -1,5 +1,268 @@
 # Changelog
 
+## 1.5.0
+Released January 14th, 2022.
+
+### New Features
+
+* Added new dynamic filter for creating a category with all recipes.
+* Added option to include a category's recipes within the Miscellaneous
+  category. Usually, only recipes that don't appear in any other categories
+  appear within Misc. However, enabling this on a category will allow its
+  recipes to still appear within Miscellaneous.
+* Added a new feature to recycle (or un-craft) items directly from the crafting
+  menu. As this potentially affects game balance, the feature is disabled by
+  default. You can also enable it separately for crafting and cooking.
+
+### Changes
+
+* Added a few new icons to the icon picker.
+
+### Fixes
+
+* Do not let users open the settings menu if they're holding an item, as that
+  may result in the loss of the item.
+* Pressing the menu close button (`E`) may cause the menu to close when it
+  should not.
+
+### API Changes
+
+* Fix typos in documentation.
+* Allow passing a specific item to be returned when recycling a matcher-based
+  ingredient. Doing so disables fuzzy-type item matching for the ingredient.
+
+
+## 1.4.0
+Released October 28th, 2022.
+
+### General
+
+* Update to use SMAPI 3.17. Older versions of SMAPI are no longer supported.
+* Improve performance slightly by reducing iteration when determining if a
+  given recipe has sufficient ingredients to be crafted.
+
+### Fixes
+
+* When clicking on UI elements when editing a category that is not rule based,
+  do not send click events to the rule editors.
+* When performing inventory manipulation (such as crafting) using a chest
+  located on another map, manually update the mutex to ensure the action
+  doesn't hang.
+* When the "Crafting Skill" mod is enabled, do not use the incorrect ingredient
+  consumption code. This should prevent any odd behavior, especially related
+  to limit quality crafting and/or using lower quality ingredients first.
+
+### API Changes
+
+* Each mod now receives a separate API instance, which will allow for better
+  tracking of which mod provided which data in the future.
+
+
+## 1.3.1
+Released September 21st, 2022.
+
+### Fixes
+
+* Larger grid items in the Better Crafting menu were having their sizes
+  calculated incorrectly.
+
+### API Changes
+
+* Added a new recipe builder to make it easier for other C# mods to
+  manipulate recipes.
+* Added a new method to count items, which is compatible with Better Crafting's
+  quality settings and aware of the mod "Stack Quality".
+* Change `CreateMatcherIngredient` to use methods for setting a display name
+  and texture, to improve performance and i18n support.
+
+
+## 1.3.0
+Released September 20th, 2022.
+
+### New Features
+
+* Categories can now have their items selected using dynamic filters, rather
+  than being picked manually. This is now the default behavior for all
+  categories in the cooking menu.
+* Cookout Kits can now function as Workbenches, but for cooking! When enabled,
+  using a Cookout Kit will let you use items from nearby chests. Additionally,
+  Cookout Kits can be made longer lasting so that they don't vanish overnight
+  or when you break them.
+
+### Changes
+
+* The maximum number of visible tabs along the left side of the crafting menu
+  is now calculated based on the height of the menu, rather than being
+  hard coded.
+* Use two columns for displaying a recipe's ingredients if the recipe has more
+  than five ingredients.
+* Add support for more category ingredients with names and icons.
+
+### Fixes
+
+* When opening a Workbench, return that the action succeeded so that they game
+  won't try performing another action immediately.
+* Do not crash in the menu handler when replacing a crafting menu with no
+  material containers list.
+* The crafting menu handles it better when the game window changes size, though
+  it may still act a bit odd in some cases.
+* Catch an error if one is thrown while getting a list of all NPCs in the
+  game for the purpose of displaying likes/loves.
+* Do not scroll the recipe list when the mouse is over the inventory display,
+  to improve compatibility with certain mods that may modify the inventory.
+* Un-cache recipes whenever the recipe data assets are invalidated.
+* Do not crash in the cooking menu when hovering over a recipe that creates an
+  item with no objectInformation entry.
+* Do not crash in the crafting menu if more than one recipe is registered with
+  the same name.
+* Remove duplicate inventories from the inventories list after discovery to
+  avoid displaying inaccurate ingredient counts.
+
+### Mod Compatibility
+
+* Added support for [Stack Quality](https://www.nexusmods.com/stardewvalley/mods/13724)
+  when it comes to crafting. It will appropriately detect the number of items
+  in a stack of a given quality, particularly when limiting crafting by quality.
+* Added support for [Custom Backpack Framework](https://www.nexusmods.com/stardewvalley/mods/13826)
+  (and potentially other backpack mods) by allowing the crafting menu to expand
+  as necessary to display more inventory rows when there are more than 3 rows.
+
+### API Changes
+
+* Added method to register new dynamic rule handlers. Configuring rules is
+  still a work in progress, but a simple text input is supported.
+* The method to add a new default category now allows you to use rules.
+* Removed a couple deprecated methods from the API interface. They still work,
+  but new implementations shouldn't use them.
+
+
+## 1.2.1
+Released September 3rd, 2022.
+
+### New Features
+
+* Display character heads for gift tastes by default, rather than names. This
+  should take up quite a bit less space for items that are liked and/or loved
+  by many characters. There is an option to display names instead.
+
+### Fixes
+
+* Do not error if an error is thrown when trying to determine if an NPC likes
+  a given item.
+
+### API Changes
+
+* Added a property to `IBetterCraftingMenu` for accessing the active `IRecipe`,
+  allowing other mods to more easily perform actions based on the current recipe.
+
+
+## 1.2.0
+Released September 2nd, 2022.
+
+### New Features
+
+* The crafting menu now displays NPC gift tastes in tool-tips, and allows
+  searching for items that specific NPCs like or love. By default, this only
+  displays gift tastes that you have already discovered in-game, as well as
+  only appearing on tool-tips while Shift is being held.
+
+### Fixes
+
+* Do not ignore containers with a `null` location when performing crafting.
+* Do not ignore the existing container list when replacing the crafting menu
+  contained within GameMenu, in case other mods have added containers.
+
+### Mod Compatibility
+
+* Added an option to change the priority of Better Crafting's menu event
+  handler, potentially allowing for increased compatibility with some mods that
+  access the game's default crafting menu.
+* Added built-in support for SpaceCore and Dynamic Game Assets. The extra file
+  "SpaceCore Support" is no longer necessary.
+
+### API Changes
+
+* Added an event to allow other mods to easily add custom containers to any
+  Better Crafting menu, including the menu embedded in the GameMenu.
+* Added a method for getting a reference to the currently active Better Crafting
+  menu, in case other mods need it for some reason.
+
+
+## 1.1.1
+Released May 25th, 2022.
+
+### Fixes
+
+* Whenever closing the menu, make sure that we release all inventory locks so
+  that no chests / workbenches / etc. are left in a state where they only
+  function for one player in multiplayer scenarios.
+
+
+## 1.1.0
+Released May 23rd, 2022.
+
+### Fixes
+
+* Add translation support for currency ingredients.
+* Do not write empty category arrays to a user's saved categories if the
+  data has not been initialized yet.
+* Fix support for inventory providers that don't have require mutexes, as
+  well as providers for inventories without a physical location.
+
+### API Changes
+
+* Add translation support for default categories added through the API.
+
+
+## 1.0.0
+Released April 26th, 2022.
+
+### New Features
+
+* Added a button to transfer items from your inventory into all the
+  chests connected to a workbench / kitchen. This is like a chest's
+  "Add to Existing Stacks" button, but for a lot of chests at once.
+
+### Fixes
+
+* Improve error checking for recipes, since a lot of mods unfortunately
+  introduce recipes with data errors.
+* Stop repositioning the mouse cursor when using a gamepad and exiting
+  the menu.
+* Draw better tooltips when a recipe doesn't have ingredients.
+
+### Mod Compatibility
+
+* Added built-in support for Vintage Interface 1.
+
+### API Changes
+
+* Improve support for custom recipes not based on an existing vanilla
+  `CraftingRecipe`, including support for recipes that don't produce
+  items at all.
+* The API now provides convenience methods for creating simple ingredients
+  so that external mods don't need to reinvent the wheel for basic tasks.
+* The API now provides convenience methods for creating simple recipes that
+  implement existing `CraftingRecipe`s with custom ingredients.
+* The API now lets mods create new default categories and add recipes to them.
+* Consolidate all interfaces used by the API into a single `.cs` file for easy
+  inclusion in other mods once SMAPI 3.14 is available.
+* Basically, a lot of API stuff happened and will be cool once 3.14 is out.
+
+### Optional Add-Ons
+
+* Created a new add-on for Better Crafting that lets you craft buildings via
+  the crafting menu. Buildings constructed this way are finished instantly.
+  Due to the somewhat cheaty nature of the add-on, it is not included by
+  default but available as an optional download.
+
+### Maintenance
+
+* All Better Crafting code, including the API, now uses nullable annotations
+  and file-scoped namespaces.
+* General code cleanup.
+
+
 ## 0.15.0
 Released March 15th, 2022.
 

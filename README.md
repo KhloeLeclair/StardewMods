@@ -12,6 +12,7 @@ This repository contains all of my Stardew Valley mods, released or not. Of note
 * [Source Code](https://github.com/KhloeLeclair/StardewMods/tree/main/Almanac)
 * [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/CHANGELOG.md)
 * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/ModAPI.cs)
+* [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
 
 
 ## Better Crafting
@@ -25,6 +26,7 @@ keeping chests locked when playing in multiplayer.
 * [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/CHANGELOG.md)
 * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterCrafting/ModAPI.cs)
 * [ContentPack Support](https://github.com/KhloeLeclair/StardewMods/tree/main/BetterCrafting.Example)
+
 
 ## See Me Rollin'
 

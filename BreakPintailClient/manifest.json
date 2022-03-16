@@ -1,0 +1,15 @@
+{
+  "EntryDll": "BreakPintailClient.dll",
+  "Name": "Break Pintail Client",
+  "Author": "Khloe Leclair",
+  "Version": "0.1.0-Debug",
+  "Description": "I'm here to make mods and break Pintail. And I'm all outta mods.",
+  "UniqueID": "leclair.stardew.breakpintailclient",
+  "MinimumApiVersion": "3.16",
+  "Dependencies": [
+    {
+      "UniqueID": "leclair.stardew.breakpintail",
+      "IsRequired": true
+    }
+  ]
+}

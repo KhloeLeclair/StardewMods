@@ -1,5 +1,159 @@
 # Changelog
 
+## 0.18.1
+Released November 14th, 2022.
+
+### General
+
+* Changed how icons are displayed in Local Notices when there are more than
+  three notice icons on a given day.
+
+### Fixes
+
+* Add error handling if an error occurs in a page's activation or date
+  changed event handler.
+* Rewrite the logic of the Local Notices page to hopefully fix issues some
+  users are seeing that causes the Almanac to break.
+
+### Mod Compatibility
+
+* Added support for the Spenny mod.
+
+
+## 0.18.0
+Released November 4th, 2022.
+
+### General
+
+* When hovering over a day on the crops calendar, if there are more than five
+  crops to display in the tool-tip, display two columns.
+
+### Fixes
+
+* Better handling for invalid dates when displaying things on calendars.
+* Do not display anniversaries for NPCs with whom a player is divorced.
+* Improve seed handling for random number generation to hopefully fix issues
+  with some information in the Almanac appearing offset by a number of days.
+
+### Mod Compatibility
+
+* Added support for the Stardew Aquarium mod to the fishing page.
+* Switch to using new API endpoints when querying Json Assets and More Giant
+  Crops for giant crop information.
+* Added support for the as of yet unreleased Giant Crop Tweaks mod.
+
+
+## 0.17.0
+Released May 10th, 2022.
+
+### General
+
+* Added an option to limit the displayed future forecast for luck and/or
+  weather to a certain number of days.
+
+### Fixes
+
+* Pre-warm RNG for weather and daily luck to generate better results.
+* Fix detection of fish available in the forest farm map.
+
+### Translation
+
+* Added Turkish and Thai translations! Thank you!
+
+### Maintenance
+
+* Update to the new content APIs made available in SMAPI 3.14+
+* Update code to use file-scoped namespaces and nullable references.
+* Update color parsing code to be more efficient and support all named
+  CSS4 colors.
+* Internal changes to better support the eventual migration to 1.6.
+
+### API / Content Packs
+
+* Added mouse cursors, standard scroll elements, and standard tool-tips to themes.
+* Added API endpoints for accessing weather data.
+* Added better handling for `Local Notices` via content packs, including support
+  for Game State Query and token strings.
+* Added support for custom `Fortune` events via content packs, using the same format
+  as Local Notices.
+
+
+## 0.16.0
+Released March 24th, 2022.
+
+### General
+
+* Replace the Almanac cover design with one based on certain elements
+  of the community center bundle UI.
+* Added an option to filter the Planting Dates page to only show crops
+  that you have seeds for.
+* Improve scrolling behavior when page content changes. Notably the
+  Planting Dates page will no longer scroll to the top when changing
+  fertilizer or other flags.
+
+### Fixes
+
+* Fixed an issue with the fishing log not correctly showing fish that are
+  catchable on the farm.
+* Fixed an issue with some crops displaying an incorrect growth time when
+  fertilizer or other flags are enabled.
+* Reload the fishing page textures when the current theme changes or is
+  otherwise reloaded.
+
+### Mod Compatibility
+
+* Add built-in support for Overgrown Flowery Interface.
+* Tweak the Vintage Interface themes.
+
+### Content Packs
+
+* Themes now have a `PageOffsets` object that allow them to change page
+  textures for specific Almanac pages.
+* Now using the public version of [ThemeManager](https://github.com/KhloeLeclair/Stardew-ThemeManager)
+  for theme support, which has a few changes. Notably, theme assets now
+  need to go into an `assets/` sub-folder.
+
+
+## 0.15.0
+Released March 17th, 2022.
+
+### General
+
+* Added an option for configuring where the Open Almanac button appears
+  in the inventory menu. It can still be disabled, but may need to be
+  disabled again by users that had done so previously.
+* Added an option to display trains on the Local Notices page.
+* When cached data is invalidated, if the Almanac is open it will be
+  refreshed immediately.
+* When `Debug Mode` is enabled, pressing F5 will refresh the Almanac
+  from its data sources as though the update command was used.
+
+### Fixes
+
+* When invalidating Almanac data, invalidate notices.
+* When clicking a calendar date on the Local Notices page and that
+  page is part of a multi-day event, scroll to the previous day with
+  a log entry. This isn't perfect, but an improvement at least.
+
+### Mod Compatibility
+
+* Add built-in support for Vintage Interface 1.
+
+### Content Packs
+
+* Content Packs can now control crop, fish, and NPC visibility via
+  Content Patcher. See the new and improved [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
+  for details.
+* Content Packs can now add Local Notices via Content Patcher. See the
+  new and improved [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
+  for details.
+* Themes now have `ScrollOffsetTop` and `ScrollOffsetBottom` properties.
+
+## Maintenance
+
+* General code cleanup. Hopefully I didn't break anything.
+
+
 ## 0.14.0
 Released March 15th, 2022.
 
@@ -11,7 +165,7 @@ Released March 15th, 2022.
 
 * Improve Chinese translation coverage.
 
-### API Changes
+### Content Packs
 
 * Added an `al_theme` command to list all themes, or change the current theme
   if called with an argument. `al_theme reload` will reload all themes,

@@ -1,4 +1,8 @@
+#nullable enable
+
 using System;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
@@ -8,76 +12,78 @@ using StardewValley.BellsAndWhistles;
 
 using Leclair.Stardew.Almanac.Menus;
 
-namespace Leclair.Stardew.Almanac.Pages {
-	public class CoverPage : BasePage<BaseState> {
+namespace Leclair.Stardew.Almanac.Pages;
 
-		private string[] words;
-		private int wordHeight;
+public class CoverPage : BasePage<BaseState> {
 
-		#region Lifecycle
+	public static readonly Color DEFAULT_COLOR = CommonHelper.ParseColor("#974E24")!.Value;
 
-		public static CoverPage GetPage(AlmanacMenu menu, ModEntry mod) {
-			return new(menu, mod);
-		}
+	private readonly string[] words;
+	private readonly int wordHeight;
 
-		public CoverPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
-			// Cache the string.
-			words = (Mod.HasIsland(Game1.player) ?
-				I18n.Almanac_CoverIsland() : I18n.Almanac_Cover()
-			).Split('\n');
-			wordHeight = 0;
-			foreach (string word in words) {
-				int height = SpriteText.getHeightOfString(word);
-				if (height > wordHeight)
-					wordHeight = height;
-			};
-		}
+	#region Lifecycle
 
-		#endregion
+	public static CoverPage GetPage(AlmanacMenu menu, ModEntry mod) {
+		return new(menu, mod);
+	}
 
-		#region ITab
+	public CoverPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
+		// Cache the string.
+		words = (Mod.HasIsland(Game1.player) ?
+			I18n.Almanac_CoverIsland() : I18n.Almanac_Cover()
+		).Split('\n');
+		wordHeight = 0;
+		foreach (string word in words) {
+			int height = SpriteText.getHeightOfString(word);
+			if (height > wordHeight)
+				wordHeight = height;
+		};
+	}
 
-		public override int SortKey => int.MinValue;
+	#endregion
 
-		#endregion
+	#region ITab
 
-		#region IAlmanacPage
+	public override int SortKey => int.MinValue;
 
-		public override PageType Type => PageType.Cover;
+	#endregion
 
-		public override void Activate() {
-			base.Activate();
-		}
+	#region IAlmanacPage
 
-		public override void Draw(SpriteBatch b) {
-			if (words == null)
-				return;
+	public override PageType Type => PageType.Cover;
 
-			int center = Menu.xPositionOnScreen + (Menu.width / 2);
-			int titleHeight = words.Length * wordHeight;
-			int y = Menu.yPositionOnScreen + (Menu.height - (titleHeight + 60 + wordHeight)) / 2;
+	public override void Activate() {
+		base.Activate();
+	}
 
-			foreach (string word in words) {
-				RenderHelper.DrawCenteredSpriteText(
-					b,
-					word,
-					center,
-					y,
-					color: Mod.Theme?.CoverTextColor ?? null
-				);
+	public override void Draw(SpriteBatch b) {
+		if (words == null)
+			return;
 
-				y += wordHeight;
-			}
+		int center = Menu.xPositionOnScreen + (Menu.width / 2);
+		int titleHeight = words.Length * wordHeight;
+		int y = Menu.yPositionOnScreen + (Menu.height - (titleHeight + 60 + wordHeight)) / 2;
 
+		foreach (string word in words) {
 			RenderHelper.DrawCenteredSpriteText(
 				b,
-				Game1.content.LoadString("Strings\\UI:Billboard_Year", Menu.Year),
+				word,
 				center,
-				y + 60,
-				color: Mod.Theme?.CoverYearColor ?? SpriteText.getColorFromIndex(2)
+				y,
+				color: Mod.Theme.CoverTextColor ?? DEFAULT_COLOR
 			);
+
+			y += wordHeight;
 		}
 
-		#endregion
+		RenderHelper.DrawCenteredSpriteText(
+			b,
+			Game1.content.LoadString("Strings\\UI:Billboard_Year", Menu.Year),
+			center,
+			y + 60,
+			color: Mod.Theme.CoverYearColor ?? SpriteText.getColorFromIndex(2)
+		);
 	}
+
+	#endregion
 }

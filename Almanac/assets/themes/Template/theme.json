@@ -1,4 +1,5 @@
 {
+	"$schema": "https://raw.githubusercontent.com/KhloeLeclair/StardewMods/main/Almanac/theme-schema.json",
 	"Name": "Theme Template",
 	"For": [
 		"Some.Mod.Id.Here",
@@ -10,18 +11,9 @@
 	"CoverTextColor": null,
 	"CoverYearColor": "red",
 
-	// CoverTextColor and CoverYearColor are drawn using SpriteText, so there
-	// are limited color choices available:
-	//  -1: Default (#56160C)
-	//   0: Black
-	//   1: Blue
-	//   2: Red
-	//   3: Purple
-	//   4: White
-	//   5: Orange
-	//   6: Green
-	//   7: Cyan
-	//   8: Gray
+	// If set to true, the mouse will be drawn with sprites from the
+	// Menu.png file. Otherwise, the default mouse will be used.
+	"CustomMouse": false,
 
 	// Standard applies to pages with the standard Almanac theme.
 	"Standard": {
@@ -29,6 +21,18 @@
 		// sprites from the Menu.png file. Otherwise, it'll use the
 		// game's main texture.
 		"CustomScroll": false,
+
+		// If CustomTooltip is enabled, tooltips will be drawn using
+		// sprites from the Menu.png file. Otherwise, it'll use the
+		// game's main texture.
+		"CustomTooltip": false,
+
+		// The scroll offset top and bottom numbers let you add margins
+		// around the right page's scrollbar so that it doesn't overlap
+		// with decorative background elements. You should avoid making
+		// these too large to maintain a healthy scrollbar size.
+		"ScrollOffsetTop": 16,
+		"ScrollOffsetBottom": 0,
 
 		"SeasonTextColor": null,
 
@@ -73,6 +77,10 @@
 		// texture sheet. Magic always uses one, and Standard always
 		// uses the other.
 		"CustomScroll": true,
+		"CustomTooltip": true,
+
+		"ScrollOffsetTop": 32,
+		"ScrollOffsetBottom": -32,
 
 		"SeasonTextColor": "white",
 

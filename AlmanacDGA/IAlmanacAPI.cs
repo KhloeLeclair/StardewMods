@@ -32,6 +32,8 @@ namespace Leclair.Stardew.Almanac {
 			bool isPaddyCrop,
 			bool isTrellisCrop,
 
+			Item[] seeds,
+
 			WorldDate start,
 			WorldDate end,
 

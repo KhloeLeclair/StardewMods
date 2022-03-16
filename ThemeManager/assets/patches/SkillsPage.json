@@ -1,0 +1,19 @@
+{
+	"ID": "SkillsPage",
+
+	"ColorVariables": {
+		"$SkillsPageText": "$Text"
+	},
+
+	"Patches": {
+		"#SkillsPage:draw(SpriteBatch)": {
+			"Colors": {
+				"LightGreen": { "*": "$SkillsPageModifiedNumber" },
+				"SandyBrown": { "*": "$SkillsPageNumber" }
+			},
+			"ColorFields": {
+				"Game1:textColor": { "*": "$SkillsPageText" }
+			}
+		}
+	}
+}

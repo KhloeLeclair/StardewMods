@@ -1,14 +1,18 @@
+#nullable enable
+
 using System;
-using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using HarmonyLib;
 
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.Inventory;
@@ -25,848 +29,1423 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 
 using Leclair.Stardew.BetterCrafting.Managers;
+using Leclair.Stardew.BetterCrafting.Models;
+using Newtonsoft.Json.Linq;
+using StardewValley.Tools;
+using Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
 
-namespace Leclair.Stardew.BetterCrafting {
+namespace Leclair.Stardew.BetterCrafting;
 
-	public class ModEntry : ModSubscriber {
+public class ModEntry : ModSubscriber {
 
-		public static ModEntry instance;
-		public static IBetterCrafting API;
+	public static readonly string NPCMapLocationPath = "Mods/Bouhm.NPCMapLocations/NPCs";
 
-		internal Harmony Harmony;
+	public static readonly string HeadsPath = "Mods/leclair.bettercrafting/Heads";
 
-		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
-		private readonly PerScreen<Menus.BetterCraftingPage> OldCraftingPage = new();
-		private readonly PerScreen<bool> OldCraftingGameMenu = new();
+#nullable disable
+	public static ModEntry Instance { get; private set; }
+#nullable enable
 
-		private bool? hasBiggerBackpacks;
-		private bool? hasLoveOfCooking;
+	internal readonly Dictionary<IManifest, ModAPI> APIInstances = new();
 
-		public bool AtTitle = false;
+	internal Harmony? Harmony;
 
-		public ModConfig Config;
-		private bool ConfigRegistered = false;
+	private readonly PerScreen<IClickableMenu?> CurrentMenu = new();
+	private readonly PerScreen<Menus.BetterCraftingPage?> OldCraftingPage = new();
+	private readonly PerScreen<bool> OldCraftingGameMenu = new();
 
-		public RecipeManager Recipes;
-		public FavoriteManager Favorites;
+	private bool? hasBiggerBackpacks;
+	private bool? hasLoveOfCooking;
 
-		private Hashtable invProviders = new Hashtable();
-		private readonly object providerLock = new();
+	public bool AtTitle = false;
 
-		private CaseInsensitiveHashSet ConnectorExamples;
-		private Dictionary<int, string> FloorMap;
+	private bool ConfigRegistered = false;
 
-		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
+#nullable disable
+	public ModConfig Config;
 
-		internal Integrations.RaisedGardenBeds.RGBIntegration intRGB;
-		internal Integrations.StackSplitRedux.SSRIntegration intSSR;
-		internal Integrations.CookingSkill.CSIntegration intCSkill;
-		internal Integrations.SpaceCore.SCIntegration intSCore;
-		internal Integrations.CustomCraftingStation.CCSIntegration intCCStation;
+	public RecipeManager Recipes;
+	public FavoriteManager Favorites;
 
-		internal ThemeManager<Models.Theme> ThemeManager;
-		internal Models.Theme Theme => ThemeManager.Theme;
+	internal ThemeManager<Theme> ThemeManager;
 
-		public override void Entry(IModHelper helper) {
-			base.Entry(helper);
-			SpriteHelper.SetHelper(helper);
-			RenderHelper.SetHelper(helper);
+#nullable enable
 
-			instance = this;
-			API = new ModAPI(this);
+	private Dictionary<string, HeadSize>? HeadsCache = null;
 
-			// Harmony
-			Harmony = new Harmony(ModManifest.UniqueID);
+	private MenuPriority? ActivePriority = null;
 
-			// Read Config
-			Config = Helper.ReadConfig<ModConfig>();
+	private readonly Hashtable invProviders = new();
+	private readonly object providerLock = new();
 
-			// Init
-			I18n.Init(Helper.Translation);
+	private CaseInsensitiveHashSet? ConnectorExamples;
+	private Dictionary<int, string>? FloorMap;
 
-			RegisterProviders();
+	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
-			Recipes = new RecipeManager(this);
-			Favorites = new FavoriteManager(this);
+	internal Integrations.ProducerFrameworkMod.PFMIntegration? intPFM;
+	internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
+	internal Integrations.StackSplitRedux.SSRIntegration? intSSR;
+	internal Integrations.CookingSkill.CSIntegration? intCSkill;
+	internal Integrations.SpaceCore.SCIntegration? intSCore;
+	internal Integrations.CustomCraftingStation.CCSIntegration? intCCStation;
+	internal Integrations.DynamicGameAssets.DGAIntegration? intDGA;
 
-			ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
-			ThemeManager.ThemeChanged += OnThemeChanged;
-			ThemeManager.Discover();
+	internal Models.Theme? Theme => ThemeManager.Theme;
 
-			//Sprites.Load(Helper.Content, Helper.ModRegistry);
+	public override void Entry(IModHelper helper) {
+		base.Entry(helper);
+		SpriteHelper.SetHelper(helper);
+		RenderHelper.SetHelper(helper);
 
-			CheckRecommendedIntegrations();
+		Instance = this;
+
+		// Harmony
+		Harmony = new Harmony(ModManifest.UniqueID);
+
+		Patches.Item_Patches.Patch(this);
+		Patches.Workbench_Patches.Patch(this);
+		Patches.Torch_Patches.Patch(this);
+
+		Common_SpriteText_Patches.Patch(Harmony, Monitor);
+
+		// Read Config
+		Config = Helper.ReadConfig<ModConfig>();
+
+		// Init
+		I18n.Init(Helper.Translation);
+
+		RegisterProviders();
+
+		Recipes = new RecipeManager(this);
+		Favorites = new FavoriteManager(this);
+
+		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
+		ThemeManager.ThemeChanged += OnThemeChanged;
+		ThemeManager.Discover();
+
+		//Sprites.Load(Helper.Content, Helper.ModRegistry);
+
+		CheckRecommendedIntegrations();
+		InjectMenuHandler();
+	}
+
+	public override object? GetApi(IModInfo mod) {
+		if (!APIInstances.TryGetValue(mod.Manifest, out var api)) {
+			Log($"Creating specific API instance for {mod.Manifest.Name} ({mod.Manifest.UniqueID})", LogLevel.Debug);
+			api = new ModAPI(this, mod.Manifest);
+			APIInstances[mod.Manifest] = api;
 		}
 
-		public override object GetApi() {
-			return API;
+		return api;
+	}
+
+	#region Events
+
+	private void InjectMenuHandler() {
+		if (Config is null)
+			return;
+
+		if (ActivePriority is not null) {
+			if (ActivePriority == Config.MenuPriority)
+				return;
+
+			switch(ActivePriority) {
+				case MenuPriority.Low:
+					Helper.Events.Display.MenuChanged -= LowMenuChanged;
+					break;
+				case MenuPriority.Normal:
+					Helper.Events.Display.MenuChanged -= NormalMenuChanged;
+					break;
+				case MenuPriority.High:
+					Helper.Events.Display.MenuChanged -= HighMenuChanged;
+					break;
+			}
 		}
 
+		switch(Config.MenuPriority) {
+			case MenuPriority.Low:
+				Helper.Events.Display.MenuChanged += LowMenuChanged;
+				ActivePriority = MenuPriority.Low;
+				return;
+			case MenuPriority.High:
+				Helper.Events.Display.MenuChanged += HighMenuChanged;
+				ActivePriority = MenuPriority.High;
+				return;
+		}
 
-		#region Events
+		Helper.Events.Display.MenuChanged += NormalMenuChanged;
+		ActivePriority = MenuPriority.Normal;
+	}
 
-		private void UpdateTextures(Texture2D oldTex, Texture2D newTex, IClickableMenu menu) {
-			if (menu.allClickableComponents != null)
-				foreach(var cmp in menu.allClickableComponents) {
-					if (cmp is ClickableTextureComponent tp && tp.texture == oldTex)
-						tp.texture = newTex;
+	private static void UpdateTextures(Texture2D? oldTex, Texture2D newTex, IClickableMenu menu) {
+		if (menu.allClickableComponents != null)
+			foreach(var cmp in menu.allClickableComponents) {
+				if (cmp is ClickableTextureComponent tp && tp.texture == oldTex)
+					tp.texture = newTex;
+			}
+	}
+
+	private void OnThemeChanged(object? sender, ThemeChangedEventArgs<Models.Theme> e) {
+		var oldTex = Sprites.Buttons.Texture;
+		var newTex = Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+
+		if (Game1.activeClickableMenu is GameMenu gm) {
+			foreach(var gmp in gm.pages) {
+				if (gmp is Menus.BetterCraftingPage bcp) {
+					UpdateTextures(oldTex, newTex, gmp);
+					bcp.LoadTextures();
 				}
+			}
 		}
 
-		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
-			var oldTex = Sprites.Buttons.Texture;
-			var newTex = Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+		if (Game1.activeClickableMenu is Menus.BetterCraftingPage page) {
+			UpdateTextures(oldTex, newTex, page);
+			page.LoadTextures();
+		}
+	}
 
-			if (Game1.activeClickableMenu is GameMenu gm) {
-				foreach(var gmp in gm.pages) {
-					if (gmp is Menus.BetterCraftingPage)
-						UpdateTextures(oldTex, newTex, gmp);
+	[EventPriority(EventPriority.Low)]
+	private void LowMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	private void NormalMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	[EventPriority(EventPriority.High)]
+	private void HighMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	private void HandleMenuChanged(MenuChangedEventArgs e) {
+		IClickableMenu menu = Game1.activeClickableMenu;
+		if (CurrentMenu.Value == menu)
+			return;
+
+		Type? type = menu?.GetType();
+		string? name = type?.FullName ?? type?.Name;
+
+		// Are we doing GMCM stuff?
+		if (OldCraftingPage.Value != null) {
+			if (menu != null) {
+				// If we're on the specific page for a mod, then
+				// everything is fine and we can continue.
+				if (name!.Equals("GenericModConfigMenu.Framework.SpecificModConfigMenu"))
+					return;
+
+				if (name!.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
+					CommonHelper.YeetMenu(menu);
+
+					GameMenu? game = null;
+					if (OldCraftingGameMenu.Value) {
+						game = new GameMenu(false);
+						menu = Game1.activeClickableMenu = game;
+					}
+
+					var bcm = Menus.BetterCraftingPage.Open(
+						mod: this,
+						location: OldCraftingPage.Value.Location,
+						position: OldCraftingPage.Value.Position,
+						width: game?.width ?? -1,
+						height: game?.height ?? -1,
+						x: game?.xPositionOnScreen ?? -1,
+						y: game?.yPositionOnScreen ?? -1,
+						area: OldCraftingPage.Value.Area,
+						cooking: OldCraftingPage.Value.cooking,
+						standalone_menu: !OldCraftingGameMenu.Value,
+						material_containers: OldCraftingPage.Value.MaterialContainers,
+						silent_open: true,
+						discover_containers: OldCraftingPage.Value.DiscoverContainers,
+						listed_recipes: OldCraftingPage.Value.GetListedRecipes()
+					);
+
+					if (game != null) {
+						for(int i =0; i < game.pages.Count; i++) {
+							if (game.pages[i] is CraftingPage cp) {
+								CommonHelper.YeetMenu(cp);
+
+								game.pages[i] = bcm;
+								game.changeTab(i, false);
+								break;
+							}
+						}
+
+					} else
+						Game1.activeClickableMenu = bcm;
 				}
 			}
 
-			if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
-				UpdateTextures(oldTex, newTex, page);
+			// Clear the old crafting page.
+			OldCraftingPage.Value = null;
+			OldCraftingGameMenu.Value = false;
 		}
 
-		[Subscriber]
-		private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
-			IClickableMenu menu = Game1.activeClickableMenu;
-			if (CurrentMenu.Value == menu)
-				return;
+		// No menu?
+		if (menu == null) {
+			CurrentMenu.Value = null;
+			return;
+		}
 
-			// Are we doing GMCM stuff?
-			if (OldCraftingPage.Value != null) {
-				if (menu != null) {
-					string name = menu.GetType().FullName;
+		// Replace crafting pages.
+		if (Config.SuppressBC?.IsDown() ?? false) { 
+			CurrentMenu.Value = menu;
+			return;
+		}
 
-					// If we're on the specific page for a mod, then
-					// everything is fine and we can continue.
-					if (name.Equals("GenericModConfigMenu.Framework.SpecificModConfigMenu"))
-						return;
+		if (menu is CraftingPage page) {
+			bool cooking = CraftingPageHelper.IsCooking(page);
+			if (cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
 
-					if (name.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
-						CommonHelper.YeetMenu(menu);
+				// Make a copy of the existing chests.
+				List<object>? chests = page._materialContainers is null ? null : new(page._materialContainers);
 
-						GameMenu game = null;
-						if (OldCraftingGameMenu.Value) {
-							game = new GameMenu(false);
-							menu = Game1.activeClickableMenu = game;
-						}
+				// Find our bench
+				var where = page.GetBenchPosition(Game1.player);
+				var area = page.GetBenchRegion(Game1.player);
 
-						var bcm = Menus.BetterCraftingPage.Open(
-							mod: this,
-							location: OldCraftingPage.Value.Location,
-							position: OldCraftingPage.Value.Position,
-							width: game?.width ?? -1,
-							height: game?.height ?? -1,
-							x: game?.xPositionOnScreen ?? -1,
-							y: game?.yPositionOnScreen ?? -1,
-							area: OldCraftingPage.Value.Area,
-							cooking: OldCraftingPage.Value.cooking,
-							standalone_menu: !OldCraftingGameMenu.Value,
-							material_containers: OldCraftingPage.Value.MaterialContainers,
-							silent_open: true,
-							discover_containers: OldCraftingPage.Value.DiscoverContainers,
-							listed_recipes: OldCraftingPage.Value.GetListedRecipes()
-						);
+				// Make sure to clean up the existing menu.
+				CommonHelper.YeetMenu(page);
 
-						if (game != null) {
-							for(int i =0; i < game.pages.Count; i++) {
-								if (game.pages[i] is CraftingPage cp) {
-									CommonHelper.YeetMenu(cp);
+				// And now create our own.
+				menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+					mod: this,
+					location: Game1.player.currentLocation,
+					position: where,
+					area: area,
+					cooking: cooking,
+					standalone_menu: true,
+					material_containers: chests
+				);
+			}
+		}
 
-									game.pages[i] = bcm;
-									game.changeTab(i, false);
-									break;
-								}
-							}
+		if (intCCStation != null && intCCStation.IsLoaded && name!.Equals("StardewValley.Menus.CustomCraftingMenu")) {
+			// CustomCraftingStation Menu?
 
-						} else
-							Game1.activeClickableMenu = bcm;
+			// See which recipes it's using. If it's not mixed, then
+			// replace it with our menu.
+
+			var recipes = Helper.Reflection.GetField<List<Dictionary<ClickableTextureComponent, CraftingRecipe>>>(menu, "pagesOfCraftingRecipes", false).GetValue();
+			if (recipes != null) {
+				List<string> names = new();
+				int crafting = 0;
+				int cooking = 0;
+
+				foreach (var rpage in recipes) {
+					foreach (var recipe in rpage.Values) {
+						if (recipe.isCookingRecipe)
+							cooking++;
+						else
+							crafting++;
+
+						names.Add(recipe.name);
 					}
 				}
 
-				// Clear the old crafting page.
-				OldCraftingPage.Value = null;
-				OldCraftingGameMenu.Value = false;
-			}
+				if (crafting == 0 || cooking == 0 && names.Count > 0) {
+					bool is_cooking = cooking > 0;
 
-			// No menu?
-			if (menu == null) {
-				CurrentMenu.Value = null;
-				return;
-			}
+					// Make a copy of the existing chests.
+					var chests = Helper.Reflection.GetField<List<Chest>>(menu, "_materialContainers", false).GetValue();
+					List<object>? containers = chests is null ? null : new(chests);
 
-			// Replace crafting pages.
-			if (Config.SuppressBC?.IsDown() ?? false) { 
-				CurrentMenu.Value = menu;
-				return;
-			}
-
-			if (menu is CraftingPage page) {
-				bool cooking = CraftingPageHelper.IsCooking(page);
-				if (cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
-
-					// Make a copy of the existing chests, in case yeeting
-					// the menu creates an issue.
-					List<object> chests = new(page._materialContainers);
-
-					// Find our bench
-					var where = page.GetBenchPosition(Game1.player);
-					var area = page.GetBenchRegion(Game1.player);
-
-					// Get recipes
-					var recipes = cooking ?
-						intCCStation.GetCookingRecipes() :
-						intCCStation.GetCraftingRecipes();
+					// TODO: Find the bench
 
 					// Make sure to clean up the existing menu.
-					CommonHelper.YeetMenu(page);
+					CommonHelper.YeetMenu(menu);
 
-					// And now create our own.
 					menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
 						mod: this,
 						location: Game1.player.currentLocation,
-						position: where,
-						area: area,
-						cooking: cooking,
+						cooking: is_cooking,
 						standalone_menu: true,
-						material_containers: chests,
-						listed_recipes: recipes
+						material_containers: containers,
+						listed_recipes: names
 					);
 				}
 			}
+		}
 
-			if (intCCStation.IsLoaded && menu.GetType().FullName.Equals("StardewValley.Menus.CustomCraftingMenu")) {
-				// CustomCraftingStation Menu?
+		// Replace crafting pages in the menu.
+		if (menu is GameMenu gm && Config.ReplaceCrafting) {
+			for (int i = 0; i < gm.pages.Count; i++) {
+				if (gm.pages[i] is CraftingPage cp) {
+					// Make a copy of the existing chests.
+					List<object>? containers = cp._materialContainers is null ? null : new(cp._materialContainers);
 
-				// See which recipes it's using. If it's not mixed, then
-				// replace it with our menu.
+					// Make sure to clean up the existing menu.
+					CommonHelper.YeetMenu(cp);
 
-				var recipes = Helper.Reflection.GetField<List<Dictionary<ClickableTextureComponent, CraftingRecipe>>>(menu, "pagesOfCraftingRecipes", false).GetValue();
-				if (recipes != null) {
-					List<string> names = new();
-					int crafting = 0;
-					int cooking = 0;
+					gm.pages[i] = Menus.BetterCraftingPage.Open(
+						mod: this,
+						location: Game1.player.currentLocation,
+						position: null,
+						width: gm.width,
+						height: gm.height,
+						cooking: false,
+						standalone_menu: false,
+						material_containers: containers,
+						x: gm.xPositionOnScreen,
+						y: gm.yPositionOnScreen
+					);
+				}
+			}
+		}
 
-					foreach (var rpage in recipes) {
-						foreach (var recipe in rpage.Values) {
-							if (recipe.isCookingRecipe)
-								cooking++;
-							else
-								crafting++;
+		CurrentMenu.Value = menu;
+	}
 
-							names.Add(recipe.name);
-						}
-					}
+	[Subscriber]
+	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		// Load Data
+		LoadFloorMap();
+		LoadConnectorExamples();
 
-					if (crafting == 0 || cooking == 0 && names.Count > 0) {
-						bool is_cooking = cooking > 0;
+		// More Init
+		AtTitle = true;
+		RegisterSettings();
 
-						var chests = Helper.Reflection.GetField<List<Chest>>(menu, "_materialContainers", false).GetValue();
-						List<object> containers = chests == null ? null : new(chests);
+		// Integrations
+		InventoryHelper.InitializeStackQuality(this);
 
-						// TODO: Find the bench
+		intPFM = new(this);
+		intRGB = new(this);
+		intSSR = new(this);
+		intCSkill = new(this);
+		intSCore = new(this);
+		intCCStation = new(this);
+		intDGA = new(this);
 
-						CommonHelper.YeetMenu(menu);
+		// Commands
+		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
+			Recipes.Invalidate();
 
-						menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
-							mod: this,
-							location: Game1.player.currentLocation,
-							cooking: is_cooking,
-							standalone_menu: true,
-							material_containers: containers,
-							listed_recipes: names
-						);
-					}
+			CachedObjects = null;
+			CachedBigCraftables = null;
+			CachedFurniture = null;
+			CachedBoots = null;
+			CachedClothing = null;
+			CachedHats = null;
+			CachedWeapons = null;
+
+			Log($"Invalided caches.");
+		});
+
+		Helper.ConsoleCommands.Add("bc_retheme", "Reload all themes.", (name, args) => {
+			ThemeManager.Discover();
+			Log($"Reloaded themes. You may need to reopen menus.");
+		});
+
+		Helper.ConsoleCommands.Add("bc_theme", "List all themes, or switch to a new theme.", (name, args) => {
+			if (ThemeManager.PerformThemeCommand(args)) {
+				Config.Theme = ThemeManager.SelectedThemeId!;
+				SaveConfig();
+			}
+		});
+
+		// Load Data -- Actually, this is unnecessary. Do it on demand.
+		// Recipes.LoadRecipes();
+		// Recipes.LoadDefaults();
+	}
+
+	[Subscriber]
+	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
+		AtTitle = false;
+		RegisterSettings();
+	}
+
+	[Subscriber]
+	private void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs e) {
+		AtTitle = true;
+		RegisterSettings();
+	}
+
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach(var name in e.Names) {
+			if (name.IsEquivalentTo(HeadsPath))
+				HeadsCache = null;
+
+			if (name.IsEquivalentTo(@"Data\ObjectInformation"))
+				CachedObjects = null;
+
+			if (name.IsEquivalentTo(@"Data\BigCraftablesInformation"))
+				CachedBigCraftables = null;
+
+			if (name.IsEquivalentTo(@"Data\Furniture"))
+				CachedFurniture = null;
+
+			if (name.IsEquivalentTo(@"Data\Boots"))
+				CachedBoots = null;
+
+			if (name.IsEquivalentTo(@"Data\ClothingInformation"))
+				CachedClothing = null;
+
+			if (name.IsEquivalentTo(@"Data\hats"))
+				CachedHats = null;
+
+			if (name.IsEquivalentTo(@"Data\weapons"))
+				CachedWeapons = null;
+		}
+	}
+
+	[Subscriber]
+	private void OnObjectsChanged(object? sender, ObjectListChangedEventArgs e) {
+		if (!Config.EnableCookoutLongevity)
+			return;
+
+		// Disable the destroyOvernight flag on Cookout Kits when they're placed.
+		if (e.Added is not null)
+			foreach(var pair in e.Added) {
+				var obj = pair.Value;
+				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278) {
+					torch.destroyOvernight = false;
 				}
 			}
 
-			// Replace crafting pages in the menu.
-			if (menu is GameMenu gm && Config.ReplaceCrafting) {
-				for (int i = 0; i < gm.pages.Count; i++) {
-					if (gm.pages[i] is CraftingPage cp) {
-						CommonHelper.YeetMenu(cp);
-
-						gm.pages[i] = Menus.BetterCraftingPage.Open(
-							mod: this,
-							location: Game1.player.currentLocation,
-							position: null,
-							width: gm.width,
-							height: gm.height,
-							cooking: false,
-							standalone_menu: false,
-							material_containers: (IList<LocatedInventory>) null,
-							listed_recipes: intCCStation.GetCraftingRecipes(),
-							x: gm.xPositionOnScreen,
-							y: gm.yPositionOnScreen
-						);
-					}
+		// When a Cookout Kit is removed, drop the Cookout Kit item at its location.
+		if (e.Removed is not null)
+			foreach(var pair in e.Removed) {
+				var obj = pair.Value;
+				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278 && torch.Fragility != 2) {
+					e.Location.debris.Add(new Debris(new StardewValley.Object(926, 1), new Vector2(pair.Key.X * 64 + 32, pair.Key.Y * 64 + 32)));
 				}
 			}
+	}
 
-			CurrentMenu.Value = menu;
-		}
-
-		[Subscriber]
-		private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
-			// Load Data
-			LoadFloorMap();
-			LoadConnectorExamples();
-
-			// More Init
-			AtTitle = true;
-			RegisterSettings();
-
-			// Integrations
-			intRGB = new(this);
-			intSSR = new(this);
-			intCSkill = new(this);
-			intSCore = new(this);
-			intCCStation = new(this);
-
-			// Commands
-			Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
-				Recipes.Invalidate();
-				Log($"Invalided 1 cache.");
-			});
-
-			Helper.ConsoleCommands.Add("bc_retheme", "Reload all themes.", (name, args) => {
-				ThemeManager.Discover();
-				Log($"Reloaded themes. You may need to reopen menus.");
-			});
-
-			Helper.ConsoleCommands.Add("bc_theme", "List all themes, or switch to a new theme.", (name, args) => {
-				if (ThemeManager.OnThemeCommand(args)) {
-					Config.Theme = ThemeManager.ThemeKey;
-					SaveConfig();
+	[Subscriber]
+	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		// Edit the cookout kit's recipe.
+		if (Config.EnableCookoutExpensive && e.NameWithoutLocale.IsEquivalentTo(@"Data\CraftingRecipes"))
+			e.Edit(data => {
+				var recipes = data.AsDictionary<string, string>();
+				if (recipes.Data.TryGetValue("Cookout Kit", out string? value)) {
+					string[] parts = value.Split('/');
+					parts[0] = "390 45 388 15 382 8 335 2";
+					recipes.Data["Cookout Kit"] = string.Join('/', parts);
 				}
 			});
 
-			// Load Data
-			Recipes.LoadRecipes();
-			Recipes.LoadDefaults();
-		}
+		if (e.Name.IsEquivalentTo(HeadsPath))
+			e.LoadFrom(() => {
+				const string path = "assets/heads.json";
+				Dictionary<string, HeadSize>? heads = null;
 
-		[Subscriber]
-		private void OnSaveLoaded(object sender, SaveLoadedEventArgs e) {
-			AtTitle = false;
-			RegisterSettings();
-		}
-
-		[Subscriber]
-		private void OnReturnToTitle(object sender, ReturnedToTitleEventArgs e) {
-			AtTitle = true;
-			RegisterSettings();
-		}
-
-		#endregion
-
-		#region Configuration
-
-		public void SaveConfig() {
-			Helper.WriteConfig(Config);
-		}
-
-		public bool HasGMCM() {
-			return GMCMIntegration?.IsLoaded ?? false;
-		}
-
-		public void OpenGMCM() {
-			if (HasGMCM()) {
-				if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is Menus.BetterCraftingPage p) {
-					OldCraftingPage.Value = p;
-					OldCraftingGameMenu.Value = true;
-				} 
-
-				if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
-					OldCraftingPage.Value = page;
-
-				GMCMIntegration.OpenMenu();
-			}
-		}
-
-
-		private void RegisterSettings() {
-			GMCMIntegration = new(this, () => Config, () => Config = new ModConfig(), () => SaveConfig());
-			if (!GMCMIntegration.IsLoaded)
-				return;
-
-			if (ConfigRegistered)
-				GMCMIntegration.Unregister();
-
-			ConfigRegistered = true;
-
-			Dictionary<Models.SeasoningMode, Func<string>> seasoning = new();
-			seasoning.Add(Models.SeasoningMode.Disabled, I18n.Seasoning_Disabled);
-			seasoning.Add(Models.SeasoningMode.Enabled, I18n.Seasoning_Enabled);
-			seasoning.Add(Models.SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory);
-
-			GMCMIntegration.Register(true);
-
-			if (!AtTitle)
-				GMCMIntegration.Add(
-					I18n.Setting_ShowAdv,
-					I18n.Setting_ShowAdv_Tip,
-					c => Game1.options.showAdvancedCraftingInformation,
-					(c, v) => Game1.options.changeCheckBoxOption(Options.toggleShowAdvancedCraftingInformation, v)
-				);
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_General)
-				.AddChoice(
-					I18n.Setting_Theme,
-					I18n.Setting_ThemeDesc,
-					c => c.Theme,
-					(c,v) => {
-						c.Theme = v;
-						ThemeManager.SelectTheme(v);
-					},
-					ThemeManager.GetThemeChoices()
-				)
-				.Add(
-					I18n.Setting_Settings,
-					I18n.Setting_Settings_Tip,
-					c => c.ShowSettingsButton,
-					(c, v) => c.ShowSettingsButton = v
-				)
-				.Add(
-					I18n.Setting_ReplaceCrafting,
-					I18n.Setting_ReplaceCrafting_Tip,
-					c => c.ReplaceCrafting,
-					(c, val) => c.ReplaceCrafting = val
-				)
-				.Add(
-					I18n.Setting_ReplaceCooking,
-					I18n.Setting_ReplaceCooking_Tip,
-					c => c.ReplaceCooking,
-					(c, val) => c.ReplaceCooking = val
-				)
-				.Add(
-					I18n.Setting_EnableCategories,
-					I18n.Setting_EnableCategories_Tip,
-					c => c.UseCategories,
-					(c, val) => c.UseCategories = val
-				);
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_Bindings, I18n.Setting_Bindings_Tip, "page:bindings");
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
-				.Add(
-					I18n.Setting_UniformGrid,
-					I18n.Setting_UniformGrid_Tip,
-					c => c.UseUniformGrid,
-					(c, val) => c.UseUniformGrid = val
-				)
-				.Add(
-					I18n.Setting_Alphabetic,
-					I18n.Setting_Alphabetic_Tip,
-					c => c.CraftingAlphabetic,
-					(c,v) => c.CraftingAlphabetic = v
-				)
-				.Add(
-					I18n.Setting_BigCraftablesLast,
-					I18n.Setting_BigCraftablesLast_Tip,
-					c => c.SortBigLast,
-					(c, val) => c.SortBigLast = val
-				);
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
-				.Add(
-					I18n.Setting_Alphabetic,
-					I18n.Setting_Alphabetic_Tip,
-					c => c.CookingAlphabetic,
-					(c, v) => c.CookingAlphabetic = v
-				)
-				.AddChoice(
-					I18n.Setting_Seasoning,
-					I18n.Setting_Seasoning_Tip,
-					c => c.UseSeasoning,
-					(c, val) => c.UseSeasoning = val,
-					choices: seasoning
-				)
-				.Add(
-					I18n.Setting_HideUnknown,
-					I18n.Setting_HideUnknown_Tip,
-					c => c.HideUnknown,
-					(c, val) => c.HideUnknown = val
-				);
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_Quality)
-				.AddParagraph(I18n.Setting_Quality_Tip)
-				.Add(
-					I18n.Setting_EnableQuality,
-					I18n.Setting_EnableQuality_Tip,
-					c => c.MaxQuality != MaxQuality.Disabled,
-					(c, v) => {
-						if (v && c.MaxQuality == MaxQuality.Disabled)
-							c.MaxQuality = MaxQuality.Iridium;
-						else if (!v && c.MaxQuality != MaxQuality.Disabled)
-							c.MaxQuality = MaxQuality.Disabled;
-					}
-				)
-				.Add(
-					I18n.Setting_SortQuality,
-					I18n.Setting_SortQuality_Tip,
-					c => c.LowQualityFirst,
-					(c, v) => c.LowQualityFirst = v
-				);
-
-			GMCMIntegration
-				.AddLabel(I18n.Setting_Nearby)
-				.AddParagraph(I18n.Setting_Nearby_Tip)
-				.Add(
-					I18n.Setting_Nearby_Enable,
-					null,
-					c => c.UseDiscovery,
-					(c, v) => c.UseDiscovery = v
-				)
-				.Add(
-					I18n.Setting_Nearby_Diagonal,
-					I18n.Setting_Nearby_Diagonal_Tip,
-					c => c.UseDiagonalConnections,
-					(c, v) => c.UseDiagonalConnections = v
-				)
-				.AddLabel(
-					I18n.Setting_Nearby_Performance,
-					I18n.Setting_Nearby_Performance_Tip,
-					"page:perf"
-				)
-				.AddLabel(
-					I18n.Setting_Nearby_Connectors,
-					I18n.Setting_Nearby_Connectors_Tip,
-					"page:conn"
-				);
-
-
-			Dictionary<TTWhen, Func<string>> whens = new() {
-				[TTWhen.Never] = I18n.Setting_Ttwhen_Never,
-				[TTWhen.ForController] = I18n.Setting_Ttwhen_ForController,
-				[TTWhen.Always] = I18n.Setting_Ttwhen_Always,
-			};
-
-			Dictionary<ButtonAction, Func<string>> actions = new() {
-				[ButtonAction.None] = I18n.Setting_Action_None,
-				[ButtonAction.Craft] = I18n.Setting_Action_Craft,
-				[ButtonAction.BulkCraft] = I18n.Setting_Action_BulkCraft,
-				[ButtonAction.Favorite] = I18n.Setting_Action_Favorite
-			};
-
-			GMCMIntegration
-				.StartPage("page:bindings", I18n.Setting_Bindings)
-				.AddChoice(
-					I18n.Setting_Key_Tooltip,
-					I18n.Setting_Key_Tooltip_Tip,
-					c => c.ShowKeybindTooltip,
-					(c, v) => c.ShowKeybindTooltip = v,
-					whens
-				)
-				.Add(
-					I18n.Setting_Suppress,
-					I18n.Setting_Suppress_Tip,
-					c => c.SuppressBC,
-					(c, v) => c.SuppressBC = v
-				)
-				.AddLabel("")
-				.Add(
-					I18n.Setting_Key_Search,
-					I18n.Setting_Key_Search_Tip,
-					c => c.SearchKey,
-					(c, v) => c.SearchKey = v
-				)
-				.Add(
-					I18n.Setting_Key_Favorite,
-					I18n.Setting_Key_Favorite_Tip,
-					c => c.FavoriteKey,
-					(c, v) => c.FavoriteKey = v
-				)
-				.Add(
-					I18n.Setting_Key_Bulk,
-					I18n.Setting_Key_Bulk_Tip,
-					c => c.BulkCraftKey,
-					(c, v) => c.BulkCraftKey = v
-				)
-				.AddLabel("");
-
-			// Use Tool
-			GMCMIntegration
-				.AddChoice(
-					I18n.Setting_Key_Behavior_Left,
-					I18n.Setting_Key_Behavior_Left_Tip,
-					c => c.LeftClick,
-					(c, v) => c.LeftClick = v,
-					actions
-				)
-				.AddChoice(
-					I18n.Setting_Key_Behavior_Right,
-					I18n.Setting_Key_Behavior_Right_Tip,
-					c => c.RightClick,
-					(c, v) => c.RightClick = v,
-					actions
-				);
-
-			GMCMIntegration
-				.StartPage("page:perf", I18n.Setting_Nearby_Performance)
-				.AddParagraph(I18n.Setting_Nearby_Performance_Tip)
-				.Add(
-					I18n.Setting_Nearby_MaxChests,
-					I18n.Setting_Nearby_MaxChests_Tip,
-					c => c.MaxInventories,
-					(c, v) => c.MaxInventories = v,
-					min: 4,
-					max: 100
-				)
-				.Add(
-					I18n.Setting_Nearby_MaxDistance,
-					I18n.Setting_Nearby_MaxDistance_Tip,
-					c => c.MaxDistance,
-					(c, v) => c.MaxDistance = v,
-					min: 1,
-					max: 100
-				)
-				.Add(
-					I18n.Setting_Nearby_MaxCheck,
-					I18n.Setting_Nearby_MaxCheck_Tip,
-					c => c.MaxCheckedTiles,
-					(c, v) => c.MaxCheckedTiles = v,
-					min: 0,
-					max: 1000
-				);
-
-			GMCMIntegration
-				.StartPage("page:conn", I18n.Setting_Nearby_Connectors)
-				.AddParagraph(I18n.Setting_Nearby_Connectors_Tip);
-
-			if (FloorMap != null) {
-				GMCMIntegration.AddLabel(I18n.Setting_Nearby_Floors);
-
-				var floors = FloorMap.Values.ToList();
-				floors.Sort(StringComparer.InvariantCultureIgnoreCase);
-
-				foreach (string connector in floors)
-					if (!string.IsNullOrEmpty(connector))
-						GMCMIntegration.Add(
-							connector,
-							null,
-							c => c.ValidConnectors.Contains(connector),
-							(c, v) => {
-								if (v)
-									c.ValidConnectors.Add(connector);
-								else
-									c.ValidConnectors.Remove(connector);
-							}
-						);
-			}
-
-			if (ConnectorExamples != null) {
-				GMCMIntegration.AddLabel(I18n.Setting_Nearby_Other);
-
-				var sorted = ConnectorExamples.ToList();
-				sorted.Sort(StringComparer.InvariantCultureIgnoreCase);
-
-				foreach (string connector in sorted)
-					if ( ! string.IsNullOrEmpty(connector) )
-						GMCMIntegration.Add(
-							connector,
-							null,
-							c => c.ValidConnectors.Contains(connector),
-							(c, v) => {
-								if (v)
-									c.ValidConnectors.Add(connector);
-								else
-									c.ValidConnectors.Remove(connector);
-							}
-						);
-			}
-		}
-
-		public static string GetInputLabel(InputButton[] buttons) {
-			return string.Join(", ", buttons.Reverse().Select(btn => btn.ToString()));
-		}
-
-		#endregion
-
-		public bool HasLoveOfCooking() {
-			if (!hasLoveOfCooking.HasValue)
-				hasLoveOfCooking = Helper.ModRegistry.IsLoaded("blueberry.LoveOfCooking");
-
-			return hasLoveOfCooking.Value;
-		}
-
-		public bool HasBiggerBackpacks() {
-			if (!hasBiggerBackpacks.HasValue)
-				hasBiggerBackpacks = Helper.ModRegistry.IsLoaded("spacechase0.BiggerBackpack");
-
-			return hasBiggerBackpacks.Value;
-		}
-
-		public IEnumerable<GameLocation> GetLocations() {
-			return Helper.Multiplayer.GetActiveLocations();
-		}
-
-		public int GetBackpackRows(Farmer who) {
-			int rows = who.MaxItems / 12;
-			if (rows < 3) rows = 3;
-			if (rows < 4 && HasBiggerBackpacks()) rows = 4;
-			return rows;
-		}
-
-		public bool CanEnterNutDoor() {
-			int num = Math.Max(Game1.netWorldState.Value.GoldenWalnutsFound.Value - 1, 0);
-			return num >= 100;
-		}
-
-		public bool DoesTranslationExist(string key) {
-			// SMAPI's translation API is very opaque.
-			// But SMAPI's reflection helper is here to help with SMAPI.
-			// Thank you, SMAPI.
-			object Translator = Helper.Reflection.GetField<object>(Helper.Translation, "Translator", false).GetValue();
-			IDictionary<string, Translation> ForLocale = Translator == null ? null : Helper.Reflection.GetField<IDictionary<string, Translation>>(Translator, "ForLocale", false).GetValue();
-			return ForLocale != null && ForLocale.ContainsKey(key);
-		}
-
-		#region Connectors
-
-		private void LoadFloorMap() {
-			const string path = "assets/floors.json";
-			Dictionary<int, string> floors = null;
-
-			try {
-				floors = Helper.Data.ReadJsonFile<Dictionary<int, string>>(path);
-				if (floors == null)
-					Log($"The {path} file is missing or invalid.", LogLevel.Error);
-			} catch(Exception ex) {
-				Log($"The {path} file is invalid.", LogLevel.Error, ex);
-			}
-
-			if (floors == null)
-				floors = new();
-
-			// Read any extra data files
-			foreach(var cp in Helper.ContentPacks.GetOwned()) {
-				if (!cp.HasFile("floors.json"))
-					continue;
-
-				Dictionary<int, string> extra = null;
 				try {
-					extra = cp.ReadJsonFile<Dictionary<int, string>>("floors.json");
+					heads = Helper.Data.ReadJsonFile<Dictionary<string, HeadSize>>(path);
+					if (heads is null)
+						Log($"The {path} file is missing or invalid.", LogLevel.Error);
 				} catch(Exception ex) {
-					Log($"The floors.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+					Log($"The {path} file is invalid.", LogLevel.Error, ex);
 				}
 
-				if (extra != null)
-					foreach(var entry in extra)
-						if ( string.IsNullOrEmpty(entry.Value) )
-							floors.Remove(entry.Key);
-						else
-							floors[entry.Key] = entry.Value;
-			}
+				if (heads is null)
+					heads = new();
 
-			FloorMap = floors;
-		}
+				// Read any extra data files.
+				foreach (var cp in Helper.ContentPacks.GetOwned()) {
+					if (!cp.HasFile("heads.json"))
+						continue;
 
-		private void LoadConnectorExamples() {
-			const string path = "assets/connector_examples.json";
-			CaseInsensitiveHashSet examples = null;
+					Dictionary<string, HeadSize>? extra = null;
+					try {
+						extra = cp.ReadJsonFile<Dictionary<string, HeadSize>>("heads.json");
+					} catch (Exception ex) {
+						Log($"The heads.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+					}
 
-			try {
-				examples = Helper.Data.ReadJsonFile<CaseInsensitiveHashSet>(path);
-				if (examples == null)
-					Log($"The {path} file is missing or invalid.", LogLevel.Error);
-			} catch (Exception ex) {
-				Log($"The {path} file is invalid.", LogLevel.Error, ex);
-			}
+					if (extra != null)
+						foreach (var entry in extra)
+							if (!string.IsNullOrEmpty(entry.Key))
+								heads[entry.Key] = entry.Value;
+				}
 
-			if (examples == null)
-				examples = new();
+				// Now, read the data file used by NPC Map Locations. This is
+				// convenient because a lot of mods support it.
+				Dictionary<string, JObject>? content = null;
 
-			// Read any extra data files
-			foreach(var cp in Helper.ContentPacks.GetOwned()) {
-				if (!cp.HasFile("connector_examples.json"))
-					continue;
-
-				List<string> extra = null;
 				try {
-					extra = cp.ReadJsonFile<List<string>>("connector_examples.json");
-				} catch(Exception ex) {
-					Log($"The connector_examples.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+					content = Helper.GameContent.Load<Dictionary<string, JObject>>(NPCMapLocationPath);
+
+				} catch (Exception) {
+					/* Nothing~ */
 				}
 
-				if (extra != null)
-					foreach (string entry in extra) {
-						if (string.IsNullOrEmpty(entry))
+				if (content is not null) {
+					int count = 0;
+
+					foreach (var entry in content) {
+						if (heads.ContainsKey(entry.Key))
 							continue;
-						else if (entry.StartsWith("--"))
-							examples.Remove(entry[2..]);
-						else if (entry.StartsWith(" --"))
-							examples.Add(entry[1..]);
-						else
-							examples.Add(entry);
+
+						int offset;
+						try {
+							offset = entry.Value.Value<int>("MarkerCropOffset");
+						} catch (Exception) {
+							continue;
+						}
+
+						heads[entry.Key] = new() {
+							OffsetY = offset
+						};
+						count++;
 					}
+
+					Log($"Loaded {count} head offsets from NPC Map Location data.");
+				}
+
+				return heads;
+
+			}, AssetLoadPriority.High);
+	}
+
+	public Dictionary<string, HeadSize> GetHeads() {
+		HeadsCache ??= Helper.GameContent.Load<Dictionary<string, HeadSize>>(HeadsPath);
+		return HeadsCache;
+	}
+
+	#endregion
+
+	#region Configuration
+
+	public void SaveConfig() {
+		Helper.WriteConfig(Config);
+		Helper.GameContent.InvalidateCache(@"Data\CraftingRecipes");
+		InjectMenuHandler();
+	}
+
+	[MemberNotNullWhen(true, nameof(GMCMIntegration))]
+	public bool HasGMCM() {
+		return GMCMIntegration?.IsLoaded ?? false;
+	}
+
+	public void OpenGMCM() {
+		if (HasGMCM()) {
+			if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is Menus.BetterCraftingPage p) {
+				OldCraftingPage.Value = p;
+				OldCraftingGameMenu.Value = true;
+			} 
+
+			if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
+				OldCraftingPage.Value = page;
+
+			GMCMIntegration.OpenMenu();
+		}
+	}
+
+
+	private void RegisterSettings() {
+		GMCMIntegration = new(this, () => Config, () => Config = new ModConfig(), () => SaveConfig());
+		if (!GMCMIntegration.IsLoaded)
+			return;
+
+		if (ConfigRegistered)
+			GMCMIntegration.Unregister();
+
+		ConfigRegistered = true;
+
+		Dictionary<Models.SeasoningMode, Func<string>> seasoning = new();
+		seasoning.Add(Models.SeasoningMode.Disabled, I18n.Seasoning_Disabled);
+		seasoning.Add(Models.SeasoningMode.Enabled, I18n.Seasoning_Enabled);
+		seasoning.Add(Models.SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory);
+
+		GMCMIntegration.Register(true);
+
+		if (!AtTitle)
+			GMCMIntegration.Add(
+				I18n.Setting_ShowAdv,
+				I18n.Setting_ShowAdv_Tip,
+				c => Game1.options.showAdvancedCraftingInformation,
+				(c, v) => Game1.options.changeCheckBoxOption(Options.toggleShowAdvancedCraftingInformation, v)
+			);
+
+		GMCMIntegration
+			.AddLabel(I18n.Setting_General)
+			.AddChoice(
+				I18n.Setting_Theme,
+				I18n.Setting_ThemeDesc,
+				c => c.Theme,
+				(c, v) => {
+					c.Theme = v;
+					ThemeManager.SelectTheme(v);
+				},
+				ThemeManager.GetThemeChoiceMethods()
+			)
+			.Add(
+				I18n.Setting_Settings,
+				I18n.Setting_Settings_Tip,
+				c => c.ShowSettingsButton,
+				(c, v) => c.ShowSettingsButton = v
+			)
+			.Add(
+				I18n.Setting_ReplaceCrafting,
+				I18n.Setting_ReplaceCrafting_Tip,
+				c => c.ReplaceCrafting,
+				(c, val) => c.ReplaceCrafting = val
+			)
+			.Add(
+				I18n.Setting_ReplaceCooking,
+				I18n.Setting_ReplaceCooking_Tip,
+				c => c.ReplaceCooking,
+				(c, val) => c.ReplaceCooking = val
+			)
+			.Add(
+				I18n.Setting_EnableCategories,
+				I18n.Setting_EnableCategories_Tip,
+				c => c.UseCategories,
+				(c, val) => c.UseCategories = val
+			)
+			.AddChoice(
+				name: I18n.Setting_GiftTaste,
+				tooltip: I18n.Setting_GiftTaste_Tip,
+				get: c => c.ShowTastes,
+				set: (c, v) => c.ShowTastes = v,
+				choices: new Dictionary<GiftMode, Func<string>> {
+					{ GiftMode.Never, I18n.Setting_GiftTaste_Never },
+					{ GiftMode.Shift, I18n.Setting_GiftTaste_Shift },
+					{ GiftMode.Always, I18n.Setting_GiftTaste_Always }
+				}
+			)
+			.AddChoice(
+				name: I18n.Setting_GiftTasteStyle,
+				tooltip: I18n.Setting_GiftTasteStyle_Tip,
+				get: c => c.TasteStyle,
+				set: (c, v) => c.TasteStyle = v,
+				choices: new Dictionary<GiftStyle, Func<string>> {
+					{ GiftStyle.Heads, I18n.Setting_GiftTasteStyle_Heads },
+					{ GiftStyle.Names, I18n.Setting_GiftTasteStyle_Names }
+				}
+			)
+			.Add(
+				name: I18n.Setting_GiftTasteAll,
+				tooltip: I18n.Setting_GiftTasteAll_Tip,
+				get: c => c.ShowAllTastes,
+				set: (c, v) => c.ShowAllTastes = v
+			)
+			.AddChoice(
+				name: I18n.Setting_Priority,
+				tooltip: I18n.Setting_Priority_Tip,
+				get: c => c.MenuPriority,
+				set: (c, v) => c.MenuPriority = v,
+				choices: new Dictionary<MenuPriority, Func<string>> {
+					{ MenuPriority.Low, I18n.Setting_Priority_Low },
+					{ MenuPriority.Normal, I18n.Setting_Priority_Normal },
+					{ MenuPriority.High, I18n.Setting_Priority_High },
+				}
+			);
+
+		GMCMIntegration
+			.AddLabel(I18n.Setting_Bindings, I18n.Setting_Bindings_Tip, "page:bindings");
+
+		GMCMIntegration
+			.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
+			.Add(
+				I18n.Setting_UniformGrid,
+				I18n.Setting_UniformGrid_Tip,
+				c => c.UseUniformGrid,
+				(c, val) => c.UseUniformGrid = val
+			)
+			.Add(
+				I18n.Setting_Alphabetic,
+				I18n.Setting_Alphabetic_Tip,
+				c => c.CraftingAlphabetic,
+				(c,v) => c.CraftingAlphabetic = v
+			)
+			.Add(
+				I18n.Setting_BigCraftablesLast,
+				I18n.Setting_BigCraftablesLast_Tip,
+				c => c.SortBigLast,
+				(c, val) => c.SortBigLast = val
+			);
+
+		GMCMIntegration
+			.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
+			.Add(
+				I18n.Setting_Alphabetic,
+				I18n.Setting_Alphabetic_Tip,
+				c => c.CookingAlphabetic,
+				(c, v) => c.CookingAlphabetic = v
+			)
+			.AddChoice(
+				I18n.Setting_Seasoning,
+				I18n.Setting_Seasoning_Tip,
+				c => c.UseSeasoning,
+				(c, val) => c.UseSeasoning = val,
+				choices: seasoning
+			)
+			.Add(
+				I18n.Setting_HideUnknown,
+				I18n.Setting_HideUnknown_Tip,
+				c => c.HideUnknown,
+				(c, val) => c.HideUnknown = val
+			);
+
+		GMCMIntegration
+			.AddLabel(I18n.Setting_Quality)
+			.AddParagraph(I18n.Setting_Quality_Tip)
+			.Add(
+				I18n.Setting_EnableQuality,
+				I18n.Setting_EnableQuality_Tip,
+				c => c.MaxQuality != MaxQuality.Disabled,
+				(c, v) => {
+					if (v && c.MaxQuality == MaxQuality.Disabled)
+						c.MaxQuality = MaxQuality.Iridium;
+					else if (!v && c.MaxQuality != MaxQuality.Disabled)
+						c.MaxQuality = MaxQuality.Disabled;
+				}
+			)
+			.Add(
+				I18n.Setting_SortQuality,
+				I18n.Setting_SortQuality_Tip,
+				c => c.LowQualityFirst,
+				(c, v) => c.LowQualityFirst = v
+			);
+
+		GMCMIntegration
+			.AddLabel(
+				I18n.Setting_Recycle,
+				I18n.Setting_Recycle_About,
+				"page:recycle"
+			)
+
+			.AddLabel(
+				I18n.Setting_Nearby,
+				I18n.Setting_Nearby_Tip,
+				"page:nearby"
+			)
+
+			.AddLabel(
+				I18n.Setting_Cookout,
+				I18n.Setting_Cookout_About,
+				"page:cookout"
+			)
+
+			.AddLabel(
+				I18n.Setting_Transfer,
+				I18n.Setting_Transfer_About,
+				"page:transfer"
+			);
+
+		Dictionary<RecyclingMode, Func<string>> recycleModes = new() {
+			[RecyclingMode.Automatic] = I18n.Setting_RecycleMode_Automatic,
+			[RecyclingMode.Enabled] = I18n.Setting_RecycleMode_Enabled,
+			[RecyclingMode.Disabled] = I18n.Setting_RecycleMode_Disabled
+		};
+
+		Dictionary<TTWhen, Func<string>> whens = new() {
+			[TTWhen.Never] = I18n.Setting_Ttwhen_Never,
+			[TTWhen.ForController] = I18n.Setting_Ttwhen_ForController,
+			[TTWhen.Always] = I18n.Setting_Ttwhen_Always,
+		};
+
+		Dictionary<ButtonAction, Func<string>> actions = new() {
+			[ButtonAction.None] = I18n.Setting_Action_None,
+			[ButtonAction.Craft] = I18n.Setting_Action_Craft,
+			[ButtonAction.BulkCraft] = I18n.Setting_Action_BulkCraft,
+			[ButtonAction.Favorite] = I18n.Setting_Action_Favorite
+		};
+
+		GMCMIntegration
+			.StartPage("page:bindings", I18n.Setting_Bindings)
+			.AddChoice(
+				I18n.Setting_Key_Tooltip,
+				I18n.Setting_Key_Tooltip_Tip,
+				c => c.ShowKeybindTooltip,
+				(c, v) => c.ShowKeybindTooltip = v,
+				whens
+			)
+			.Add(
+				I18n.Setting_Suppress,
+				I18n.Setting_Suppress_Tip,
+				c => c.SuppressBC,
+				(c, v) => c.SuppressBC = v
+			)
+			.AddLabel("")
+			.Add(
+				I18n.Setting_Key_Modifier,
+				I18n.Setting_Key_Modifier_Tip,
+				c => c.ModiferKey,
+				(c, v) => c.ModiferKey = v
+			)
+			.Add(
+				I18n.Setting_Key_Search,
+				I18n.Setting_Key_Search_Tip,
+				c => c.SearchKey,
+				(c, v) => c.SearchKey = v
+			)
+			.Add(
+				I18n.Setting_Key_Favorite,
+				I18n.Setting_Key_Favorite_Tip,
+				c => c.FavoriteKey,
+				(c, v) => c.FavoriteKey = v
+			)
+			.Add(
+				I18n.Setting_Key_Bulk,
+				I18n.Setting_Key_Bulk_Tip,
+				c => c.BulkCraftKey,
+				(c, v) => c.BulkCraftKey = v
+			)
+			.AddLabel("");
+
+		// Use Tool
+		GMCMIntegration
+			.AddChoice(
+				I18n.Setting_Key_Behavior_Left,
+				I18n.Setting_Key_Behavior_Left_Tip,
+				c => c.LeftClick,
+				(c, v) => c.LeftClick = v,
+				actions
+			)
+			.AddChoice(
+				I18n.Setting_Key_Behavior_Right,
+				I18n.Setting_Key_Behavior_Right_Tip,
+				c => c.RightClick,
+				(c, v) => c.RightClick = v,
+				actions
+			);
+
+		GMCMIntegration
+			.StartPage("page:perf", I18n.Setting_Nearby_Performance)
+			.AddParagraph(I18n.Setting_Nearby_Performance_Tip)
+			.Add(
+				I18n.Setting_Nearby_MaxChests,
+				I18n.Setting_Nearby_MaxChests_Tip,
+				c => c.MaxInventories,
+				(c, v) => c.MaxInventories = v,
+				min: 4,
+				max: 100
+			)
+			.Add(
+				I18n.Setting_Nearby_MaxDistance,
+				I18n.Setting_Nearby_MaxDistance_Tip,
+				c => c.MaxDistance,
+				(c, v) => c.MaxDistance = v,
+				min: 1,
+				max: 100
+			)
+			.Add(
+				I18n.Setting_Nearby_MaxCheck,
+				I18n.Setting_Nearby_MaxCheck_Tip,
+				c => c.MaxCheckedTiles,
+				(c, v) => c.MaxCheckedTiles = v,
+				min: 0,
+				max: 1000
+			);
+
+		GMCMIntegration
+			.StartPage("page:conn", I18n.Setting_Nearby_Connectors)
+			.AddParagraph(I18n.Setting_Nearby_Connectors_Tip);
+
+		if (FloorMap != null) {
+			GMCMIntegration.AddLabel(I18n.Setting_Nearby_Floors);
+
+			var floors = FloorMap.Values.ToList();
+			floors.Sort(StringComparer.InvariantCultureIgnoreCase);
+
+			foreach (string connector in floors)
+				if (!string.IsNullOrEmpty(connector))
+					GMCMIntegration.Add(
+						connector,
+						null,
+						c => c.ValidConnectors.Contains(connector),
+						(c, v) => {
+							if (v)
+								c.ValidConnectors.Add(connector);
+							else
+								c.ValidConnectors.Remove(connector);
+						}
+					);
+		}
+
+		if (ConnectorExamples != null) {
+			GMCMIntegration.AddLabel(I18n.Setting_Nearby_Other);
+
+			var sorted = ConnectorExamples.ToList();
+			sorted.Sort(StringComparer.InvariantCultureIgnoreCase);
+
+			foreach (string connector in sorted)
+				if ( ! string.IsNullOrEmpty(connector) )
+					GMCMIntegration.Add(
+						connector,
+						null,
+						c => c.ValidConnectors.Contains(connector),
+						(c, v) => {
+							if (v)
+								c.ValidConnectors.Add(connector);
+							else
+								c.ValidConnectors.Remove(connector);
+						}
+					);
+		}
+
+		GMCMIntegration
+			.StartPage("page:recycle", I18n.Setting_Recycle)
+			.AddParagraph(I18n.Setting_Recycle_About)
+			.Add(
+				I18n.Setting_Recycle_ClickToggle,
+				I18n.Setting_Recycle_ClickToggle_Tip,
+				c => c.RecycleClickToggle,
+				(c, v) => c.RecycleClickToggle = v
+			)
+			.AddChoice(
+				I18n.Setting_Recycle_Crafting,
+				I18n.Setting_Recycle_Crafting_Tip,
+				c => c.RecycleCrafting,
+				(c, v) => c.RecycleCrafting = v,
+				recycleModes
+			)
+			.AddChoice(
+				I18n.Setting_Recycle_Cooking,
+				I18n.Setting_Recycle_Cooking_Tip,
+				c => c.RecycleCooking,
+				(c, v) => c.RecycleCooking = v,
+				recycleModes
+			)
+			.AddLabel("")
+			.Add(
+				I18n.Setting_Recycle_Fuzzy,
+				I18n.Setting_Recycle_Fuzzy_Tip,
+				c => c.RecycleFuzzyItems,
+				(c, v) => c.RecycleFuzzyItems = v
+			)
+			.Add(
+				I18n.Setting_Recycle_Unknown,
+				I18n.Setting_Recycle_Unknown_Tip,
+				c => c.RecycleUnknownRecipes,
+				(c, v) => c.RecycleUnknownRecipes = v
+			);
+
+		GMCMIntegration
+			.StartPage("page:nearby", I18n.Setting_Nearby)
+			.AddParagraph(I18n.Setting_Nearby_Tip)
+			.Add(
+				I18n.Setting_Nearby_Enable,
+				null,
+				c => c.UseDiscovery,
+				(c, v) => c.UseDiscovery = v
+			)
+			.Add(
+				I18n.Setting_Nearby_Diagonal,
+				I18n.Setting_Nearby_Diagonal_Tip,
+				c => c.UseDiagonalConnections,
+				(c, v) => c.UseDiagonalConnections = v
+			)
+			.AddLabel(
+				I18n.Setting_Nearby_Performance,
+				I18n.Setting_Nearby_Performance_Tip,
+				"page:perf"
+			)
+			.AddLabel(
+				I18n.Setting_Nearby_Connectors,
+				I18n.Setting_Nearby_Connectors_Tip,
+				"page:conn"
+			);
+
+		GMCMIntegration
+			.StartPage("page:cookout", I18n.Setting_Cookout)
+			.AddParagraph(I18n.Setting_Cookout_About);
+
+		GMCMIntegration
+			.Add(
+				I18n.Setting_Cookout_Workbench,
+				I18n.Setting_Cookout_Workbench_Tip,
+				c => c.EnableCookoutWorkbench,
+				(c, v) => c.EnableCookoutWorkbench = v
+			)
+			.Add(
+				I18n.Setting_Cookout_Durable,
+				I18n.Setting_Cookout_Durable_Tip,
+				c => c.EnableCookoutLongevity,
+				(c, v) => c.EnableCookoutLongevity = v
+			)
+			.Add(
+				I18n.Setting_Cookout_Expensive,
+				I18n.Setting_Cookout_Expensive_Tip,
+				c => c.EnableCookoutExpensive,
+				(c, v) => c.EnableCookoutExpensive = v
+			);
+
+		GMCMIntegration
+			.StartPage("page:transfer", I18n.Setting_Transfer)
+			.AddParagraph(I18n.Setting_Transfer_About);
+
+		GMCMIntegration
+			.Add(
+				I18n.Setting_Transfer_Enable,
+				null,
+				c => c.UseTransfer,
+				(c, v) => c.UseTransfer = v
+			)
+
+			.AddLabel("") // Spacer
+
+			.Add(
+				I18n.Setting_Key_Modifier,
+				I18n.Setting_Key_Modifier_Tip,
+				c => c.ModiferKey,
+				(c,v) => c.ModiferKey = v
+			)
+
+			.AddLabel(""); // Spacer
+
+		GMCMIntegration.AddLabel(() => I18n.Setting_Transfer_UseTool(string.Join(", ", Game1.options.useToolButton.Select(x => x.ToSButton().ToString()))));
+		AddBehaviorSettings(c => c.AddToBehaviors.UseTool);
+
+		GMCMIntegration.AddLabel(I18n.Setting_Transfer_UseToolModifier);
+		AddBehaviorSettings(c => c.AddToBehaviors.UseToolModified);
+
+		GMCMIntegration.AddLabel(""); // Spacer
+
+		GMCMIntegration.AddLabel(() => I18n.Setting_Transfer_Action(string.Join(", ", Game1.options.actionButton.Select(x => x.ToSButton().ToString()))));
+		AddBehaviorSettings(c => c.AddToBehaviors.Action);
+
+		GMCMIntegration.AddLabel(I18n.Setting_Transfer_ActionModifier);
+		AddBehaviorSettings(c => c.AddToBehaviors.ActionModified);
+	}
+
+	private void AddBehaviorSettings(Func<ModConfig, TransferBehavior> accessor) {
+		Dictionary<TransferMode, Func<string>> modes = new() {
+			{ TransferMode.None, I18n.Setting_Transfer_Behavior_None },
+			{ TransferMode.All, I18n.Setting_Transfer_Behavior_All },
+			{ TransferMode.AllButQuantity, I18n.Setting_Transfer_Behavior_AllQuantity },
+			{ TransferMode.Half, I18n.Setting_Transfer_Behavior_Half },
+			{ TransferMode.Quantity, I18n.Setting_Transfer_Behavior_Quantity }
+		};
+
+		GMCMIntegration!
+			.AddChoice(
+				I18n.Setting_Transfer_Behavior,
+				null,
+				c => accessor(c).Mode,
+				(c, v) => accessor(c).Mode = v,
+				modes
+			)
+
+			.Add(
+				I18n.Setting_Transfer_Quantity,
+				I18n.Setting_Transfer_Quantity_Tip,
+				c => accessor(c).Quantity,
+				(c,v) => accessor(c).Quantity = v,
+				min: 1,
+				max: 999
+			);
+	}
+
+	public static string GetInputLabel(InputButton[] buttons) {
+		return string.Join(", ", buttons.Reverse().Select(btn => btn.ToString()));
+	}
+
+	#endregion
+
+	#region Item Enumeration
+
+	private List<Item>? CachedObjects;
+	private List<Item>? CachedBigCraftables;
+	private List<Item>? CachedFurniture;
+	private List<Item>? CachedWeapons;
+	private List<Item>? CachedBoots;
+	private List<Item>? CachedHats;
+	private List<Item>? CachedClothing;
+
+	[MemberNotNull(nameof(CachedObjects))]
+	private void LoadObjects() {
+		if (CachedObjects is null) {
+			CachedObjects = new();
+			foreach(int id in Game1.objectInformation.Keys) {
+				Item? item = InventoryHelper.CreateObjectOrRing(id);
+				if (item is not null)
+					CachedObjects.Add(item);
+			}
+		}
+	}
+
+	[MemberNotNull(nameof(CachedBigCraftables))]
+	private void LoadBigCraftables() {
+		if (CachedBigCraftables is null) {
+			CachedBigCraftables = new();
+			foreach(int id in Game1.bigCraftablesInformation.Keys)
+				CachedBigCraftables.Add(new SObject(Vector2.Zero, id, 1));
+		}
+	}
+
+	[MemberNotNull(nameof(CachedFurniture))]
+	private void LoadFurniture() {
+		if (CachedFurniture is null) {
+			CachedFurniture = new();
+			foreach(int id in Game1.content.Load<Dictionary<int, string>>(@"Data\Furniture").Keys)
+				CachedFurniture.Add(Furniture.GetFurnitureInstance(id, Vector2.Zero));
+		}
+	}
+
+	[MemberNotNull(nameof(CachedWeapons))]
+	private void LoadWeapons() {
+		if (CachedWeapons is null) {
+			CachedWeapons = new();
+			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\weapons").Keys)
+				CachedWeapons.Add(new MeleeWeapon(id));
+		}
+	}
+
+	[MemberNotNull(nameof(CachedBoots))]
+	private void LoadBoots() {
+		if (CachedBoots is null) {
+			CachedBoots = new();
+			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\Boots").Keys)
+				CachedBoots.Add(new Boots(id));
+		}
+	}
+
+	[MemberNotNull(nameof(CachedHats))]
+	private void LoadHats() {
+		if (CachedHats is null) {
+			CachedHats = new();
+			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\hats").Keys)
+				CachedHats.Add(new Hat(id));
+		}
+	}
+
+	[MemberNotNull(nameof(CachedClothing))]
+	private void LoadClothes() {
+		if (CachedClothing is null) {
+			CachedClothing = new();
+			foreach (int id in Game1.clothingInformation.Keys)
+				CachedClothing.Add(new Clothing(id));
+		}
+	}
+
+	public IEnumerable<Item> GetMatchingItems(Func<Item, bool> predicate, bool normalObjects = true, bool bigCraftables = true, bool clothing = true, bool dga = true) {
+		if (normalObjects)
+			LoadObjects();
+			// Screw you VS this is not "may be null" why are you not seeing
+			// the MemberNotNull attribute on LoadObjects()?
+			foreach(Item item in CachedObjects!) {
+				if (predicate(item))
+					yield return item;
 			}
 
-			ConnectorExamples = examples;
-		}
-
-		public bool IsValidConnector(object obj) {
-			// TODO: Check for MoveToConnected?
-
-			if (obj == null) return false;
-
-			switch(obj) {
-				case Item item:
-					return Config.ValidConnectors.Contains(item.Name);
-
-				case Flooring floor:
-					return FloorMap != null
-						&& FloorMap.TryGetValue(floor.whichFloor.Value, out string name)
-						&& name != null
-						&& Config.ValidConnectors.Contains(name);
-
-				default:
-					return false;
+		if (bigCraftables) {
+			LoadBigCraftables();
+			foreach(Item item in CachedBigCraftables) {
+				if (predicate(item))
+					yield return item;
 			}
 
-		}
-
-		#endregion
-
-		#region Providers
-
-		public void RegisterProviders() {
-			RegisterInventoryProvider(typeof(Chest), new ChestProvider(any: true));
-			RegisterInventoryProvider(typeof(Workbench), new WorkbenchProvider());
-		}
-
-		public void RegisterInventoryProvider(Type type, IInventoryProvider provider) {
-			lock (providerLock) {
-				invProviders[type] = provider;
+			LoadFurniture();
+			foreach(Item item in CachedFurniture) {
+				if (predicate(item))
+					yield return item;
 			}
 		}
 
-		public void UnregisterInventoryProvider(Type type) {
-			lock (providerLock) {
-				if (invProviders.ContainsKey(type))
-					invProviders.Remove(type);
+		// if tools
+		LoadWeapons();
+		foreach(Item item in CachedWeapons) {
+			if (predicate(item))
+				yield return item;
+		}
+
+		// if boots
+		LoadBoots();
+		foreach(Item item in CachedBoots) {
+			if (predicate(item))
+				yield return item;
+		}
+
+		// if hats
+		LoadHats();
+		foreach(Item item in CachedHats) {
+			if (predicate(item))
+				yield return item;
+		}
+
+		if (clothing) {
+			LoadClothes();
+			foreach(Item item in CachedClothing) {
+				if (predicate(item))
+					yield return item;
 			}
 		}
 
-		public IInventoryProvider GetInventoryProvider(object obj) {
-			// TODO: Check for MoveToConnected?
+		// Finally, DynamicGameAssets.
+		if (dga && intDGA != null)
+			foreach(Item item in intDGA.GetAllItems()) {
+				if (predicate(item))
+					yield return item;
+			}
+	}
 
-			Type type = obj?.GetType();
-			if (type == null || !invProviders.ContainsKey(type))
-				return null;
+	#endregion
 
-			return (IInventoryProvider)invProviders[type];
+	public bool HasLoveOfCooking() {
+		if (!hasLoveOfCooking.HasValue)
+			hasLoveOfCooking = Helper.ModRegistry.IsLoaded("blueberry.LoveOfCooking");
+
+		return hasLoveOfCooking.Value;
+	}
+
+	public bool HasBiggerBackpacks() {
+		if (!hasBiggerBackpacks.HasValue)
+			hasBiggerBackpacks = Helper.ModRegistry.IsLoaded("spacechase0.BiggerBackpack");
+
+		return hasBiggerBackpacks.Value;
+	}
+
+	public IEnumerable<GameLocation> GetLocations() {
+		return Helper.Multiplayer.GetActiveLocations();
+	}
+
+	public int GetBackpackRows(Farmer who) {
+		int rows = who.MaxItems / 12;
+		if (rows < 3) rows = 3;
+		if (rows < 4 && HasBiggerBackpacks()) rows = 4;
+		return rows;
+	}
+
+	public bool DoesTranslationExist(string key) {
+		return Helper.Translation.ContainsKey(key);
+	}
+
+	#region Connectors
+
+	[MemberNotNull(nameof(FloorMap))]
+	private void LoadFloorMap() {
+		const string path = "assets/floors.json";
+		Dictionary<int, string>? floors = null;
+
+		try {
+			floors = Helper.Data.ReadJsonFile<Dictionary<int, string>>(path);
+			if (floors == null)
+				Log($"The {path} file is missing or invalid.", LogLevel.Error);
+		} catch(Exception ex) {
+			Log($"The {path} file is invalid.", LogLevel.Error, ex);
 		}
 
-		#endregion
+		if (floors == null)
+			floors = new();
+
+		// Read any extra data files
+		foreach(var cp in Helper.ContentPacks.GetOwned()) {
+			if (!cp.HasFile("floors.json"))
+				continue;
+
+			Dictionary<int, string>? extra = null;
+			try {
+				extra = cp.ReadJsonFile<Dictionary<int, string>>("floors.json");
+			} catch(Exception ex) {
+				Log($"The floors.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+			}
+
+			if (extra != null)
+				foreach(var entry in extra)
+					if ( string.IsNullOrEmpty(entry.Value) )
+						floors.Remove(entry.Key);
+					else
+						floors[entry.Key] = entry.Value;
+		}
+
+		FloorMap = floors;
+	}
+
+	[MemberNotNull(nameof(ConnectorExamples))]
+	private void LoadConnectorExamples() {
+		const string path = "assets/connector_examples.json";
+		CaseInsensitiveHashSet? examples = null;
+
+		try {
+			examples = Helper.Data.ReadJsonFile<CaseInsensitiveHashSet>(path);
+			if (examples == null)
+				Log($"The {path} file is missing or invalid.", LogLevel.Error);
+		} catch (Exception ex) {
+			Log($"The {path} file is invalid.", LogLevel.Error, ex);
+		}
+
+		if (examples == null)
+			examples = new();
+
+		// Read any extra data files
+		foreach(var cp in Helper.ContentPacks.GetOwned()) {
+			if (!cp.HasFile("connector_examples.json"))
+				continue;
+
+			List<string>? extra = null;
+			try {
+				extra = cp.ReadJsonFile<List<string>>("connector_examples.json");
+			} catch(Exception ex) {
+				Log($"The connector_examples.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+			}
+
+			if (extra != null)
+				foreach (string entry in extra) {
+					if (string.IsNullOrEmpty(entry))
+						continue;
+					else if (entry.StartsWith("--"))
+						examples.Remove(entry[2..]);
+					else if (entry.StartsWith(" --"))
+						examples.Add(entry[1..]);
+					else
+						examples.Add(entry);
+				}
+		}
+
+		ConnectorExamples = examples;
+	}
+
+	public bool IsValidConnector(object obj) {
+		// TODO: Check for MoveToConnected?
+
+		if (obj == null) return false;
+
+		switch(obj) {
+			case Item item:
+				return Config.ValidConnectors.Contains(item.Name);
+
+			case Flooring floor:
+				return FloorMap != null
+					&& FloorMap.TryGetValue(floor.whichFloor.Value, out string? name)
+					&& name != null
+					&& Config.ValidConnectors.Contains(name);
+
+			default:
+				return false;
+		}
 
 	}
 
+	#endregion
+
+	#region Providers
+
+	public void RegisterProviders() {
+		RegisterInventoryProvider(typeof(Chest), new ChestProvider(any: true));
+		RegisterInventoryProvider(typeof(Workbench), new WorkbenchProvider());
+	}
+
+	public void RegisterInventoryProvider(Type type, IInventoryProvider provider) {
+		lock (providerLock) {
+			invProviders[type] = provider;
+		}
+	}
+
+	public void UnregisterInventoryProvider(Type type) {
+		lock (providerLock) {
+			if (invProviders.ContainsKey(type))
+				invProviders.Remove(type);
+		}
+	}
+
+	public IInventoryProvider? GetInventoryProvider(object obj) {
+		// TODO: Check for MoveToConnected?
+
+		Type? type = obj?.GetType();
+		if (type == null || !invProviders.ContainsKey(type))
+			return null;
+
+		return invProviders[type] as IInventoryProvider;
+	}
+
+	#endregion
+
 }
+

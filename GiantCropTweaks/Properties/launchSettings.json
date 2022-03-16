@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GiantCropTweaks": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"$(ModSet)\""
+    }
+  }
+}
