@@ -1,5 +1,5 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema",
+	"$schema": "http://json-schema.org/draft-04/schema",
 	"$id": "/schemas/theme",
 	"type": "object",
 	"title": "Almanac Theme",
@@ -34,45 +34,68 @@
 			}
 		},
 		"CoverTextColor": {
-			"$ref": "#/schemas/color",
+			"$ref": "#/definitions/color",
 			"description": "CoverTextColor changes the color of the Almanac's name on the front cover."
 		},
 		"CoverYearColor": {
-			"$ref": "#/schemas/color",
+			"$ref": "#/definitions/color",
 			"description": "CoverYearColor changes the color of the year on the front cover of the Almanac."
 		},
 		"Standard": {
-			"$ref": "#/schemas/style",
+			"$ref": "#/definitions/style",
 			"title": "Standard Style",
 			"description": "The style of a standard, non-magical Almanac page."
 		},
 		"Magic": {
-			"$ref": "#/schemas/style",
+			"$ref": "#/definitions/style",
 			"title": "Magic Style",
 			"description": "The style of a magical Almanac page."
 		}
 	},
 	"additionalProperties": true,
-	"$defs": {
+	"definitions": {
 		"style": {
 			"$id": "#/schemas/style",
 			"type": "object",
 			"properties": {
 				"CustomScroll": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "If CustomScroll is enabled, the scrollbar and arrows will be drawn using sprites from Menu.png. Otherwise, it'll use the game's main texture."
 				},
-				"SeasonTextColor": { "$ref": "#/schemas/color" },
-				"CalendarLabelColor": { "$ref": "#/schemas/color" },
-				"CalendarDayColor": { "$ref": "#/schemas/color" },
-				"CalendarDimColor": { "$ref": "#/schemas/color" },
+				"SeasonTextColor": {
+					"$ref": "#/definitions/color",
+					"description": "SeasonTextColor changes the color of the season displayed at the top left of an open Almanac page."
+				},
+				"CalendarLabelColor": {
+					"$ref": "#/definitions/color",
+					"description": "The calendar label color is for the day of the week labels (M, T, W, etc.) at the top of the calendar."
+				},
+				"CalendarDayColor": {
+					"$ref": "#/definitions/color",
+					"description": "The calendar day color is for individual day numbers."
+				},
+				"CalendarDimColor": {
+					"$ref": "#/definitions/color",
+					"description": "The calendar dim color is used to color a solid rectangle that's drawn over calendar days that are in the past. A separate opacity field is used because rendering is weird."
+				},
 				"CalendarDimOpacity": {
+					"description": "The opacity that the calendar dimming rectangles should be drawn with.",
 					"type": "number",
 					"min": 0,
 					"max": 1
 				},
-				"CalendarHighlightColor": { "$ref": "#/schemas/color" },
-				"TextColor": { "$ref": "#/schemas/color" },
-				"TextShadowColor": { "$ref": "#/schemas/color" }
+				"CalendarHighlightColor": {
+					"$ref": "#/definitions/color",
+					"description": "The calendar highlight color is used to color the pulsing rectangle drawn around the current day to highlight it."
+				},
+				"TextColor": {
+					"$ref": "#/definitions/color",
+					"description": "The text color is the primary color of all text drawn in the Almanac that has not otherwise been given a color."
+				},
+				"TextShadowColor": {
+					"$ref": "#/definitions/color",
+					"description": "The text shadow color is the shadow color of all text drawn in the Almanac that has not been otherwise assigned a shadow color."
+				}
 			},
 			"additionalProperties": false
 		},

@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/khloeleclair/StardewMods/main/Almanac/theme-schema.json",
+	"$schema": "https://raw.githubusercontent.com/KhloeLeclair/StardewMods/main/Almanac/theme-schema.json",
 	"Name": "Theme Template",
 	"For": [
 		"Some.Mod.Id.Here",
@@ -10,19 +10,6 @@
 	// enum names list), hex values, or objects with R, G, B, and A keys.
 	"CoverTextColor": null,
 	"CoverYearColor": "red",
-
-	// CoverTextColor and CoverYearColor are drawn using SpriteText, so there
-	// are limited color choices available:
-	//  -1: Default (#56160C)
-	//   0: Black
-	//   1: Blue
-	//   2: Red
-	//   3: Purple
-	//   4: White
-	//   5: Orange
-	//   6: Green
-	//   7: Cyan
-	//   8: Gray
 
 	// Standard applies to pages with the standard Almanac theme.
 	"Standard": {
