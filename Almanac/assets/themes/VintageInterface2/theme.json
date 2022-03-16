@@ -1,4 +1,5 @@
 {
+	"$schema": "https://raw.githubusercontent.com/khloeleclair/StardewMods/main/Almanac/theme-schema.json",
 	"Name": "Vintage Interface 2",
 	"For": [
 		"ManaKirel.VintageInterface2"
