@@ -301,25 +301,10 @@ Read more about it in the migration guide for now.
 `IconType` allows you to specify which type of icon we want to display
 for this notice. There are two possibilities.
 
-<table>
-<tr>
-<th>Value</th>
-<th> </th>
-</tr>
-<tr>
-<td><code>Item</code></td>
-<td>
-
-A value of `item` means that the `Item` associated with this notice should be
+1. `Item`: A value of `item` means that the `Item` associated with this notice should be
 used as the notice's icon.
 
-</td>
-</tr>
-<tr>
-<td><code>Texture</code></td>
-<td>
-
-A value of `texture` means that the notice should take its icon from a specific
+2. `Texture`: A value of `texture` means that the notice should take its icon from a specific
 texture. When set to `texture`, the item should have either an `IconPath` or
 `IconSource` along with an `IconSourceRect` set.
 
