@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -8,9 +9,12 @@ using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
 namespace Leclair.Stardew.Almanac {
-	public class AssetManager : IAssetEditor {
+	public class AssetManager : IAssetLoader, IAssetEditor {
 
 		private readonly ModEntry Mod;
+
+		public static readonly string ModAssetPath = Path.Combine("Mods", "leclair.almanac");
+		public static readonly string LocalNoticesPath = Path.Combine(ModAssetPath, "ExtraLocalNotices");
 
 		// Events
 		private readonly string EventPath = PathUtilities.NormalizeAssetName("Data/Events");
@@ -21,6 +25,7 @@ namespace Leclair.Stardew.Almanac {
 
 		public AssetManager(ModEntry mod) {
 			Mod = mod;
+			Mod.Helper.Content.AssetLoaders.Add(this);
 			Mod.Helper.Content.AssetEditors.Add(this);
 		}
 
@@ -43,6 +48,24 @@ namespace Leclair.Stardew.Almanac {
 			Loaded = true;
 			Locale = locale;
 		}
+
+		#region IAssetLoader
+		public bool CanLoad<T>(IAssetInfo asset) {
+			return asset.AssetNameEquals(LocalNoticesPath);
+		}
+
+		public T Load<T>(IAssetInfo asset) {
+			if (asset.AssetNameEquals(LocalNoticesPath)) {
+				var data = new Dictionary<string, Models.LocalNotice>();
+				return (T) (object) data;
+			}
+
+			return (T) (object) null;
+		}
+
+		#endregion
+
+		#region IAssetEditor
 
 		public bool CanEdit<T>(IAssetInfo asset) {
 			if (asset.AssetName.StartsWith(EventPath)) {
@@ -78,6 +101,8 @@ namespace Leclair.Stardew.Almanac {
 			foreach (var entry in events)
 				editor.Data[entry.Key] = entry.Localize(Mod.Helper.Translation);
 		}
+
+		#endregion
 	}
 
 	public struct EventData {

@@ -30,6 +30,10 @@ namespace Leclair.Stardew.Almanac.Models {
 
 		public bool CustomScroll { get; set; }
 
+		public int ScrollOffsetTop { get; set; } = -9999;
+		public int ScrollOffsetBottom { get; set; } = -9999;
+
+
 		[JsonConverter(typeof(ColorConverter))]
 		public Color? SeasonTextColor { get; set; }
 

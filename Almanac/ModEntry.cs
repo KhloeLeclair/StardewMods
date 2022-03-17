@@ -71,6 +71,7 @@ namespace Leclair.Stardew.Almanac {
 
 		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
 
+		internal Integrations.ContentPatcher.CPIntegration intCP;
 		internal Integrations.LuckSkill.LSIntegration intLS;
 		internal Integrations.JsonAssets.JAIntegration intJA;
 		internal Integrations.MoreGiantCrops.MGCIntegration intMGC;
@@ -203,6 +204,7 @@ namespace Leclair.Stardew.Almanac {
 		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
 			if (Game1.activeClickableMenu is Menus.AlmanacMenu menu) {
 				menu.background = ThemeManager.Load<Texture2D>("Menu.png");
+				menu.Recenter();
 				menu.UpdateScrollComponents();
 			}
 		}
@@ -212,7 +214,17 @@ namespace Leclair.Stardew.Almanac {
 			if (!Context.IsWorldReady)
 				return;
 
-			if (Game1.activeClickableMenu != null || !(Config.UseKey?.JustPressed() ?? false))
+			if (Game1.activeClickableMenu != null)
+				return;
+
+#if DEBUG
+			if (e.Button == SButton.F8) {
+				GMCMIntegration?.OpenMenu();
+				return;
+			}
+#endif
+
+			if (!(Config.UseKey?.JustPressed() ?? false))
 				return;
 
 			Helper.Input.SuppressActiveKeybinds(Config.UseKey);
@@ -261,9 +273,18 @@ namespace Leclair.Stardew.Almanac {
 			}
 		}
 
+		public void Invalidate() {
+			Assets.Invalidate();
+			Notices.Invalidate();
+			Crops.Invalidate();
+			Fish.Invalidate();
+			Weather.Invalidate();
+		}
+
 		[Subscriber]
 		private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
 			// Integrations
+			intCP = new(this);
 			intLS = new(this);
 			intJA = new(this);
 			intMGC = new(this);
@@ -273,10 +294,9 @@ namespace Leclair.Stardew.Almanac {
 
 			// Commands
 			Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
-				Assets.Invalidate();
-				Crops.Invalidate();
-				Fish.Invalidate();
-				Weather.Invalidate();
+				Invalidate();
+				if (Game1.activeClickableMenu is Menus.AlmanacMenu almanac)
+					almanac.RefreshPages();
 			});
 
 			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", (name, args) => {
@@ -318,7 +338,7 @@ namespace Leclair.Stardew.Almanac {
 			// TODO: Add our pages to shop menus, if we have pages that are
 			// to be added to shops.
 
-			if (!HasAlmanac(Game1.player) || ! Config.ShowAlmanacButton)
+			if (!HasAlmanac(Game1.player) || Config.AlmanacButtonPos == ButtonPosition.Disabled)
 				return;
 
 			InventoryPage page = null;
@@ -342,7 +362,7 @@ namespace Leclair.Stardew.Almanac {
 			LoadHeads();
 
 			// Detect Season Length
-			WorldDate day = new WorldDate(1, "summer", 1);
+			WorldDate day = new(1, "summer", 1);
 			day.TotalDays--;
 			DaysPerMonth = day.DayOfMonth;
 
@@ -383,11 +403,19 @@ namespace Leclair.Stardew.Almanac {
 			GMCMIntegration.Register(true);
 
 			GMCMIntegration
-				.Add(
+				.AddChoice(
 					I18n.Settings_Button,
 					I18n.Settings_ButtonDesc,
-					c => c.ShowAlmanacButton,
-					(c, v) => c.ShowAlmanacButton = v
+					c => c.AlmanacButtonPos,
+					(c, v) => c.AlmanacButtonPos = v,
+					new Dictionary<ButtonPosition, Func<string>> {
+						[ButtonPosition.Disabled] = I18n.Settings_Button_Disabled,
+						[ButtonPosition.TopLeft] = I18n.Settings_Button_LeftTop,
+						[ButtonPosition.BottomLeft] = I18n.Settings_Button_LeftBottom,
+						[ButtonPosition.OrganizeRight] = I18n.Settings_Button_OrganizeRight,
+						[ButtonPosition.TrashRight] = I18n.Settings_Button_TrashRight,
+						[ButtonPosition.TrashDown] = I18n.Settings_Button_TrashDown
+					}
 				)
 				.Add(
 					I18n.Settings_RestoreState,

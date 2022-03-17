@@ -62,6 +62,14 @@
 					"type": "boolean",
 					"description": "If CustomScroll is enabled, the scrollbar and arrows will be drawn using sprites from Menu.png. Otherwise, it'll use the game's main texture."
 				},
+				"ScrollOffsetTop": {
+					"type": "integer",
+					"description": "The number of pixels from the top of the scrollable text flow that the right-side scrollbar should be offset."
+				},
+				"ScrollOffsetBottom": {
+					"type": "integer",
+					"description": "The number of pixels from the bottom of the scrollable text flow that the right-side scrollbar should be offset."
+				},
 				"SeasonTextColor": {
 					"$ref": "#/definitions/color",
 					"description": "SeasonTextColor changes the color of the season displayed at the top left of an open Almanac page."

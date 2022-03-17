@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.15.0
+Unreleased.
+
+### General
+
+* Added an option for configuring where the Open Almanac button appears
+  in the inventory menu. It can still be disabled, but may need to be
+  disabled again by users that had done so previously.
+* When cached data is invalidated, if the Almanac is open it will be
+  refreshed immediately.
+* When `Debug Mode` is enabled, pressing F5 will refresh the Almanac
+  from its data sources as though the update command was used.
+
+### Fixes
+
+* When invalidating Almanac data, invalidate notices.
+* When clicking a calendar date on the Local Notices page and that
+  page is part of a multi-day event, scroll to the previous day with
+  a log entry. This isn't perfect, but an improvement at least.
+
+### Mod Compatibility
+
+* Add built-in support for Vintage Interface 1.
+
+### Content Packs
+
+* Content Packs can now add Local Notices via Content Patcher. See the
+  new and improved [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
+  for details.
+* Themes now have `ScrollOffsetTop` and `ScrollOffsetBottom` properties.
+
+
 ## 0.14.0
 Released March 15th, 2022.
 
@@ -11,7 +43,7 @@ Released March 15th, 2022.
 
 * Improve Chinese translation coverage.
 
-### API Changes
+### Content Packs
 
 * Added an `al_theme` command to list all themes, or change the current theme
   if called with an argument. `al_theme reload` will reload all themes,

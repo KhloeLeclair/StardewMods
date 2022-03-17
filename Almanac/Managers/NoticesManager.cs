@@ -33,6 +33,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 		private readonly Dictionary<IManifest, Func<int, WorldDate, IEnumerable<IRichEvent>>> InterfaceHooks = new();
 
 		private Dictionary<WorldDate, List<IRichEvent>> DataEvents;
+
 		private bool Loaded = false;
 		private string Locale;
 
@@ -40,6 +41,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		public void Invalidate() {
 			Loaded = false;
+			Mod.Helper.Content.InvalidateCache(AssetManager.LocalNoticesPath);
 		}
 
 		#region Event Handlers
@@ -104,9 +106,117 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		#region Events
 
-		public IEnumerable<IRichEvent> GetEventsForDate(int seed, WorldDate date) {
+		public IRichEvent HydrateEvent(LocalNotice notice, int seed, WorldDate date) {
+			if (notice == null)
+				return null;
+
+			// Year Validation
+			if (notice.FirstYear > date.Year || notice.LastYear < date.Year)
+				return null;
+
+			if (notice.ValidYears != null && !notice.ValidYears.Contains(date.Year))
+				return null;
+
+			// Season Validation
+			if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains((NoticeSeason) date.SeasonIndex))
+				return null;
+
+			// Date Range Validation
+			int day;
+
+			bool first = true;
+
+			switch(notice.Period) {
+				case NoticePeriod.Year:
+					day = date.TotalDays % (WorldDate.MonthsPerYear * ModEntry.DaysPerMonth);
+					break;
+				case NoticePeriod.Season:
+					day = date.DayOfMonth;
+					break;
+				case NoticePeriod.Week:
+					day = date.DayOfMonth % 7;
+					break;
+				default:
+					day = -1;
+					break;
+			}
+
+			if (notice.Ranges != null) {
+				bool matched = false;
+				first = false;
+				foreach (var range in notice.Ranges) {
+					if (range.Start <= day && range.End >= day && (range.Valid == null || range.Valid.Contains(day))) {
+						if (range.Start == day)
+							first = true;
+						matched = true;
+					}
+				}
+
+				if (!matched)
+					return null;
+			}
+
+			// Get icon
+			Item item = null;
+			SpriteInfo sprite;
+
+			// Try parsing the item.
+			// This will change in 1.6
+			if (!string.IsNullOrEmpty(notice.Item)) {
+				try {
+					item = InventoryHelper.CreateItemById(notice.Item);
+				} catch(Exception ex) {
+					Log($"Unable to get item instance for: {notice.Item}", LogLevel.Warn, ex);
+					item = null;
+				}
+			}
+
+			if (notice.IconType == NoticeIconType.Item) {
+				sprite = item == null ? null : SpriteHelper.GetSprite(item);
+
+			} else if (notice.IconType == NoticeIconType.Texture) {
+				Texture2D tex;
+				if (!string.IsNullOrEmpty(notice.IconPath))
+					tex = Game1.content.Load<Texture2D>(notice.IconPath);
+				else if (notice.IconSource.HasValue)
+					tex = SpriteHelper.GetTexture(notice.IconSource.Value);
+				else
+					tex = null;
+
+				sprite = tex == null ? null : new SpriteInfo(
+					tex,
+					notice.IconSourceRect ?? tex.Bounds
+				);
+
+			} else {
+				item = null;
+				sprite = null;
+			}
+
+			return new RichEvent(
+				(first || notice.ShowEveryDay) ? notice.Description : null,
+				null,
+				sprite,
+				item
+			);
+		}
+
+		public LocalNotice[] LoadExtraNotices() {
+			Dictionary<string, LocalNotice> notices = Game1.content.Load<Dictionary<string, LocalNotice>>(AssetManager.LocalNoticesPath);
+			return notices?.Values?.ToArray();
+		}
+
+		public IEnumerable<IRichEvent> GetEventsForDate(int seed, WorldDate date, LocalNotice[] extraNotices = null) {
 
 			Load();
+
+			if (extraNotices != null) {
+				foreach(var notice in extraNotices) {
+					IRichEvent hydrated = HydrateEvent(notice, seed, date);
+					if (hydrated != null)
+						yield return hydrated;
+				}
+			}
 
 			if (DataEvents?.ContainsKey(date) ?? false) {
 				foreach(var evt in DataEvents[date])

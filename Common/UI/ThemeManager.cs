@@ -36,11 +36,24 @@ namespace Leclair.Stardew.Common.UI {
 		private readonly Mod Mod;
 		private Dictionary<string, Tuple<DataT, IContentPack>> Themes = new();
 
+		private DataT _DefaultTheme;
+
+		public DataT DefaultTheme {
+			get => _DefaultTheme;
+			set {
+				bool is_default = UsedThemeKey == "default";
+				DataT oldData = Theme;
+				_DefaultTheme = value;
+				if (is_default)
+					ThemeChanged?.Invoke(this, new ThemeChangedEventArgs<DataT>("default", oldData, "default", _DefaultTheme));
+			}
+		}
+
 		private Tuple<DataT, IContentPack> BaseThemeData = null;
 		public string ThemeKey { get; private set; } = null;
 		public string UsedThemeKey { get; private set; } = null;
 
-		public DataT Theme => BaseThemeData?.Item1;
+		public DataT Theme => BaseThemeData?.Item1 ?? _DefaultTheme;
 
 		public event EventHandler<ThemeChangedEventArgs<DataT>> ThemeChanged;
 
@@ -48,10 +61,11 @@ namespace Leclair.Stardew.Common.UI {
 
 		#region Life Cycle
 
-		public ThemeManager(Mod mod, string key, string assetPrefix = "assets/") {
+		public ThemeManager(Mod mod, string key, DataT defaultTheme = null, string assetPrefix = "assets/") {
 			Mod = mod;
 			AssetPrefix = assetPrefix;
 			ThemeKey = key;
+			_DefaultTheme = DefaultTheme;
 		}
 
 		private void Log(string message, LogLevel level = LogLevel.Debug, Exception ex = null, LogLevel? exLevel = null) {
@@ -75,16 +89,17 @@ namespace Leclair.Stardew.Common.UI {
 				}
 
 				string selected = null;
+				var themes = GetThemeChoices();
 
-				foreach (var pair in Themes) {
-					if (pair.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) {
+				foreach(var pair in themes) {
+					if (pair.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) { 
 						selected = pair.Key;
 						break;
 					}
 				}
 
 				if (selected == null)
-					foreach (var pair in Themes) {
+					foreach (var pair in themes) {
 						if (pair.Key.Contains(key, StringComparison.OrdinalIgnoreCase)) {
 							selected = pair.Key;
 							break;
@@ -92,15 +107,19 @@ namespace Leclair.Stardew.Common.UI {
 					}
 
 				if (selected == null)
-					foreach (var pair in Themes) {
+					foreach (var pair in themes) {
 						if (GetThemeName(pair.Key).Contains(key, StringComparison.OrdinalIgnoreCase)) {
 							selected = pair.Key;
 							break;
 						}
 					}
 
-				SelectTheme(selected);
-				return true;
+				if (selected != null) {
+					SelectTheme(selected);
+					return true;
+				}
+
+				Log($"Unable to match theme: {key}", LogLevel.Warn);
 			}
 
 			Log($"Available Themes:", LogLevel.Info);
@@ -301,6 +320,9 @@ namespace Leclair.Stardew.Common.UI {
 		#region Resource Loading
 
 		public T Load<T>(string path) {
+			if (!string.IsNullOrEmpty(AssetPrefix))
+				path = $"{AssetPrefix}{path}";
+
 			if (BaseThemeData != null && BaseThemeData.Item2.HasFile(path)) {
 				try {
 					return BaseThemeData.Item2.LoadAsset<T>(path);
@@ -309,13 +331,13 @@ namespace Leclair.Stardew.Common.UI {
 				}
 			}
 
-			if (!string.IsNullOrEmpty(AssetPrefix))
-				path = $"{AssetPrefix}{path}";
-
 			return Mod.Helper.Content.Load<T>(path);
 		}
 
 		public T LoadLocalized<T>(string path, string locale) {
+			if (!string.IsNullOrEmpty(AssetPrefix))
+				path = $"{AssetPrefix}{path}";
+
 			if (BaseThemeData != null && BaseThemeData.Item2.HasLocalizedAsset(path, locale)) {
 				try {
 					return BaseThemeData.Item2.LoadLocalizedAsset<T>(path, locale);
@@ -323,9 +345,6 @@ namespace Leclair.Stardew.Common.UI {
 					Log($"Failed to load asset \"{path}\" (locale:{locale}) from content pack {BaseThemeData.Item2.Manifest.Name}.", LogLevel.Warn, ex);
 				}
 			}
-
-			if (!string.IsNullOrEmpty(AssetPrefix))
-				path = $"{AssetPrefix}{path}";
 
 			return Mod.Helper.Content.LoadLocalized<T>(path, locale);
 		}

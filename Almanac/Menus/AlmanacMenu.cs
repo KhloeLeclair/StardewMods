@@ -296,6 +296,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 		}
 
 
+		public void RefreshPages() {
+			foreach (IAlmanacPage page in Pages)
+				page.Refresh();
+		}
+
+
 		public int CurrentTab {
 			get {
 				for (int i = 0; i < Tabs.Count; i++) {
@@ -502,8 +508,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 			int rightMarginBottom = 0;
 			int rightMarginLeft = 0;
 			int rightMarginRight = 0;
-			int rightScrollTop = IsMagic ? 32 : 16;
-			int rightScrollBottom = IsMagic ? -32 : 0;
+			int rightScrollTop = Style?.ScrollOffsetTop ?? -9999;
+			if (rightScrollTop == -9999)
+				rightScrollTop = IsMagic ? 32 : 16;
+			int rightScrollBottom = Style?.ScrollOffsetBottom ?? -9999;
+			if (rightScrollBottom == -9999)
+				rightScrollBottom = IsMagic ? -32 : 0;
 
 			int leftMarginTop = 0;
 			int leftMarginBottom = 0;
@@ -840,6 +850,13 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			if (CurrentPage?.ReceiveKeyPress(key) ?? false)
 				return;
+
+			if (key == Keys.F5 && Mod.Config.DebugMode) {
+				Mod.Invalidate();
+				RefreshPages();
+				Game1.playSound("bigSelect");
+				return;
+			}
 
 			if (key == Keys.Tab) {
 				if (

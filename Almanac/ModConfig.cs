@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using StardewModdingAPI.Utilities;
 
 namespace Leclair.Stardew.Almanac {
@@ -31,6 +32,15 @@ namespace Leclair.Stardew.Almanac {
 		}
 	}*/
 
+	public enum ButtonPosition {
+		Disabled,
+		TopLeft,
+		BottomLeft,
+		TrashRight,
+		TrashDown,
+		OrganizeRight
+	}
+
 	public class ModConfig {
 
 		public string Theme { get; set; } = "automatic";
@@ -44,7 +54,7 @@ namespace Leclair.Stardew.Almanac {
 
 		public bool MagicAlwaysAvailable { get; set; } = false;
 
-		public bool ShowAlmanacButton { get; set; } = true;
+		public ButtonPosition AlmanacButtonPos { get; set; } = ButtonPosition.OrganizeRight;
 
 		public bool RestoreAlmanacState { get; set; } = true;
 

@@ -160,6 +160,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 					align: Alignment.Center
 				);
 
+			var notices = Mod.Notices.LoadExtraNotices();
+
 			for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
 
 				FlowBuilder db = new();
@@ -168,7 +170,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 				date.DayOfMonth = day;
 				List<SpriteInfo> sprites = new();
 
-				foreach(var evt in Mod.Notices.GetEventsForDate(0, date)) {
+				foreach(var evt in Mod.Notices.GetEventsForDate(0, date, notices)) {
 					if (evt == null)
 						continue;
 
@@ -339,10 +341,20 @@ namespace Leclair.Stardew.Almanac.Pages {
 		}
 
 		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
-			int day = date.DayOfMonth;
-			if (Nodes?[day - 1] is IFlowNode node && Menu.ScrollRightFlow(node)) {
-				Game1.playSound("shiny4");
-				return true;
+			int day = date.DayOfMonth - 1;
+
+			while (day >= 0) {
+				// Do we have something click-worthy?
+				if ((Sprites?[day]?.Length ?? 0) == 0 && (Birthdays?[day]?.Count ?? 0) == 0)
+					return false;
+
+				if (Nodes?[day] is IFlowNode node) {
+					if (Menu.ScrollRightFlow(node))
+						Game1.playSound("shiny4");
+					return true;
+				}
+
+				day--;
 			}
 
 			return false;

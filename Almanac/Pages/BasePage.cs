@@ -147,6 +147,10 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public virtual bool IsMagic => false;
 
+		public virtual void Refresh() {
+			Update();
+		}
+
 		public virtual void Activate() {
 			Active = true;
 			if (LastDate != Menu.Date && (WantDateUpdates || Menu.Date.Season != LastDate?.Season))

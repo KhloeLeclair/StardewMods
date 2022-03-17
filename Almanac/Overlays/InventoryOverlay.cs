@@ -86,8 +86,62 @@ namespace Leclair.Stardew.Almanac.Overlays {
 
 		public virtual void MoveUIElements() {
 
-			GUIHelper.LinkComponents(GUIHelper.Side.Right, id => Menu.getComponentWithID(id), Menu.organizeButton, btnAlmanac);
-			GUIHelper.MoveComponents(GUIHelper.Side.Right, -1, Menu.organizeButton, btnAlmanac);
+			var pos = ModEntry.instance.Config.AlmanacButtonPos;
+
+			// When set to Left, we set the position manually.
+
+			if (pos == ButtonPosition.TopLeft || pos == ButtonPosition.BottomLeft) {
+
+				btnAlmanac.bounds.X = Menu.xPositionOnScreen - 64 - 32;
+				if (pos == ButtonPosition.TopLeft)
+					btnAlmanac.bounds.Y = Menu.inventory.yPositionOnScreen;
+				else
+					btnAlmanac.bounds.Y = Menu.yPositionOnScreen + Menu.height - 64 - IClickableMenu.borderWidth;
+
+				btnAlmanac.leftNeighborID = ClickableComponent.ID_ignore;
+				btnAlmanac.upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+				btnAlmanac.rightNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+				btnAlmanac.downNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+
+				foreach (var cmp in Menu.inventory.GetBorder(InventoryMenu.BorderSide.Left))
+					if (cmp.leftNeighborID == ClickableComponent.ID_ignore)
+						cmp.leftNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+
+				return;
+			}
+
+			// Relative to another component~
+
+			ClickableComponent other;
+			GUIHelper.Side side;
+
+			switch(ModEntry.instance.Config.AlmanacButtonPos) {
+				case ButtonPosition.OrganizeRight:
+					side = GUIHelper.Side.Right;
+					other = Menu.organizeButton;
+					break;
+				case ButtonPosition.TrashRight:
+					side = GUIHelper.Side.Right;
+					other = Menu.trashCan;
+					break;
+				case ButtonPosition.TrashDown:
+					side = GUIHelper.Side.Down;
+					other = Menu.trashCan;
+					break;
+				default:
+					return;
+			}
+
+			GUIHelper.LinkComponents(
+				side,
+				id => Menu.getComponentWithID(id),
+				other, btnAlmanac
+			);
+
+			GUIHelper.MoveComponents(
+				side, -1,
+				other, btnAlmanac
+			);
 		}
 
 		#endregion

@@ -165,8 +165,15 @@
 	"theme.automatic": "Automatic",
 	"theme.default": "Default",
 
-	"settings.button": "Show Almanac Button",
-	"settings.button-desc": "When enabled, a button to open the Almanac will be added to the inventory menu.",
+	"settings.button": "Almanac Button Position",
+	"settings.button-desc": "When not disabled, a button to open the Almanac will be added to the inventory menu in this position.",
+
+	"settings.button.Disabled": "Disabled",
+	"settings.button.LeftTop": "Left Top of Menu",
+	"settings.button.LeftBottom": "Left Bottom of Menu",
+	"settings.button.OrganizeRight": "Right of Organize",
+	"settings.button.TrashRight": "Right of Trash Can",
+	"settings.button.TrashDown": "Below Trash Can",
 
 	"settings.available": "Almanac Always Available",
 	"settings.available-desc": "When enabled, the Almanac will always be available regardless of whether you've received a copy.",
@@ -251,7 +258,7 @@
 	"settings.cycle-time.desc": "When multiple pictures need to be shown on a given day, each picture is shown for this many seconds.",
 
 	"settings.debug": "Debug Mode",
-	"settings.debug.desc": "When enabled, some additional information may be displayed in the Almanac useful for debugging.",
+	"settings.debug.desc": "When enabled, some additional information may be displayed in the Almanac useful for debugging. Debug Mode also enables pressing F5 to refresh data.",
 
 	// Events
 

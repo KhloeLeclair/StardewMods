@@ -18,6 +18,13 @@
 		// game's main texture.
 		"CustomScroll": false,
 
+		// The scroll offset top and bottom numbers let you add margins
+		// around the right page's scrollbar so that it doesn't overlap
+		// with decorative background elements. You should avoid making
+		// these too large to maintain a healthy scrollbar size.
+		"ScrollOffsetTop": 16,
+		"ScrollOffsetBottom": 0,
+
 		"SeasonTextColor": null,
 
 		// The rest of the colors can be entered with color names (from
@@ -61,6 +68,9 @@
 		// texture sheet. Magic always uses one, and Standard always
 		// uses the other.
 		"CustomScroll": true,
+
+		"ScrollOffsetTop": 32,
+		"ScrollOffsetBottom": -32,
 
 		"SeasonTextColor": "white",
 
