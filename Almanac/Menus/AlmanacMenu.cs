@@ -1229,16 +1229,17 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 					if ((page?.ShouldHighlightToday ?? false) && ddays == today) {
 						int num = 4 + (int) (2.0 * Game1.dialogueButtonScale / 8.0);
-						IClickableMenu.drawTextureBox(
+						RenderHelper.DrawBox(
 							b,
-							Game1.mouseCursors,
-							DAY_BORDER,
-							cmp.bounds.X - num,
-							cmp.bounds.Y - num,
-							cmp.bounds.Width + num * 2,
-							cmp.bounds.Height + num * 2,
-							Style?.CalendarHighlightColor ?? Color.Blue,
-							4f, false
+							texture: Game1.mouseCursors,
+							sourceRect: DAY_BORDER,
+							x: cmp.bounds.X - num,
+							y: cmp.bounds.Y - num,
+							width: cmp.bounds.Width + num * 2,
+							height: cmp.bounds.Height + num * 2,
+							color: Style?.CalendarHighlightColor ?? Color.Blue,
+							scale: 4f,
+							drawShadow: false
 						);
 					}
 

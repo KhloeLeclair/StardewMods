@@ -145,7 +145,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
 			// Background
-			IClickableMenu.drawTextureBox(
+			RenderHelper.DrawBox(
 				b,
 				texture: Game1.menuTexture,
 				sourceRect: new Rectangle(0, 256, 60, 60),
@@ -155,7 +155,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				height: height,
 				color: Color.White,
 				scale: 1f
-				);
+			);
 
 			Flow.Draw(b);
 

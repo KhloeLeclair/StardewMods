@@ -288,8 +288,8 @@ namespace Leclair.Stardew.Almanac.Crops {
 				}
 
 				fertilizer = FlowHelper.Builder()
-					.Sprite(Fertilizer.Item2, 2, onHover: onHover)
-					.Text($" {Fertilizer.Item1.DisplayName}", bold: true, onHover: onHover)
+					.Sprite(Fertilizer.Item2, 2, extra: Fertilizer.Item1)
+					.Text($" {Fertilizer.Item1.DisplayName}", bold: true, extra: Fertilizer.Item1)
 					.Build();
 			}
 

@@ -98,7 +98,7 @@ namespace Leclair.Stardew.Common.UI {
 
 			// Draw the background first.
 			if (drawBG)
-				IClickableMenu.drawTextureBox(
+				RenderHelper.DrawBox(
 					batch,
 					texture: bgTexture ?? Game1.menuTexture,
 					sourceRect: bgSource ?? new Rectangle(0, 256, 60, 60),

@@ -357,6 +357,26 @@ namespace Leclair.Stardew.Common
 			int sRight = (int) (rightSlice * scale);
 			int sBottom = (int) (bottomSlice * scale);
 
+			// Not doing recursive calls would, frankly, be stupid.
+			if (drawShadow)
+				DrawBox(
+					b: b,
+					texture: texture,
+					sourceRect: sourceRect,
+					x: x - 8,
+					y: y + 8,
+					width: width,
+					height: height,
+					color: Color.Black * 0.4f,
+					topSlice: topSlice,
+					leftSlice: leftSlice,
+					rightSlice: rightSlice,
+					bottomSlice: bottomSlice,
+					scale: scale,
+					drawShadow: false,
+					draw_layer: layerDepth
+				);
+
 			// Base
 			b.Draw(
 				texture,

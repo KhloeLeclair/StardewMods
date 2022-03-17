@@ -639,30 +639,30 @@ namespace Leclair.Stardew.Common.UI
 				else
 					btnPageDown.draw(batch, Color.Black * 0.35f, 0.89f);
 
-				IClickableMenu.drawTextureBox(
+				RenderHelper.DrawBox(
 					batch,
-					ScrollAreaTexture,
-					ScrollAreaSource,
-					ScrollArea.X,
-					ScrollArea.Y,
-					ScrollArea.Width,
-					ScrollArea.Height,
-					Color.White,
-					4f,
-					false
+					texture: ScrollAreaTexture,
+					sourceRect: ScrollAreaSource,
+					x: ScrollArea.X,
+					y: ScrollArea.Y,
+					width: ScrollArea.Width,
+					height: ScrollArea.Height,
+					color: Color.White,
+					scale: 4f,
+					drawShadow: false
 				);
 
 				bool scrolling = Scrolling || MiddleScrolling;
 
 				RenderHelper.DrawBox(
 					batch,
-					ScrollBar.texture,
-					ScrollBar.sourceRect,
-					ScrollBar.bounds.X + (scrolling ? -2 : 0),
-					ScrollBar.bounds.Y + (scrolling ? -2 : 0),
-					ScrollArea.Width + (scrolling ? 4 : 0),
-					ScrollBar.bounds.Height + (scrolling ? 4 : 0),
-					Color.White,
+					texture: ScrollBar.texture,
+					sourceRect: ScrollBar.sourceRect,
+					x: ScrollBar.bounds.X + (scrolling ? -2 : 0),
+					y: ScrollBar.bounds.Y + (scrolling ? -2 : 0),
+					width: ScrollArea.Width + (scrolling ? 4 : 0),
+					height: ScrollBar.bounds.Height + (scrolling ? 4 : 0),
+					color: Color.White,
 					topSlice: 3,
 					bottomSlice: 3,
 					leftSlice: 2,
@@ -670,8 +670,6 @@ namespace Leclair.Stardew.Common.UI
 					scale: 4f,
 					drawShadow: false
 				);
-
-				//ScrollBar.draw(batch);
 			}
 
 			if (!Flow.HasValue)

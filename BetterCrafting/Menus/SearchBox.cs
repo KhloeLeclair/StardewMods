@@ -1,8 +1,8 @@
 using System;
 
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.UI.SimpleLayout;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -207,7 +207,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					);
 
 			// Background
-			IClickableMenu.drawTextureBox(
+			RenderHelper.DrawBox(
 				b,
 				texture: Game1.menuTexture,
 				sourceRect: new Rectangle(0, 256, 60, 60),
@@ -217,7 +217,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				height: height,
 				color: Color.White,
 				scale: 1f
-				);
+			);
 
 			txtInput.Draw(b);
 			btnSearch.draw(b);
