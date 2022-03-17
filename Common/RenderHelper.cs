@@ -222,11 +222,13 @@ namespace Leclair.Stardew.Common
 							}
 						}
 
+						bool use_color = !special && !junimoText && color.HasValue;
+
 						b.Draw(
-							color.HasValue ? SpriteText.coloredTexture : SpriteText.spriteTexture,
+							use_color ? SpriteText.coloredTexture : SpriteText.spriteTexture,
 							position + offset * SpriteText.fontPixelZoom,
 							SpriteText_getSourceRectForChar(c, junimoText),
-							(color ?? ((special || junimoText) ? Color.White : SpriteText.getColorFromIndex(-1))) * alpha,
+							(use_color ? (color ?? SpriteText.getColorFromIndex(-1)) : Color.White) * alpha,
 							0f,
 							Vector2.Zero,
 							SpriteText.fontPixelZoom,

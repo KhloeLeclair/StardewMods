@@ -96,7 +96,7 @@ namespace Leclair.Stardew.Almanac {
 		public static Dictionary<int, Dictionary<SubLocation, List<int>>> GetFishLocations() {
 			Dictionary<int, Dictionary<SubLocation, List<int>>> result = new();
 
-			var locations = Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
+			var locations = Game1.content.Load<Dictionary<string, string>>(@"Data\Locations");
 
 			foreach (var lp in locations) {
 				if (SkipLocation(lp.Key))

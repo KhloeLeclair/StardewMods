@@ -6,11 +6,20 @@ This document is intended to help mod authors create content packs for Almanac.
 
 * [Getting Started](#getting-started)
   * [Create a Content Pack](#create-a-content-pack)
+* [Crops](#crops)
+  * [Crop Overrides](#crop-overrides)
+  * [Using Content Patcher](#crop-overrides-using-content-patcher)
+* [Fish](#fish)
+  * [Fish Overrides](#fish-overrides)
+  * [Using Content Patcher](#fish-overrides-using-content-patcher)
 * [Local Notices](#local-notices)
   * [What is a Notice?](#what-is-a-notice)
-  * [Notices Using Content Patcher](#notices-using-content-patcher)
+  * [Using Content Patcher](#notices-using-content-patcher)
   * [Testing](#notice-testing)
   * [Notice Format](#notice-format)
+* [NPCs](#npcs)
+  * [NPC Overrides](#npc-overrides)
+  * [Using Content Patcher](#npc-overrides-using-content-patcher)
 * [Themes](#themes)
   * [What is a Theme?](#what-is-a-theme)
   * [Theme Definitions](#theme-definitions)
@@ -52,6 +61,138 @@ This document is intended to help mod authors create content packs for Almanac.
    uploading your mod.
 5. Create other files as described below, based on what you want your content
    pack to do with Almanac.
+
+
+## Crops
+
+### Crop Overrides
+
+Currently, crop overrides only allow you to control the visibility of a crop
+in the Planting Dates page of the Almanac. All other crop information should
+be read from the game's crop data table, or by using a C# mod that uses the
+API to add crops to the system.
+
+Crop overrides have the following format:
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Visible</code></td>
+<td>
+
+A boolean value. Whether or not the crop should be listed in the Almanac.
+This is `true` by default for all crops.
+
+</td>
+</tr>
+</table>
+
+
+### Crop Overrides Using Content Patcher
+
+The best, and currently only, way to add crop overrides to Almanac using a
+content pack is through the use of Content Patcher. This is particularly
+useful to authors as you can then use Content Patcher's conditions system
+to only hide or show crops in ceratin cases.
+
+> When using Content Patcher, you'll need to make a separate content pack
+> that targets Content Patcher rather than Almanac. For more on that, you'll
+> want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
+
+To add a crop override, you'll want to use Content Patcher's `EditData`
+action on the file `Mods/leclair.almanac/CropOverrides`. Here's a quick
+example that hides Ancient Fruit:
+```json
+{
+  "Format": "1.25.0",
+  "Changes": [
+    {
+      "LogName": "Hide Ancient Fruit",
+      "Action": "EditData",
+      "Target": "Mods/leclair.almanac/CropOverrides",
+      "Entries": {
+        "499": {
+          "Visible": false
+        }
+      }
+    }
+  ]
+}
+```
+
+When adding overrides, you should limit your use of Content Patcher
+conditions as much as possible for the best user experience. Ideally,
+users can see information on crops they should reasonably know about even
+if those crops cannot currently be obtained.
+
+
+## Fish
+
+### Fish Overrides
+
+Currently, fish overrides only allow you to control the visibility of a fish
+in the Fishing page of the Almanac. All other information is currently read
+from the fish data table, as well as the fishing data associated with every
+game location.
+
+Fish overrides have the following format:
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Visible</code></td>
+<td>
+
+A boolean value. Whether or not the fish should be listed in the Almanac.
+This is `true` by default for all fish.
+
+</td>
+</tr>
+</table>
+
+
+### Fish Overrides Using Content Patcher
+
+The best, and currently only, way to add fish overrides to Almanac using a
+content pack is through the use of Content Patcher. This is particularly
+useful to authors as you can then use Content Patcher's conditions system
+to only hide or show fish in ceratin cases.
+
+> When using Content Patcher, you'll need to make a separate content pack
+> that targets Content Patcher rather than Almanac. For more on that, you'll
+> want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
+
+To add a fish override, you'll want to use Content Patcher's `EditData`
+action on the file `Mods/leclair.almanac/FishOverrides`. Here's a quick
+example that hides Pufferfish:
+```json
+{
+  "Format": "1.25.0",
+  "Changes": [
+    {
+      "LogName": "Hide Pufferfish",
+      "Action": "EditData",
+      "Target": "Mods/leclair.almanac/FishOverrides",
+      "Entries": {
+        "128": {
+          "Visible": false
+        }
+      }
+    }
+  ]
+}
+```
+
+When adding overrides, you should limit your use of Content Patcher
+conditions as much as possible for the best user experience. Ideally,
+users can see information on fish they should reasonably know about even
+if those fish cannot currently be obtained.
 
 
 ## Local Notices
@@ -109,9 +250,14 @@ that adds a simple notice to the first day of every season:
   ]
 }
 ```
+
 That example adds a new notice with the ID `leclair.almanac.example-cp-notices/1`,
 that appears seasonally, that appears on the first and only the first, and that
-has a text message along with an icon.
+has a text message along with an icon. It looks like this:
+
+![](docs/NoticeCalendarExample.png)
+
+![](docs/NoticeExample.png)
 
 When adding notices, you should limit your use of Content Patcher conditions as
 much as possible for the best user experience.
@@ -152,8 +298,8 @@ ranges of dates available:
 
 <table>
 <tr>
-<th><code>Period</code></th>
-<th>Test</th>
+<th>Value</th>
+<th>Date Range</th>
 </tr>
 <tr>
 <td><code>Week</code></td>
@@ -363,6 +509,94 @@ This is a rectangle and specified as an object with `X`, `Y`, `Width`, and
 </table>
 
 
+## NPCs
+
+### NPC Overrides
+
+NPC overrides currently serve two purposes:
+
+1. Allowing you to control the visibility of an NPC in the Almanac, which
+   currently only affects birthdays on the Local Notices page.
+2. Allowing you to control the portion of a character's sprite used to
+   draw their head on the Local Notices page. It's likely you won't need
+   to supply this data because we're reading data from the
+   NPC Map Locations mod for broader support.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Visible</code></td>
+<td>
+
+A boolean value. Whether or not the NPC should be listed in the Almanac.
+This is `true` by default for all NPCs. There are further visibility
+checks based on your friendship level and the socialability state of
+the NPC in question.
+
+</td>
+</tr>
+<tr>
+<td><code>Head</code></td>
+<td>
+
+An object describing the portion of the NPC's sprite to use when drawing
+their head. By default, this is a rectangle starting at (0, 0) with a
+width of 16 and a height of 15. Values for this should be formatted as:
+```json
+{
+  "OffsetX": 0,
+  "OffsetY": 0,
+  "Width": 16,
+  "Height": 15
+}
+```
+
+</td>
+</tr>
+</table>
+
+
+### NPC Overrides Using Content Patcher
+
+The best, and currently only, way to add NPC overrides to Almanac using a
+content pack is through the use of Content Patcher. This is particularly
+useful to authors as you can then use Content Patcher's conditions system
+to only hide or show NPCs in ceratin cases.
+
+> When using Content Patcher, you'll need to make a separate content pack
+> that targets Content Patcher rather than Almanac. For more on that, you'll
+> want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
+
+To add an NPC override, you'll want to use Content Patcher's `EditData`
+action on the file `Mods/leclair.almanac/NPCOverrides`. Here's a quick
+example that hides Gus and adjusts Willy's head sprite down by 3 pixels:
+```json
+{
+  "Format": "1.25.0",
+  "Changes": [
+    {
+      "LogName": "Hide Gus and Move Abigail",
+      "Action": "EditData",
+      "Target": "Mods/leclair.almanac/NPCOverrides",
+      "Entries": {
+        "Gus": {
+          "Visible": false
+        },
+        "Willy": {
+          "Head": {
+            "OffsetY": 3
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+
 ## Themes
 
 ### What is a Theme?
@@ -525,15 +759,25 @@ The following control characters are available:
 </tr>
 <tr><td colspan=2>Content Alignment</td></tr>
 <tr>
-<td><code>@<</code></td>
-<td>
+<td colspan=2>
 
-Use left horizontal alignment for subsequent content.
+Vertical and horizontal alignment can be used to nicely lay out text in some cases.
+```
+@<Left @|Center @>Right
 
-> Note: Horizontal alignment of segments is currently very weird and not
-> something I actually encourage anyone to do.
+@|@^Top @-Middle @vBottom
+```
+
+![](docs/Alignment.png)
+
+> Note: Here we're also using `@\_{2}@m{0}@\_{1}` to insert large weed sprites so
+> that you can actually see the effect of vertical alignment.
 
 </td>
+</tr>
+<tr>
+<td><code>@<</code></td>
+<td>Use left horizontal alignment for subsequent content.</td>
 </tr>
 <tr>
 <td><code>@|</code></td>
@@ -555,6 +799,26 @@ Use left horizontal alignment for subsequent content.
 <td><code>@v</code></td>
 <td>Use bottom vertical alignment for subsequent content.</td>
 </tr>
+<tr><td colspan=2>Embedded Content</td></tr>
+<tr>
+<td><code>@M{...}</code></td>
+<td>
+
+Display an item along with its name.
+
+This requires a string with the item's ID, using the new Qualified Item ID
+syntax being [added to the game in 1.6](https://stardewvalleywiki.com/Modding:Migrate_to_Stardew_Valley_1.6#Custom_items).
+Read more about it in the migration guide for now.
+
+Example:
+```
+If you want to marry someone, give them a @M{(O)460}.
+```
+
+![](docs/PendantExample.png)
+
+</td>
+</tr>
 <tr><td colspan=2>Text Style</td></tr>
 <tr>
 <td><code>@_{...}</code></td>
@@ -562,14 +826,26 @@ Use left horizontal alignment for subsequent content.
 
 Use a new scale for subsequent content. Scale is a floating point number, which
 defaults to `1.0`. Example:
+```
+Hello @\_{2}there@\_{1}!
+```
 
-> Hello @\_{2}there@\_{1}!
+![](docs/GeneralKenobi.png)
 
 </td>
 </tr>
 <tr>
 <td><code>@B</code></td>
-<td>Enable bold rendering for subsequent text.</td>
+<td>
+
+Enable bold rendering for subsequent text. Example:
+```
+That's a @Blotta@b damage!
+```
+
+![](docs/BoldExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@b</code></td>
@@ -581,18 +857,39 @@ defaults to `1.0`. Example:
 
 Use a new foreground color for subsequent text.  When entering colors, you can
 use hex values along with some color names. Example:
+```
+Hello but @C{red}with red text@C{}!
+```
 
-> Hello but @C{red}with red text@C{}!
+![](docs/ColorExample.png)
 
 </td>
 </tr>
 <tr>
 <td><code>@c{...}</code></td>
-<td>Use a new shadow color for subsequent text.</td>
+<td>
+
+Use a new shadow color for subsequent text. Example:
+```
+Hello but @C{white}@c{navy}with a blue shadow@C{}@c{}...
+```
+
+![](docs/ShadowColorExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@F</code></td>
-<td>Use SpriteText rendering for subsequent text.</td>
+<td>
+
+Use SpriteText rendering for subsequent text. Example:
+```
+Have a @Fwonderful@f day!
+```
+
+![](docs/SpriteTextExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@f</code></td>
@@ -600,7 +897,16 @@ use hex values along with some color names. Example:
 </tr>
 <tr>
 <td><code>@H</code></td>
-<td>Enable shadow rendering for subsequent text.</td>
+<td>
+
+Enable shadow rendering for subsequent text. Example:
+```
+Shadows are on by default, @hbut now they're off, @Hand back on again.
+```
+
+![](docs/ShadowExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@h</code></td>
@@ -613,6 +919,14 @@ use hex values along with some color names. Example:
 Invert the foreground and background colors for subsequent text.
 
 > Note: You should only use this if you're already using a background color.
+> But honestly this is pretty weird and likely not useful.
+
+Example:
+```
+@C{white}@R{navy}@hThis is when @Ithings flip@i so hold on.
+```
+
+![](docs/InvertExample.png)
 
 </td>
 </tr>
@@ -628,6 +942,13 @@ Enable junimo text rendering for subsequent text.
 
 > Note: Junimo Text forces SpriteText rendering to be used.
 
+Example:
+```
+Did you know that @Jyou can't read this@j?
+```
+
+![](docs/JunimoExample.png)
+
 </td>
 </tr>
 <tr>
@@ -636,7 +957,16 @@ Enable junimo text rendering for subsequent text.
 </tr>
 <tr>
 <td><code>@P</code></td>
-<td>Enable prismatic foreground color for subsequent text. The prismatic color changes over time.</td>
+<td>
+
+Enable prismatic foreground color for subsequent text. The prismatic color changes over time. Example:
+```
+This is some @B@Pfancy text@b@p, just so you know.
+```
+
+![](docs/PrismaticExample.gif)
+
+</td>
 </tr>
 <tr>
 <td><code>@p</code></td>
@@ -644,11 +974,29 @@ Enable junimo text rendering for subsequent text.
 </tr>
 <tr>
 <td><code>@R{...}</code></td>
-<td>Enable a new background color for subsequent text. (Why R, you ask? I don't know either.)</td>
+<td>
+
+Enable a new background color for subsequent text. (Why R, you ask? I don't know either.) Example:
+```
+How do you feel about @R{pink}highlighting@R{} words?
+```
+
+![](docs/BackgroundExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@S</code></td>
-<td>Enable strikethrough for subsequent text.</td>
+<td>
+
+Enable strikethrough for subsequent text. Example:
+```
+To Do: @Smake mod@s, @Swrite docs@s, take over world
+```
+
+![](docs/StrikeExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@s</code></td>
@@ -662,11 +1010,30 @@ Use a different font for subsequent text. The following fonts are supported:
 
 > `dialog`, `small`, `tiny`
 
+Example:
+```
+Hello @T{dialog}my darling, @T{small}hello my honey, @T{tiny}hello my tiny font. 1234567890
+```
+
+![](docs/FontExample.png)
+
+> Note: As you can see in the image, the `tiny` font is actually not so tiny
+> at all. It only has support for numbers, 0-9.
+
 </td>
 </tr>
 <tr>
 <td><code>@U</code></td>
-<td>Enable underline for subsequent text.</td>
+<td>
+
+Enable underline for subsequent text. Example:
+```
+This is of @Uutmost importance@u, I'll have you know.
+```
+
+![](docs/UnderlineExample.png)
+
+</td>
 </tr>
 <tr>
 <td><code>@u</code></td>

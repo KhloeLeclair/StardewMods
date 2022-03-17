@@ -14,7 +14,11 @@ namespace Leclair.Stardew.Almanac {
 		private readonly ModEntry Mod;
 
 		public static readonly string ModAssetPath = Path.Combine("Mods", "leclair.almanac");
+
+		public static readonly string CropOverridesPath = Path.Combine(ModAssetPath, "CropOverrides");
+		public static readonly string FishOverridesPath = Path.Combine(ModAssetPath, "FishOverrides");
 		public static readonly string LocalNoticesPath = Path.Combine(ModAssetPath, "ExtraLocalNotices");
+		public static readonly string NPCOverridesPath = Path.Combine(ModAssetPath, "NPCOverrides");
 
 		// Events
 		private readonly string EventPath = PathUtilities.NormalizeAssetName("Data/Events");
@@ -51,12 +55,31 @@ namespace Leclair.Stardew.Almanac {
 
 		#region IAssetLoader
 		public bool CanLoad<T>(IAssetInfo asset) {
-			return asset.AssetNameEquals(LocalNoticesPath);
+			return
+				asset.AssetNameEquals(CropOverridesPath) ||
+				asset.AssetNameEquals(FishOverridesPath) ||
+				asset.AssetNameEquals(LocalNoticesPath) ||
+				asset.AssetNameEquals(NPCOverridesPath);
 		}
 
 		public T Load<T>(IAssetInfo asset) {
+			if (asset.AssetNameEquals(CropOverridesPath)) {
+				var data = new Dictionary<string, Models.CropOverride>();
+				return (T) (object) data;
+			}
+
+			if (asset.AssetNameEquals(FishOverridesPath)) {
+				var data = new Dictionary<string, Models.FishOverride>();
+				return (T) (object) data;
+			}
+
 			if (asset.AssetNameEquals(LocalNoticesPath)) {
 				var data = new Dictionary<string, Models.LocalNotice>();
+				return (T) (object) data;
+			}
+
+			if (asset.AssetNameEquals(NPCOverridesPath)) {
+				var data = new Dictionary<string, Models.NPCOverride>();
 				return (T) (object) data;
 			}
 

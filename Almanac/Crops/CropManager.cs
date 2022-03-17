@@ -61,6 +61,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 		public void Invalidate() {
 			Loaded = false;
+			Mod.Helper.Content.InvalidateCache(AssetManager.CropOverridesPath);
 		}
 
 		public void AddProvider(ICropProvider provider) {
@@ -115,18 +116,25 @@ namespace Leclair.Stardew.Almanac.Crops {
 			Loaded = true;
 		}
 
-		public List<CropInfo> GetSeasonCrops(int season) {
-			return GetSeasonCrops(WeatherHelper.GetSeasonName(season));
+		public List<CropInfo> GetSeasonCrops(int season, bool filtered = true) {
+			return GetSeasonCrops(WeatherHelper.GetSeasonName(season), filtered);
 		}
 
-		public List<CropInfo> GetSeasonCrops(string season) {
+		public List<CropInfo> GetSeasonCrops(string season, bool filtered = true) {
 			if (!Loaded)
 				RefreshCrops();
 
 			WorldDate start = new(1, season, 1);
 			WorldDate end = new(1, season, ModEntry.DaysPerMonth);
 
-			return Crops.Where(crop => crop.StartDate <= end && crop.EndDate >= start).ToList();
+			var overrides = filtered ?
+				Game1.content.Load<Dictionary<string, Models.CropOverride>>(AssetManager.CropOverridesPath)
+				: null;
+
+			return Crops.Where(crop =>
+				(overrides == null || ! overrides.TryGetValue(crop.Id, out var ovr) || ovr.Visible)
+				&& crop.StartDate <= end && crop.EndDate >= start
+			).ToList();
 		}
 
 	}

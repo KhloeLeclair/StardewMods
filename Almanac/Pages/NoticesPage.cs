@@ -25,6 +25,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 		private readonly Dictionary<NPC, SpriteInfo> Portraits = new();
 		private readonly Dictionary<NPC, SpriteInfo> Heads = new();
 
+		private Dictionary<string, Models.NPCOverride> Overrides;
+
 		//private WorldDate HoveredDate;
 		//private Cache<ISimpleNode, WorldDate> CalendarTip;
 
@@ -38,38 +40,13 @@ namespace Leclair.Stardew.Almanac.Pages {
 		}
 
 		public NoticesPage(AlmanacMenu menu, ModEntry mod) : base(menu, mod) {
-			// Caches
-			/*CalendarTip = new(date => {
-				if (date == null)
-					return null;
 
-				int day = date.DayOfMonth - 1;
+			LoadOverrides();
 
-				List<NPC> bdays = Birthdays?[day];
+		}
 
-				SimpleBuilder builder = new();
-
-				if (bdays != null) {
-					builder
-						.FormatText("Birthdays:")
-						.Divider();
-
-					foreach (NPC npc in bdays) {
-						SpriteInfo head = GetHead(npc);
-						if (head != null)
-							builder.Sprite(
-								head,
-								3f,
-								label: npc.displayName
-							);
-					}
-				}
-
-				return builder.GetLayout();
-
-			}, () => HoveredDate);*/
-
-			//Update();
+		public void LoadOverrides() {
+			Overrides = Game1.content.Load<Dictionary<string, Models.NPCOverride>>(AssetManager.NPCOverridesPath);
 		}
 
 		#endregion
@@ -114,7 +91,12 @@ namespace Leclair.Stardew.Almanac.Pages {
 			}
 
 			Models.HeadSize info = null;
-			Mod.HeadSizes?.TryGetValue(npc.Name, out info);
+
+			if (Overrides != null && Overrides.TryGetValue(npc.Name, out var ovr))
+				info = ovr.Head;
+
+			if (info == null)
+				Mod.HeadSizes?.TryGetValue(npc.Name, out info);
 
 			sprite = new SpriteInfo(
 				texture,
@@ -143,6 +125,10 @@ namespace Leclair.Stardew.Almanac.Pages {
 				if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
 					// Don't show villagers we can't socialize with.
 					if (!npc.CanSocialize && !Game1.player.friendshipData.ContainsKey(npc.Name))
+						continue;
+
+					// Don't show forbidden villagers.
+					if (Overrides != null && Overrides.TryGetValue(npc.Name, out var ovr) && !ovr.Visible)
 						continue;
 
 					int day = npc.Birthday_Day;
@@ -239,6 +225,9 @@ namespace Leclair.Stardew.Almanac.Pages {
 								new { name },
 								align: Alignment.Middle
 							);
+
+						if (Mod.Config.DebugMode)
+							db.Text($" (#{npc.Name})", align: Alignment.Middle);
 					}
 				}
 
@@ -282,6 +271,14 @@ namespace Leclair.Stardew.Almanac.Pages {
 		#endregion
 
 		#region IAlmanacPage
+
+		public override void Refresh() {
+			LoadOverrides();
+			Heads.Clear();
+			Portraits.Clear();
+
+			base.Refresh();
+		}
 
 		#endregion
 

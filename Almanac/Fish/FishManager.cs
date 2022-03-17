@@ -94,6 +94,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		public void Invalidate() {
 			Loaded = false;
+			Mod.Helper.Content.InvalidateCache(AssetManager.FishOverridesPath);
 		}
 
 		private void RefreshFish() {
@@ -269,18 +270,37 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		#region Queries
 
-		public IReadOnlyCollection<FishInfo> GetFish() {
-			return Fish.AsReadOnly();
-		}
-
-		public List<FishInfo> GetSeasonFish(int season) {
+		public IReadOnlyCollection<FishInfo> GetFish(bool filter = true) {
 			if (!Loaded)
 				RefreshFish();
 
-			return Fish.Where(fish => fish.Seasons != null && fish.Seasons.Contains(season)).ToList();
+			if (!filter)
+				return Fish.AsReadOnly();
+
+			var overrides = Game1.content.Load<Dictionary<string, FishOverride>>(AssetManager.FishOverridesPath);
+			if (overrides == null || overrides.Count == 0)
+				return Fish.AsReadOnly();
+
+			return Fish.Where(fish =>
+				(!overrides.TryGetValue(fish.Id, out var ovr) || ovr.Visible)
+			).ToList();
 		}
 
-		public List<FishInfo> GetSeasonFish(string season) {
+		public List<FishInfo> GetSeasonFish(int season, bool filter = true) {
+			if (!Loaded)
+				RefreshFish();
+
+			var overrides = filter ?
+				Game1.content.Load<Dictionary<string, FishOverride>>(AssetManager.FishOverridesPath)
+				: null;
+
+			return Fish.Where(fish =>
+				(overrides == null || !overrides.TryGetValue(fish.Id, out var ovr) || ovr.Visible)
+				&& fish.Seasons != null && fish.Seasons.Contains(season)
+			).ToList();
+		}
+
+		public List<FishInfo> GetSeasonFish(string season, bool filter = true) {
 			WorldDate start = new(1, season, 1);
 			return GetSeasonFish(start.SeasonIndex);
 		}

@@ -282,11 +282,6 @@ namespace Leclair.Stardew.Almanac.Crops {
 			if (Fertilizer?.Item1 == null)
 				fertilizer = null;
 			else {
-				bool onHover(IFlowNodeSlice slice, int x, int y) {
-					Menu.HoveredItem = Fertilizer.Item1;
-					return true;
-				}
-
 				fertilizer = FlowHelper.Builder()
 					.Sprite(Fertilizer.Item2, 2, extra: Fertilizer.Item1)
 					.Text($" {Fertilizer.Item1.DisplayName}", bold: true, extra: Fertilizer.Item1)
