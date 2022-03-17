@@ -18,9 +18,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		public float ShadowOffset { get; }
 
 		public Alignment Alignment => Alignment.None;
+		public object Extra { get; }
 
-		public ClickableComponent UseComponent => null;
-		public bool NoComponent => true;
 		public Func<IFlowNodeSlice, int, int, bool> OnClick => null;
 		public Func<IFlowNodeSlice, int, int, bool> OnHover => null;
 		public Func<IFlowNodeSlice, int, int, bool> OnRightClick => null;
@@ -30,13 +29,23 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			Color? shadowColor = null,
 			float size = 4f,
 			float padding = 14f,
-			float shadowOffset = 2f
+			float shadowOffset = 2f,
+			object extra = null
 		) {
 			Color = color;
 			ShadowColor = shadowColor;
 			Size = size;
 			Padding = padding < 0 ? 0f : padding;
 			ShadowOffset = shadowOffset;
+			Extra = extra;
+		}
+
+		public bool? WantComponent(IFlowNodeSlice slice) {
+			return false;
+		}
+
+		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
+			return null;
 		}
 
 		public bool IsEmpty() {

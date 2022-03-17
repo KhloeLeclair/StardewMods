@@ -10,37 +10,23 @@ namespace Leclair.Stardew.Almanac.Models {
 		Texture
 	}
 
-	public enum NoticePeriod {
-		Week,
-		Season,
-		Year,
-		Total
-	};
-
-	public enum NoticeSeason {
-		Spring = 0,
-		Summer = 1,
-		Fall = 2,
-		Winter = 3
-	};
-
 	public record struct DateRange(int Start, int End, int[] Valid = null);
 
 	public class LocalNotice {
 
 		// When
-		public NoticePeriod Period { get; set; }
+		public TimeScale Period { get; set; }
 		public DateRange[] Ranges { get; set; }
 
 		public int FirstYear { get; set; } = 1;
 		public int LastYear { get; set; } = int.MaxValue;
 		public int[] ValidYears { get; set; } = null;
 
-		public NoticeSeason[] ValidSeasons { get; set; } = new NoticeSeason[] {
-			NoticeSeason.Spring,
-			NoticeSeason.Summer,
-			NoticeSeason.Fall,
-			NoticeSeason.Winter
+		public Season[] ValidSeasons { get; set; } = new[] {
+			Season.Spring,
+			Season.Summer,
+			Season.Fall,
+			Season.Winter
 		};
 
 

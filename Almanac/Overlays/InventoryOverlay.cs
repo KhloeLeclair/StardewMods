@@ -28,8 +28,8 @@ namespace Leclair.Stardew.Almanac.Overlays {
 
 		#region Lifecycle
 
-		internal InventoryOverlay(InventoryPage menu, Farmer who)
-		: base(menu, ModEntry.instance, true) {
+		internal InventoryOverlay(InventoryPage menu)
+		: base(menu, ModEntry.Instance, true) {
 			btnAlmanac = new(
 				new Rectangle(
 					Menu.xPositionOnScreen - 64 - 8,
@@ -37,7 +37,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 					64,
 					64
 				),
-				ModEntry.instance.ThemeManager.Load<Texture2D>("Menu.png"),
+				ModEntry.Instance.ThemeManager.Load<Texture2D>("Menu.png"),
 				new Rectangle(240, 352, 16, 16),
 				4f
 			) {
@@ -86,7 +86,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 
 		public virtual void MoveUIElements() {
 
-			var pos = ModEntry.instance.Config.AlmanacButtonPos;
+			var pos = ModEntry.Instance.Config.AlmanacButtonPos;
 
 			// When set to Left, we set the position manually.
 
@@ -115,7 +115,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 			ClickableComponent other;
 			GUIHelper.Side side;
 
-			switch(ModEntry.instance.Config.AlmanacButtonPos) {
+			switch(ModEntry.Instance.Config.AlmanacButtonPos) {
 				case ButtonPosition.OrganizeRight:
 					side = GUIHelper.Side.Right;
 					other = Menu.organizeButton;
@@ -191,7 +191,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 				Game1.playSound("bigSelect");
 
 				if (Menu.readyToClose())
-					Game1.activeClickableMenu = new Menus.AlmanacMenu(ModEntry.instance, Game1.Date.Year);
+					Game1.activeClickableMenu = new Menus.AlmanacMenu(ModEntry.Instance, Game1.Date.Year);
 
 				return true;
 			}

@@ -17,7 +17,6 @@ using StardewValley.Menus;
 namespace Leclair.Stardew.BetterCrafting.Menus {
 	public class IconPicker : MenuSubscriber<ModEntry> {
 
-
 		public readonly Action<CategoryIcon> onPick;
 
 		public List<ClickableComponent> FlowComponents;
@@ -25,16 +24,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public ClickableTextureComponent btnPageUp;
 		public ClickableTextureComponent btnPageDown;
 
-		private ScrollableFlow Flow;
-
-		/*private IEnumerable<IFlowNode> Flow;
-		private CachedFlow CachedFlow;
-
-		private int FlowOffset;
-		private int MaxFlowOffset;
-
-		private ClickableTextureComponent btnPageUp;
-		private ClickableTextureComponent btnPageDown;*/
+		private readonly ScrollableFlow Flow;
 
 		public IconPicker(ModEntry mod, int x, int y, int width, int height, Action<CategoryIcon> onPick)
 		: base(mod) {

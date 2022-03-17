@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Types;
 
@@ -173,14 +174,18 @@ namespace Leclair.Stardew.Almanac.Managers {
 			int daysPerYear = WorldDate.MonthsPerYear * ModEntry.DaysPerMonth;
 			int weeksPerYear = daysPerYear / 7;
 
-			if (rule.Period == RulePeriod.Year) {
+			if (rule.Period == TimeScale.Total) {
+				Log($"Weather rule has period \"Total\" which is unsupported for weather rules. Treating as \"Year\".", LogLevel.Warn);
 				ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
 
-			} else if (rule.Period == RulePeriod.Season) {
+			} else if (rule.Period == TimeScale.Year) {
+				ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
+
+			} else if (rule.Period == TimeScale.Season) {
 				for(int i = 0; i < 4; i++) {
 					int first = (i * ModEntry.DaysPerMonth);
 
-					if (!seasons.Contains(i))
+					if (!seasons.Contains(i) && !seasons.Contains(-1))
 						continue;
 
 					ArraySegment<int> weatherSeg = new(Weather, first, ModEntry.DaysPerMonth);
@@ -189,11 +194,11 @@ namespace Leclair.Stardew.Almanac.Managers {
 					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
 				}
 
-			} else if (rule.Period == RulePeriod.Week) {
+			} else if (rule.Period == TimeScale.Week) {
 				for (int i = 0; i < weeksPerYear; i++) {
 					int first = (i * 7);
 
-					if (!seasons.Contains(i / 4))
+					if (!seasons.Contains(i / 4) && !seasons.Contains(-1))
 						continue;
 
 					ArraySegment<int> weatherSeg = new(Weather, first, 7);
@@ -204,7 +209,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			}
 		}
 
-		private void ExecuteRuleInner(WeatherRule rule, RulePatternEntry[][] pattern, int seed, int year, int offset, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static void ExecuteRuleInner(WeatherRule rule, RulePatternEntry[][] pattern, int seed, int year, int offset, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
 
 			Dictionary<int, PossibleMatch> possibleMatches = new();
 
@@ -266,7 +271,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			ApplyPattern(rnd, matches[idx].Offset, pattern, Weather, RuledDates);
 		}
 
-		private void ApplyPattern(Random rnd, int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static void ApplyPattern(Random rnd, int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
 
 			for (int i = 0; i < pattern.Length; i++) {
 				int idx = offset + i - 1;
@@ -306,7 +311,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			}
 		}
 
-		private int GetPatternCost(int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static int GetPatternCost(int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
 
 			int cost = 0;
 
@@ -341,7 +346,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		#region Data Loading
 
-		public void HydrateRules(Dictionary<string, WeatherRule> rules, WeatherRule[] additional) {
+		public static void HydrateRules(Dictionary<string, WeatherRule> rules, WeatherRule[] additional) {
 			foreach (WeatherRule rule in additional) {
 				rules[rule.Id] = rule;
 			}

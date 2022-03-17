@@ -31,8 +31,8 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 		// the profession that makes Crab Pots cheaper, they should have the
 		// cheaper recipe while the other player should now.
 
-		private PerScreen<int> CraftingCount = new(() => 0);
-		private PerScreen<int> CookingCount = new(() =>0);
+		private readonly PerScreen<int> CraftingCount = new(() => 0);
+		private readonly PerScreen<int> CookingCount = new(() =>0);
 
 		private readonly PerScreen<Dictionary<string, IRecipe>> CraftingRecipesByName = new(() => new());
 		private readonly PerScreen<Dictionary<string, IRecipe>> CookingRecipesByName = new(() => new());
@@ -58,7 +58,7 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 
 		public RecipeManager(ModEntry mod) : base(mod) { }
 
-		private void AssertFarmer(Farmer who) {
+		private static void AssertFarmer(Farmer who) {
 			if (who == null)
 				throw new ArgumentNullException("who cannot be null");
 		}
@@ -154,7 +154,7 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 					CraftingCategories.TryGetValue(id, out result);
 			});
 
-			return result ?? (cooking ? DefaultCookingCategories : DefaultCraftingCategories) ?? new Category[0];
+			return result ?? (cooking ? DefaultCookingCategories : DefaultCraftingCategories) ?? Array.Empty<Category>();
 		}
 
 		public void SetCategories(Farmer who, IEnumerable<Category> categories, bool cooking) {

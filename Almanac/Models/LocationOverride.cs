@@ -1,18 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Leclair.Stardew.Common.Enums;
 
 namespace Leclair.Stardew.Almanac.Models {
-
-	public enum Season {
-		All = -1,
-		Spring = 0,
-		Summer = 1,
-		Fall = 2,
-		Winter = 3
-	}
 
 	public class LocationOverride {
 		public string Map;

@@ -8,6 +8,7 @@ Unreleased.
 * Added an option for configuring where the Open Almanac button appears
   in the inventory menu. It can still be disabled, but may need to be
   disabled again by users that had done so previously.
+* Added an option to display trains on the Local Notices page.
 * When cached data is invalidated, if the Almanac is open it will be
   refreshed immediately.
 * When `Debug Mode` is enabled, pressing F5 will refresh the Almanac

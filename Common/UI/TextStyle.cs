@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
@@ -118,43 +119,51 @@ namespace Leclair.Stardew.Common.UI {
 			return Equals(EMPTY);
 		}
 
-		public override bool Equals(object obj) {
-			if (!(obj is TextStyle))
-				return false;
+		#region Equality
 
-			TextStyle other = (TextStyle) obj;
-			return
-				Fancy.Equals(other.Fancy) &&
-				Junimo.Equals(other.Junimo) &&
-				Shadow.Equals(other.Shadow) &&
-				ShadowColor.Equals(other.ShadowColor) &&
-				Bold.Equals(other.Bold) &&
-				Color.Equals(other.Color) &&
-				BackgroundColor.Equals(other.BackgroundColor) &&
-				Prismatic.Equals(other.Prismatic) &&
-				Font == other.Font &&
-				Scale.Equals(other.Scale) &&
-				Strikethrough.Equals(other.Strikethrough) &&
-				Underline.Equals(other.Underline) &&
-				Invert.Equals(other.Invert);
+		public override bool Equals(object obj) {
+			return obj is TextStyle style &&
+				   Fancy == style.Fancy &&
+				   Junimo == style.Junimo &&
+				   Shadow == style.Shadow &&
+				   EqualityComparer<Color?>.Default.Equals(ShadowColor, style.ShadowColor) &&
+				   Bold == style.Bold &&
+				   Invert == style.Invert &&
+				   EqualityComparer<Color?>.Default.Equals(Color, style.Color) &&
+				   EqualityComparer<Color?>.Default.Equals(BackgroundColor, style.BackgroundColor) &&
+				   Prismatic == style.Prismatic &&
+				   EqualityComparer<SpriteFont>.Default.Equals(Font, style.Font) &&
+				   Strikethrough == style.Strikethrough &&
+				   Underline == style.Underline &&
+				   Scale == style.Scale;
 		}
 
 		public override int GetHashCode() {
-			int hashCode = -412244955;
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Fancy);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Junimo);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Shadow);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(ShadowColor);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Bold);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(Color);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Color?>.Default.GetHashCode(BackgroundColor);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Prismatic);
-			hashCode = hashCode * -1521134295 + EqualityComparer<SpriteFont>.Default.GetHashCode(Font);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Strikethrough);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Underline);
-			hashCode = hashCode * -1521134295 + EqualityComparer<bool?>.Default.GetHashCode(Invert);
-			hashCode = hashCode * -1521134295 + EqualityComparer<float?>.Default.GetHashCode(Scale);
-			return hashCode;
+			HashCode hash = new();
+			hash.Add(Fancy);
+			hash.Add(Junimo);
+			hash.Add(Shadow);
+			hash.Add(ShadowColor);
+			hash.Add(Bold);
+			hash.Add(Invert);
+			hash.Add(Color);
+			hash.Add(BackgroundColor);
+			hash.Add(Prismatic);
+			hash.Add(Font);
+			hash.Add(Strikethrough);
+			hash.Add(Underline);
+			hash.Add(Scale);
+			return hash.ToHashCode();
 		}
+
+		public static bool operator ==(TextStyle left, TextStyle right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(TextStyle left, TextStyle right) {
+			return !(left == right);
+		}
+
+		#endregion
 	}
 }

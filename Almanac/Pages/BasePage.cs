@@ -181,7 +181,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		}
 
-		private bool IsComponent(Type type) {
+		private static bool IsComponent(Type type) {
 			return type == typeof(ClickableComponent) || type.IsSubclassOf(typeof(ClickableComponent));
 		}
 

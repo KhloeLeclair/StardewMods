@@ -40,8 +40,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public static readonly Rectangle FAV_STAR = new(338, 400, 8, 8);
 
 		// Session State
-		public static string LastTab = null;
-		public static bool FavoritesOnly = false;
+		public static string LastTab { get; private set; } = null;
+		public static bool FavoritesOnly { get; private set; } = false;
 
 		// Menu Mode
 		public readonly bool cooking;
@@ -59,7 +59,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public IList<LocatedInventory> MaterialContainers;
 		protected IList<LocatedInventory> CachedInventories;
 		private IList<IInventory> UnsafeInventories;
-		private bool ChestsOnly;
+		private readonly bool ChestsOnly;
 		public bool DiscoverContainers { get; private set; }
 
 		// Editing Mode
@@ -863,7 +863,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				Category cat = entry.Key;
 				SpriteInfo sprite = GetSpriteFromIcon(cat.Icon, entry.Value);
 
-				ClickableComponent tab = new ClickableComponent(
+				ClickableComponent tab = new(
 					bounds: Rectangle.Empty, // new Rectangle(xPositionOnScreen - 48, yPositionOnScreen + offsetY + (64 * idx), 64, 64),
 					name: entry.Key.Id,
 					label: string.IsNullOrEmpty(entry.Key.I18nKey) ? entry.Key.Name : Mod.Helper.Translation.Get(entry.Key.I18nKey)
@@ -1711,13 +1711,13 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					filtered = true;
 				},
 				old
-			);
-
-			search.exitFunction = () => {
-				if (!filtered)
-					UpdateFilter(null);
-				if (Game1.options.SnappyMenus)
-					snapCursorToCurrentSnappedComponent();
+			) {
+				exitFunction = () => {
+					if (!filtered)
+						UpdateFilter(null);
+					if (Game1.options.SnappyMenus)
+						snapCursorToCurrentSnappedComponent();
+				}
 			};
 
 			SetChildMenu(search);
@@ -1730,7 +1730,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				string prefix = I18n.Search_IngredientPrefix();
 				FilterIngredients = filter.StartsWith(prefix);
 				if (FilterIngredients)
-					filter = filter.Substring(prefix.Length).TrimStart();
+					filter = filter[prefix.Length..].TrimStart();
 			}
 
 			if (string.IsNullOrEmpty(filter)) {
@@ -1958,11 +1958,11 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					height - 256,
 
 					icon => UpdateCategorySprite(icon)
-				);
-
-				picker.exitFunction = () => {
-					if (Game1.options.SnappyMenus)
-						snapCursorToCurrentSnappedComponent();
+				) {
+					exitFunction = () => {
+						if (Game1.options.SnappyMenus)
+							snapCursorToCurrentSnappedComponent();
+					}
 				};
 
 				if (playSound)
@@ -2259,13 +2259,13 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			int quantity = recipe.QuantityPerCraft * (shifting ? (ctrling ? 25 : 5) : 1);
 
 			// TODO: Check that we can craft it.
-			var bulk = new BulkCraftingMenu(Mod, this, recipe, quantity);
-
-			bulk.exitFunction = () => {
-				if (Game1.options.SnappyMenus)
-					snapCursorToCurrentSnappedComponent();
+			var bulk = new BulkCraftingMenu(Mod, this, recipe, quantity) {
+				exitFunction = () => {
+					if (Game1.options.SnappyMenus)
+						snapCursorToCurrentSnappedComponent();
+				}
 			};
-			
+
 			SetChildMenu(bulk);
 			performHoverAction(0, 0);
 			return true;
@@ -2981,9 +2981,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			builder.Divider();
 
 			if (Filter == null)
-				builder.Flow(FlowHelper.Builder().Text(hoverRecipe.Description).Build());
+				builder.Flow(FlowHelper.Builder()
+					.Text(hoverRecipe.Description)
+					.Build(),
+					wrapText: true
+				);
 			else
-				builder.FormatText(HighlightSearchTerms(hoverRecipe.Description), wrapText: true);
+				builder.FormatText(
+					HighlightSearchTerms(hoverRecipe.Description), wrapText: true);
 
 			AddBuffsToTooltip(builder, recipeItem, buffIconsToDisplay, false);
 
@@ -3049,7 +3054,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return builder.GetLayout();
 		}
 
-		private SimpleBuilder AddBuffsToTooltip(SimpleBuilder builder, Item item, string[] buffs, bool icons_only = false) {
+		private static SimpleBuilder AddBuffsToTooltip(SimpleBuilder builder, Item item, string[] buffs, bool icons_only = false) {
 			if (icons_only)
 				builder = builder.Group(margin: 8);
 
@@ -3158,7 +3163,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return builder;
 		}
 
-		public string GetActionTip(ButtonAction action) {
+		public static string GetActionTip(ButtonAction action) {
 			switch (action) {
 				case ButtonAction.Craft:
 					return I18n.Setting_Action_Craft();
@@ -3171,21 +3176,21 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return null;
 		}
 
-		public ISimpleNode GetLeftClickNode() {
+		public static ISimpleNode GetLeftClickNode() {
 			if (Game1.options.gamepadControls)
 				return GetNode(SButton.ControllerA);
 
 			return GetNode(Game1.options.useToolButton);
 		}
 
-		public ISimpleNode GetRightClickNode() {
+		public static ISimpleNode GetRightClickNode() {
 			if (Game1.options.gamepadControls)
 				return GetNode(SButton.ControllerX);
 
 			return GetNode(Game1.options.actionButton);
 		}
 
-		public ISimpleNode GetNode(KeybindList keybind) {
+		public static ISimpleNode GetNode(KeybindList keybind) {
 			// We either want gamepad or not.
 			bool want_pad = Game1.options.gamepadControls;
 
@@ -3202,14 +3207,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			return null;
 		}
 
-		public ISimpleNode GetNode(SButton button) {
+		public static ISimpleNode GetNode(SButton button) {
 			var sprite = SpriteHelper.GetSprite(button);
 			if ( sprite != null )
 				return new SpriteNode(sprite, scale: 2, alignment: Alignment.Middle);
 
 			return new TextNode($"{button}:");
 		}
-		public ISimpleNode GetNode(InputButton[] buttons) {
+		public static ISimpleNode GetNode(InputButton[] buttons) {
 			SpriteInfo sprite = null;
 			foreach(InputButton btn in buttons) {
 				if (btn.mouseLeft) {

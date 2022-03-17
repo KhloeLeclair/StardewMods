@@ -38,7 +38,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			}
 		}
 
-		private Vector2 MinSize {
+		public Vector2 MinSize {
 			get => _MinSize;
 			set {
 				_MinSize = value;
@@ -56,7 +56,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 
 		public LayoutDirection Direction { get; }
 
-		public bool DeferSize => _Children == null ? false : _Children.Any(val => val.DeferSize);
+		public bool DeferSize => _Children != null && _Children.Any(val => val.DeferSize);
 
 		public LayoutNode(LayoutDirection direction, ISimpleNode[] children, int margin = 0, Vector2? minSize = null, Alignment alignment = Alignment.None) {
 			Direction = direction;
@@ -80,7 +80,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 					break;
 			}
 
-			Vector2 size = new Vector2(width, height);
+			Vector2 size = new(width, height);
 
 			bool initial = true;
 			int count = _Children?.Length ?? 0;

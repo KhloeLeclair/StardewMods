@@ -82,7 +82,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				if (date == null)
 					return null;
 
-				List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
+				List<CropInfo> crops = LastDays?[date.DayOfMonth - 1];
 
 				if (crops == null)
 					return null;
@@ -120,9 +120,9 @@ namespace Leclair.Stardew.Almanac.Crops {
 								days = 1;
 
 							if (days == 1)
-								sprites[i] = Mod.Config.PreviewUseHarvestSprite ? crop.Sprite : crop.PhaseSprites[crop.PhaseSprites.Length - 2];
+								sprites[i] = Mod.Config.PreviewUseHarvestSprite ? crop.Sprite : crop.PhaseSprites[^2];
 							else
-								sprites[i] = crop.PhaseSprites[crop.PhaseSprites.Length - 1];
+								sprites[i] = crop.PhaseSprites[^1];
 
 							continue;
 
@@ -131,7 +131,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 							phase = 0;
 							days = 1;
 
-							sprites[i] = Mod.Config.PreviewUseHarvestSprite ? crop.Sprite : crop.PhaseSprites[crop.PhaseSprites.Length - 1];
+							sprites[i] = Mod.Config.PreviewUseHarvestSprite ? crop.Sprite : crop.PhaseSprites[^1];
 							continue;
 						}
 
@@ -382,7 +382,13 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 				builder
 					.Add(node)
-					.Text($" {crop.Name}\n", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true)
+					.Text($" {crop.Name}", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true);
+
+				if (Mod.Config.DebugMode)
+					builder.Text($" (#{crop.Id})", align: Alignment.Middle);
+
+				builder
+					.Text("\n")
 					.FormatText(I18n.Crop_GrowTime(count: days), shadow: false);
 
 				if (crop.Regrow > 0)
@@ -423,22 +429,10 @@ namespace Leclair.Stardew.Almanac.Crops {
 						.Translate(
 							Mod.Helper.Translation.Get("crop.giant-note"),
 							new {
-								link = link
+								link
 							},
 							new TextStyle(shadow: false)
 						);
-					/*builder.FormatText($" {I18n.Crop_GiantNote()}", shadow: false, onHover: (_,_,_) => {
-						if (crop.GiantSprite == null)
-							return false;
-
-						Menu.HoverNode = SimpleHelper.Builder(LayoutDirection.Horizontal)
-							//.Space()
-							.Sprite(crop.GiantSprite, scale: 8)
-							//.Space()
-							.GetLayout();
-
-						return true;
-					});*/
 				}
 
 				builder.FormatText($" {I18n.Crop_LastDate(date: sdate.ToLocaleString(withYear: false))}", shadow: false);
@@ -668,7 +662,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				return;
 			}
 
-			List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
+			List<CropInfo> crops = LastDays?[date.DayOfMonth - 1];
 
 			if (crops == null)
 				return;
@@ -754,7 +748,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 		}
 
 		private CropInfo? GetCropAt(int x, int y, WorldDate date, Rectangle bounds) {
-			List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
+			List<CropInfo> crops = LastDays?[date.DayOfMonth - 1];
 
 			if (crops == null || crops.Count == 0)
 				return null;
@@ -824,7 +818,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 		}
 
 		public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
-			List<CropInfo> crops = LastDays == null ? null : LastDays[date.DayOfMonth - 1];
+			List<CropInfo> crops = LastDays?[date.DayOfMonth - 1];
 
 			if (crops == null || crops.Count == 0)
 				return false;

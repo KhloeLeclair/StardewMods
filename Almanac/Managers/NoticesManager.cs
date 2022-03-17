@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.FlowNode;
 
@@ -118,7 +119,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 				return null;
 
 			// Season Validation
-			if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains((NoticeSeason) date.SeasonIndex))
+			if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains(Season.All) && !notice.ValidSeasons.Contains((Season) date.SeasonIndex))
 				return null;
 
 			// Date Range Validation
@@ -127,13 +128,13 @@ namespace Leclair.Stardew.Almanac.Managers {
 			bool first = true;
 
 			switch(notice.Period) {
-				case NoticePeriod.Year:
+				case TimeScale.Year:
 					day = date.TotalDays % (WorldDate.MonthsPerYear * ModEntry.DaysPerMonth);
 					break;
-				case NoticePeriod.Season:
+				case TimeScale.Season:
 					day = date.DayOfMonth;
 					break;
-				case NoticePeriod.Week:
+				case TimeScale.Week:
 					day = date.DayOfMonth % 7;
 					break;
 				default:
@@ -275,7 +276,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 		public IEnumerable<IRichEvent> GetVanillaEventsForDate(int seed, WorldDate date) {
 
 			// Berry Season
-			bool gathering = ModEntry.instance.Config.NoticesShowGathering;
+			bool gathering = Mod.Config.NoticesShowGathering;
 
 			if (gathering && bush == null)
 				bush = new();
@@ -306,13 +307,13 @@ namespace Leclair.Stardew.Almanac.Managers {
 						null,
 						first_day ?
 							FlowHelper.Translate(
-								ModEntry.instance.Helper.Translation.Get("page.notices.season"),
+								Mod.Helper.Translation.Get("page.notices.season"),
 								new {
 									item = berry.DisplayName,
 									start = new SDate(date.DayOfMonth, date.Season).ToLocaleString(withYear: false),
 									end = new SDate(last, date.Season).ToLocaleString(withYear: false)
 								},
-								alignment: Alignment.Middle
+								align: Alignment.Middle
 							) : null,
 						SpriteHelper.GetSprite(berry),
 						berry
@@ -321,7 +322,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			}
 
 			// Festivals
-			if (ModEntry.instance.Config.NoticesShowFestivals && Utility.isFestivalDay(date.DayOfMonth, date.Season)) {
+			if (Mod.Config.NoticesShowFestivals && Utility.isFestivalDay(date.DayOfMonth, date.Season)) {
 				var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + date.DayOfMonth);
 				if (data.ContainsKey("name") && data.ContainsKey("conditions")) {
 					string name = data["name"];
@@ -349,14 +350,14 @@ namespace Leclair.Stardew.Almanac.Managers {
 					yield return new RichEvent(
 						null,
 						FlowHelper.Translate(
-							ModEntry.instance.Helper.Translation.Get("page.notices.festival"),
+							Mod.Helper.Translation.Get("page.notices.festival"),
 							new {
-								name = name,
-								where = where,
+								name,
+								where,
 								start = TimeHelper.FormatTime(start),
 								end = TimeHelper.FormatTime(end)
 							},
-							alignment: Alignment.Middle
+							align: Alignment.Middle
 						),
 						new SpriteInfo(
 							Game1.temporaryContent.Load<Texture2D>("LooseSprites\\Billboard"),
@@ -375,7 +376,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 				// Children
 				// TODO: This.
 
-				if (!ModEntry.instance.Config.NoticesShowAnniversaries)
+				if (!Mod.Config.NoticesShowAnniversaries)
 					continue;
 
 				// Player Weddings and Anniversaries
@@ -410,7 +411,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							yield return new RichEvent(
 								null,
 								FlowHelper.Translate(
-									ModEntry.instance.Helper.Translation.Get(
+									Mod.Helper.Translation.Get(
 										no_s ?
 											"page.notices.wedding.no-s"
 											: "page.notices.wedding.s"
@@ -419,7 +420,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 										name = who.displayName,
 										spouse = spouse.displayName
 									},
-									alignment: Alignment.Middle
+									align: Alignment.Middle
 								),
 								sprite
 							);
@@ -427,7 +428,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							yield return new RichEvent(
 								null,
 								FlowHelper.Translate(
-									ModEntry.instance.Helper.Translation.Get(
+									Mod.Helper.Translation.Get(
 										no_s ?
 											"page.notices.anniversary.no-s"
 											: "page.notices.anniversary.s"
@@ -436,13 +437,33 @@ namespace Leclair.Stardew.Almanac.Managers {
 										name = who.displayName,
 										spouse = spouse.displayName
 									},
-									alignment: Alignment.Middle
+									align: Alignment.Middle
 								),
 								sprite
 							);
 						}
 					}
 				}
+			}
+
+			// Trains
+			if (Mod.Config.NoticesShowTrains) {
+				int time = TrainHelper.GetTrainTime(date);
+				if (time >= 0)
+					yield return new RichEvent(
+						null,
+						FlowHelper.Translate(
+							Mod.Helper.Translation.Get("page.notices.train"),
+							new {
+								time = TimeHelper.FormatTime(time)
+							},
+							align: Alignment.Middle
+						),
+						new SpriteInfo(
+							Game1.mouseCursors,
+							TrainHelper.TRAIN
+						)
+					);
 			}
 
 			// Spring
@@ -470,19 +491,19 @@ namespace Leclair.Stardew.Almanac.Managers {
 			else if (date.SeasonIndex == 2) {
 
 				if (gathering && date.DayOfMonth >= 15 && date.DayOfMonth <= 28) {
-					SObject nut = new SObject(408, 1);
+					SObject nut = new(408, 1);
 
 					yield return new RichEvent(
 						null,
 						date.DayOfMonth == 15 ?
 						FlowHelper.Translate(
-							ModEntry.instance.Helper.Translation.Get("page.notices.season"),
+							Mod.Helper.Translation.Get("page.notices.season"),
 							new {
 								item = nut.DisplayName,
 								start = new SDate(15, date.Season).ToLocaleString(withYear: false),
 								end = new SDate(28, date.Season).ToLocaleString(withYear: false),
 							},
-							alignment: Alignment.Middle
+							align: Alignment.Middle
 						) : null,
 						SpriteHelper.GetSprite(nut),
 						nut
@@ -547,7 +568,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 							if (item is SObject sobj)
 								builder
-									.Sprite(SpriteHelper.GetSprite(sobj), scale: 2, alignment: Alignment.Middle)
+									.Sprite(SpriteHelper.GetSprite(sobj), scale: 2, align: Alignment.Middle)
 									.Text(" ");
 
 							builder.Text(item.DisplayName, shadow: false);

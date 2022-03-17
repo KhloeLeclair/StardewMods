@@ -2,23 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-
-/* Unmerged change from project 'MoveToConnected'
-Before:
-using StardewValley.Menus;
-
-using StardewModdingAPI;
-using StardewModdingAPI.Events;
-
-using Leclair.Stardew.Common.Events;
-After:
-using Leclair.Stardew.Common.Events;
-
-using StardewModdingAPI;
-using StardewModdingAPI.Events;
-
-using StardewValley.Menus;
-*/
 using StardewModdingAPI;
 
 using StardewValley.Menus;

@@ -284,7 +284,7 @@ namespace Leclair.Stardew.Almanac {
 			SetCropCallback(manifest, null);
 		}
 
-		private SpriteInfo HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
+		private static SpriteInfo HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
 			if (input?.Item1 == null)
 				return null;
 
@@ -298,7 +298,7 @@ namespace Leclair.Stardew.Almanac {
 			);
 		}
 
-		private List<SpriteInfo> HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
+		private static List<SpriteInfo> HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
 			if (input == null)
 				return null;
 

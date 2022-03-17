@@ -113,6 +113,8 @@
 	"page.notices.merchant": "The Traveling Merchant will be in town.",
 	"page.notices.merchant.stock": "The Traveling Merchant will be selling:",
 
+	"page.notices.train": "A train is scheduled to pass the station at {{time}}.",
+
 	// Fishing Page
 
 	"page.fish": "Fishing",
@@ -236,6 +238,9 @@
 	"settings.fish.legendary-desc": "When enabled, legendary fish will be listed in the Almanac as well.",
 
 	"settings.notices": "Page: Local Notices",
+
+	"settings.notices.trains": "Show Trains",
+	"settings.notices.trains-desc": "When enabled, the train schedule will be posted to Local Notices. This can be used as an alternative to the Train Schedule page.",
 
 	"settings.notices.anniversaries": "Show Anniversaries",
 	"settings.notices.anniversaries-desc": "When enabled, weddings and anniversaries for all farmers will be listed in the Local Notices pages.",

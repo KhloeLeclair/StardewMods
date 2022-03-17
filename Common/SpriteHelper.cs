@@ -28,7 +28,7 @@ namespace Leclair.Stardew.Common {
 
 		// Shared Textures
 
-		public static Texture2D KeyTexture = null;
+		public static Texture2D KeyTexture { get; private set; } = null;
 		private readonly static object loadLock = new();
 
 		public static void LoadKeyTexture() {

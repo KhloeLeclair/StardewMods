@@ -13,9 +13,9 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		public float Size { get; }
 		public int Frame { get; set; }
 		public Alignment Alignment { get; }
+		public object Extra { get; }
 
 		public bool NoComponent { get; }
-		public ClickableComponent UseComponent => null;
 		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnHover { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnRightClick { get; }
@@ -23,23 +23,35 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		public SpriteNode(
 			SpriteInfo sprite,
 			float scale,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
 			float size = 16,
-			int frame = -1
+			int frame = -1,
+			object extra = null
 		) {
 			Sprite = sprite;
 			Scale = scale;
 			Size = size;
-			Alignment = alignment ?? Alignment.None;
+			Alignment = align ?? Alignment.None;
 			OnClick = onClick;
 			OnHover = onHover;
 			OnRightClick = onRightClick;
 			NoComponent = noComponent;
 			Frame = frame;
+			Extra = extra;
+		}
+
+		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
+			return null;
+		}
+
+		public bool? WantComponent(IFlowNodeSlice slice) {
+			if (NoComponent)
+				return false;
+			return null;
 		}
 
 		public bool IsEmpty() {
@@ -65,26 +77,36 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				   EqualityComparer<SpriteInfo>.Default.Equals(Sprite, node.Sprite) &&
 				   Scale == node.Scale &&
 				   Size == node.Size &&
-				   Alignment == node.Alignment &&
-				   NoComponent == node.NoComponent &&
 				   Frame == node.Frame &&
+				   Alignment == node.Alignment &&
+				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
+				   NoComponent == node.NoComponent &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick);
 		}
 
 		public override int GetHashCode() {
-			int hashCode = 2138745294;
-			hashCode = hashCode * -1521134295 + EqualityComparer<SpriteInfo>.Default.GetHashCode(Sprite);
-			hashCode = hashCode * -1521134295 + Scale.GetHashCode();
-			hashCode = hashCode * -1521134295 + Size.GetHashCode();
-			hashCode = hashCode * -1521134295 + Alignment.GetHashCode();
-			hashCode = hashCode * -1521134295 + NoComponent.GetHashCode();
-			hashCode = hashCode * -1521134295 + Frame.GetHashCode();
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnClick);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnHover);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnRightClick);
-			return hashCode;
+			HashCode hash = new();
+			hash.Add(Sprite);
+			hash.Add(Scale);
+			hash.Add(Size);
+			hash.Add(Frame);
+			hash.Add(Alignment);
+			hash.Add(Extra);
+			hash.Add(NoComponent);
+			hash.Add(OnClick);
+			hash.Add(OnHover);
+			hash.Add(OnRightClick);
+			return hash.ToHashCode();
+		}
+
+		public static bool operator ==(SpriteNode left, SpriteNode right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(SpriteNode left, SpriteNode right) {
+			return !(left == right);
 		}
 	}
 }

@@ -35,7 +35,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					if (info.HasValue)
 						result.Add(info.Value);
 				} catch (Exception ex) {
-					ModEntry.instance.Log($"Unable to process crop: {entry.Key}", LogLevel.Warn, ex);
+					ModEntry.Instance.Log($"Unable to process crop: {entry.Key}", LogLevel.Warn, ex);
 				}
 			}
 
@@ -76,7 +76,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					end = new(1, season, ModEntry.DaysPerMonth);
 
 				} catch (Exception) {
-					ModEntry.instance.Log($"Invalid season for crop {id} (harvest:{harvest}): {season}", LogLevel.Warn);
+					ModEntry.Instance.Log($"Invalid season for crop {id} (harvest:{harvest}): {season}", LogLevel.Warn);
 					return null;
 				}
 

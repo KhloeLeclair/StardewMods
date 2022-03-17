@@ -95,11 +95,11 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public ClickableTextureComponent btnTabsDown;
 		private int TabScroll = 0;
 
-		private List<Tuple<ClickableComponent, int, int, int>> Tabs = new();
+		private readonly List<Tuple<ClickableComponent, int, int, int>> Tabs = new();
 
 		// Flow Rendering
-		private ScrollableFlow LeftFlow;
-		private ScrollableFlow RightFlow;
+		private readonly ScrollableFlow LeftFlow;
+		private readonly ScrollableFlow RightFlow;
 
 		// Proxy Flow Elements
 		public ClickableTextureComponent btnLeftPageUp;
@@ -116,7 +116,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public ISimpleNode HoverNode;
 		public string HoverText;
 
-		private Cache<ISimpleNode, string> CachedHoverText;
+		private readonly Cache<ISimpleNode, string> CachedHoverText;
 
 		// Lookup Anything support.
 		public Item HoveredItem = null;
@@ -125,7 +125,12 @@ namespace Leclair.Stardew.Almanac.Menus {
 		: base(0, 0, 0, 0, true) {
 			Mod = mod;
 			background = Mod.ThemeManager.Load<Texture2D>("Menu.png");
-			Date = new(Game1.Date);
+
+			if (year == Game1.Date.Year)
+				Date = new(Game1.Date);
+			else
+				Date = new(year, "spring", 1);
+
 			Date.DayOfMonth = 1;
 
 			// CachedHoverText
@@ -593,7 +598,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 			for(int i = 0; i < Tabs.Count; i++) {
 				var entry = Tabs[i];
 				ClickableComponent cmp = entry.Item1;
-				if (Pages[entry.Item2] is not ITab tab || cmp == null)
+				if (Pages[entry.Item2] is not ITab || cmp == null)
 					continue;
 
 				if (btnTabsUp != null && (i < TabScroll || i >= (TabScroll + VISIBLE_TABS))) {
@@ -1092,11 +1097,19 @@ namespace Leclair.Stardew.Almanac.Menus {
 
 			CurrentPage?.PerformHover(x, y);
 
-			if (LeftFlow.HasValue)
-				LeftFlow.PerformHover(x, y);
+			if (LeftFlow.HasValue) {
+				if (HoveredItem == null && LeftFlow.GetExtraAt(x, y) is Item item)
+					HoveredItem = item;
 
-			if (RightFlow.HasValue)
+				LeftFlow.PerformHover(x, y);
+			}
+
+			if (RightFlow.HasValue) {
+				if (HoveredItem == null && RightFlow.GetExtraAt(x, y) is Item item)
+					HoveredItem= item;
+
 				RightFlow.PerformHover(x, y);
+			}
 		}
 
 		#endregion

@@ -94,7 +94,7 @@ namespace Leclair.Stardew.AlmanacDGA {
 							return null;
 
 						cval = cond.Value?.Trim()?.ToLowerInvariant() == "true";
-						choices = c.Substring(9).Split(',').Select(x => x.Trim()).ToArray();
+						choices = c[9..].Split(',').Select(x => x.Trim()).ToArray();
 					}
 
 					switch(token) {

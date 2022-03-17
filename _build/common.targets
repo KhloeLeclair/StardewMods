@@ -21,6 +21,7 @@
 
 	<!-- mod build package -->
 	<ItemGroup>
+        <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
 	</ItemGroup>
 </Project>

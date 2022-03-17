@@ -74,7 +74,7 @@ namespace Leclair.Stardew.Almanac {
 					return false;
 
 				string[] bits = PathUtilities.GetSegments(asset.AssetName);
-				string end = bits[bits.Length - 1];
+				string end = bits[^1];
 
 				if (ModEvents.ContainsKey(end))
 					return true;
@@ -92,7 +92,7 @@ namespace Leclair.Stardew.Almanac {
 				return;
 
 			string[] bits = PathUtilities.GetSegments(asset.AssetName);
-			string end = bits[bits.Length - 1];
+			string end = bits[^1];
 
 			if (!ModEvents.TryGetValue(end, out var events) || events == null)
 				return;

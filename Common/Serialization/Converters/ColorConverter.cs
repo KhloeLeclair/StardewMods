@@ -20,7 +20,7 @@ namespace Leclair.Stardew.Common.Serialization.Converters {
 				case JsonToken.Null:
 					return null;
 				case JsonToken.String:
-					return ReadString(JToken.Load(reader).Value<string>(), path);
+					return ReadString(JToken.Load(reader).Value<string>());
 				case JsonToken.StartObject:
 					return ReadObject(JObject.Load(reader), path);
 				default:
@@ -44,11 +44,11 @@ namespace Leclair.Stardew.Common.Serialization.Converters {
 			jo.WriteTo(writer);
 		}
 
-		private Color? ReadString(string value, string path) {
+		private static Color? ReadString(string value) {
 			return CommonHelper.ParseColor(value);
 		}
 
-		private Color? ReadObject(JObject obj, string path) {
+		private static Color? ReadObject(JObject obj, string path) {
 			try {
 				if (!obj.TryGetValueIgnoreCase("R", out int R) ||
 					!obj.TryGetValueIgnoreCase("G", out int G) ||
@@ -64,8 +64,6 @@ namespace Leclair.Stardew.Common.Serialization.Converters {
 			} catch(Exception ex) {
 				throw new JsonReaderException($"Can't parse Color? from JSON object node (path: {path}).", ex);
 			}
-
-			return null;
 		}
 	}
 }

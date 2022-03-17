@@ -14,6 +14,7 @@ using StardewValley.Objects;
 using SObject = StardewValley.Object;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Types;
 
@@ -47,14 +48,6 @@ namespace Leclair.Stardew.Almanac.Fish {
 			lock(OverrideLock) {
 				action();
 			}
-		}
-
-		private T WithOverrides<T>(Func<T> action) {
-			T result;
-			lock(OverrideLock) {
-				result = action();
-			}
-			return result;
 		}
 
 		#endregion
@@ -192,7 +185,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		#region Locations
 
-		private void AddFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result ) {
+		private static void AddFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result ) {
 			if ( ! result.TryGetValue(fish, out var entry)) { 
 				result[fish] = new() {
 					[loc] = seasons.ToList(),
@@ -212,7 +205,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			}
 		}
 
-		private void RemoveFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result) {
+		private static void RemoveFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result) {
 			if (!result.TryGetValue(fish, out var entry))
 				return;
 

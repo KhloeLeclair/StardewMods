@@ -19,8 +19,8 @@ using StardewValley.Menus;
 namespace Leclair.Stardew.Common.UI {
 
 	public class FlowBuilder {
-		private FlowBuilder Parent;
-		private NestedNode? Node;
+		private readonly FlowBuilder Parent;
+		private readonly NestedNode? Node;
 		private List<IFlowNode> Nodes;
 		private IFlowNode[] Built;
 
@@ -64,25 +64,27 @@ namespace Leclair.Stardew.Common.UI {
 		public FlowBuilder Sprite(
 			SpriteInfo sprite,
 			float scale,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
 			float size = 16,
-			int frame = -1
+			int frame = -1,
+			object extra = null
 		) {
 			AssertState();
 			Nodes.Add(new SpriteNode(
-				sprite,
-				scale,
-				alignment,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent,
-				size,
-				frame
+				sprite: sprite,
+				scale: scale,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				size: size,
+				frame: frame,
+				extra: extra
 			));
 			return this;
 		}
@@ -90,21 +92,23 @@ namespace Leclair.Stardew.Common.UI {
 		public FlowBuilder FormatText(
 			string text,
 			TextStyle style,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			AssertState();
 			Nodes.AddRange(FlowHelper.FormatText(
-				text,
-				style,
-				alignment,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				text: text,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
 			));
 			return this;
 		}
@@ -112,28 +116,50 @@ namespace Leclair.Stardew.Common.UI {
 		public FlowBuilder Text(
 			string text,
 			TextStyle style,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			AssertState();
 			Nodes.Add(new TextNode(
-				text,
-				style,
-				alignment,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				text: text,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
 			));
 			return this;
 		}
 
-		public FlowBuilder Translate(Translation source, object values, TextStyle? style = null, Alignment? alignment = null) {
+		public FlowBuilder Translate(
+			Translation source,
+			object values,
+			TextStyle? style = null,
+			Alignment? align = null,
+			Func<IFlowNodeSlice, int, int, bool> onClick = null,
+			Func<IFlowNodeSlice, int, int, bool> onHover = null,
+			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
+			bool noComponent = false,
+			object extra = null
+		) {
 			AssertState();
-			Nodes.AddRange(FlowHelper.Translate(source, values, style, alignment));
+			Nodes.AddRange(FlowHelper.Translate(
+				source: source,
+				values: values,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
+			));
 			return this;
 		}
 
@@ -153,9 +179,10 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
-			TextStyle style = new TextStyle(
+			TextStyle style = new(
 				color: color,
 				prismatic: prismatic,
 				font: font,
@@ -169,13 +196,14 @@ namespace Leclair.Stardew.Common.UI {
 			);
 
 			return FormatText(
-				text,
-				style,
-				align,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				text: text,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
 			);
 		}
 
@@ -195,9 +223,10 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
-			TextStyle style = new TextStyle(
+			TextStyle style = new(
 				color: color,
 				prismatic: prismatic,
 				font: font,
@@ -211,13 +240,14 @@ namespace Leclair.Stardew.Common.UI {
 			);
 
 			return Text(
-				text,
-				style,
-				align,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				text: text,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
 			);
 		}
 
@@ -226,16 +256,18 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			Func<IFlowNodeSlice, bool?> wantComponent = null,
+			object extra = null
 		) {
 			AssertState();
-			NestedNode nested = new NestedNode(
+			NestedNode nested = new(
 				null,
-				align,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				wantComponent: wantComponent,
+				extra: extra
 			);
 			Nodes.Add(nested);
 			return new FlowBuilder(this, nested);
@@ -251,7 +283,7 @@ namespace Leclair.Stardew.Common.UI {
 
 		public FlowBuilder EndGroup() {
 			if (Parent != null && Node.HasValue)
-				Parent.ReplaceNode(Node.Value, new NestedNode(BuildThis(), alignment: Node.Value.Alignment));
+				Parent.ReplaceNode(Node.Value, new NestedNode(BuildThis(), align: Node.Value.Alignment));
 
 			return Parent ?? this;
 		}
@@ -262,7 +294,7 @@ namespace Leclair.Stardew.Common.UI {
 
 		public IFlowNode[] BuildThis() {
 			if (Built != null) return Built;
-			Built = Nodes?.ToArray() ?? new IFlowNode[0];
+			Built = Nodes?.ToArray() ?? Array.Empty<IFlowNode>();
 			Nodes = null;
 			return Built;
 		}
@@ -270,17 +302,23 @@ namespace Leclair.Stardew.Common.UI {
 
 	public static class FlowHelper {
 
-		public static Regex I18N_REPLACER = new("{{([ \\w\\.\\-]+)}}");
+		public static readonly Regex I18N_REPLACER = new("{{([ \\w\\.\\-]+)}}");
 
-		public static IFlowNode GetNode(object obj, Alignment? alignment = null, TextStyle? style = null, bool format = false, IModHelper helper = null) {
+		public static IFlowNode GetNode(
+			object obj,
+			Alignment? align = null,
+			TextStyle? style = null,
+			bool format = false,
+			IModHelper helper = null
+		) {
 			if (obj == null)
 				return null;
 			if (obj is IFlowNode node)
 				return node;
 			if (obj is IFlowNode[] nodes)
-				return new NestedNode(nodes, alignment: alignment);
+				return new NestedNode(nodes, align: align);
 			if (obj is IEnumerable<IFlowNode> nlist)
-				return new NestedNode(nlist.ToArray(), alignment: alignment);
+				return new NestedNode(nlist.ToArray(), align: align);
 			if (obj is Tuple<int>) {
 				return new DividerNode(null);
 			}
@@ -288,60 +326,66 @@ namespace Leclair.Stardew.Common.UI {
 				return new SpriteNode(
 					new SpriteInfo(tex, tex.Bounds),
 					2f,
-					alignment: alignment
+					align: align
 				);
 			if (obj is Tuple<Texture2D, float> twople)
 				return new SpriteNode(
 					new SpriteInfo(twople.Item1, twople.Item1.Bounds),
 					twople.Item2,
-					alignment: alignment
+					align: align
 				);
 			if (obj is Tuple<Texture2D, Rectangle> tuple)
 				return new SpriteNode(
 					new SpriteInfo(tuple.Item1, tuple.Item2),
 					2f,
-					alignment: alignment
+					align: align
 				);
 			if (obj is Tuple<Texture2D, Rectangle, float> triple)
 				return new SpriteNode(
 					new SpriteInfo(triple.Item1, triple.Item2),
 					triple.Item3,
-					alignment: alignment
+					align: align
 				);
 			if (obj is SpriteInfo sprite)
-				return new SpriteNode(sprite, 2f, alignment: alignment);
+				return new SpriteNode(sprite, 2f, align: align);
 			if (obj is Tuple<SpriteInfo, float> spriple)
-				return new SpriteNode(spriple.Item1, spriple.Item2, alignment: alignment);
+				return new SpriteNode(spriple.Item1, spriple.Item2, align: align);
 			if (obj is Item item && helper != null)
 				return new SpriteNode(
 					SpriteHelper.GetSprite(item),
 					2f,
-					alignment: alignment
+					align: align
 				);
 			if (obj is Tuple<Item, float> ituple && helper != null)
 				return new SpriteNode(
 					SpriteHelper.GetSprite(ituple.Item1),
 					ituple.Item2,
-					alignment: alignment
+					align: align
 				);
 
 			if (format) {
-				IFlowNode[] nods = FormatText(obj.ToString(), style: style, alignment: alignment)?.ToArray();
+				IFlowNode[] nods = FormatText(obj.ToString(), style: style, align: align)?.ToArray();
 				if (nods == null || nods.Length == 0)
 					return null;
 				if (nods.Length == 1)
 					return nods[0];
-				return new NestedNode(nods, alignment: alignment);
+				return new NestedNode(nods, align: align);
 			}
 
-			return new TextNode(obj.ToString(), style: style, alignment: alignment);
+			return new TextNode(obj.ToString(), style: style, align: align);
 		}
 
-		public static List<IFlowNode> GetNodes(object[] objs, Alignment? alignment = null, TextStyle? style = null, bool format = false, IModHelper helper = null) {
+		public static List<IFlowNode> GetNodes(
+			object[] objs,
+			Alignment? align = null,
+			TextStyle? style = null,
+			bool format = false,
+			IModHelper helper = null
+		) {
 			List<IFlowNode> result = new();
 
 			foreach(object obj in objs) {
-				IFlowNode node = GetNode(obj, alignment, style, format, helper);
+				IFlowNode node = GetNode(obj, align, style, format, helper);
 				if (node is NestedNode nn)
 					result.AddRange(nn.Nodes);
 				else if (node != null)
@@ -371,49 +415,64 @@ namespace Leclair.Stardew.Common.UI {
 		public static IEnumerable<IFlowNode> FormatText(
 			string text,
 			TextStyle? style = null,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			return FormatText(
 				text: text,
 				out TextStyle _,
 				out Alignment __,
 				style: style,
-				alignment: alignment,
+				align: align,
 				onClick: onClick,
 				onHover: onHover,
 				onRightClick: onRightClick,
-				noComponent: noComponent
+				noComponent: noComponent,
+				extra: extra
 			);
 		}
 
 		public static IEnumerable<IFlowNode> FormatText(
 			string text,
 			out TextStyle endStyle,
-			out Alignment endAlignment,
+			out Alignment endAlign,
 			TextStyle? style = null,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			if (string.IsNullOrEmpty(text) || !text.Contains('@')) {
 				endStyle = style ?? TextStyle.EMPTY;
-				endAlignment = alignment ?? Alignment.None;
+				endAlign = align ?? Alignment.None;
 
 				return new IFlowNode[]{
-					new TextNode(text, style, alignment, onClick, onHover, onRightClick, noComponent)
+					new TextNode(
+						text: text,
+						style: style,
+						align: align,
+						onClick: onClick,
+						onHover: onHover,
+						onRightClick: onRightClick,
+						noComponent: noComponent,
+						extra: extra
+					)
 				};
 			}
 
 			List<IFlowNode> nodes = new();
 
 			TextStyle s = style ?? TextStyle.EMPTY;
-			Alignment a = alignment ?? Alignment.None;
+			Alignment a = align ?? Alignment.None;
+
+			Item item = null;
+			bool itemLabel = false;
 
 			StringBuilder builder = new();
 
@@ -559,6 +618,19 @@ namespace Leclair.Stardew.Common.UI {
 						ns = new(ns, junimo: true);
 						break;
 
+					case 'm':
+					case 'M':
+						string iname = ReadSubString(text, i, out ni);
+						itemLabel = next == 'M';
+						i = ni;
+						try {
+							item = InventoryHelper.CreateItemById(iname);
+							break;
+						} catch (Exception) {
+							// What do?
+						}
+						continue;
+
 					case 'p':
 						if (!ns.IsPrismatic())
 							continue;
@@ -632,15 +704,45 @@ namespace Leclair.Stardew.Common.UI {
 						new TextNode(
 							builder.ToString(),
 							style: s,
-							alignment: a,
+							align: a,
 							onClick: onClick,
 							onHover: onHover,
 							onRightClick: onRightClick,
-							noComponent: noComponent
+							noComponent: noComponent,
+							extra: extra
 						)
 					);
 
 					builder.Clear();
+				}
+
+				if (item != null) {
+					nodes.Add(
+						new SpriteNode(
+							SpriteHelper.GetSprite(item),
+							2f * (s.Scale ?? 1f),
+							align: na,
+							onClick: onClick,
+							onHover: onHover,
+							onRightClick: onRightClick,
+							noComponent: noComponent,
+							extra: item
+						)
+					);
+
+					if (itemLabel)
+						nodes.Add(new TextNode(
+							$" {item.DisplayName}",
+							style: ns,
+							align: na,
+							onClick: onClick,
+							onHover: onHover,
+							onRightClick: onRightClick,
+							noComponent: noComponent,
+							extra: item
+						));
+
+					item = null;
 				}
 
 				s = ns;
@@ -652,16 +754,17 @@ namespace Leclair.Stardew.Common.UI {
 					new TextNode(
 						builder.ToString(),
 						style: s,
-						alignment: a,
+						align: a,
 						onClick: onClick,
 						onHover: onHover,
 						onRightClick: onRightClick,
-						noComponent: noComponent
+						noComponent: noComponent,
+						extra: extra
 					)
 				);
 
 			endStyle = s;
-			endAlignment = a;
+			endAlign = a;
 
 			return nodes;
 		}
@@ -671,11 +774,12 @@ namespace Leclair.Stardew.Common.UI {
 			Translation source,
 			object values,
 			TextStyle? style = null,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			IDictionary<string, object> vals = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
@@ -694,14 +798,15 @@ namespace Leclair.Stardew.Common.UI {
 			}
 
 			return Translate(
-				source,
-				vals,
-				style,
-				alignment,
-				onClick,
-				onHover,
-				onRightClick,
-				noComponent
+				source: source,
+				values: vals,
+				style: style,
+				align: align,
+				onClick: onClick,
+				onHover: onHover,
+				onRightClick: onRightClick,
+				noComponent: noComponent,
+				extra: extra
 			);
 		}
 
@@ -709,16 +814,17 @@ namespace Leclair.Stardew.Common.UI {
 			Translation source,
 			IDictionary<string, object> values,
 			TextStyle? style = null,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			bool noComponent = false,
+			object extra = null
 		) {
 			string val = source.ToString();
 			if (!source.HasValue())
 				return new IFlowNode[] {
-					new TextNode(val, style, alignment, onClick, onHover, onRightClick, noComponent)
+					new TextNode(val, style, align, onClick, onHover, onRightClick, noComponent)
 				};
 
 			string[] bits = I18N_REPLACER.Split(val);
@@ -727,7 +833,7 @@ namespace Leclair.Stardew.Common.UI {
 			bool replacement = false;
 
 			TextStyle s = style ?? TextStyle.EMPTY;
-			Alignment a = alignment ?? Alignment.None;
+			Alignment a = align ?? Alignment.None;
 
 			foreach (string bit in bits) {
 				if (replacement && !string.IsNullOrWhiteSpace(bit)) {
@@ -751,11 +857,12 @@ namespace Leclair.Stardew.Common.UI {
 						out s,
 						out a,
 						style: s,
-						alignment: a,
+						align: a,
 						onClick: onClick,
 						onHover: onHover,
 						onRightClick: onRightClick,
-						noComponent: noComponent
+						noComponent: noComponent,
+						extra: extra
 					));
 
 				replacement = !replacement;
@@ -782,21 +889,32 @@ namespace Leclair.Stardew.Common.UI {
 			bool found = false;
 			float remaining = 0;
 
+			bool can_center = true;
+			bool can_right = true;
+
 			foreach(var s in line.Slices) {
 				if (slice == s)
 					found = true;
 
-				if (found)
+				if (!found) {
+					if (s.Node.Alignment.HasFlag(Alignment.Center))
+						can_center = false;
+					if (s.Node.Alignment.HasFlag(Alignment.Right)) {
+						can_right = false;
+						can_center = false;
+					}
+
+				} else
 					remaining += s.Width * scale;
 			}
 
 			float before = maxWidth - remaining - pos;
 
 			if (alignment.HasFlag(Alignment.Right))
-				return (float) Math.Floor(before);
+				return can_right ? (float) Math.Floor(before) : 0;
 
 			if (alignment.HasFlag(Alignment.Center))
-				return (float) Math.Floor(before / 2f);
+				return can_center ? (float) Math.Floor(before / 2f) : 0;
 
 			return 0;
 		}
@@ -1035,6 +1153,10 @@ namespace Leclair.Stardew.Common.UI {
 
 		// Smooth Scroll
 
+		public static object GetExtra(CachedFlow flow, int x, int y, float scale = 1, float scrollOffset = 0f, float maxHeight = -1) {
+			IFlowNodeSlice slice = GetSliceAtPoint(flow, x, y, scale, scrollOffset, maxHeight);
+			return slice?.Node.Extra;
+		}
 		public static bool ClickFlow(CachedFlow flow, int x, int y, float scale = 1, float scrollOffset = 0f, float maxHeight = -1) {
 			IFlowNodeSlice slice = GetSliceAtPoint(flow, x, y, scale, scrollOffset, maxHeight);
 			return slice?.Node.OnClick?.Invoke(slice, x, y) ?? false;
@@ -1067,7 +1189,7 @@ namespace Leclair.Stardew.Common.UI {
 							continue;
 
 						IFlowNode node = slice.Node;
-						ClickableComponent cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
 						if (cmp != null)
 							cmp.visible = false;
 					}
@@ -1091,7 +1213,7 @@ namespace Leclair.Stardew.Common.UI {
 
 					IFlowNode node = slice.Node;
 					if (done) {
-						ClickableComponent cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
 						if (cmp != null)
 							cmp.visible = false;
 						continue;
@@ -1102,13 +1224,12 @@ namespace Leclair.Stardew.Common.UI {
 
 					float offX = GetXOffset(node.Alignment, slice, line, scale, x, Math.Max(flow.Width * scale, flow.MaxWidth));
 
-					if ((node.OnHover != null || node.OnClick != null || node.OnRightClick != null) && !node.NoComponent) {
+					if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) { 
 						float offY = GetYOffset(node.Alignment, sHeight, lHeight);
 
 						// Get a component.
-						ClickableComponent cmp;
-						if (node.UseComponent != null) {
-							cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
+						if (cmp != null) {
 							cmp.visible = true;
 						} else {
 							i++;
@@ -1148,7 +1269,7 @@ namespace Leclair.Stardew.Common.UI {
 
 			// Remove excess components.
 			while (components.Count > i + 1) {
-				ClickableComponent last = components[components.Count - 1];
+				ClickableComponent last = components[^1];
 				onDestroy?.Invoke(last);
 				components.Remove(last);
 			}
@@ -1216,6 +1337,11 @@ namespace Leclair.Stardew.Common.UI {
 
 		// Line Scroll
 
+		public static object GetExtra(CachedFlow flow, int x, int y, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
+			IFlowNodeSlice slice = GetSliceAtPoint(flow, x, y, scale, lineOffset, maxHeight);
+			return slice?.Node.Extra;
+		}
+
 		public static bool ClickFlow(CachedFlow flow, int x, int y, float scale = 1, int lineOffset = 0, float maxHeight = -1) {
 			IFlowNodeSlice slice = GetSliceAtPoint(flow, x, y, scale, lineOffset, maxHeight);
 			return slice?.Node.OnClick?.Invoke(slice, x, y) ?? false;
@@ -1246,7 +1372,7 @@ namespace Leclair.Stardew.Common.UI {
 							continue;
 
 						IFlowNode node = slice.Node;
-						ClickableComponent cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
 						if (cmp != null)
 							cmp.visible = false;
 					}
@@ -1267,7 +1393,7 @@ namespace Leclair.Stardew.Common.UI {
 
 					IFlowNode node = slice.Node;
 					if (done) {
-						ClickableComponent cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
 						if (cmp != null)
 							cmp.visible = false;
 						continue;
@@ -1278,13 +1404,12 @@ namespace Leclair.Stardew.Common.UI {
 
 					float offX = GetXOffset(node.Alignment, slice, line, scale, x, Math.Max(flow.Width * scale, flow.MaxWidth));
 
-					if ((node.OnHover != null || node.OnClick != null || node.OnRightClick != null) && !node.NoComponent) {
+					if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) { 
 						float offY = GetYOffset(node.Alignment, sHeight, lHeight);
 
 						// Get a component.
-						ClickableComponent cmp;
-						if (node.UseComponent != null) {
-							cmp = node.UseComponent;
+						ClickableComponent cmp = node.UseComponent(slice);
+						if (cmp != null) { 
 							cmp.visible = true;
 						} else {
 							i++;
@@ -1320,7 +1445,7 @@ namespace Leclair.Stardew.Common.UI {
 
 			// Remove excess components.
 			while (components.Count > i + 1) {
-				ClickableComponent last = components[components.Count - 1];
+				ClickableComponent last = components[^1];
 				onDestroy?.Invoke(last);
 				components.Remove(last);
 			}

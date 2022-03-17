@@ -69,9 +69,9 @@ namespace Leclair.Stardew.Almanac.Fish {
 		public ClickableTextureComponent btnFilterLocation;
 
 		private FishInfo? CurrentFish;
-		private Dictionary<string, PickableNode> FishNodes = new();
 
-		private Cache<IEnumerable<IFlowNode>, FishInfo?> FishFlow;
+		private readonly Dictionary<string, SelectableNode> FishNodes = new();
+		private readonly Cache<IEnumerable<IFlowNode>, FishInfo?> FishFlow;
 
 		// Filters
 		public FishWeather Weather = FishWeather.None;
@@ -464,7 +464,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 							),
 							2f,
 							size: 10,
-							alignment: Alignment.Middle
+							align: Alignment.Middle
 						)
 						.Text(" ")
 						.Text(
@@ -477,7 +477,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 					builder.Translate(
 						Mod.Helper.Translation.Get("page.fish.level"),
 						new {
-							skill = skill,
+							skill,
 							level = caught.Minlevel
 						}
 					);
@@ -518,7 +518,11 @@ namespace Leclair.Stardew.Almanac.Fish {
 							.Text("\n    ");
 
 						if (Mod.Config.DebugMode)
-							b3.Text($"id: {pair.Key.Key}:{pair.Key.Area}", shadow: false, color: Game1.textColor * 0.5f)
+							b3.Text(
+								$"id: {pair.Key.Key}:{pair.Key.Area}",
+								shadow: false,
+								color: Game1.textColor * 0.5f
+							)
 							.Text("\n    ");
 
 						if (all_seasons)
@@ -636,12 +640,15 @@ namespace Leclair.Stardew.Almanac.Fish {
 				if (!to_select.HasValue || (selected.HasValue && selected.Value == fish))
 					to_select = fish;
 
-				var node = new PickableNode(
-					FlowHelper.Builder()
-						.Sprite(fish.Sprite, 4f, Alignment.Middle)
-						.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Middle)
-						.Text(Mod.Config.DebugMode ? $" (#{fish.Id})" : null)
-						.Build(),
+				var sb = FlowHelper.Builder()
+					.Sprite(fish.Sprite, 4f, Alignment.Middle)
+					.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Middle);
+
+				if (Mod.Config.DebugMode)
+					sb.Text($" (#{fish.Id})", align: Alignment.Middle | Alignment.Right);
+
+				var node = new SelectableNode(
+					sb.Build(),
 
 					onHover: (_, _, _) => {
 						Menu.HoveredItem = fish.Item;

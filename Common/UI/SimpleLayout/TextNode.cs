@@ -54,11 +54,8 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			if (Style.IsPrismatic())
 				color = Utility.GetPrismaticColor();
 
-			if (Style.IsInverted()) {
-				Color third = background;
-				background = color;
-				color = third;
-			}
+			if (Style.IsInverted())
+				(color, background) = (background, color);
 
 			if (background.A > 0) {
 				float a = (float) background.A / 255;
@@ -73,10 +70,14 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 				);
 			}
 
-			if (Style.IsJunimo())
-				SpriteText.drawString(batch, Text, (int) position.X, (int) position.Y, junimoText: true);
-			else if (Style.IsFancy())
-				SpriteText.drawString(batch, Text, (int) position.X, (int) position.Y);
+			if (Style.IsFancy() || Style.IsJunimo())
+				RenderHelper.DrawSpriteText(
+					batch,
+					Text,
+					(int) position.X, (int) position.Y,
+					junimoText: Style.IsJunimo(),
+					color: color
+				);
 			else if (Style.IsBold())
 				Utility.drawBoldText(batch, Text, font, position, color, scale);
 			else if (Style.HasShadow()) {

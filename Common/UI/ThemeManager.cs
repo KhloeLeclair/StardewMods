@@ -34,7 +34,7 @@ namespace Leclair.Stardew.Common.UI {
 	public class ThemeManager<DataT> where DataT : BaseThemeData {
 
 		private readonly Mod Mod;
-		private Dictionary<string, Tuple<DataT, IContentPack>> Themes = new();
+		private readonly Dictionary<string, Tuple<DataT, IContentPack>> Themes = new();
 
 		private DataT _DefaultTheme;
 
@@ -65,7 +65,7 @@ namespace Leclair.Stardew.Common.UI {
 			Mod = mod;
 			AssetPrefix = assetPrefix;
 			ThemeKey = key;
-			_DefaultTheme = DefaultTheme;
+			_DefaultTheme = defaultTheme;
 		}
 
 		private void Log(string message, LogLevel level = LogLevel.Debug, Exception ex = null, LogLevel? exLevel = null) {

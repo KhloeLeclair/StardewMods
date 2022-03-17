@@ -33,5 +33,13 @@ namespace Leclair.Stardew.Almanac.Models {
 		public override int GetHashCode() {
 			return HashCode.Combine(Key, Area);
 		}
+
+		public static bool operator ==(SubLocation left, SubLocation right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(SubLocation left, SubLocation right) {
+			return !(left == right);
+		}
 	}
 }

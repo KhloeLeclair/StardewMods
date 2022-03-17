@@ -36,13 +36,21 @@ namespace Leclair.Stardew.Common {
 		public override int GetHashCode() {
 			return HashCode.Combine(Source, Location);
 		}
+
+		public static bool operator ==(LocatedInventory left, LocatedInventory right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(LocatedInventory left, LocatedInventory right) {
+			return !(left == right);
+		}
 	}
 
 	public static class InventoryHelper {
 
 		#region Item Creation
 
-		public static readonly Regex ITEM_REGEX = new Regex(@"^\(([^)]+)\)(.+)$");
+		public static readonly Regex ITEM_REGEX = new(@"^\(([^)]+)\)(.+)$");
 
 		public static string GetItemQualifiedId(Item item) {
 			if (item is Boots boots)
@@ -438,9 +446,8 @@ namespace Leclair.Stardew.Common {
 			List<LocatedInventory> result = new();
 
 			int i = start;
-			int limit = 100;
 
-			while(i < potentials.Count && i < limit) {
+			while(i < potentials.Count && i < scanLimit) {
 				AbsolutePosition abs = potentials[i++];
 
 				SObject obj;

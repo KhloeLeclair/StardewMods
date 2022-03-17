@@ -20,8 +20,8 @@ namespace Leclair.Stardew.Almanac.Integrations.JsonAssets {
 
 		private readonly object JAMod;
 
-		private IReflectedMethod _ResolveObjectId;
-		private IReflectedMethod _CheckCanBeGiant;
+		private readonly IReflectedMethod _ResolveObjectId;
+		//private readonly IReflectedMethod _CheckCanBeGiant;
 
 		public JAIntegration(ModEntry mod)
 		: base(mod, "spacechase0.JsonAssets", "1.10.0") {
@@ -49,7 +49,7 @@ namespace Leclair.Stardew.Almanac.Integrations.JsonAssets {
 				if (CropPatcher == null)
 					throw new ArgumentNullException("CropPatcher");
 
-				_CheckCanBeGiant = Self.Helper.Reflection.GetMethod(CropPatcher, "CheckCanBeGiant", false);
+				//_CheckCanBeGiant = Self.Helper.Reflection.GetMethod(CropPatcher, "CheckCanBeGiant", false);
 
 			} catch(Exception) {
 				Log($"Unable to find CropPatcher. Will not be able to determine if JsonAssets crops are giant.", LogLevel.Debug);

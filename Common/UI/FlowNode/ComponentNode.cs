@@ -14,6 +14,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		public Alignment Alignment { get; }
 
+		public object Extra { get; }
+
 		public Action<SpriteBatch, Vector2, float, SpriteFont, Color?, Color?> OnDraw;
 
 		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
@@ -22,9 +24,6 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		public WrapMode Wrapping { get; }
 
-		public bool NoComponent => false;
-		public ClickableComponent UseComponent => Component;
-
 		public ComponentNode(
 			ClickableComponent component,
 			Alignment? alignment = null,
@@ -32,7 +31,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			Action<SpriteBatch, Vector2, float, SpriteFont, Color?, Color?> onDraw = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
-			Func<IFlowNodeSlice, int, int, bool> onRightClick = null
+			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
+			object extra = null
 		) {
 			Component = component;
 			Alignment = alignment ?? Alignment.None;
@@ -41,13 +41,15 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			OnClick = onClick;
 			OnHover = onHover;
 			OnRightClick = onRightClick;
+			Extra = extra;
 		}
 
-		private bool HandleHover(IFlowNodeSlice slice, int x, int y) {
-			x += Component.bounds.X;
-			y += Component.bounds.Y;
+		public bool? WantComponent(IFlowNodeSlice slice) {
+			return true;
+		}
 
-			return false;
+		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
+			return Component;
 		}
 
 		public bool IsEmpty() {
@@ -95,15 +97,24 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			return obj is ComponentNode node &&
 				   EqualityComparer<ClickableComponent>.Default.Equals(Component, node.Component) &&
 				   Alignment == node.Alignment &&
+				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
 				   EqualityComparer<Action<SpriteBatch, Vector2, float, SpriteFont, Color?, Color?>>.Default.Equals(OnDraw, node.OnDraw) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick) &&
-				   NoComponent == node.NoComponent;
+				   Wrapping == node.Wrapping;
 		}
 
 		public override int GetHashCode() {
-			return HashCode.Combine(Component, Alignment, OnDraw, OnClick, OnHover, OnRightClick, NoComponent);
+			return HashCode.Combine(Component, Alignment, Extra, OnDraw, OnClick, OnHover, OnRightClick, Wrapping);
+		}
+
+		public static bool operator ==(ComponentNode left, ComponentNode right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(ComponentNode left, ComponentNode right) {
+			return !(left == right);
 		}
 	}
 }

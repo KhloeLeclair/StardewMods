@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)CombinedRingSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingPageHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\Season.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\TimeScale.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\TransferMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\TransferDirection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\MenuSubscriber.cs" />

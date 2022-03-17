@@ -44,14 +44,14 @@ namespace Leclair.Stardew.Almanac.Fish {
 					if (info.HasValue)
 						result.Add(info.Value);
 				} catch(Exception ex) {
-					ModEntry.instance.Log($"Unable to process fish: {entry.Key}", LogLevel.Warn, ex);
+					ModEntry.Instance.Log($"Unable to process fish: {entry.Key}", LogLevel.Warn, ex);
 				}
 			}
 
 			return result;
 		}
 
-		private FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations) {
+		private static FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations) {
 			if (string.IsNullOrEmpty(data))
 				return null;
 
@@ -59,7 +59,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				return null;
 
 			string[] bits = data.Split('/');
-			SObject obj = new SObject(id, 1);
+			SObject obj = new(id, 1);
 
 			if (bits.Length < 7 || obj is null)
 				return null;
@@ -142,7 +142,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				desc = WHITESPACE_REGEX.Replace(desc, " ");
 
 			return new FishInfo(
-				Id: bits[0],
+				Id: id.ToString(), // bits[0],
 				Item: obj,
 				Name: obj.DisplayName,
 				Description: desc,

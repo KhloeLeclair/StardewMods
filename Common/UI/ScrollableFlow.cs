@@ -531,6 +531,19 @@ namespace Leclair.Stardew.Common.UI
 			return false;
 		}
 
+
+		public object GetExtraAt(int x, int y) {
+			if (Flow.HasValue) {
+				int fx = x - _x;
+				int fy = y - _y;
+
+				return FlowHelper.GetExtra(Flow.Value, fx, fy, scrollOffset: ScrollOffset, maxHeight: _height);
+			}
+
+			return null;
+		}
+
+
 		public bool PerformHover(int x, int y) {
 			btnPageUp.tryHover(x, ScrollOffset > 0 ? y : -1);
 			btnPageDown.tryHover(x, ScrollOffset < ScrollMax ? y : -1);

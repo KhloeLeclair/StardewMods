@@ -10,7 +10,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.UI.FlowNode
 {
-    public class PickableNode : IFlowNode
+    public class SelectableNode : IFlowNode
     {
 
 		public Texture2D SelectedTexture { get; set; }
@@ -26,9 +26,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		public bool Hovered { get; private set; }
 		public IFlowNode[] Nodes { get; }
 		public Alignment Alignment { get; }
-
-		public ClickableComponent UseComponent => null;
-		public bool NoComponent => false;
+		public object Extra { get; }
 
 		public Func<IFlowNodeSlice, int, int, bool> OnClick => _onClick;
 		public Func<IFlowNodeSlice, int, int, bool> OnHover => _onHover;
@@ -39,18 +37,28 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		private CachedFlow? Flow = null;
 
-		public PickableNode(
+		public SelectableNode(
 			IFlowNode[] nodes,
 			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
-			Func<IFlowNodeSlice, int, int, bool> onRightClick = null
+			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
+			object extra = null
 		) {
 			Nodes = nodes;
 			Alignment = align ?? Alignment.None;
 			delClick = onClick;
 			delHover = onHover;
 			OnRightClick = onRightClick;
+			Extra = extra;
+		}
+
+		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
+			return null;
+		}
+
+		public bool? WantComponent(IFlowNodeSlice slice) {
+			return true;
 		}
 
 		public bool IsEmpty() {
@@ -158,6 +166,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		#endregion
 
 		#region Equality
+
+
 
 		#endregion
 

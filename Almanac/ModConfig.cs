@@ -113,6 +113,7 @@ namespace Leclair.Stardew.Almanac {
 		public bool NoticesShowFestivals { get; set; } = true;
 		public bool NoticesShowGathering { get; set; } = true;
 		public MerchantMode NoticesShowMerchant { get; set; } = MerchantMode.Visit;
+		public bool NoticesShowTrains { get; set; } = false;
 	}
 
 	public enum MerchantMode {

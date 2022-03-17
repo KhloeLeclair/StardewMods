@@ -208,7 +208,7 @@ namespace Leclair.Stardew.Common
 
 						accumulatedHorizontalSpaceBetweenCharacters = (int) (0f * SpriteText.fontPixelZoom);
 						bool upper = char.IsUpper(c) || c == 'ß';
-						Vector2 offset = new Vector2(0f, -1 + ((!junimoText && upper) ? -3 : 0));
+						Vector2 offset = new(0f, -1 + ((!junimoText && upper) ? -3 : 0));
 						if (c == 'Ç')
 							offset.Y += 2f;
 

@@ -113,8 +113,7 @@ namespace Leclair.Stardew.Almanac {
 							SubLocation sl = new(lp.Key, zone);
 
 							foreach (int fish in pair.Value) {
-								Dictionary<SubLocation, List<int>> locs;
-								if (!result.TryGetValue(fish, out locs))
+								if (!result.TryGetValue(fish, out var locs))
 									result[fish] = locs = new();
 
 								if (locs.TryGetValue(sl, out var seasons))
@@ -124,7 +123,7 @@ namespace Leclair.Stardew.Almanac {
 							}
 						}
 					} catch {
-						ModEntry.instance.Log($"Uh oh: {lp.Key}");
+						ModEntry.Instance.Log($"Uh oh: {lp.Key}");
 					}
 				}
 			}
@@ -256,7 +255,7 @@ namespace Leclair.Stardew.Almanac {
 
 					AddFish(fish, no_zones ? -1 : zone, existing);
 				} else
-					ModEntry.instance.Log($"Invalid fish data entry for season {season} (Fish ID:{entries[i]}, Zone:{entries[i + 1]})", LogLevel.Warn);
+					ModEntry.Instance.Log($"Invalid fish data entry for season {season} (Fish ID:{entries[i]}, Zone:{entries[i + 1]})", LogLevel.Warn);
 			}
 
 			return existing;

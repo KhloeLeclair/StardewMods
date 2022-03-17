@@ -21,7 +21,7 @@ namespace Leclair.Stardew.Common
 			}
 		};
 
-		public static bool TryParseJson<T>(string input, out T result, IMonitor monitor = null) where T : class? {
+		public static bool TryParseJson<T>(string input, out T result, IMonitor monitor = null) {
 			if (!string.IsNullOrEmpty(input))
 				throw new ArgumentException("The input is empty or null.", nameof(input));
 
@@ -34,7 +34,7 @@ namespace Leclair.Stardew.Common
 					monitor.Log(ex.ToString(), LogLevel.Warn);
 				}
 
-				result = null;
+				result = default;
 				return false;
 			}
 		}

@@ -22,8 +22,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 		private IFlowNode[] Nodes;
 		private List<NPC>[] Birthdays;
 		private SpriteInfo[][] Sprites;
-		private Dictionary<NPC, SpriteInfo> Portraits = new();
-		private Dictionary<NPC, SpriteInfo> Heads = new();
+		private readonly Dictionary<NPC, SpriteInfo> Portraits = new();
+		private readonly Dictionary<NPC, SpriteInfo> Heads = new();
 
 		//private WorldDate HoveredDate;
 		//private Cache<ISimpleNode, WorldDate> CalendarTip;
@@ -200,7 +200,12 @@ namespace Leclair.Stardew.Almanac.Pages {
 					if (evt.AdvancedLabel != null)
 						db.AddRange(evt.AdvancedLabel);
 					else if (has_simple)
-						db.FormatText(evt.SimpleLabel, align: Alignment.Middle, onHover: onHover);
+						db.FormatText(
+							evt.SimpleLabel,
+							align: Alignment.Middle,
+							onHover: onHover,
+							noComponent: true
+						);
 				}
 
 				Sprites[day - 1] = sprites.Count > 0 ? sprites.ToArray() : null;
@@ -218,7 +223,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 						var name = new Common.UI.FlowNode.TextNode(
 							npc.displayName,
-							alignment: Alignment.Middle
+							align: Alignment.Middle
 						);
 
 						db
@@ -232,7 +237,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 										"page.notices.birthday.s"
 								),
 								new { name },
-								alignment: Alignment.Middle
+								align: Alignment.Middle
 							);
 					}
 				}

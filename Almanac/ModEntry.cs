@@ -44,10 +44,10 @@ namespace Leclair.Stardew.Almanac {
 		public static readonly int Event_Island = 11022001;
 		public static readonly int Event_Magic  = 11022002;*/
 
-		public static int DaysPerMonth = WorldDate.DaysPerMonth;
+		public static int DaysPerMonth { get; private set; } = WorldDate.DaysPerMonth;
 
-		public static ModEntry instance;
-		public static ModAPI API;
+		public static ModEntry Instance { get; private set; }
+		public static ModAPI API { get; private set; }
 
 		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
 		private readonly PerScreen<IOverlay> CurrentOverlay = new();
@@ -81,7 +81,7 @@ namespace Leclair.Stardew.Almanac {
 			SpriteHelper.SetHelper(helper);
 			RenderHelper.SetHelper(helper);
 
-			instance = this;
+			Instance = this;
 			API = new(this);
 
 			Assets = new(this);
@@ -254,7 +254,7 @@ namespace Leclair.Stardew.Almanac {
 			}
 
 			if (Config.EnableDeterministicWeather) {
-				WorldDate tomorrow = new WorldDate(Game1.Date);
+				WorldDate tomorrow = new(Game1.Date);
 				tomorrow.TotalDays++;
 
 				// Main Weather
@@ -313,7 +313,7 @@ namespace Leclair.Stardew.Almanac {
 
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
 				int seed = GetBaseWorldSeed();
-				WorldDate date = new WorldDate(Game1.Date);
+				WorldDate date = new(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
 					int weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
 					Log($"Date: {date.Localize()} -- Weather: {WeatherHelper.GetWeatherName(weather)}");
@@ -353,7 +353,7 @@ namespace Leclair.Stardew.Almanac {
 			}
 
 			if (page != null)
-				CurrentOverlay.Value = new Overlays.InventoryOverlay(page, Game1.player);
+				CurrentOverlay.Value = new Overlays.InventoryOverlay(page);
 		}
 
 		[Subscriber]
@@ -660,6 +660,12 @@ namespace Leclair.Stardew.Almanac {
 						[MerchantMode.Visit] = I18n.Settings_Notices_Merchant_Visit,
 						[MerchantMode.Stock] = I18n.Settings_Notices_Merchant_Stock
 					}
+				)
+				.Add(
+					I18n.Settings_Notices_Trains,
+					I18n.Settings_Notices_TrainsDesc,
+					c => c.NoticesShowTrains,
+					(c, v) => c.NoticesShowTrains = v
 				);
 		}
 
@@ -683,19 +689,19 @@ namespace Leclair.Stardew.Almanac {
 			}
 		}
 
-		private void ToggleMail(Farmer who, string key, bool has) {
+		private static void ToggleMail(Farmer who, string key, bool has) {
 			if (has)
 				AddMail(who, key);
 			else
 				RemoveMail(who, key);
 		}
 
-		private void AddMail(Farmer who, string key) {
+		private static void AddMail(Farmer who, string key) {
 			if (!who.mailReceived.Contains(key))
 				who.mailReceived.Add(key);
 		}
 
-		private void RemoveMail(Farmer who, string key) {
+		private static void RemoveMail(Farmer who, string key) {
 			if (who.mailReceived.Contains(key))
 				who.mailReceived.Remove(key);
 		}

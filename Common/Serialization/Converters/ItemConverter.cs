@@ -19,7 +19,6 @@ namespace Leclair.Stardew.Common.Serialization.Converters
 		}
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
-			string path = reader.Path;
 			switch (reader.TokenType) {
 				case JsonToken.Null:
 					return null;
@@ -44,7 +43,7 @@ namespace Leclair.Stardew.Common.Serialization.Converters
 			jo.WriteTo(writer);
 		}
 
-		private Item ReadObject(JObject obj) {
+		private static Item ReadObject(JObject obj) {
 			string id = obj.ValueIgnoreCase<string>("Id");
 			string type = obj.ValueIgnoreCase<string>("Type");
 

@@ -40,6 +40,11 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.Win32.Registry": {
+              "include": "None",
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
             "Pathoschild.Stardew.ModBuildConfig": {
               "target": "Package",
               "version": "[4.0.0, )"

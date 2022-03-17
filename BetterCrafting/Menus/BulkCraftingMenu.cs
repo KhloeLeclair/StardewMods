@@ -25,7 +25,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public readonly BetterCraftingPage Menu;
 
 		// Caching
-		private Dictionary<IIngredient, int> AvailableQuantity = new();
+		private readonly Dictionary<IIngredient, int> AvailableQuantity = new();
 
 		public int Quantity { get; private set; } = 1;
 		private ISimpleNode Layout;
@@ -41,9 +41,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		public ClickableTextureComponent btnLess;
 		public ClickableTextureComponent btnMore;
 
-		private SeasoningMode Seasoning;
+		private readonly SeasoningMode Seasoning;
 		private int SeasoningAmount;
-		private IIngredient SeasonIngred;
+		private readonly IIngredient SeasonIngred;
 
 		public BulkCraftingMenu(ModEntry mod, BetterCraftingPage menu, IRecipe recipe, int initial)
 		: base(mod) {

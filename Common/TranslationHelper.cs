@@ -26,8 +26,9 @@ namespace Leclair.Stardew.Common
 			if (flfield == null)
 				return false;
 
-			IDictionary<string, Translation> ForLocale = flfield.GetValue(Translator) as IDictionary<string, Translation>;
-			return ForLocale != null && ForLocale.ContainsKey(key);
+			return flfield.GetValue(Translator) is
+				IDictionary<string, Translation> ForLocale &&
+				ForLocale.ContainsKey(key);
 		}
 
 	}

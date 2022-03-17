@@ -8,8 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Leclair.Stardew.Common.UI {
 	public class SimpleBuilder {
-		private SimpleBuilder Parent;
-		private LayoutNode Layout;
+		private readonly SimpleBuilder Parent;
+		private readonly LayoutNode Layout;
 		private List<ISimpleNode> Nodes;
 		private ISimpleNode[] Built;
 
@@ -90,7 +90,7 @@ namespace Leclair.Stardew.Common.UI {
 		}
 
 		public SimpleBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, bool wrapText = false, float minWidth = -1, Alignment align = Alignment.None) {
-			TextStyle style = new TextStyle(
+			TextStyle style = new(
 				color: color,
 				prismatic: prismatic,
 				font: font,
@@ -113,7 +113,7 @@ namespace Leclair.Stardew.Common.UI {
 		}
 
 		public SimpleBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
-			TextStyle style = new TextStyle(
+			TextStyle style = new(
 				color: color,
 				prismatic: prismatic,
 				font: font,
@@ -133,7 +133,7 @@ namespace Leclair.Stardew.Common.UI {
 			AssertState();
 			LayoutDirection dir = Layout.Direction == LayoutDirection.Vertical ? LayoutDirection.Horizontal : LayoutDirection.Vertical;
 
-			LayoutNode child = new LayoutNode(dir, null, margin, minSize, alignment: align);
+			LayoutNode child = new(dir, null, margin, minSize, alignment: align);
 			Nodes.Add(child);
 			return new SimpleBuilder(this, child);
 		}
@@ -150,7 +150,7 @@ namespace Leclair.Stardew.Common.UI {
 
 		public ISimpleNode[] BuildThis() {
 			if (Built != null) return Built;
-			Built = Nodes?.ToArray() ?? new ISimpleNode[0];
+			Built = Nodes?.ToArray() ?? Array.Empty<ISimpleNode>();
 			Layout.Children = Built;
 			Nodes = null;
 			return Built;

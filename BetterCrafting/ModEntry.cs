@@ -30,8 +30,8 @@ namespace Leclair.Stardew.BetterCrafting {
 
 	public class ModEntry : ModSubscriber {
 
-		public static ModEntry instance;
-		public static IBetterCrafting API;
+		public static ModEntry Instance { get; private set; }
+		public static IBetterCrafting API { get; private set; }
 
 		internal Harmony Harmony;
 
@@ -50,7 +50,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		public RecipeManager Recipes;
 		public FavoriteManager Favorites;
 
-		private Hashtable invProviders = new Hashtable();
+		private readonly Hashtable invProviders = new();
 		private readonly object providerLock = new();
 
 		private CaseInsensitiveHashSet ConnectorExamples;
@@ -72,7 +72,7 @@ namespace Leclair.Stardew.BetterCrafting {
 			SpriteHelper.SetHelper(helper);
 			RenderHelper.SetHelper(helper);
 
-			instance = this;
+			Instance = this;
 			API = new ModAPI(this);
 
 			// Harmony
@@ -105,7 +105,7 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		#region Events
 
-		private void UpdateTextures(Texture2D oldTex, Texture2D newTex, IClickableMenu menu) {
+		private static void UpdateTextures(Texture2D oldTex, Texture2D newTex, IClickableMenu menu) {
 			if (menu.allClickableComponents != null)
 				foreach(var cmp in menu.allClickableComponents) {
 					if (cmp is ClickableTextureComponent tp && tp.texture == oldTex)

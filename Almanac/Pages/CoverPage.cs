@@ -11,8 +11,8 @@ using Leclair.Stardew.Almanac.Menus;
 namespace Leclair.Stardew.Almanac.Pages {
 	public class CoverPage : BasePage<BaseState> {
 
-		private string[] words;
-		private int wordHeight;
+		private readonly string[] words;
+		private readonly int wordHeight;
 
 		#region Lifecycle
 

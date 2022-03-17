@@ -228,7 +228,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		#region Vanilla Events
 
-		public IRichEvent GetTrashEvent(int seed, WorldDate date) {
+		public static IRichEvent GetTrashEvent(int seed, WorldDate date) {
 			for (int i = 0; i < 8; i++) {
 				Random rnd = new((date.TotalDays + 1) + (seed / 2) + 777 + i * 77);
 
@@ -258,7 +258,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			return null;
 		}
 
-		private IRichEvent GetVanillaEventForDate(int seed, WorldDate date) {
+		private static IRichEvent GetVanillaEventForDate(int seed, WorldDate date) {
 			int days = date.TotalDays + 1;
 
 			if (days == 31)
@@ -319,7 +319,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			return null;
 		}
 
-		private IRichEvent GetLuckSkillEventForDate(int seed, WorldDate date) {
+		private static IRichEvent GetLuckSkillEventForDate(int seed, WorldDate date) {
 			int days = date.TotalDays + 1 + 999999;
 
 			if (days == 31)

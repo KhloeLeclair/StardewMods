@@ -12,27 +12,44 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 
 		public IFlowNode[] Nodes { get; }
 		public Alignment Alignment { get; }
+		public object Extra { get; }
 
-		public ClickableComponent UseComponent => null;
-		public bool NoComponent { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnHover { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnRightClick { get; }
 
+		public Func<IFlowNodeSlice, bool?> _wantComponent { get; }
+
 		public NestedNode(
 			IFlowNode[] nodes,
-			Alignment? alignment = null,
+			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			bool noComponent = false
+			Func<IFlowNodeSlice, bool?> wantComponent = null,
+			object extra = null
 		) {
 			Nodes = nodes;
-			Alignment = alignment ?? Alignment.None;
-			NoComponent = noComponent;
+			Alignment = align ?? Alignment.None;
+			_wantComponent = wantComponent;
 			OnClick = onClick;
 			OnHover = onHover;
 			OnRightClick = onRightClick;
+			Extra = extra;
+		}
+
+		public bool? WantComponent(IFlowNodeSlice slice) {
+			if (slice is NestedNodeSlice tslice)
+				return tslice.Node.WantComponent(slice);
+
+			return _wantComponent?.Invoke(slice);
+		}
+
+		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
+			if (slice is NestedNodeSlice tslice)
+				return tslice.Node.UseComponent(slice);
+
+			return null;
 		}
 
 		public bool IsEmpty() {
@@ -69,21 +86,23 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return obj is NestedNode node &&
 				   EqualityComparer<IFlowNode[]>.Default.Equals(Nodes, node.Nodes) &&
 				   Alignment == node.Alignment &&
-				   NoComponent == node.NoComponent &&
+				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
-				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick);
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick) &&
+				   EqualityComparer<Func<IFlowNodeSlice, bool?>>.Default.Equals(_wantComponent, node._wantComponent);
 		}
 
 		public override int GetHashCode() {
-			int hashCode = 449514427;
-			hashCode = hashCode * -1521134295 + EqualityComparer<IFlowNode[]>.Default.GetHashCode(Nodes);
-			hashCode = hashCode * -1521134295 + Alignment.GetHashCode();
-			hashCode = hashCode * -1521134295 + NoComponent.GetHashCode();
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnClick);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnHover);
-			hashCode = hashCode * -1521134295 + EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.GetHashCode(OnRightClick);
-			return hashCode;
+			return HashCode.Combine(Nodes, Alignment, Extra, OnClick, OnHover, OnRightClick, _wantComponent);
+		}
+
+		public static bool operator ==(NestedNode left, NestedNode right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(NestedNode left, NestedNode right) {
+			return !(left == right);
 		}
 	}
 
@@ -121,15 +140,15 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		}
 
 		public override int GetHashCode() {
-			int hashCode = -493577651;
-			hashCode = hashCode * -1521134295 + TNode.GetHashCode();
-			hashCode = hashCode * -1521134295 + EqualityComparer<IFlowNode>.Default.GetHashCode(Node);
-			hashCode = hashCode * -1521134295 + Width.GetHashCode();
-			hashCode = hashCode * -1521134295 + Height.GetHashCode();
-			hashCode = hashCode * -1521134295 + ForceWrap.GetHashCode();
-			hashCode = hashCode * -1521134295 + Index.GetHashCode();
-			hashCode = hashCode * -1521134295 + EqualityComparer<IFlowNodeSlice>.Default.GetHashCode(Slice);
-			return hashCode;
+			return HashCode.Combine(TNode, Node, Width, Height, ForceWrap, Index, Slice);
+		}
+
+		public static bool operator ==(NestedNodeSlice left, NestedNodeSlice right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(NestedNodeSlice left, NestedNodeSlice right) {
+			return !(left == right);
 		}
 	}
 }
