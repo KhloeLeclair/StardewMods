@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.15.0
-Unreleased.
+Released March 17th, 2022.
 
 ### General
 
@@ -27,10 +27,17 @@ Unreleased.
 
 ### Content Packs
 
+* Content Packs can now control crop, fish, and NPC visibility via
+  Content Patcher. See the new and improved [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
+  for details.
 * Content Packs can now add Local Notices via Content Patcher. See the
   new and improved [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md)
   for details.
 * Themes now have `ScrollOffsetTop` and `ScrollOffsetBottom` properties.
+
+## Maintenance
+
+* General code cleanup. Hopefully I didn't break anything.
 
 
 ## 0.14.0

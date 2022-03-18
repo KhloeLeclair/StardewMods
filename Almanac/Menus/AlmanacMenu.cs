@@ -489,7 +489,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 			yPositionOnScreen = (int) pos.Y;
 
 			var view = Game1.uiViewport;
-			if (view.Width >= 1280 && view.Width <= 1376) {
+			if (view.Width >= 1280 && view.Width <= 1376 && width > 1200) {
 				xPositionOnScreen -= (1376 - view.Width) / 2 - 8;
 			}
 
@@ -582,7 +582,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 				offsetY += 3 * (752 - view.Height) / 2;
 			}
 
-			if (view.Width >= 1280 && view.Width <= 1376)
+			if (view.Width >= 1280 && view.Width <= 1376 && width > 1200)
 				offsetX = -8;
 
 			if (btnTabsUp != null) {
