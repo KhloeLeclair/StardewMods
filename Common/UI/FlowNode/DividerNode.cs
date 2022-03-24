@@ -19,6 +19,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		public Alignment Alignment => Alignment.None;
 		public object Extra { get; }
+		public string UniqueId { get; }
 
 		public Func<IFlowNodeSlice, int, int, bool> OnClick => null;
 		public Func<IFlowNodeSlice, int, int, bool> OnHover => null;
@@ -30,7 +31,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			float size = 4f,
 			float padding = 14f,
 			float shadowOffset = 2f,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			Color = color;
 			ShadowColor = shadowColor;
@@ -38,6 +40,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			Padding = padding < 0 ? 0f : padding;
 			ShadowOffset = shadowOffset;
 			Extra = extra;
+			UniqueId = id;
 		}
 
 		public bool? WantComponent(IFlowNodeSlice slice) {
@@ -52,7 +55,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			return Size <= 0;
 		}
 
-		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining) {
+		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice) {
 			if (last != null)
 				return null;
 
@@ -92,6 +95,45 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 				new Rectangle(16, 272, 28, 28),
 				Color ?? defaultColor ?? Game1.textColor
 			);
+		}
+
+		public override bool Equals(object obj) {
+			return obj is DividerNode node &&
+				   EqualityComparer<Color?>.Default.Equals(Color, node.Color) &&
+				   EqualityComparer<Color?>.Default.Equals(ShadowColor, node.ShadowColor) &&
+				   Size == node.Size &&
+				   Padding == node.Padding &&
+				   ShadowOffset == node.ShadowOffset &&
+				   Alignment == node.Alignment &&
+				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
+				   UniqueId == node.UniqueId &&
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
+				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick);
+		}
+
+		public override int GetHashCode() {
+			HashCode hash = new HashCode();
+			hash.Add(Color);
+			hash.Add(ShadowColor);
+			hash.Add(Size);
+			hash.Add(Padding);
+			hash.Add(ShadowOffset);
+			hash.Add(Alignment);
+			hash.Add(Extra);
+			hash.Add(UniqueId);
+			hash.Add(OnClick);
+			hash.Add(OnHover);
+			hash.Add(OnRightClick);
+			return hash.ToHashCode();
+		}
+
+		public static bool operator ==(DividerNode left, DividerNode right) {
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(DividerNode left, DividerNode right) {
+			return !(left == right);
 		}
 	}
 }

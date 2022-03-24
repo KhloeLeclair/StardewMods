@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.GameData.FishPond;
 using StardewValley.Tools;
 using StardewModdingAPI;
 
@@ -36,11 +37,13 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 			Dictionary<int, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
 
+			List<FishPondData> pondData = Game1.content.Load<List<FishPondData>>(@"Data\FishPondData");
+
 			foreach (var entry in data) {
 				locations.TryGetValue(entry.Key, out Dictionary<SubLocation, List<int>> locs);
 
 				try {
-					FishInfo? info = GetFishInfo(entry.Key, entry.Value, locs);
+					FishInfo? info = GetFishInfo(entry.Key, entry.Value, locs, pondData);
 					if (info.HasValue)
 						result.Add(info.Value);
 				} catch(Exception ex) {
@@ -51,7 +54,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			return result;
 		}
 
-		private static FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations) {
+		private static FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
 			if (string.IsNullOrEmpty(data))
 				return null;
 
@@ -88,7 +91,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				trap = new(type);
 
 				seasons = new int[WorldDate.MonthsPerYear];
-				for(int i = 0; i < seasons.Length; i++)
+				for (int i = 0; i < seasons.Length; i++)
 					seasons[i] = i;
 
 			} else {
@@ -102,7 +105,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				int[] rawTimes = bits[5].Split(' ').Select(x => Convert.ToInt32(x)).ToArray();
 				TimeOfDay[] times = new TimeOfDay[rawTimes.Length / 2];
 
-				for(int i = 0, j = 0; i < times.Length && j < rawTimes.Length; i++, j += 2) {
+				for (int i = 0, j = 0; i < times.Length && j < rawTimes.Length; i++, j += 2) {
 					times[i] = new(
 						rawTimes[j],
 						rawTimes[j + 1]
@@ -110,7 +113,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				}
 
 				FishWeather weather;
-				switch(bits[7]) {
+				switch (bits[7]) {
 					case "sunny":
 						weather = FishWeather.Sunny;
 						break;
@@ -132,7 +135,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				);
 
 				if (locations != null)
-					seasons = locations.Values.SelectMany(x =>x).Distinct().ToArray();
+					seasons = locations.Values.SelectMany(x => x).Distinct().ToArray();
 				else
 					seasons = null;
 			}
@@ -140,6 +143,49 @@ namespace Leclair.Stardew.Almanac.Fish {
 			string desc = obj.getDescription();
 			if (desc != null)
 				desc = WHITESPACE_REGEX.Replace(desc, " ");
+
+
+			// Fish Ponds
+			FishPondData pond = null;
+			if (pondData != null && ! obj.HasContextTag("fish_legendary"))
+				foreach (var entry in pondData) {
+					bool matched = true;
+					foreach (string tag in entry.RequiredTags) {
+						if (!obj.HasContextTag(tag)) {
+							matched = false;
+							break;
+						}
+					}
+
+					if (!matched)
+						continue;
+
+					pond = entry;
+					break;
+				}
+
+			PondInfo? pondInfo = null;
+			if (pond != null) {
+				// Taken from FishPond
+				if (pond.SpawnTime == -1) {
+					int price = obj.Price;
+					pond.SpawnTime = price > 30 ? (price > 80 ? (price > 120 ? (price > 250 ? 5 : 4) : 3) : 2) : 1;
+				}
+
+				int initial = 10;
+
+				if (pond.PopulationGates != null) {
+					foreach (int key in pond.PopulationGates.Keys)
+						if (key >= initial)
+							initial = key - 1;
+				}
+
+				pondInfo = new(
+					Initial: initial,
+					SpawnTime: pond.SpawnTime,
+					ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == 812 ? FishHelper.GetRoeForFish(obj) : new SObject(x, 1)) as Item).ToList()
+				);
+			}
 
 			return new FishInfo(
 				Id: id.ToString(), // bits[0],
@@ -162,7 +208,8 @@ namespace Leclair.Stardew.Almanac.Fish {
 				},
 				Seasons: seasons,
 				TrapInfo: trap,
-				CatchInfo: caught
+				CatchInfo: caught,
+				PondInfo: pondInfo
 			);
 		}
 	}

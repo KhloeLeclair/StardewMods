@@ -85,7 +85,7 @@ namespace Leclair.Stardew.Almanac.Menus {
 		private readonly IAlmanacPage[] Pages;
 
 		private int PageIndex = -1;
-		private IAlmanacPage CurrentPage => (Pages == null || PageIndex < 0 || PageIndex >= Pages.Length) ? null : Pages[PageIndex];
+		public IAlmanacPage CurrentPage => (Pages == null || PageIndex < 0 || PageIndex >= Pages.Length) ? null : Pages[PageIndex];
 
 		public bool IsMagic => CurrentPage?.IsMagic ?? false;
 		public Models.Style Style => IsMagic ? Mod.Theme?.Magic : Mod.Theme?.Standard;
@@ -304,6 +304,15 @@ namespace Leclair.Stardew.Almanac.Menus {
 		public void RefreshPages() {
 			foreach (IAlmanacPage page in Pages)
 				page.Refresh();
+		}
+
+		public void RefreshTheme() {
+			background = Mod.ThemeManager.Load<Texture2D>("Menu.png");
+			Recenter();
+			UpdateScrollComponents();
+
+			foreach (IAlmanacPage page in Pages)
+				page.ThemeChanged();
 		}
 
 
@@ -1131,10 +1140,23 @@ namespace Leclair.Stardew.Almanac.Menus {
 				Color.Black * 0.75f
 			);
 
+			var pageSource = CurrentPage?.Type == PageType.Cover ?
+				COVER : OPEN_PAGES[IsMagic ? 1 : 0];
+
+			Models.PageOffset offset = null;
+
+			if (CurrentPage != null && Mod.Theme?.PageOffsets != null)
+				Mod.Theme.PageOffsets.TryGetValue(CurrentPage.Id, out offset);
+
 			b.Draw(
 				background,
 				new Vector2(xPositionOnScreen, yPositionOnScreen),
-				CurrentPage?.Type == PageType.Cover ? COVER : OPEN_PAGES[IsMagic ? 1 : 0],
+				offset == null ? pageSource : new Rectangle(
+					pageSource.X + offset.X,
+					pageSource.Y + offset.Y,
+					pageSource.Width,
+					pageSource.Height
+				),
 				Color.White,
 				0f,
 				Vector2.Zero,

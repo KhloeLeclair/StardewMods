@@ -14,6 +14,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		public int Frame { get; set; }
 		public Alignment Alignment { get; }
 		public object Extra { get; }
+		public string UniqueId { get; }
 
 		public bool NoComponent { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
@@ -30,7 +31,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			bool noComponent = false,
 			float size = 16,
 			int frame = -1,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			Sprite = sprite;
 			Scale = scale;
@@ -42,6 +44,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			NoComponent = noComponent;
 			Frame = frame;
 			Extra = extra;
+			UniqueId = id;
 		}
 
 		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
@@ -58,7 +61,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return Sprite == null || Scale <= 0;
 		}
 
-		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining) {
+		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice) {
 			if (last != null)
 				return null;
 
@@ -80,6 +83,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				   Frame == node.Frame &&
 				   Alignment == node.Alignment &&
 				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
+				   UniqueId == node.UniqueId &&
 				   NoComponent == node.NoComponent &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
@@ -87,13 +91,14 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		}
 
 		public override int GetHashCode() {
-			HashCode hash = new();
+			HashCode hash = new HashCode();
 			hash.Add(Sprite);
 			hash.Add(Scale);
 			hash.Add(Size);
 			hash.Add(Frame);
 			hash.Add(Alignment);
 			hash.Add(Extra);
+			hash.Add(UniqueId);
 			hash.Add(NoComponent);
 			hash.Add(OnClick);
 			hash.Add(OnHover);

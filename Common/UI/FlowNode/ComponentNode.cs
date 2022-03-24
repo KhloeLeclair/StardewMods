@@ -14,6 +14,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		public Alignment Alignment { get; }
 
+		public string UniqueId { get; }
 		public object Extra { get; }
 
 		public Action<SpriteBatch, Vector2, float, SpriteFont, Color?, Color?> OnDraw;
@@ -32,7 +33,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			Component = component;
 			Alignment = alignment ?? Alignment.None;
@@ -42,6 +44,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			OnHover = onHover;
 			OnRightClick = onRightClick;
 			Extra = extra;
+			UniqueId = id;
 		}
 
 		public bool? WantComponent(IFlowNodeSlice slice) {
@@ -56,7 +59,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			return Component == null;
 		}
 
-		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining) {
+		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice) {
 			if (last != null || Component == null)
 				return null;
 
@@ -97,6 +100,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			return obj is ComponentNode node &&
 				   EqualityComparer<ClickableComponent>.Default.Equals(Component, node.Component) &&
 				   Alignment == node.Alignment &&
+				   UniqueId == node.UniqueId &&
 				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
 				   EqualityComparer<Action<SpriteBatch, Vector2, float, SpriteFont, Color?, Color?>>.Default.Equals(OnDraw, node.OnDraw) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
@@ -106,7 +110,17 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		}
 
 		public override int GetHashCode() {
-			return HashCode.Combine(Component, Alignment, Extra, OnDraw, OnClick, OnHover, OnRightClick, Wrapping);
+			HashCode hash = new HashCode();
+			hash.Add(Component);
+			hash.Add(Alignment);
+			hash.Add(UniqueId);
+			hash.Add(Extra);
+			hash.Add(OnDraw);
+			hash.Add(OnClick);
+			hash.Add(OnHover);
+			hash.Add(OnRightClick);
+			hash.Add(Wrapping);
+			return hash.ToHashCode();
 		}
 
 		public static bool operator ==(ComponentNode left, ComponentNode right) {

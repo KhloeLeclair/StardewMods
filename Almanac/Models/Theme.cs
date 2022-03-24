@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 
 using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.Common.UI;
+using Leclair.Stardew.Common.Types;
 
 namespace Leclair.Stardew.Almanac.Models {
 	public class Theme : BaseThemeData {
@@ -15,6 +16,7 @@ namespace Leclair.Stardew.Almanac.Models {
 		[JsonConverter(typeof(ColorConverter))]
 		public Color? CoverYearColor { get; set; }
 
+		public CaseInsensitiveDictionary<PageOffset> PageOffsets { get; set; }
 
 		public Style Standard { get; set; } = new Style {
 			CustomScroll = false
@@ -24,6 +26,11 @@ namespace Leclair.Stardew.Almanac.Models {
 			CustomScroll = true
 		};
 
+	}
+
+	public class PageOffset {
+		public int X { get; set; }
+		public int Y { get; set; }
 	}
 
 	public class Style {

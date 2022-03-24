@@ -558,7 +558,7 @@ namespace Leclair.Stardew.Common
 		}
 
 
-		public static void WithScissor(SpriteBatch b, SpriteSortMode mode, Rectangle rectangle, Action action) {
+		public static void WithScissor(SpriteBatch b, SpriteSortMode mode, Rectangle rectangle, Action action, RenderTarget2D target = null) {
 
 			var smField = Helper.Reflection.GetField<SpriteSortMode>(b, "_sortMode", false);
 			SpriteSortMode old_sort = smField?.GetValue() ?? mode;
@@ -579,6 +579,8 @@ namespace Leclair.Stardew.Common
 			Effect old_effect = efField?.GetValue();
 
 			var old_scissor = b.GraphicsDevice.ScissorRectangle;
+
+			var old_targets = b.GraphicsDevice.GetRenderTargets();
 
 			RasterizerState state = new() {
 				ScissorTestEnable = true
@@ -605,12 +607,16 @@ namespace Leclair.Stardew.Common
 				transformMatrix: null
 			);
 
+			if (target != null)
+				b.GraphicsDevice.SetRenderTarget(target);
+
 			b.GraphicsDevice.ScissorRectangle = Rectangle.Intersect(rectangle, old_scissor);
 
 			try {
 				action?.Invoke();
 			} finally {
 				b.End();
+
 				b.Begin(
 					sortMode: old_sort,
 					blendState: old_blend,
@@ -620,6 +626,12 @@ namespace Leclair.Stardew.Common
 					effect: old_effect,
 					transformMatrix: null
 				);
+
+				if (target != null) { 
+					var rt = (old_targets?.Length ?? 0) > 0 ?
+						old_targets[0].RenderTarget : null;
+					b.GraphicsDevice.SetRenderTarget((RenderTarget2D) rt);
+				}
 
 				b.GraphicsDevice.ScissorRectangle = old_scissor;
 			}

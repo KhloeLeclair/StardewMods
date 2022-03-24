@@ -54,6 +54,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			bool isTrellisCrop,
 			bool isGiantCrop,
 			SpriteInfo giantSprite,
+			Item[] seeds,
 			bool isPaddyCrop,
 
 			IEnumerable<int> phases,
@@ -71,6 +72,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 				sprite,
 				isGiantCrop,
 				giantSprite,
+				seeds: seeds,
 				isTrellisCrop,
 				phases.ToArray(),
 				regrow,

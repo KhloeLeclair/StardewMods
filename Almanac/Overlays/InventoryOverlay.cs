@@ -30,6 +30,14 @@ namespace Leclair.Stardew.Almanac.Overlays {
 
 		internal InventoryOverlay(InventoryPage menu)
 		: base(menu, ModEntry.Instance, true) {
+			Texture2D tex;
+			try {
+				tex = ModEntry.Instance.ThemeManager.Load<Texture2D>("Menu.png");
+			} catch(Exception ex) {
+				ModEntry.Instance.Log("Unable to load texture", LogLevel.Warn, ex);
+				tex = null;
+			}
+
 			btnAlmanac = new(
 				new Rectangle(
 					Menu.xPositionOnScreen - 64 - 8,
@@ -37,7 +45,7 @@ namespace Leclair.Stardew.Almanac.Overlays {
 					64,
 					64
 				),
-				ModEntry.Instance.ThemeManager.Load<Texture2D>("Menu.png"),
+				tex,
 				new Rectangle(240, 352, 16, 16),
 				4f
 			) {

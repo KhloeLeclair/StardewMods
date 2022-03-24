@@ -119,6 +119,32 @@ namespace Leclair.Stardew.Almanac {
 			bool isPaddyCrop,
 			bool isTrellisCrop,
 
+			Item[] seeds,
+
+			WorldDate start,
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
+		);
+
+
+		void AddCrop(
+			IManifest manifest,
+
+			string id,
+
+			Item item,
+			string name,
+
+			int regrow,
+			bool isGiantCrop,
+			bool isPaddyCrop,
+			bool isTrellisCrop,
+
 			WorldDate start,
 			WorldDate end,
 
@@ -341,6 +367,51 @@ namespace Leclair.Stardew.Almanac {
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
 				giantSprite: HydrateSprite(giantSprite),
+				seeds: null,
+				isPaddyCrop: isPaddyCrop,
+				phases: phases,
+				phaseSprites: HydrateSprites(phaseSprites),
+				regrow: regrow,
+				start: start,
+				end: end
+			);
+		}
+
+
+		public void AddCrop(
+			IManifest manifest,
+
+			string id,
+
+			Item item,
+			string name,
+
+			int regrow,
+			bool isGiantCrop,
+			bool isPaddyCrop,
+			bool isTrellisCrop,
+
+			Item[] seeds,
+
+			WorldDate start,
+			WorldDate end,
+
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> sprite,
+			Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> giantSprite,
+
+			IReadOnlyCollection<int> phases,
+			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
+		) {
+			var provider = Mod.Crops.GetModProvider(manifest);
+			provider.AddCrop(
+				id: id,
+				item: item,
+				name: name,
+				sprite: sprite == null ? (item == null ? null : SpriteHelper.GetSprite(item)) : HydrateSprite(sprite),
+				isTrellisCrop: isTrellisCrop,
+				isGiantCrop: isGiantCrop,
+				giantSprite: HydrateSprite(giantSprite),
+				seeds: seeds,
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
 				phaseSprites: HydrateSprites(phaseSprites),
@@ -382,6 +453,7 @@ namespace Leclair.Stardew.Almanac {
 				isTrellisCrop: isTrellisCrop,
 				isGiantCrop: isGiantCrop,
 				giantSprite: giantSprite,
+				seeds: null,
 				isPaddyCrop: isPaddyCrop,
 				phases: phases,
 				phaseSprites: phaseSprites,

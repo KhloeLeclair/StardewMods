@@ -26,6 +26,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		public bool Hovered { get; private set; }
 		public IFlowNode[] Nodes { get; }
 		public Alignment Alignment { get; }
+
+		public string UniqueId { get; }
 		public object Extra { get; }
 
 		public Func<IFlowNodeSlice, int, int, bool> OnClick => _onClick;
@@ -43,7 +45,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			Nodes = nodes;
 			Alignment = align ?? Alignment.None;
@@ -51,6 +54,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			delHover = onHover;
 			OnRightClick = onRightClick;
 			Extra = extra;
+			UniqueId = id;
 		}
 
 		public ClickableComponent UseComponent(IFlowNodeSlice slice) {
@@ -67,7 +71,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		#region Slicing
 
-		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining) {
+		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice) {
 			if (last != null)
 				return null;
 

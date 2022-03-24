@@ -12,6 +12,11 @@
 		"CustomScroll": true,
 		"SeasonTextColor": "#3c3c3c",
 
+		"CalendarDimColor": "#6E5A58",
+		"CalendarDimOpacity": 0.4,
+
+		"CalendarHighlightColor": "#59433A",
+
 		"TextColor": "#382f29",
 		"TextShadowColor": "#D4C8AF"
 	},

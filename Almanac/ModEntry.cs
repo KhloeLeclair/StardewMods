@@ -202,11 +202,8 @@ namespace Leclair.Stardew.Almanac {
 		#region Events
 
 		private void OnThemeChanged(object sender, ThemeChangedEventArgs<Models.Theme> e) {
-			if (Game1.activeClickableMenu is Menus.AlmanacMenu menu) {
-				menu.background = ThemeManager.Load<Texture2D>("Menu.png");
-				menu.Recenter();
-				menu.UpdateScrollComponents();
-			}
+			if (Game1.activeClickableMenu is Menus.AlmanacMenu menu)
+				menu.RefreshTheme();
 		}
 
 		[Subscriber]
@@ -299,14 +296,21 @@ namespace Leclair.Stardew.Almanac {
 					almanac.RefreshPages();
 			});
 
-			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", (name, args) => {
-				ThemeManager.Discover();
-				Log($"Reloaded themes. You may need to reopen menus.");
+			Helper.ConsoleCommands.Add("al_debug", "Print some debugging information.", (name, args) => {
+				Log($"Location: {Game1.currentLocation.Name}", LogLevel.Info);
+				Log($"Is Farm: {Game1.currentLocation is Farm}", LogLevel.Info);
+				if (Game1.currentLocation is Farm farm) {
+					Log($"  - Which: {Game1.whichFarm}", LogLevel.Info);
+					Log($"  - Fish Override: {farm.getMapProperty("FarmFishLocationOverride")}", LogLevel.Info);
+				}
+				Log($"  - Fish Sample: {Game1.currentLocation.getFish(0f, 0, 4, Game1.player, 0, Microsoft.Xna.Framework.Vector2.Zero).Name}", LogLevel.Info);
 			});
 
+			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", ThemeManager.PerformReloadCommand);
+
 			Helper.ConsoleCommands.Add("al_theme", "List all themes, or switch to a new theme.", (name, args) => {
-				if (ThemeManager.OnThemeCommand(args)) {
-					Config.Theme = ThemeManager.ThemeKey;
+				if (ThemeManager.PerformThemeCommand(args)) {
+					Config.Theme = ThemeManager.SelectedThemeId;
 					SaveConfig();
 				}
 			});
@@ -440,7 +444,7 @@ namespace Leclair.Stardew.Almanac {
 						c.Theme = v;
 						ThemeManager.SelectTheme(v);
 					},
-					ThemeManager.GetThemeChoices()
+					ThemeManager.GetThemeChoiceMethods()
 				)
 				.AddLabel("") // Spacer
 				.Add(

@@ -1,4 +1,6 @@
 using System;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
@@ -10,6 +12,8 @@ using Leclair.Stardew.Almanac.Menus;
 
 namespace Leclair.Stardew.Almanac.Pages {
 	public class CoverPage : BasePage<BaseState> {
+
+		public static readonly Color DEFAULT_COLOR = CommonHelper.ParseColor("#974E24").Value;
 
 		private readonly string[] words;
 		private readonly int wordHeight;
@@ -63,7 +67,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					word,
 					center,
 					y,
-					color: Mod.Theme?.CoverTextColor ?? null
+					color: Mod.Theme?.CoverTextColor ?? DEFAULT_COLOR
 				);
 
 				y += wordHeight;

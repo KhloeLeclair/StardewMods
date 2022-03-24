@@ -68,6 +68,10 @@ namespace Leclair.Stardew.Almanac.Pages {
 			LastDate = new(Menu.Date);
 		}
 
+		public IEnumerable<IFlowNode> GetLeftFlow() {
+			return LeftFlow;
+		}
+
 		public void SetLeftFlow(FlowBuilder builder, int step = 4, int scroll = 0) {
 			SetLeftFlow(builder.Build(), step, scroll);
 		}
@@ -78,11 +82,15 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			if (LeftFlowRestore)
 				LeftFlowRestore = false;
-			else if (scroll >= 0)
+			else if (scroll >= 0 || scroll == -1)
 				LeftFlowScroll = scroll;
 
 			if (Active)
 				Menu.SetLeftFlow(LeftFlow, LeftFlowStep, LeftFlowScroll);
+		}
+
+		public IEnumerable<IFlowNode> GetRightFlow() {
+			return RightFlow;
 		}
 
 		public void SetRightFlow(FlowBuilder builder, int step = 4, int scroll = 0) {
@@ -95,7 +103,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 			if (RightFlowRestore)
 				RightFlowRestore = false;
-			else if (scroll >= 0)
+			else if (scroll >= 0 || scroll == -1)
 				RightFlowScroll = scroll;
 
 			if (Active)
@@ -149,6 +157,10 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public virtual void Refresh() {
 			Update();
+		}
+
+		public virtual void ThemeChanged() {
+
 		}
 
 		public virtual void Activate() {

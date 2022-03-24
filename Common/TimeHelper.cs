@@ -3,7 +3,7 @@ using StardewValley;
 namespace Leclair.Stardew.Common {
 	public static class TimeHelper {
 
-		private static LocalizedContentManager.LanguageCode? Code = null;
+		/*private static LocalizedContentManager.LanguageCode? Code = null;
 		private static string AMString;
 		private static string PMString;
 
@@ -30,13 +30,15 @@ namespace Leclair.Stardew.Common {
 				default:
 					return true;
 			}
-		}
+		}*/
 
 		public static string FormatTime(int time) {
 			// Limit it to one day.
 			time %= 2400;
 
-			int hours = time / 100;
+			return Game1.getTimeOfDayString(time);
+
+			/*int hours = time / 100;
 			int minutes = time % 100;
 
 			bool twelve = IsTwelveHour();
@@ -59,8 +61,7 @@ namespace Leclair.Stardew.Common {
 			} else
 				ampm = "";
 
-			return $"{hourPad}{hours}:{minutePad}{minutes}{ampm}";
+			return $"{hourPad}{hours}:{minutePad}{minutes}{ampm}";*/
 		}
-
 	}
 }

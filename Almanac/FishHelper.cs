@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Microsoft.Xna.Framework;
 
 using StardewValley;
 using StardewValley.Locations;
+using StardewValley.Menus;
+using StardewValley.Objects;
 using StardewModdingAPI;
 
 using SObject = StardewValley.Object;
@@ -92,6 +94,19 @@ namespace Leclair.Stardew.Almanac {
 			return result;
 		}
 
+		public static SObject GetRoeForFish(SObject fish) {
+			Color color = TailoringMenu.GetDyeColor(fish) ?? Color.Orange;
+			if (fish.ParentSheetIndex == 698)
+				color = new Color(61, 55, 42);
+
+			ColoredObject result = new ColoredObject(812, 1, color);
+			result.name = fish.Name + " Roe";
+			result.preserve.Value = SObject.PreserveType.Roe;
+			result.preservedParentSheetIndex.Value = fish.ParentSheetIndex;
+			result.Price += fish.Price / 2;
+
+			return result as SObject;
+		}
 
 		public static Dictionary<int, Dictionary<SubLocation, List<int>>> GetFishLocations() {
 			Dictionary<int, Dictionary<SubLocation, List<int>>> result = new();
@@ -184,7 +199,8 @@ namespace Leclair.Stardew.Almanac {
 				return result;
 			}
 
-			result = new();
+			// This line will forever live in shame as a stupid mistake.
+			//result = new();
 
 			string ovr = farm.getMapProperty("FarmFishLocationOverride");
 			if (!string.IsNullOrEmpty(ovr)) {

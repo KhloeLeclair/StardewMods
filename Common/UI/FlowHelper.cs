@@ -71,7 +71,8 @@ namespace Leclair.Stardew.Common.UI {
 			bool noComponent = false,
 			float size = 16,
 			int frame = -1,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			AssertState();
 			Nodes.Add(new SpriteNode(
@@ -84,7 +85,8 @@ namespace Leclair.Stardew.Common.UI {
 				noComponent: noComponent,
 				size: size,
 				frame: frame,
-				extra: extra
+				extra: extra,
+				id: id
 			));
 			return this;
 		}
@@ -97,7 +99,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			AssertState();
 			Nodes.AddRange(FlowHelper.FormatText(
@@ -108,7 +111,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			));
 			return this;
 		}
@@ -121,7 +125,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			AssertState();
 			Nodes.Add(new TextNode(
@@ -132,7 +137,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			));
 			return this;
 		}
@@ -146,7 +152,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			AssertState();
 			Nodes.AddRange(FlowHelper.Translate(
@@ -158,7 +165,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			));
 			return this;
 		}
@@ -180,7 +188,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			TextStyle style = new(
 				color: color,
@@ -203,7 +212,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			);
 		}
 
@@ -224,7 +234,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			TextStyle style = new(
 				color: color,
@@ -247,7 +258,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			);
 		}
 
@@ -257,7 +269,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			Func<IFlowNodeSlice, bool?> wantComponent = null,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			AssertState();
 			NestedNode nested = new(
@@ -267,7 +280,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				wantComponent: wantComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			);
 			Nodes.Add(nested);
 			return new FlowBuilder(this, nested);
@@ -301,6 +315,17 @@ namespace Leclair.Stardew.Common.UI {
 	}
 
 	public static class FlowHelper {
+
+#if DEBUG
+		private static readonly Color[] DEBUG_COLORS = new Color[] {
+			Color.Blue,
+			Color.Purple,
+			Color.Gray,
+			Color.Gold,
+			Color.Fuchsia,
+			Color.Orange
+		};
+#endif
 
 		public static readonly Regex I18N_REPLACER = new("{{([ \\w\\.\\-]+)}}");
 
@@ -420,7 +445,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			return FormatText(
 				text: text,
@@ -432,7 +458,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			);
 		}
 
@@ -446,7 +473,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			if (string.IsNullOrEmpty(text) || !text.Contains('@')) {
 				endStyle = style ?? TextStyle.EMPTY;
@@ -461,7 +489,8 @@ namespace Leclair.Stardew.Common.UI {
 						onHover: onHover,
 						onRightClick: onRightClick,
 						noComponent: noComponent,
-						extra: extra
+						extra: extra,
+						id: id
 					)
 				};
 			}
@@ -709,9 +738,12 @@ namespace Leclair.Stardew.Common.UI {
 							onHover: onHover,
 							onRightClick: onRightClick,
 							noComponent: noComponent,
-							extra: extra
+							extra: extra,
+							id: id
 						)
 					);
+
+					id = null;
 
 					builder.Clear();
 				}
@@ -726,9 +758,12 @@ namespace Leclair.Stardew.Common.UI {
 							onHover: onHover,
 							onRightClick: onRightClick,
 							noComponent: noComponent,
-							extra: item
+							extra: item,
+							id: id
 						)
 					);
+
+					id = null;
 
 					if (itemLabel)
 						nodes.Add(new TextNode(
@@ -739,7 +774,8 @@ namespace Leclair.Stardew.Common.UI {
 							onHover: onHover,
 							onRightClick: onRightClick,
 							noComponent: noComponent,
-							extra: item
+							extra: item,
+							id: id
 						));
 
 					item = null;
@@ -759,7 +795,8 @@ namespace Leclair.Stardew.Common.UI {
 						onHover: onHover,
 						onRightClick: onRightClick,
 						noComponent: noComponent,
-						extra: extra
+						extra: extra,
+						id: id
 					)
 				);
 
@@ -779,7 +816,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			IDictionary<string, object> vals = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
@@ -806,7 +844,8 @@ namespace Leclair.Stardew.Common.UI {
 				onHover: onHover,
 				onRightClick: onRightClick,
 				noComponent: noComponent,
-				extra: extra
+				extra: extra,
+				id: id
 			);
 		}
 
@@ -819,7 +858,8 @@ namespace Leclair.Stardew.Common.UI {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			bool noComponent = false,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			string val = source.ToString();
 			if (!source.HasValue())
@@ -862,7 +902,8 @@ namespace Leclair.Stardew.Common.UI {
 						onHover: onHover,
 						onRightClick: onRightClick,
 						noComponent: noComponent,
-						extra: extra
+						extra: extra,
+						id: id
 					));
 
 				replacement = !replacement;
@@ -944,15 +985,25 @@ namespace Leclair.Stardew.Common.UI {
 
 			bool forceNew = false;
 
-			foreach (IFlowNode node in nodes) {
+			if (nodes is not IFlowNode[] nodesArray)
+				nodesArray = nodes.ToArray();
+
+			for(int i = 0; i < nodesArray.Length; i++) {
 				// Make sure the segment has content, or skip it.
+				IFlowNode node = nodesArray[i];
 				if (node == null || node.IsEmpty())
 					continue;
 
 				IFlowNodeSlice last = null;
 
+				IFlowNodeSlice nextSlice;
+				if (i + 1 < nodesArray.Length)
+					nextSlice = nodesArray[i + 1].Slice(null, font, 0f, 0f, null);
+				else
+					nextSlice = null;
+
 				while (true) {
-					IFlowNodeSlice slice = node.Slice(last, font, bound, bound - lineWidth);
+					IFlowNodeSlice slice = node.Slice(last, font, bound, bound - lineWidth, nextSlice);
 					if (slice == null)
 						break;
 
@@ -983,7 +1034,7 @@ namespace Leclair.Stardew.Common.UI {
 			}
 
 			return new CachedFlow(
-				nodes: nodes.ToArray(),
+				nodes: nodesArray,
 				lines: lines.ToArray(),
 				height: height,
 				width: width,
@@ -1151,6 +1202,55 @@ namespace Leclair.Stardew.Common.UI {
 			return 0;
 		}
 
+		public static float GetScrollOffsetForUniqueNode(CachedFlow flow, string id, float scale = 1f) {
+			float y = 0;
+
+			foreach(CachedFlowLine line in flow.Lines) {
+				float lHeight = line.Height * scale;
+
+				foreach (IFlowNodeSlice slice in line.Slices) {
+					if (slice.Node.UniqueId == id)
+						return y;
+				}
+
+				y += (float) Math.Ceiling(lHeight);
+			}
+
+			return -1;
+		}
+
+		public static Tuple<IFlowNode, float> GetClosestUniqueNode(CachedFlow flow, float scale = 1, float scrollOffset = 0f, float maxHeight = -1) {
+			float y = -scrollOffset;
+
+			IFlowNode node = null;
+			float offset = 0;
+			float distance = float.MaxValue;
+
+			foreach (CachedFlowLine line in flow.Lines) {
+				float lHeight = line.Height * scale;
+
+				float dist = Math.Abs(y);
+				if (dist < distance) {
+					foreach (IFlowNodeSlice slice in line.Slices) {
+						if (!string.IsNullOrEmpty(slice.Node.UniqueId)) {
+							node = slice.Node;
+							distance = dist;
+							offset = y;
+							break;
+						}
+					}
+				} else
+					break;
+
+				y += (float) Math.Ceiling(lHeight);
+			}
+
+			if (node == null)
+				return null;
+
+			return new(node, offset);
+		}
+
 		// Smooth Scroll
 
 		public static object GetExtra(CachedFlow flow, int x, int y, float scale = 1, float scrollOffset = 0f, float maxHeight = -1) {
@@ -1229,6 +1329,7 @@ namespace Leclair.Stardew.Common.UI {
 
 						// Get a component.
 						ClickableComponent cmp = node.UseComponent(slice);
+						bool used = cmp != null;
 						if (cmp != null) {
 							cmp.visible = true;
 						} else {
@@ -1252,9 +1353,14 @@ namespace Leclair.Stardew.Common.UI {
 						if (maxHeight >= 0 && y + sHeight > maxHeight)
 							cHeight -= (int) ((y + sHeight) - maxHeight);
 
+						bool clip_top = !used && y < 0;
+
+						if (clip_top)
+							cHeight += (int) y;
+
 						cmp.bounds = new Rectangle(
 							(int) (offsetX + x + offX),
-							(int) (offsetY + y + offY),
+							(int) (offsetY + (clip_top ? 0 : y) + offY),
 							(int) sWidth,
 							cHeight
 						);
@@ -1279,10 +1385,35 @@ namespace Leclair.Stardew.Common.UI {
 			float x = 0;
 			float y = 0;
 
+#if DEBUG
+			bool debugDraw = Game1.oldKBState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F3);
+			int cidx = 0;
+			IFlowNode lastNode = null;
+			int nidx = 0;
+
+#endif
+
 			foreach (CachedFlowLine line in flow.Lines) {
 				float height = line.Height * scale;
 				if (height < scrollOffset) {
 					scrollOffset -= (float) Math.Ceiling(height);
+
+#if DEBUG
+					if (debugDraw) {
+						foreach(IFlowNodeSlice slice in line.Slices) {
+							if (slice == null || slice.IsEmpty())
+								continue;
+
+							if (slice.Node != lastNode) {
+								lastNode = slice.Node;
+								nidx++;
+							}
+
+							cidx = (cidx + 1) % DEBUG_COLORS.Length;
+						}
+					}
+#endif
+
 					continue;
 				} else if (scrollOffset != 0) {
 					y -= scrollOffset;
@@ -1314,6 +1445,35 @@ namespace Leclair.Stardew.Common.UI {
 						line,
 						flow
 					);
+
+#if DEBUG
+					if (debugDraw) {
+						if (node != lastNode) {
+							lastNode = node;
+							nidx++;
+						}
+
+						RenderHelper.DrawBox(
+							batch,
+							texture: Game1.mouseCursors,
+							sourceRect: new Rectangle(379, 357, 3, 3),
+							x: (int) (position.X + x + offsetX),
+							y: (int) (position.Y + y + offsetY),
+							width: (int) (slice.Width * scale),
+							height: (int) (slice.Height * scale),
+							color: DEBUG_COLORS[cidx],
+							scale: 2f,
+							drawShadow: false
+						);
+
+						Utility.drawTinyDigits(nidx, batch, new Vector2(
+							position.X + x + offsetX,
+							position.Y + y + offsetY
+						), 2f, 1f, DEBUG_COLORS[cidx]);
+
+						cidx = (cidx + 1) % DEBUG_COLORS.Length;
+					}
+#endif
 
 					x += offsetX + (float) Math.Ceiling(slice.Width * scale);
 				}

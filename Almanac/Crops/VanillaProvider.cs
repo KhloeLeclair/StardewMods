@@ -188,6 +188,9 @@ namespace Leclair.Stardew.Almanac.Crops {
 				SpriteHelper.GetSprite(item),
 				isGiantCrop,
 				giantSprite,
+				new Item[] {
+					new SObject(id, 1)
+				},
 				isTrellisCrop,
 				phases,
 				regrow,

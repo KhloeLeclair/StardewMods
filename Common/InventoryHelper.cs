@@ -134,6 +134,11 @@ namespace Leclair.Stardew.Common {
 
 		#endregion
 
+		#region Item Iteration
+
+
+		#endregion
+
 		#region Discovery
 
 		public static List<LocatedInventory> DiscoverInventories(

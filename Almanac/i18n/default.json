@@ -23,6 +23,15 @@
 	"crop.toggle": "Toggle {{mode}}",
 	"crop.paddy": "Paddy Bonus",
 
+	"page.crop.none": "There are no crops that match your current filters.",
+
+	"page.crop.seed-filter": "Filter by Seeds",
+	"page.crop.seed-filter.disabled": "Disabled",
+	"page.crop.seed-filter.inventory": "In Inventory",
+	"page.crop.seed-filter.owned": "Owned",
+
+	"crop.seed-filter": "Display Owned Seeds Only",
+
 	"crop.using-none": "The following growth times and dates assume you have no fertilizer or skill.",
 	"crop.using-agri": "The following growth times and dates assume you are an {{agriculturist}}.",
 	"crop.using-speed": "The following growth times and dates assume you are using {{fertilizer}}.",

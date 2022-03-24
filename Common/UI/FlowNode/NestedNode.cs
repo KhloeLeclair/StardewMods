@@ -13,6 +13,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		public IFlowNode[] Nodes { get; }
 		public Alignment Alignment { get; }
 		public object Extra { get; }
+		public string UniqueId { get; }
 
 		public Func<IFlowNodeSlice, int, int, bool> OnClick { get; }
 		public Func<IFlowNodeSlice, int, int, bool> OnHover { get; }
@@ -27,7 +28,8 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
 			Func<IFlowNodeSlice, int, int, bool> onRightClick = null,
 			Func<IFlowNodeSlice, bool?> wantComponent = null,
-			object extra = null
+			object extra = null,
+			string id = null
 		) {
 			Nodes = nodes;
 			Alignment = align ?? Alignment.None;
@@ -36,6 +38,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			OnHover = onHover;
 			OnRightClick = onRightClick;
 			Extra = extra;
+			UniqueId = id;
 		}
 
 		public bool? WantComponent(IFlowNodeSlice slice) {
@@ -56,7 +59,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			return Nodes == null || Nodes.Length == 0 || Nodes.All(val => val.IsEmpty());
 		}
 
-		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining) {
+		public IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice) {
 			IFlowNodeSlice previous = null;
 			int index = 0;
 
@@ -66,7 +69,11 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 			}
 
 			while (index < Nodes.Length) {
-				IFlowNodeSlice result = Nodes[index].Slice(previous, font, maxWidth, remaining);
+				IFlowNodeSlice ns = nextSlice;
+				if (index + 1 < Nodes.Length)
+					ns = Nodes[index + 1].Slice(null, font, 0f, 0f, null);
+
+				IFlowNodeSlice result = Nodes[index].Slice(previous, font, maxWidth, remaining, ns);
 				if (result != null)
 					return new NestedNodeSlice(this, index, result);
 
@@ -87,6 +94,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 				   EqualityComparer<IFlowNode[]>.Default.Equals(Nodes, node.Nodes) &&
 				   Alignment == node.Alignment &&
 				   EqualityComparer<object>.Default.Equals(Extra, node.Extra) &&
+				   UniqueId == node.UniqueId &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnClick, node.OnClick) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnHover, node.OnHover) &&
 				   EqualityComparer<Func<IFlowNodeSlice, int, int, bool>>.Default.Equals(OnRightClick, node.OnRightClick) &&
@@ -94,7 +102,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 		}
 
 		public override int GetHashCode() {
-			return HashCode.Combine(Nodes, Alignment, Extra, OnClick, OnHover, OnRightClick, _wantComponent);
+			return HashCode.Combine(Nodes, Alignment, Extra, UniqueId, OnClick, OnHover, OnRightClick, _wantComponent);
 		}
 
 		public static bool operator ==(NestedNode left, NestedNode right) {

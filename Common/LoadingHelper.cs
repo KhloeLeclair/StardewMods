@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,13 @@ namespace Leclair.Stardew.Common
 {
     public static class LoadingHelper
     {
+
+		private static IModHelper Helper;
+
+		public static void SetHelper(IModHelper helper) {
+			Helper = helper;
+		}
+
 
 		public static void CheckIntegrations(Mod mod, IEnumerable<RecommendedIntegration> integrations, LogLevel level = LogLevel.Warn) {
 			if (integrations == null)
@@ -90,6 +98,7 @@ namespace Leclair.Stardew.Common
 			// Still here? Return the bare resource.
 			return pack.LoadAsset<T>(key);
 		}
+
 
 		public static T LoadLocalized<T>(this IContentHelper helper, string key, string locale = null, ContentSource source = ContentSource.ModFolder) {
 			locale ??= helper.CurrentLocale;

@@ -22,6 +22,8 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		// Events
 		void Refresh();
+
+		void ThemeChanged();
 		void Activate();
 		void Deactivate();
 		void DateChanged(WorldDate oldDate, WorldDate newDate);

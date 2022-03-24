@@ -196,6 +196,26 @@ namespace Leclair.Stardew.Almanac.Fish {
 			};
 		}
 
+		public override void ThemeChanged() {
+			base.ThemeChanged();
+
+			btnFilterWeather.texture = Menu.background;
+			btnFilterType.texture = Menu.background;
+			btnFilterCaught.texture = Menu.background;
+			btnFilterLocation.texture = Menu.background;
+
+			Tank.FloorTexture = Menu.background;
+			Tank.FrameTexture = Menu.background;
+
+			var flow = GetLeftFlow();
+			if (flow != null)
+				foreach(var node in flow)
+					if (node is SelectableNode sn) {
+						sn.SelectedTexture = Menu.background;
+						sn.HoverTexture = Menu.background;
+					}
+		}
+
 		#endregion
 
 		#region Logic
@@ -560,6 +580,34 @@ namespace Leclair.Stardew.Almanac.Fish {
 						.FormatText(I18n.Page_Fish_Locations_None());
 			}
 
+			/*if (info.PondInfo.HasValue) {
+				PondInfo pond = info.PondInfo.Value;
+
+				builder
+					.Text("\n\n")
+					.FormatText("Farming", font: Game1.dialogueFont)
+					.Text("\n");
+
+				builder
+					.FormatText($"When bred in a fish pond, {info.Name} reproduce every @B{pond.SpawnTime}@b days.");
+
+				if (pond.Initial < 10)
+					builder
+						.FormatText($"  support an initial population of @B{pond.Initial}@b");
+
+				builder
+					.FormatText($" Captive {info.Name} have been known to produce the following:\n");
+
+				foreach(var item in pond.ProducedItems)
+					builder
+						.Text("\n  ")
+						.Sprite(SpriteHelper.GetSprite(item), 2f, align: Alignment.Middle, extra: item)
+						.Text(" ")
+						.Text(item.DisplayName, extra: item);
+
+				builder.Text("\n");
+			}*/
+
 			return builder.Build();
 		}
 
@@ -680,7 +728,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 					.Text("\n\n\n")
 					.FormatText(I18n.Page_Fish_None(), align: Alignment.Center);
 
-			SetLeftFlow(builder);
+			SetLeftFlow(builder, scroll: -1);
 			SelectFish(to_select);
 		}
 

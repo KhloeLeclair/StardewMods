@@ -369,15 +369,40 @@ namespace Leclair.Stardew.Common.UI
 			Set(nodes, size.Y * step, scroll);
 		}
 
-		public void Set(IEnumerable<IFlowNode> nodes, float step, float scroll) { 
-			if (nodes == null)
+		public void Set(IEnumerable<IFlowNode> nodes, float step, float scroll) {
+			if (nodes == null) {
 				Flow = null;
-			else
-				Flow = FlowHelper.CalculateFlow(
-					nodes,
-					maxWidth: FlowWidth,
-					defaultFont: _defaultFont
-				);
+
+				ScrollStep = step;
+				ScrollOffset = 0;
+
+				UpdateFlow(false);
+				return;
+			}
+
+			Tuple<IFlowNode, float> closest = null;
+			if (scroll == -1 && Flow.HasValue)
+				closest = FlowHelper.GetClosestUniqueNode(Flow.Value, 1f, ScrollOffset, _height);
+
+			Flow = FlowHelper.CalculateFlow(
+				nodes,
+				maxWidth: FlowWidth,
+				defaultFont: _defaultFont
+			);
+
+			if (scroll == -1) {
+				if (closest != null) {
+					float pos = FlowHelper.GetScrollOffsetForUniqueNode(
+						Flow.Value,
+						closest.Item1.UniqueId
+					);
+					if (pos >= 0)
+						scroll = pos - closest.Item2;
+					else
+						scroll = 0;
+				} else
+					scroll = 0;
+			}
 
 			ScrollStep = step;
 			ScrollOffset = scroll;

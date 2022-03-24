@@ -12,9 +12,11 @@ namespace Leclair.Stardew.Common.UI.FlowNode {
 
 		Alignment Alignment { get; }
 
+		string UniqueId { get; }
+
 		object Extra { get; }
 
-		IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining);
+		IFlowNodeSlice Slice(IFlowNodeSlice last, SpriteFont font, float maxWidth, float remaining, IFlowNodeSlice nextSlice);
 
 		void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor, CachedFlowLine line, CachedFlow flow);
 

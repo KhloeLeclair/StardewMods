@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.16.0
+Released March 24th, 2022.
+
+### General
+
+* Replace the Almanac cover design with one based on certain elements
+  of the community center bundle UI.
+* Added an option to filter the Planting Dates page to only show crops
+  that you have seeds for.
+* Improve scrolling behavior when page content changes. Notably the
+  Planting Dates page will no longer scroll to the top when changing
+  fertilizer or other flags.
+
+### Fixes
+
+* Fixed an issue with the fishing log not correctly showing fish that are
+  catchable on the farm.
+* Fixed an issue with some crops displaying an incorrect growth time when
+  fertilizer or other flags are enabled.
+* Reload the fishing page textures when the current theme changes or is
+  otherwise reloaded.
+
+### Mod Compatibility
+
+* Add built-in support for Overgrown Flowery Interface.
+* Tweak the Vintage Interface themes.
+
+### Content Packs
+
+* Themes now have a `PageOffsets` object that allow them to change page
+  textures for specific Almanac pages.
+* Now using the public version of [ThemeManager](https://github.com/KhloeLeclair/Stardew-ThemeManager)
+  for theme support, which has a few changes. Notably, theme assets now
+  need to go into an `assets/` subfolder.
+
+
 ## 0.15.0
 Released March 17th, 2022.
 

@@ -70,7 +70,8 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		// Extra
 		TrapFishInfo? TrapInfo,
-		CatchFishInfo? CatchInfo
+		CatchFishInfo? CatchInfo,
+		PondInfo? PondInfo
 	);
 
 	public record struct TrapFishInfo(
@@ -83,5 +84,11 @@ namespace Leclair.Stardew.Almanac.Fish {
 		FishWeather Weather,
 
 		int Minlevel
+	);
+
+	public record struct PondInfo(
+		int Initial,
+		int SpawnTime,
+		List<Item> ProducedItems
 	);
 }
