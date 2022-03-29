@@ -114,6 +114,16 @@ namespace Leclair.Stardew.Almanac.Managers {
 		public double GetLuckForDate(int seed, WorldDate date) {
 			Random rnd = new(date.TotalDays + (seed / 2));
 
+			int prewarm = rnd.Next(0, 100);
+			for (int j = 0; j < prewarm; j++)
+				rnd.NextDouble();
+
+			prewarm = rnd.Next(0, 100);
+			for (int j = 0; j < prewarm; j++)
+				rnd.NextDouble();
+
+			rnd.NextDouble();
+
 			return Math.Min(0.100000001490116, (double) rnd.Next(-100, 101) / 1000.0);
 		}
 

@@ -78,6 +78,8 @@ namespace Leclair.Stardew.BetterCrafting {
 			// Harmony
 			Harmony = new Harmony(ModManifest.UniqueID);
 
+			Patches.Workbench_Patches.Patch(this);
+
 			// Read Config
 			Config = Helper.ReadConfig<ModConfig>();
 
@@ -337,8 +339,8 @@ namespace Leclair.Stardew.BetterCrafting {
 			});
 
 			Helper.ConsoleCommands.Add("bc_theme", "List all themes, or switch to a new theme.", (name, args) => {
-				if (ThemeManager.OnThemeCommand(args)) {
-					Config.Theme = ThemeManager.ThemeKey;
+				if (ThemeManager.PerformThemeCommand(args)) {
+					Config.Theme = ThemeManager.SelectedThemeId;
 					SaveConfig();
 				}
 			});
@@ -422,7 +424,7 @@ namespace Leclair.Stardew.BetterCrafting {
 						c.Theme = v;
 						ThemeManager.SelectTheme(v);
 					},
-					ThemeManager.GetThemeChoices()
+					ThemeManager.GetThemeChoiceMethods()
 				)
 				.Add(
 					I18n.Setting_Settings,
