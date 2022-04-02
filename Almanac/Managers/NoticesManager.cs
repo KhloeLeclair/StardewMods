@@ -359,13 +359,13 @@ public class NoticesManager : BaseManager {
 		if (gathering && bush == null)
 			bush = new();
 
-		if (gathering && bush!.inBloom(date.Season, date.DayOfMonth)) {
-			Item? berry = null;
-			if (date.SeasonIndex == 0)
-				berry = InventoryHelper.CreateItemById("(O)296", 1); // Salmonberry
+			if (gathering && bush.inBloom(date.Season, date.DayOfMonth)) {
+				Item berry = null;
+				if (date.SeasonIndex == 0)
+					berry = Utility.CreateItemByID("(O)296", 1); // Salmonberry
 
-			else if (date.SeasonIndex == 2)
-				berry = InventoryHelper.CreateItemById("(O)410", 1); // Blackberry
+				else if (date.SeasonIndex == 2)
+					berry = Utility.CreateItemByID("(O)410", 1); // Blackberry
 
 			if (berry != null) {
 				bool first_day = date.DayOfMonth == 1 || !bush.inBloom(date.Season, date.DayOfMonth - 1);

@@ -4,10 +4,15 @@
 		<AssemblyName>Almanac</AssemblyName>
 		<Version>0.18.1</Version>
 		<RootNamespace>Leclair.Stardew.Almanac</RootNamespace>
-		
 		<EnableHarmony>true</EnableHarmony>
 		<EnableTranslation>true</EnableTranslation>
+		<TargetFramework>net6.0</TargetFramework>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.0" />        
+	</ItemGroup>
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />
