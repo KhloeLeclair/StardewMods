@@ -22,11 +22,11 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 
 	public static readonly Rectangle WEATHER_ICON = new(384, 352, 16, 16);
 
-	private readonly ulong Seed;
-	private IFlowNode[]? Nodes;
-	private int[]? Forecast;
-	private bool[]? Festivals;
-	private bool[]? Pirates;
+		private readonly ulong Seed;
+		private IFlowNode[] Nodes;
+		private string[] Forecast;
+		private bool[] Festivals;
+		private bool[] Pirates;
 
 	readonly bool IsIsland;
 
@@ -75,11 +75,11 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 	public override void Update() {
 		base.Update();
 
-		Forecast = new int[ModEntry.DaysPerMonth];
-		Nodes = new IFlowNode[ModEntry.DaysPerMonth];
-		Festivals = IsIsland ? null : new bool[ModEntry.DaysPerMonth];
-		Pirates = IsIsland ? new bool[ModEntry.DaysPerMonth] : null;
-		WorldDate date = new(Menu.Date);
+			Forecast = new string[ModEntry.DaysPerMonth];
+			Nodes = new IFlowNode[ModEntry.DaysPerMonth];
+			Festivals = IsIsland ? null : new bool[ModEntry.DaysPerMonth];
+			Pirates = IsIsland ? new bool[ModEntry.DaysPerMonth] : null;
+			WorldDate date = new(Menu.Date);
 
 		FlowBuilder builder = new();
 		List<int>? pirateDays = IsIsland ? new() : null;
@@ -90,12 +90,12 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		if (!IsIsland)
 			builder.FormatText(I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex)));
 
-		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
-			date.DayOfMonth = day;
-			bool shown = forecastLength == -1 || date.TotalDays - today <= forecastLength;
-			int weather = Forecast[day - 1] = shown ?
-				Mod.Weather.GetWeatherForDate(Seed, date, IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default)
-				: -1;
+			var context = IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default;
+
+
+			for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
+				date.DayOfMonth = day;
+				string weather = Forecast[day - 1] = Mod.Weather.GetWeatherForDate(Seed, date, context);
 
 			if (IsIsland) {
 				bool pirates = Pirates![day - 1] = shown && day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather);
@@ -255,7 +255,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 					bounds.X + (bounds.Width - 64) / 2,
 					bounds.Y + (bounds.Height - 64) / 2
 				),
-				WeatherHelper.GetWeatherIcon(Forecast[day], date.Season),
+				WeatherHelper.GetWeatherIcon(Forecast[day]),
 				Color.White,
 				0f,
 				Vector2.Zero,
@@ -310,12 +310,9 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		if (Forecast == null)
 			return;
 
-		int weather = Forecast[date.DayOfMonth - 1];
-		if (weather == -1)
-			return;
-
-		Menu.HoverText = WeatherHelper.LocalizeWeather(weather);
-	}
+			string weather = Forecast[date.DayOfMonth - 1];
+			Menu.HoverText = WeatherHelper.LocalizeWeather(weather);
+		}
 
 	#endregion
 

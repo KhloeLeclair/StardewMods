@@ -121,17 +121,18 @@ public class ModEntry : ModSubscriber {
 		ThemeManager.ThemeChanged += OnThemeChanged;
 		ThemeManager.Discover();
 
-		// Init
-		RegisterBuilder(CoverPage.GetPage);
-		RegisterBuilder(CropPage.GetPage);
-		RegisterBuilder(WeatherPage.GetPage);
-		RegisterBuilder(WeatherPage.GetIslandPage);
-		RegisterBuilder(TrainPage.GetPage);
-		RegisterBuilder(FortunePage.GetPage);
-		RegisterBuilder(MinesPage.GetPage);
-		RegisterBuilder(NoticesPage.GetPage);
-		RegisterBuilder(FishingPage.GetPage);
-	}
+			// Init
+			RegisterBuilder(CoverPage.GetPage);
+			RegisterBuilder(CropPage.GetPage);
+			RegisterBuilder(WeatherPage.GetPage);
+			RegisterBuilder(WeatherPage.GetIslandPage);
+			RegisterBuilder(TrainPage.GetPage);
+			RegisterBuilder(FortunePage.GetPage);
+			RegisterBuilder(MinesPage.GetPage);
+			RegisterBuilder(NoticesPage.GetPage);
+			RegisterBuilder(FishingPage.GetPage);
+			RegisterBuilder(DebugItemsPage.GetPage);
+		}
 
 	public override object GetApi() {
 		return API;
@@ -370,16 +371,25 @@ public class ModEntry : ModSubscriber {
 			}
 		});
 
-		Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
-			ulong seed = GetBaseWorldSeed();
-			WorldDate date = new(Game1.Date);
-			for (int i = 0; i < 4 * 28; i++) {
-				int weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
-				Log($"Date: {date.Localize()} -- Weather: {WeatherHelper.GetWeatherName(weather)}");
-				date.TotalDays++;
-			}
-		});
-	}
+			Helper.ConsoleCommands.Add("al_now", "Print information about the in-game time.", (_, _) => {
+				Log($"Date: {Game1.Date.Localize()}", LogLevel.Info);
+				Log($"-   Year: {Game1.year}", LogLevel.Info);
+				Log($"- Season: {Game1.currentSeason}", LogLevel.Info);
+				Log($"-  DayOf: {Game1.dayOfMonth}", LogLevel.Info);
+				Log($"-  TDays: {Game1.Date.TotalDays}", LogLevel.Info);
+				Log($"DaysPlayed: {Game1.stats.DaysPlayed}", LogLevel.Info);
+			});
+
+			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
+				ulong seed = GetBaseWorldSeed();
+				WorldDate date = new(Game1.Date);
+				for (int i = 0; i < 4 * 28; i++) {
+					string weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
+					Log($"Date: {date.Localize()} -- Weather: {weather}");
+					date.TotalDays++;
+				}
+			});
+		}
 
 	[Subscriber]
 	private void OnMenuChanged(object sender, MenuChangedEventArgs e) {

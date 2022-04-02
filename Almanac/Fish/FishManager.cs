@@ -188,11 +188,11 @@ public class FishManager : BaseManager {
 
 	#region Locations
 
-	private static void AddFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result ) {
-		if ( ! result.TryGetValue(fish, out var entry)) { 
-			result[fish] = new() {
-				[loc] = seasons.ToList(),
-			};
+		private static void AddFish(SubLocation loc, int[] seasons, string fish, Dictionary<string, Dictionary<SubLocation, List<int>>> result ) {
+			if ( ! result.TryGetValue(fish, out var entry)) { 
+				result[fish] = new() {
+					[loc] = seasons.ToList(),
+				};
 
 			return;
 		}
@@ -208,9 +208,9 @@ public class FishManager : BaseManager {
 		}
 	}
 
-	private static void RemoveFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result) {
-		if (!result.TryGetValue(fish, out var entry))
-			return;
+		private static void RemoveFish(SubLocation loc, int[] seasons, string fish, Dictionary<string, Dictionary<SubLocation, List<int>>> result) {
+			if (!result.TryGetValue(fish, out var entry))
+				return;
 
 		if (!entry.TryGetValue(loc, out var slist))
 			return;
@@ -231,9 +231,9 @@ public class FishManager : BaseManager {
 		result.Remove(fish);
 	}
 
-	public Dictionary<int, Dictionary<SubLocation, List<int>>> GetFishLocations() {
-		if (!OverridesLoaded)
-			LoadOverrides();
+		public Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
+			if (!OverridesLoaded)
+				LoadOverrides();
 
 		var result = FishHelper.GetFishLocations();
 
@@ -250,17 +250,15 @@ public class FishManager : BaseManager {
 
 				SubLocation sl = new(ovr.Map, ovr.Zone);
 
-				if (ovr.AddFish != null)
-					foreach(string sFish in ovr.AddFish) {
-						if (int.TryParse(sFish, out int fish))
+					if (ovr.AddFish != null)
+						foreach(string fish in ovr.AddFish) {
 							AddFish(sl, seasons, fish, result);
-					}
+						}
 
-				if (ovr.RemoveFish != null)
-					foreach(string sFish in ovr.RemoveFish) {
-						if (int.TryParse(sFish, out int fish))
+					if (ovr.RemoveFish != null)
+						foreach(string fish in ovr.RemoveFish) {
 							RemoveFish(sl, seasons, fish, result);
-					}
+						}
 
 			}
 		});

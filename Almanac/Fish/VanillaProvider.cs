@@ -29,11 +29,11 @@ public class VanillaProvider : IFishProvider {
 	public string Name => nameof(VanillaProvider);
 	public int Priority => 0;
 
-	public IEnumerable<FishInfo> GetFish() {
-		Dictionary<int, string> data = Game1.content.Load<Dictionary<int, string>>(@"Data\Fish");
-		List<FishInfo> result = new();
+		public IEnumerable<FishInfo> GetFish() {
+			Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(@"Data\Fish");
+			List<FishInfo> result = new();
 
-		Dictionary<int, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
+			Dictionary<string, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
 
 		List<FishPondData> pondData = Game1.content.Load<List<FishPondData>>(@"Data\FishPondData");
 
@@ -52,15 +52,15 @@ public class VanillaProvider : IFishProvider {
 		return result;
 	}
 
-	private static FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>>? locations, List<FishPondData> pondData) {
-		if (string.IsNullOrEmpty(data))
-			return null;
+		private static FishInfo? GetFishInfo(string id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
+			if (string.IsNullOrEmpty(data))
+				return null;
 
 		if (FishHelper.SkipFish(Game1.player, id))
 			return null;
 
-		string[] bits = data.Split('/');
-		SObject obj = new(id, 1);
+			string[] bits = data.Split('/');
+			SObject obj = Utility.CreateItemByID(id, 1) as SObject;
 
 		if (bits.Length < 7 || obj is null)
 			return null;
@@ -178,12 +178,12 @@ public class VanillaProvider : IFishProvider {
 						initial = key - 1;
 			}
 
-			pondInfo = new(
-				Initial: initial,
-				SpawnTime: pond.SpawnTime,
-				ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == 812 ? FishHelper.GetRoeForFish(obj) : new SObject(x, 1)) as Item).ToList()
-			);
-		}
+				pondInfo = new(
+					Initial: initial,
+					SpawnTime: pond.SpawnTime,
+					ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : Utility.CreateItemByID(x, 1))).ToList()
+				);
+			}
 
 		return new FishInfo(
 			Id: id.ToString(), // bits[0],

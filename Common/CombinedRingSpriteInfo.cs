@@ -11,8 +11,11 @@ namespace Leclair.Stardew.Common {
 
 		public CombinedRing Ring;
 
-		public CombinedRingSpriteInfo(CombinedRing ring) : base(Game1.objectSpriteSheet, Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, ring.indexInTileSheet.Value, SObject.spriteSheetTileSize, SObject.spriteSheetTileSize)) {
+		public CombinedRingSpriteInfo(CombinedRing ring) : base() {
 			Ring = ring;
+			var data = Utility.GetItemDataForItemID(Ring.QualifiedItemID);
+			Texture = data.texture;
+			BaseSource = data.GetSourceRect(0);
 		}
 
 		public override void Draw(SpriteBatch batch, Vector2 location, float scale, Vector2 size, int frame = -1, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
@@ -20,22 +23,22 @@ namespace Leclair.Stardew.Common {
 		}
 
 		public override void Draw(SpriteBatch batch, Vector2 location, float scale, int frame = -1, float size = 16, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
-			int firstIdx = Ring.combinedRings[0].indexInTileSheet.Value;
-			int secondIdx = Ring.combinedRings[1].indexInTileSheet.Value;
-
+			var firstData = Utility.GetItemDataForItemID(Ring.combinedRings[0].QualifiedItemID);
+			var secondData = Utility.GetItemDataForItemID(Ring.combinedRings[1].QualifiedItemID);
+			
 			//location.Y -= 8 * scale;
 
 			Vector2 Origin = new(2f, 1f);
 
 			// Part One - Left Ring Arc
-			Rectangle p1 = Game1.getSourceRectForStandardTileSheet(Texture, firstIdx, 16, 16);
+			Rectangle p1 = firstData.GetSourceRect(0);
 			p1.X += 5;
 			p1.Y += 7;
 			p1.Width = 4;
 			p1.Height = 6;
 
 			batch.Draw(
-				texture: Texture,
+				texture: firstData.texture,
 				position: location + new Vector2(5f, 7f) * scale,
 				sourceRectangle: p1,
 				color: Color.White,
@@ -54,7 +57,7 @@ namespace Leclair.Stardew.Common {
 			p1.Height = 1;
 
 			batch.Draw(
-				texture: Texture,
+				texture: firstData.texture,
 				position: location + new Vector2(6f, 6f) * scale,
 				sourceRectangle: p1,
 				color: Color.White,
@@ -67,14 +70,14 @@ namespace Leclair.Stardew.Common {
 
 
 			// Part Three - Right Ring Arc
-			Rectangle p2 = Game1.getSourceRectForStandardTileSheet(Texture, secondIdx, 16, 16);
+			Rectangle p2 = secondData.GetSourceRect(0);
 			p2.X += 9;
 			p2.Y += 7;
 			p2.Width = 4;
 			p2.Height = 6;
 
 			batch.Draw(
-				texture: Texture,
+				texture: secondData.texture,
 				position: location + new Vector2(9f, 7f) * scale,
 				sourceRectangle: p2,
 				color: Color.White,
@@ -92,7 +95,7 @@ namespace Leclair.Stardew.Common {
 			p2.Height = 1;
 
 			batch.Draw(
-				texture: Texture,
+				texture: secondData.texture,
 				position: location + new Vector2(9f, 6f) * scale,
 				sourceRectangle: p2,
 				color: Color.White,
@@ -126,7 +129,7 @@ namespace Leclair.Stardew.Common {
 
 			// Left Ring Bit
 			batch.Draw(
-				texture: Texture,
+				texture: Game1.objectSpriteSheet,
 				position: location + new Vector2(2f, 8f) * scale,
 				sourceRectangle: RING_BIT,
 				color: Utility.Get2PhaseColor(firstColor, secondColor, timeOffset: 1125f),
@@ -139,7 +142,7 @@ namespace Leclair.Stardew.Common {
 
 			// Right Ring Bit
 			batch.Draw(
-				texture: Texture,
+				texture: Game1.objectSpriteSheet,
 				position: location + new Vector2(12f, 8f) * scale,
 				sourceRectangle: RING_BIT,
 				color: Utility.Get2PhaseColor(firstColor, secondColor, timeOffset: 375f),
@@ -152,7 +155,7 @@ namespace Leclair.Stardew.Common {
 
 			// Bottom Ring Bit
 			batch.Draw(
-				texture: Texture,
+				texture: Game1.objectSpriteSheet,
 				position: location + new Vector2(7f, 13f) * scale,
 				sourceRectangle: RING_BIT,
 				color: Utility.Get2PhaseColor(firstColor, secondColor, timeOffset: 750f),
