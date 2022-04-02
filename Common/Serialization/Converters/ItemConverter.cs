@@ -36,8 +36,8 @@ namespace Leclair.Stardew.Common.Serialization.Converters
 			}
 
 			var jo = new JObject {
-				{"Id", sobj.ParentSheetIndex},
-				{"Type", sobj.bigCraftable.Value ? "BigObject" : "Object"}
+				{"Id", sobj.QualifiedItemID},
+				{"Amount", sobj.Stack}
 			};
 
 			jo.WriteTo(writer);
@@ -45,19 +45,9 @@ namespace Leclair.Stardew.Common.Serialization.Converters
 
 		private static Item ReadObject(JObject obj) {
 			string id = obj.ValueIgnoreCase<string>("Id");
-			string type = obj.ValueIgnoreCase<string>("Type");
+			int stack = obj.ValueIgnoreCase<int>("Amount");
 
-			int nid = Convert.ToInt32(id);
-
-			switch(type) {
-				case "BigObject":
-					return new SObject(Vector2.Zero, nid);
-
-				case "Object":
-					return new SObject(nid, 1);
-			}
-
-			return null;
+			return Utility.CreateItemByID(id, stack <= 0 ? 1 : stack, allow_null: true);
 		}
 	}
 }

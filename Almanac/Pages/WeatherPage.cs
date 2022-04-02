@@ -18,9 +18,9 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public static readonly Rectangle WEATHER_ICON = new(384, 352, 16, 16);
 
-		private readonly int Seed;
+		private readonly ulong Seed;
 		private IFlowNode[] Nodes;
-		private int[] Forecast;
+		private string[] Forecast;
 		private bool[] Festivals;
 		private bool[] Pirates;
 
@@ -71,7 +71,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 		public override void Update() {
 			base.Update();
 
-			Forecast = new int[ModEntry.DaysPerMonth];
+			Forecast = new string[ModEntry.DaysPerMonth];
 			Nodes = new IFlowNode[ModEntry.DaysPerMonth];
 			Festivals = IsIsland ? null : new bool[ModEntry.DaysPerMonth];
 			Pirates = IsIsland ? new bool[ModEntry.DaysPerMonth] : null;
@@ -83,9 +83,12 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (!IsIsland)
 				builder.FormatText(I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex)));
 
+			var context = IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default;
+
+
 			for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
 				date.DayOfMonth = day;
-				int weather = Forecast[day - 1] = Mod.Weather.GetWeatherForDate(Seed, date, IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default);
+				string weather = Forecast[day - 1] = Mod.Weather.GetWeatherForDate(Seed, date, context);
 
 				if (IsIsland) {
 					bool pirates = Pirates[day - 1] = day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather);
@@ -211,7 +214,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 					bounds.X + (bounds.Width - 64) / 2,
 					bounds.Y + (bounds.Height - 64) / 2
 				),
-				WeatherHelper.GetWeatherIcon(Forecast[day], date.Season),
+				WeatherHelper.GetWeatherIcon(Forecast[day]),
 				Color.White,
 				0f,
 				Vector2.Zero,
@@ -266,7 +269,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			if (Forecast == null)
 				return;
 
-			int weather = Forecast[date.DayOfMonth - 1];
+			string weather = Forecast[date.DayOfMonth - 1];
 			Menu.HoverText = WeatherHelper.LocalizeWeather(weather);
 		}
 

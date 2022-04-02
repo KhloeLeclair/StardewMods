@@ -258,7 +258,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				if (Tank == null)
 					return null;
 
-				var urchin = new SObject(397, 1);
+				var urchin = Utility.CreateItemByID("(O)397", 1);
 				FillTank(urchin, 4);
 
 				builder.Text("\n\n\n\n");
@@ -756,9 +756,9 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 			// Decor
 			if (Mod.Config.DecorateFishTank) {
-				Tank.heldItems.Add(new SObject(152, 1));
-				Tank.heldItems.Add(new SObject(390, 1));
-				Tank.heldItems.Add(new SObject(393, 1));
+				Tank.heldItems.Add(Utility.CreateItemByID("(O)152", 1));
+				Tank.heldItems.Add(Utility.CreateItemByID("(O)390", 1));
+				Tank.heldItems.Add(Utility.CreateItemByID("(O)393", 1));
 			}
 
 			// Add the Fish
@@ -778,11 +778,11 @@ namespace Leclair.Stardew.Almanac.Fish {
 			// Do we want hats?
 
 			if (Tank.tankFish.Count > 0 && Tank.tankFish[0].fishIndex == 86) {
-				Dictionary<int, string> dictionary = Game1.content.Load<Dictionary<int, string>>(@"Data\hats");
+				Dictionary<string, string> dictionary = Game1.content.Load<Dictionary<string, string>>(@"Data\hats");
 
 				for (int i = 0; i < 4; i++) {
-					int hat = Game1.random.Next(0, dictionary.Keys.Count);
-					Tank.heldItems.Add(new Hat(hat));
+					string hat = dictionary.Keys.ElementAt(Game1.random.Next(0, dictionary.Count));
+					Tank.heldItems.Add(Utility.CreateItemByID($"(H){hat}", 1));
 				}
 			}
 		}

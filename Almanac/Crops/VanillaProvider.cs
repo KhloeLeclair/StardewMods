@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.GameData;
+
 using StardewModdingAPI;
 
 using SObject = StardewValley.Object;
@@ -26,7 +28,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 		public int Priority => 0;
 
 		public IEnumerable<CropInfo> GetCrops() {
-			Dictionary<int, string> crops = Game1.content.Load<Dictionary<int, string>>("Data\\Crops");
+			Dictionary<string, string> crops = Game1.content.Load<Dictionary<string, string>>(@"Data\Crops");
 			List<CropInfo> result = new();
 
 			foreach (var entry in crops) {
@@ -42,7 +44,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			return result;
 		}
 
-		private CropInfo? GetCropInfo(int id, string data) {
+		private CropInfo? GetCropInfo(string id, string data) {
 
 			// TODO: Create Crop instances so we can
 			// lean more on vanilla logic.
@@ -52,12 +54,12 @@ namespace Leclair.Stardew.Almanac.Crops {
 				return null;
 
 			int sprite = Convert.ToInt32(bits[2]);
-			int harvest = Convert.ToInt32(bits[3]);
+			string harvestID = bits[3];
 			int regrow = Convert.ToInt32(bits[4]);
 
 			bool isTrellisCrop = bits.Length > 7 && bits[7].Equals("true");
 
-			if (!Game1.objectInformation.ContainsKey(harvest))
+			if (!Game1.objectInformation.ContainsKey(harvestID))
 				return null;
 
 			string[] seasons = bits[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -76,7 +78,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 					end = new(1, season, ModEntry.DaysPerMonth);
 
 				} catch (Exception) {
-					ModEntry.Instance.Log($"Invalid season for crop {id} (harvest:{harvest}): {season}", LogLevel.Warn);
+					ModEntry.Instance.Log($"Invalid season for crop {id} (harvest:{harvestID}): {season}", LogLevel.Warn);
 					return null;
 				}
 
@@ -98,13 +100,18 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 			// If the sprite is 23, it's a seasonal multi-seed
 			// so we want to show that rather than the seed.
-			Item item = new SObject(sprite == 23 ? id : harvest, 1).getOne();
+			Item item;
+			if (sprite == 23)
+				item = Utility.CreateItemByID(id, 1);
+			else
+				item = Utility.CreateItemByID(harvestID, 1);
 
 			// Phases
 			int[] phases = bits[0].Split(' ').Select(val => Convert.ToInt32(val)).ToArray();
 
 			// Stupid hard coded bullshit.
-			bool paddyCrop = harvest == 271 || harvest == 830;
+			// TODO: Wait for the new context tag / data bit and check that.
+			bool paddyCrop = harvestID == "271" || harvestID == "830";
 
 			// Phase Sprites
 			// We need an extra sprite for the finished crop,
@@ -146,39 +153,19 @@ namespace Leclair.Stardew.Almanac.Crops {
 			bool isGiantCrop = false;
 			SpriteInfo giantSprite = null;
 
-			// Vanilla Giant Crops
-			if (harvest == 190 || harvest == 254 || harvest == 276) {
+			// Giant Crops
+			var giantCrops = Game1.content.Load<Dictionary<string, GiantCrops>>(@"Data\GiantCrops");
+			if (giantCrops != null && giantCrops.TryGetValue(harvestID, out var gcdata) && gcdata != null) { 
 				isGiantCrop = true;
-
-				int which;
-				if (harvest == 190)
-					which = 0;
-				else if (harvest == 254)
-					which = 1;
-				else
-					which = 2;
 
 				giantSprite = new(
-					SpriteHelper.GetTexture(Common.Enums.GameTexture.Crop),
-					new Rectangle(112 + which*48, 512, 48, 64)
+					Game1.content.Load<Texture2D>(gcdata.Texture),
+					new Rectangle(
+						gcdata.Corner.X, gcdata.Corner.Y,
+						gcdata.TileSize.X * 16,
+						(gcdata.TileSize.Y + 1) * 16
+					)
 				);
-			}
-
-			// JsonAssets Giant Crops
-			if (!isGiantCrop && Mod.intJA.IsLoaded) {
-				Texture2D tex = Mod.intJA.GetGiantCropTexture(harvest);
-				if (tex != null) {
-					isGiantCrop = true;
-					giantSprite = new(tex, tex.Bounds);
-				}
-			}
-
-			// MoreGiantCrops Giant Crops
-			if (!isGiantCrop && Mod.intMGC.IsGiantCrop(harvest)) {
-				isGiantCrop = true;
-				Texture2D tex = Mod.intMGC.GetGiantCropTexture(harvest);
-				if (tex != null)
-					giantSprite = new(tex, tex.Bounds);
 			}
 
 			return new(

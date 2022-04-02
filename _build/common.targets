@@ -23,5 +23,6 @@
 	<ItemGroup>
         <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
+        <PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="1.0.3" />
 	</ItemGroup>
 </Project>

@@ -6,12 +6,15 @@ namespace Leclair.Stardew.SeeMeRollin {
 
 		public int Speed;
 
-		public RollinBuff(int speed) : base(I18n.Buff_Name(), 1000, null, 9) {
-			which = ModEntry.BUFF;
-
+		public RollinBuff(int speed) : base(
+			ModEntry.BUFF,
+			duration: 1,
+			icon_texture: Game1.buffsIcons,
+			icon_sheet_index: 9,
+			display_name: I18n.Buff_Name()
+		) {
+			effects.speed.Value = speed;
 			Speed = speed;
-			buffAttributes[Buff.speed] = Speed;
 		}
-
 	}
 }

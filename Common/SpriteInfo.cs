@@ -26,6 +26,7 @@ namespace Leclair.Stardew.Common {
 		public int FrameTime;
 		public int FrameDelay;
 
+		protected SpriteInfo() { }
 
 		public SpriteInfo(Texture2D texture, Rectangle baseSource, Color? baseColor = null, float baseScale = 1f, Texture2D overlayTexture = null, Rectangle? overlaySource = null, Color? overlayColor = null, float overlayScale = 1f, bool isPrismatic = false, int baseFrames = 1, int overlayFrames = 1, int framesPerRow = int.MaxValue, int frameTime = 100, int frameDelay = 0) {
 			Texture = texture;

@@ -38,10 +38,10 @@ namespace Leclair.Stardew.Almanac.Crops {
 
 	public class CropPage : BasePage<CropState>, ICalendarPage, ITab {
 
-		private readonly static Tuple<int, double>[] FERTILIZERS = new Tuple<int, double>[] {
-			new(465, 0.10),
-			new(466, 0.25),
-			new(918, 0.33)
+		private readonly static Tuple<Item, double>[] FERTILIZERS = new Tuple<Item, double>[] {
+			new(Utility.CreateItemByID("465", 1), 0.10),
+			new(Utility.CreateItemByID("466", 1), 0.25),
+			new(Utility.CreateItemByID("918", 1), 0.33)
 		};
 
 		private List<CropInfo>[] LastDays;
@@ -206,10 +206,7 @@ namespace Leclair.Stardew.Almanac.Crops {
 			FertComponents = new(FERTILIZERS.Length);
 
 			for (int i = 0; i < FERTILIZERS.Length; i++) {
-				int id = FERTILIZERS[i].Item1;
-
-				SObject obj = id == -1 ? null : new(FERTILIZERS[i].Item1, 1);
-				Item item = obj?.getOne();
+				Item item = FERTILIZERS[i].Item1;
 				SpriteInfo sprite = item == null ? null : SpriteHelper.GetSprite(item);
 
 				Fertilizers.Add(new(item, sprite, FERTILIZERS[i].Item2, Game1.random.Next(2 * AlmanacMenu.TABS.Length)));

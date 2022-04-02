@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,6 +11,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 using StardewValley;
+using StardewValley.GameData;
 
 using Leclair.Stardew.Almanac.Models;
 
@@ -26,21 +28,18 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		// Cache
 
-		private int CachedSeed;
+		private ulong CachedSeed;
 		private int CachedYear;
 
-		private int[] CachedWeather;
-		private int[] CachedIslandWeather;
-
-		private readonly object WeatherCache = new();
+		private readonly Dictionary<string, string[]> CachedWeather = new();
 
 		public WeatherManager(ModEntry mod) : base(mod) { }
 
 		public void Invalidate() {
 			WithCache(() => {
-				CachedSeed = CachedYear = -1;
-				CachedWeather = null;
-				CachedIslandWeather = null;
+				CachedSeed = 0;
+				CachedYear = -1;
+				CachedWeather.Clear();
 			});
 
 			WithRules(() => {
@@ -54,9 +53,11 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		[Subscriber]
 		private void OnSaveLoaded(object sender, SaveLoadedEventArgs e) {
-			CachedSeed = CachedYear = -1;
-			CachedWeather = null;
-			CachedIslandWeather = null;
+			WithCache(() => {
+				CachedSeed = 0;
+				CachedYear = -1;
+				CachedWeather.Clear();
+			});
 		}
 
 		#endregion
@@ -70,7 +71,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 		}
 
 		private void WithCache(Action action) {
-			lock (WeatherCache) {
+			lock ((CachedWeather as ICollection).SyncRoot) {
 				action();
 			}
 		}
@@ -86,25 +87,20 @@ namespace Leclair.Stardew.Almanac.Managers {
 			return SortedRules;
 		}
 
-		public int GetWeatherForDate(int seed, int day) {
+		public string GetWeatherForDate(ulong seed, int day) {
 			return GetWeatherForDate(seed, day, GameLocation.LocationContext.Default);
 		}
 
-		public int GetWeatherForDate(int seed, int day, GameLocation.LocationContext context) {
+		public string GetWeatherForDate(ulong seed, int day, LocationContextData context) {
 			WorldDate date = new();
 			date.TotalDays = day;
 			return GetWeatherForDate(seed, date, context);
 		}
 
-		public int GetWeatherForDate(int seed, WorldDate date, GameLocation.LocationContext context) {
-			UpdateCache(seed, date.Year);
+		public string GetWeatherForDate(ulong seed, WorldDate date, LocationContextData context) {
+			UpdateCache(seed, date.Year, context);
 
-			int[] Forecast;
-			if (context == GameLocation.LocationContext.Island)
-				Forecast = CachedIslandWeather;
-			else
-				Forecast = CachedWeather;
-
+			string[] Forecast = CachedWeather[context.Name];
 			return Forecast[date.SeasonIndex * ModEntry.DaysPerMonth + date.DayOfMonth - 1];
 		}
 
@@ -112,59 +108,71 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 		#region Calculation
 
-		private void UpdateCache(int seed, int year) {
-			if (CachedSeed == seed && CachedYear == year)
-				return;
+		private void UpdateCache(ulong seed, int year, LocationContextData context) {
+			lock((CachedWeather as ICollection).SyncRoot) {
 
-			CachedSeed = seed;
-			CachedYear = year;
+				if (CachedSeed != seed || CachedYear != year)
+					CachedWeather.Clear();
 
-			CachedWeather = new int[ModEntry.DaysPerMonth * 4];
-			CachedIslandWeather = new int[CachedWeather.Length];
+				if (CachedWeather.ContainsKey(context.Name))
+					return;
 
-			bool[] RuledDates = new bool[CachedWeather.Length];
-			bool[] RuledIslandDates = new bool[CachedIslandWeather.Length];
+				CachedSeed = seed;
+				CachedYear = year;
 
-			WorldDate date = new(year, "spring", 1);
+				string[] forecast = new string[ModEntry.DaysPerMonth * 4];
+				bool[] RuledDates = new bool[forecast.Length];
 
-			// First, we calculate the raw weather on any given date.
-			for(int i = 1; i <= CachedWeather.Length; i++) {
-				CachedWeather[i - 1] = WeatherHelper.GetRawWeatherForDate(seed, date, GameLocation.LocationContext.Default);
-				CachedIslandWeather[i - 1] = WeatherHelper.GetRawWeatherForDate(seed, date, GameLocation.LocationContext.Island);
+				WorldDate date = new(year, "spring", 1);
 
-				// Standard weather is overwritten on some dates. Don't
-				// let us modify the weather on those days with rules.
-				if (Game1.getWeatherModificationsForDate(date, -1) != -1)
-					RuledDates[i - 1] = true;
+				// First, we calculate the raw weather on any given date.
+				for(int i = 1; i <= forecast.Length; i++) {
+					forecast[i - 1] = WeatherHelper.GetRawWeatherForDate(seed, date, context);
 
-				date.TotalDays++;
-			}
+					// Standard weather is overwritten on some dates. Don't
+					// let us modify the weather on those days with rules.
+					// TODO: See how this changes for different contexts.
+					if (context == GameLocation.LocationContext.Default && Game1.getWeatherModificationsForDate(date, "didnotchange") != "didnotchange")
+						RuledDates[i - 1] = true;
 
-			if (!Mod.Config.EnableWeatherRules)
-				return;
+					date.TotalDays++;
+				}
 
-			// Now, we need to start processing rules.
-			IEnumerable<WeatherRule> rules = GetRules();
+				if (Mod.Config.EnableWeatherRules) {
+					// Now, we need to start processing rules.
+					IEnumerable<WeatherRule> rules = GetRules();
 
-			foreach (WeatherRule rule in rules) {
-				if (rule == null || !rule.Enabled)
-					continue;
+					foreach (WeatherRule rule in rules) {
+						if (rule == null || !rule.Enabled)
+							continue;
 
-				if (rule.FirstYear > year || rule.LastYear < year)
-					continue;
+						if (rule.FirstYear > year || rule.LastYear < year)
+							continue;
 
-				if (rule.ValidYears != null && rule.ValidYears.Contains(year))
-					continue;
+						if (rule.ValidYears != null && rule.ValidYears.Contains(year))
+							continue;
 
-				if (rule.Context == RuleContext.Default || rule.Context == RuleContext.All)
-					ExecuteRule(rule, seed, year, CachedWeather, RuledDates);
+						if (rule.Contexts != null) {
+							bool matched = false;
+							foreach (string ctx in rule.Contexts) {
+								if (context.Name.Equals(ctx, StringComparison.OrdinalIgnoreCase)) {
+									matched = true;
+									break;
+								}
+							}
+							if (!matched)
+								continue;
+						}
 
-				if (rule.Context == RuleContext.Island || rule.Context == RuleContext.All)
-					ExecuteRule(rule, seed, year, CachedIslandWeather, RuledIslandDates);
+						ExecuteRule(rule, seed, year, forecast, RuledDates);
+					}
+				}
+			
+				CachedWeather[context.Name] = forecast;
 			}
 		}
 
-		private void ExecuteRule(WeatherRule rule, int seed, int year, int[] Weather, bool[] RuledDates) {
+		private void ExecuteRule(WeatherRule rule, ulong seed, int year, string[] Weather, bool[] RuledDates) {
 			var pattern = rule.CalculatedPattern;
 			if (pattern == null)
 				return;
@@ -188,7 +196,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 					if (!seasons.Contains(i) && !seasons.Contains(-1))
 						continue;
 
-					ArraySegment<int> weatherSeg = new(Weather, first, ModEntry.DaysPerMonth);
+					ArraySegment<string> weatherSeg = new(Weather, first, ModEntry.DaysPerMonth);
 					ArraySegment<bool> ruledSeg = new(RuledDates, first, ModEntry.DaysPerMonth);
 
 					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
@@ -201,7 +209,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 					if (!seasons.Contains(i / 4) && !seasons.Contains(-1))
 						continue;
 
-					ArraySegment<int> weatherSeg = new(Weather, first, 7);
+					ArraySegment<string> weatherSeg = new(Weather, first, 7);
 					ArraySegment<bool> ruledSeg = new(RuledDates, first, 7);
 
 					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
@@ -209,7 +217,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			}
 		}
 
-		private static void ExecuteRuleInner(WeatherRule rule, RulePatternEntry[][] pattern, int seed, int year, int offset, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static void ExecuteRuleInner(WeatherRule rule, RulePatternEntry[][] pattern, ulong seed, int year, int offset, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
 
 			Dictionary<int, PossibleMatch> possibleMatches = new();
 
@@ -261,7 +269,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			List<PossibleMatch> matches = possibleMatches.Values.Where(match => match.Cost <= min_cost).ToList();
 			matches.Sort((a, b) => a.Cost - b.Cost);
 
-			Random rnd = new(seed + (year * 112) + offset);
+			Random rnd = new((int)seed + (year * 112) + offset);
 
 			// TODO: Apply weights when picking a random match.
 			int idx = rnd.Next(0, matches.Count);
@@ -271,7 +279,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			ApplyPattern(rnd, matches[idx].Offset, pattern, Weather, RuledDates);
 		}
 
-		private static void ApplyPattern(Random rnd, int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static void ApplyPattern(Random rnd, int offset, RulePatternEntry[][] pattern, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
 
 			for (int i = 0; i < pattern.Length; i++) {
 				int idx = offset + i - 1;
@@ -281,12 +289,12 @@ namespace Leclair.Stardew.Almanac.Managers {
 
 				RuledDates[idx] = true;
 
-				int current = Weather[idx];
+				string current = Weather[idx];
 				bool matched = false;
 				float total = 0f;
 				foreach (var item in pattern[i]) {
 					total += item.Weight;
-					if (current == ((int) item.Weather)) {
+					if (current == item.Weather) {
 						matched = true;
 						break;
 					}
@@ -302,7 +310,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 						continue;
 
 					if (val <= item.Weight) {
-						Weather[idx] = ((int)item.Weather);
+						Weather[idx] = item.Weather;
 						break;
 					}
 
@@ -311,7 +319,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			}
 		}
 
-		private static int GetPatternCost(int offset, RulePatternEntry[][] pattern, ArraySegment<int> Weather, ArraySegment<bool> RuledDates) {
+		private static int GetPatternCost(int offset, RulePatternEntry[][] pattern, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
 
 			int cost = 0;
 
@@ -321,11 +329,11 @@ namespace Leclair.Stardew.Almanac.Managers {
 				if (idx < 0 || idx > Weather.Count)
 					return -1;
 
-				int current = Weather[idx];
+				string current = Weather[idx];
 
 				bool matched = false;
 				foreach (var item in pattern[i]) {
-					if (current == ((int)item.Weather)) {
+					if (current == item.Weather) { 
 						matched = true;
 						break;
 					}
@@ -399,6 +407,43 @@ namespace Leclair.Stardew.Almanac.Managers {
 				Log($"Loaded {Rules.Count} total and {SortedRules.Length} enabled weather rules.", LogLevel.Debug);
 				RulesLoaded = true;
 			});
+		}
+
+		#endregion
+
+		#region Daily Update
+
+		public void UpdateForNewDay() {
+			if (! Mod.Config.EnableDeterministicWeather)
+				return;
+
+			if (!Game1.IsMasterGame)
+				return;
+
+			var contexts = Game1.content.Load<Dictionary<string, LocationContextData>>(@"Data\LocationContexts");
+			WorldDate date = new(Game1.year, Game1.currentSeason, Game1.dayOfMonth + 1);
+			foreach(var entry in contexts) {
+				var weather = Game1.netWorldState.Value.GetWeatherForLocation(entry.Key);
+				weather.weatherForTomorrow.Value = GetWeatherForDate(Mod.GetBaseWorldSeed(), date, entry.Value);
+			}
+
+			// Since we've changed weather, we need to re-copy.
+			foreach(var entry in contexts) {
+				if (entry.Value.CopyWeatherFromLocation == null)
+					continue;
+
+				try {
+					Game1.netWorldState.Value
+						.GetWeatherForLocation(entry.Key)
+						.CopyFrom(
+							Game1.netWorldState.Value
+							.GetWeatherForLocation(
+								entry.Value.CopyWeatherFromLocation
+							));
+				} catch(Exception ex) {
+					Log($"Unable to copy weather from context {entry.Key} to {entry.Value.CopyWeatherFromLocation}.", LogLevel.Warn, ex, LogLevel.Trace);
+				}
+			}
 		}
 
 		#endregion

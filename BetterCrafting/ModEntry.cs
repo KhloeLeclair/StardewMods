@@ -54,7 +54,7 @@ namespace Leclair.Stardew.BetterCrafting {
 		private readonly object providerLock = new();
 
 		private CaseInsensitiveHashSet ConnectorExamples;
-		private Dictionary<int, string> FloorMap;
+		private Dictionary<string, string> FloorMap;
 
 		private GMCMIntegration<ModConfig, ModEntry> GMCMIntegration;
 
@@ -735,10 +735,10 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		private void LoadFloorMap() {
 			const string path = "assets/floors.json";
-			Dictionary<int, string> floors = null;
+			Dictionary<string, string> floors = null;
 
 			try {
-				floors = Helper.Data.ReadJsonFile<Dictionary<int, string>>(path);
+				floors = Helper.Data.ReadJsonFile<Dictionary<string, string>>(path);
 				if (floors == null)
 					Log($"The {path} file is missing or invalid.", LogLevel.Error);
 			} catch(Exception ex) {
@@ -753,9 +753,9 @@ namespace Leclair.Stardew.BetterCrafting {
 				if (!cp.HasFile("floors.json"))
 					continue;
 
-				Dictionary<int, string> extra = null;
+				Dictionary<string, string> extra = null;
 				try {
-					extra = cp.ReadJsonFile<Dictionary<int, string>>("floors.json");
+					extra = cp.ReadJsonFile<Dictionary<string, string>>("floors.json");
 				} catch(Exception ex) {
 					Log($"The floors.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
 				}
@@ -824,6 +824,9 @@ namespace Leclair.Stardew.BetterCrafting {
 					return Config.ValidConnectors.Contains(item.Name);
 
 				case Flooring floor:
+					if (Config.ValidConnectors.Contains(floor.whichFloor.Value))
+						return true;
+
 					return FloorMap != null
 						&& FloorMap.TryGetValue(floor.whichFloor.Value, out string name)
 						&& name != null

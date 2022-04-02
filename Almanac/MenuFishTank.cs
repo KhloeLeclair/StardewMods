@@ -37,7 +37,7 @@ namespace Leclair.Stardew.Almanac {
 		private Rectangle _Inside;
 
 		public MenuFishTank(Rectangle bounds)
-		: base(2304, Vector2.Zero) {
+		: base("2304", Vector2.Zero) {
 
 			_Bounds = bounds;
 

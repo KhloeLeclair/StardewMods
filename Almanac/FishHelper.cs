@@ -31,15 +31,15 @@ namespace Leclair.Stardew.Almanac {
 			return false;
 		}
 
-		public static bool SkipFish(Farmer who, int id) {
+		public static bool SkipFish(Farmer who, string id) {
 			who ??= Game1.player;
 
 			switch(id) {
-				case 898:
-				case 899:
-				case 900:
-				case 901:
-				case 902:
+				case "898":
+				case "899":
+				case "900":
+				case "901":
+				case "902":
 					return ! who.team.SpecialOrderRuleActive("LEGENDARY_FAMILY");
 			}
 
@@ -99,17 +99,17 @@ namespace Leclair.Stardew.Almanac {
 			if (fish.ParentSheetIndex == 698)
 				color = new Color(61, 55, 42);
 
-			ColoredObject result = new ColoredObject(812, 1, color);
+			ColoredObject result = new ColoredObject("812", 1, color);
 			result.name = fish.Name + " Roe";
 			result.preserve.Value = SObject.PreserveType.Roe;
-			result.preservedParentSheetIndex.Value = fish.ParentSheetIndex;
+			result.preservedParentSheetIndex.Value = fish.ItemID;
 			result.Price += fish.Price / 2;
 
-			return result as SObject;
+			return result;
 		}
 
-		public static Dictionary<int, Dictionary<SubLocation, List<int>>> GetFishLocations() {
-			Dictionary<int, Dictionary<SubLocation, List<int>>> result = new();
+		public static Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
+			Dictionary<string, Dictionary<SubLocation, List<int>>> result = new();
 
 			var locations = Game1.content.Load<Dictionary<string, string>>(@"Data\Locations");
 
@@ -127,7 +127,7 @@ namespace Leclair.Stardew.Almanac {
 							int zone = pair.Key;
 							SubLocation sl = new(lp.Key, zone);
 
-							foreach (int fish in pair.Value) {
+							foreach (string fish in pair.Value) {
 								if (!result.TryGetValue(fish, out var locs))
 									result[fish] = locs = new();
 
@@ -146,8 +146,8 @@ namespace Leclair.Stardew.Almanac {
 			return result;
 		}
 
-		public static Dictionary<int, List<SubLocation>> GetFishLocations(int season) {
-			Dictionary<int, List<SubLocation>> result = new();
+		public static Dictionary<string, List<SubLocation>> GetFishLocations(int season) {
+			Dictionary<string, List<SubLocation>> result = new();
 
 			var locations = Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
 			foreach (var lp in locations) {
@@ -162,7 +162,7 @@ namespace Leclair.Stardew.Almanac {
 					int zone = pair.Key;
 					SubLocation sl = new(lp.Key, zone);
 
-					foreach(int fish in pair.Value) {
+					foreach(string fish in pair.Value) {
 						if (result.TryGetValue(fish, out var subs))
 							subs.Add(sl);
 						else
@@ -174,16 +174,16 @@ namespace Leclair.Stardew.Almanac {
 			return result;
 		}
 
-		public static Dictionary<int, List<int>> GetLocationFish(GameLocation location, int season) {
+		public static Dictionary<int, List<string>> GetLocationFish(GameLocation location, int season) {
 			return GetLocationFish(location.Name, season);
 		}
 
-		public static Dictionary<int, List<int>> GetLocationFish(string key, int season, Dictionary<string, string> locations = null) {
+		public static Dictionary<int, List<string>> GetLocationFish(string key, int season, Dictionary<string, string> locations = null) {
 			if (key == "BeachNightMarket")
 				key = "Beach";
 
 			locations ??= Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
-			Dictionary<int, List<int>> result = null;
+			Dictionary<int, List<string>> result = null;
 
 			if (locations.ContainsKey(key))
 				result = GetLocationFish(season, locations[key]);
@@ -235,7 +235,7 @@ namespace Leclair.Stardew.Almanac {
 					GetLocationFish(season, locations?["Town"], result, true, 1);
 					break;
 				case 2:
-					AddFish(734, -1, result);
+					AddFish("734", -1, result);
 					GetLocationFish(season, locations?["Forest"], result, true, 1);
 					break;
 				case 3:
@@ -248,11 +248,11 @@ namespace Leclair.Stardew.Almanac {
 					GetLocationFish(season, locations?["Forest"], result, true, 1);
 					break;
 				case 6:
-					AddFish(152, -1, result);
-					AddFish(723, -1, result);
-					AddFish(393, -1, result);
-					AddFish(719, -1, result);
-					AddFish(718, -1, result);
+					AddFish("152", -1, result);
+					AddFish("723", -1, result);
+					AddFish("393", -1, result);
+					AddFish("719", -1, result);
+					AddFish("718", -1, result);
 					GetLocationFish(season, locations?["Beach"], result, true);
 					break;
 			}
@@ -260,26 +260,27 @@ namespace Leclair.Stardew.Almanac {
 			return result;
 		}
 
-		private static void AddFish(int fish, int zone, Dictionary<int, List<int>> existing) {
-			if (existing.TryGetValue(zone, out List<int> result)) {
+		private static void AddFish(string fish, int zone, Dictionary<int, List<string>> existing) {
+			if (existing.TryGetValue(zone, out List<string> result)) {
 				if (!result.Contains(fish))
 					result.Add(fish);
 			} else
 				existing.Add(zone, new() { fish });
 		}
 
-		public static Dictionary<int, List<int>> GetLocationFish(int season, string data) {
+		public static Dictionary<int, List<string>> GetLocationFish(int season, string data) {
 			return GetLocationFish(season, data, new());
 		}
 
-		public static Dictionary<int, List<int>> GetLocationFish(int season, string data, Dictionary<int, List<int>> existing, bool no_zones = false, int limit_zone = -1) {
+		public static Dictionary<int, List<string>> GetLocationFish(int season, string data, Dictionary<int, List<string>> existing, bool no_zones = false, int limit_zone = -1) {
 			if (string.IsNullOrEmpty(data))
 				return existing;
 
 			string[] entries = data.Split('/')[4 + season].Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
 			for (int i = 0; (i + 1) < entries.Length; i += 2) {
-				if (int.TryParse(entries[i], out int fish) && int.TryParse(entries[i + 1], out int zone)) {
+				string fish = entries[i];
+				if (int.TryParse(entries[i + 1], out int zone)) {
 					if (limit_zone != -1 && zone != -1 && limit_zone != zone)
 						continue;
 

@@ -33,7 +33,7 @@ namespace Leclair.Stardew.Almanac {
 				: Game1.netWorldState.Value.MinesDifficulty;
 		}
 
-		public static LevelType GetLevelType(int floor, int seed, int date) {
+		public static LevelType GetLevelType(int floor, ulong seed, int date) {
 			if (floor < 1 || floor > 77377)
 				return LevelType.None;
 
@@ -47,7 +47,7 @@ namespace Leclair.Stardew.Almanac {
 
 				// Check for monster infestation first, since that
 				// has a higher priority.
-				rnd = new((date + 1) + floor * 100 + seed / 2);
+				rnd = new((date + 1) + floor * 100 + (int)seed / 2);
 
 				if (rnd.NextDouble() < 0.044 && floor % 40 > 5 && floor % 40 < 30 && floor % 40 != 19) {
 					if (rnd.NextDouble() < 0.5)
@@ -64,7 +64,7 @@ namespace Leclair.Stardew.Almanac {
 				}
 
 				// Now check for mushrooms.
-				rnd = new((date - 1) * floor + 4 * floor + seed / 2);
+				rnd = new((date - 1) * floor + 4 * floor + (int)seed / 2);
 
 				// Duplicate randomness calls that are used before.
 				// We don't care about their output.
@@ -81,7 +81,7 @@ namespace Leclair.Stardew.Almanac {
 
 			// Skull Caves
 			if (floor >= 121 && floor < 77377) {
-				rnd = new((date + 1) + floor * 100 + seed / 2);
+				rnd = new((date + 1) + floor * 100 + (int)seed / 2);
 
 				if (rnd.NextDouble() < 0.044 && floor % 40 > 5 && floor % 40 < 30 && floor % 40 != 19) {
 					LevelType result;

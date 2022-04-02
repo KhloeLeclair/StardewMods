@@ -53,83 +53,11 @@ namespace Leclair.Stardew.Common {
 		public static readonly Regex ITEM_REGEX = new(@"^\(([^)]+)\)(.+)$");
 
 		public static string GetItemQualifiedId(Item item) {
-			if (item is Boots boots)
-				return $"(B){boots.indexInTileSheet.Value}";
-
-			if (item is Furniture furniture)
-				return $"(F){furniture.ParentSheetIndex}";
-
-			if (item is Hat hat)
-				return $"(H){hat.which.Value}";
-
-			if (item is Clothing clothing) {
-				string type;
-				switch (clothing.clothesType.Value) {
-					case 0: // Shirt
-						type = "S";
-						break;
-					case 1: // Pants
-						type = "P";
-						break;
-					case 2: // Accessories
-						type = "A";
-						break;
-					default:
-						throw new ArgumentException($"unknown clothing type \"{clothing.clothesType.Value}\"", nameof(item));
-				}
-
-				return $"({type}){clothing.ParentSheetIndex}";
-			}
-
-			if (item is MeleeWeapon weapon)
-				return $"(W){weapon.InitialParentTileIndex}";
-
-			if (item is SObject sobj) {
-				string type = "O";
-				if (sobj.bigCraftable.Value)
-					type = "BC";
-
-				return $"({type}){sobj.ParentSheetIndex}";
-			}
-
-			throw new ArgumentException($"unknown item type", nameof(item));
+			return item.QualifiedItemID;
 		}
 
 		public static Item CreateItemById(string id) {
-			var match = ITEM_REGEX.Match(id);
-			string type;
-			int nid;
-
-			if (match.Success) {
-				type = match.Groups[1].Value;
-				if (!int.TryParse(match.Groups[2].Value, out nid))
-					throw new ArgumentException("invalid item id", nameof(id));
-
-			} else {
-				type = "O";
-				if (!int.TryParse(id, out nid))
-					throw new ArgumentException("invalid item id", nameof(id));
-			}
-
-			switch(type) {
-				case "BC":
-					return new SObject(Vector2.Zero, nid);
-				case "B":
-					return new Boots(nid);
-				case "F":
-					return new Furniture(nid, Vector2.Zero);
-				case "H":
-					return new Hat(nid);
-				case "O":
-					return new SObject(nid, 1);
-				case "P":
-				case "S":
-					return new Clothing(nid);
-				case "W":
-					return new MeleeWeapon(nid);
-				default:
-					throw new ArgumentException($"unsupported item type \"{type}\"", nameof(id));
-			}
+			return Utility.CreateItemByID(id, 1);
 		}
 
 		#endregion
@@ -717,7 +645,7 @@ namespace Leclair.Stardew.Common {
 
 		#region Recipes and Crafting
 
-		public static bool DoesPlayerHaveItems(IEnumerable<KeyValuePair<int, int>> items, Farmer who, IList<Item> extra = null) {
+		public static bool DoesPlayerHaveItems(IEnumerable<KeyValuePair<string, int>> items, Farmer who, IList<Item> extra = null) {
 			foreach (var pair in items) {
 				int num = pair.Value - who.getItemCount(pair.Key, 5);
 				if (num > 0 && (extra == null || num - who.getItemCountInList(extra, pair.Key, 5) > 0))
@@ -734,15 +662,14 @@ namespace Leclair.Stardew.Common {
 		/// <param name="id">the ID to check</param>
 		/// <param name="item">the Item to check</param>
 		/// <returns></returns>
-		public static bool DoesItemMatchID(int id, Item item) {
+		public static bool DoesItemMatchID(string id, Item item) {
 			if (item is SObject sobj) {
-				return
-					!sobj.bigCraftable.Value && sobj.ParentSheetIndex == id
-					|| item.Category == id
-					|| CraftingRecipe.isThereSpecialIngredientRule(sobj, id);
+				if (sobj.Category.ToString() == id || CraftingRecipe.isThereSpecialIngredientRule(sobj, id))
+					return true;
 			}
 
-			return false;
+			var data = Utility.GetItemDataOrErrorObject(id);
+			return item?.QualifiedItemID == data?.qualifiedItemID;
 		}
 
 		public static void ConsumeIngredients(this CraftingRecipe recipe, Farmer who, IEnumerable<IInventory> inventories) {
@@ -757,7 +684,7 @@ namespace Leclair.Stardew.Common {
 		/// <param name="items">The inventory we're searching</param>
 		/// <param name="nullified">whether or not one or more of the items in the inventory was replaced with null</param>
 		/// <returns>the remaining quantity to remove</returns>
-		public static int ConsumeItem(int id, int amount, IList<Item> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
+		public static int ConsumeItem(string id, int amount, IList<Item> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
 			nullified = false;
 			passed_quality = false;
 
@@ -833,13 +760,13 @@ namespace Leclair.Stardew.Common {
 		/// <param name="inventories"></param>
 		/// <param name="max_quality"></param>
 		/// <param name="low_quality_first"></param>
-		public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer who, IEnumerable<IInventory> inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+		public static void ConsumeItems(IEnumerable<KeyValuePair<string, int>> items, Farmer who, IEnumerable<IInventory> inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
 			IList<IInventory> working = (inventories as IList<IInventory>) ?? inventories?.ToList();
 			bool[] modified = working == null ? null : new bool[working.Count];
 			IList<Item>[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray();
 
-			foreach (KeyValuePair<int, int> pair in items) {
-				int id = pair.Key;
+			foreach (KeyValuePair<string, int> pair in items) {
+				string id = pair.Key;
 				int remaining = pair.Value;
 
 				int mq = max_quality;

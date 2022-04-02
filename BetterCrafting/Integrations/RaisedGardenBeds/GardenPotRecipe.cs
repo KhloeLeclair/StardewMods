@@ -37,7 +37,7 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 
 		// Identity
 
-		public int SortValue => Recipe.itemToProduce[0];
+		public string SortValue => Recipe.itemToProduce[0];
 
 		// Display
 

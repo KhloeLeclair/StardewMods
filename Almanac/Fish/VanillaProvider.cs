@@ -32,10 +32,10 @@ namespace Leclair.Stardew.Almanac.Fish {
 		public int Priority => 0;
 
 		public IEnumerable<FishInfo> GetFish() {
-			Dictionary<int, string> data = Game1.content.Load<Dictionary<int, string>>(@"Data\Fish");
+			Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(@"Data\Fish");
 			List<FishInfo> result = new();
 
-			Dictionary<int, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
+			Dictionary<string, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
 
 			List<FishPondData> pondData = Game1.content.Load<List<FishPondData>>(@"Data\FishPondData");
 
@@ -54,7 +54,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			return result;
 		}
 
-		private static FishInfo? GetFishInfo(int id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
+		private static FishInfo? GetFishInfo(string id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
 			if (string.IsNullOrEmpty(data))
 				return null;
 
@@ -62,7 +62,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				return null;
 
 			string[] bits = data.Split('/');
-			SObject obj = new(id, 1);
+			SObject obj = Utility.CreateItemByID(id, 1) as SObject;
 
 			if (bits.Length < 7 || obj is null)
 				return null;
@@ -183,7 +183,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 				pondInfo = new(
 					Initial: initial,
 					SpawnTime: pond.SpawnTime,
-					ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == 812 ? FishHelper.GetRoeForFish(obj) : new SObject(x, 1)) as Item).ToList()
+					ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : Utility.CreateItemByID(x, 1))).ToList()
 				);
 			}
 

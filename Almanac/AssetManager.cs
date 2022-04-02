@@ -35,7 +35,7 @@ namespace Leclair.Stardew.Almanac {
 
 		public void Invalidate() {
 			Loaded = false;
-			Mod.Helper.Content.InvalidateCache(asset => asset.AssetName.StartsWith(EventPath));
+			Mod.Helper.Content.InvalidateCache(asset => asset.Name.StartsWith(EventPath));
 		}
 
 		private void Load(string locale) {
@@ -56,29 +56,29 @@ namespace Leclair.Stardew.Almanac {
 		#region IAssetLoader
 		public bool CanLoad<T>(IAssetInfo asset) {
 			return
-				asset.AssetNameEquals(CropOverridesPath) ||
-				asset.AssetNameEquals(FishOverridesPath) ||
-				asset.AssetNameEquals(LocalNoticesPath) ||
-				asset.AssetNameEquals(NPCOverridesPath);
+				asset.Name.IsEquivalentTo(CropOverridesPath) ||
+				asset.Name.IsEquivalentTo(FishOverridesPath) ||
+				asset.Name.IsEquivalentTo(LocalNoticesPath) ||
+				asset.Name.IsEquivalentTo(NPCOverridesPath);
 		}
 
 		public T Load<T>(IAssetInfo asset) {
-			if (asset.AssetNameEquals(CropOverridesPath)) {
+			if (asset.Name.IsEquivalentTo(CropOverridesPath)) {
 				var data = new Dictionary<string, Models.CropOverride>();
 				return (T) (object) data;
 			}
 
-			if (asset.AssetNameEquals(FishOverridesPath)) {
+			if (asset.Name.IsEquivalentTo(FishOverridesPath)) {
 				var data = new Dictionary<string, Models.FishOverride>();
 				return (T) (object) data;
 			}
 
-			if (asset.AssetNameEquals(LocalNoticesPath)) {
+			if (asset.Name.IsEquivalentTo(LocalNoticesPath)) {
 				var data = new Dictionary<string, Models.LocalNotice>();
 				return (T) (object) data;
 			}
 
-			if (asset.AssetNameEquals(NPCOverridesPath)) {
+			if (asset.Name.IsEquivalentTo(NPCOverridesPath)) {
 				var data = new Dictionary<string, Models.NPCOverride>();
 				return (T) (object) data;
 			}
@@ -91,12 +91,12 @@ namespace Leclair.Stardew.Almanac {
 		#region IAssetEditor
 
 		public bool CanEdit<T>(IAssetInfo asset) {
-			if (asset.AssetName.StartsWith(EventPath)) {
+			if (asset.Name.StartsWith(EventPath)) {
 				Load(asset.Locale);
 				if (ModEvents == null)
 					return false;
 
-				string[] bits = PathUtilities.GetSegments(asset.AssetName);
+				string[] bits = PathUtilities.GetSegments(asset.Name.BaseName);
 				string end = bits[^1];
 
 				if (ModEvents.ContainsKey(end))
@@ -107,14 +107,14 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		public void Edit<T>(IAssetData asset) {
-			if (!asset.AssetName.StartsWith(EventPath))
+			if (!asset.Name.StartsWith(EventPath))
 				return;
 
 			Load(asset.Locale);
 			if (ModEvents == null)
 				return;
 
-			string[] bits = PathUtilities.GetSegments(asset.AssetName);
+			string[] bits = PathUtilities.GetSegments(asset.Name.BaseName);
 			string end = bits[^1];
 
 			if (!ModEvents.TryGetValue(end, out var events) || events == null)

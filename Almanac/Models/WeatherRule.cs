@@ -5,13 +5,7 @@ using Newtonsoft.Json;
 using Leclair.Stardew.Common.Enums;
 
 namespace Leclair.Stardew.Almanac.Models {
-
-	public enum RuleContext {
-		Default,
-		Island,
-		All
-	};
-
+	
 	public enum RuleWeather {
 		Sun = 0,
 		Rain = 1,
@@ -39,10 +33,10 @@ namespace Leclair.Stardew.Almanac.Models {
 	}
 
 	public struct RulePatternEntry {
-		public RuleWeather Weather { get; set; }
+		public string Weather { get; set; }
 		public float Weight { get; set; } = 1;
 
-		public RulePatternEntry(RuleWeather weather, float weight) {
+		public RulePatternEntry(string weather, float weight) {
 			Weather = weather;
 			Weight = weight;
 		}
@@ -50,8 +44,10 @@ namespace Leclair.Stardew.Almanac.Models {
 
 	public class WeatherRule {
 		public string Id { get; set; }
+
+		public string[] Contexts { get; set; }
+
 		public bool Enabled { get; set; } = true;
-		public RuleContext Context { get; set; } = RuleContext.Default;
 		public int Priority { get; set; } = 0;
 
 		public int FirstYear { get; set; } = 1;
@@ -70,7 +66,7 @@ namespace Leclair.Stardew.Almanac.Models {
 		public RuleDateRange[] Dates { get; set; }
 
 		public RulePatternEntry[][] WeightedPattern { get; set; }
-		public RuleWeather[][] Pattern { get; set; }
+		public string[][] Pattern { get; set; }
 
 		public RuleWeight Weight { get; set; } = RuleWeight.None;
 
@@ -97,7 +93,7 @@ namespace Leclair.Stardew.Almanac.Models {
 				RulePatternEntry[][] result = new RulePatternEntry[Pattern.Length][];
 
 				for (int i = 0; i < result.Length; i++) {
-					RuleWeather[] input = Pattern[i];
+					string[] input = Pattern[i];
 					result[i] = new RulePatternEntry[input.Length];
 					for (int j = 0; j < input.Length; j++) {
 						result[i][j] = new RulePatternEntry {
@@ -111,11 +107,11 @@ namespace Leclair.Stardew.Almanac.Models {
 			}
 		}
 
-		public static float GetDefaultWeight(RuleWeather weather) {
-			if (weather == RuleWeather.Storm)
+		public static float GetDefaultWeight(string weather) {
+			if (weather == "Storm")
 				return 0.25f;
 
-			if (weather == RuleWeather.Festival)
+			if (weather == "Festival")
 				return 0f;
 
 			return 1f;

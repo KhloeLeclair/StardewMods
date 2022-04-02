@@ -34,7 +34,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		// TODO: Stop hard-coding seasoning.
 		public static readonly IIngredient[] SEASONING_RECIPE = new IIngredient[] {
-			new BaseIngredient(917, 1)
+			new BaseIngredient("(O)917", 1)
 		};
 
 		public static readonly Rectangle FAV_STAR = new(338, 400, 8, 8);
@@ -1325,7 +1325,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						Game1.player.craftingRecipes[recipe.Name] += recipe.QuantityPerCraft;
 
 					if (cooking) {
-						Game1.player.cookedRecipe(HeldItem.ParentSheetIndex);
+						Game1.player.cookedRecipe(HeldItem.ItemID);
 
 						if (obj is SObject sobj)
 							Mod.intCSkill.AddCookingExperience(
@@ -2837,8 +2837,9 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 			string[] buffIconsToDisplay = null;
 			Item recipeItem = lastRecipeHover.Value;
+			
 			if (cooking && recipeItem != null) {
-				string[] temp = Game1.objectInformation[recipeItem.ParentSheetIndex].Split('/');
+				string[] temp = Game1.objectInformation[recipeItem.ItemID].Split('/');
 				if (temp.Length > 7)
 					buffIconsToDisplay = temp[7].Split(' ');
 			}

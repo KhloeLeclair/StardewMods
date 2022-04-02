@@ -186,7 +186,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 
 		#region Locations
 
-		private static void AddFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result ) {
+		private static void AddFish(SubLocation loc, int[] seasons, string fish, Dictionary<string, Dictionary<SubLocation, List<int>>> result ) {
 			if ( ! result.TryGetValue(fish, out var entry)) { 
 				result[fish] = new() {
 					[loc] = seasons.ToList(),
@@ -206,7 +206,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			}
 		}
 
-		private static void RemoveFish(SubLocation loc, int[] seasons, int fish, Dictionary<int, Dictionary<SubLocation, List<int>>> result) {
+		private static void RemoveFish(SubLocation loc, int[] seasons, string fish, Dictionary<string, Dictionary<SubLocation, List<int>>> result) {
 			if (!result.TryGetValue(fish, out var entry))
 				return;
 
@@ -229,7 +229,7 @@ namespace Leclair.Stardew.Almanac.Fish {
 			result.Remove(fish);
 		}
 
-		public Dictionary<int, Dictionary<SubLocation, List<int>>> GetFishLocations() {
+		public Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
 			if (!OverridesLoaded)
 				LoadOverrides();
 
@@ -249,15 +249,13 @@ namespace Leclair.Stardew.Almanac.Fish {
 					SubLocation sl = new(ovr.Map, ovr.Zone);
 
 					if (ovr.AddFish != null)
-						foreach(string sFish in ovr.AddFish) {
-							if (int.TryParse(sFish, out int fish))
-								AddFish(sl, seasons, fish, result);
+						foreach(string fish in ovr.AddFish) {
+							AddFish(sl, seasons, fish, result);
 						}
 
 					if (ovr.RemoveFish != null)
-						foreach(string sFish in ovr.RemoveFish) {
-							if (int.TryParse(sFish, out int fish))
-								RemoveFish(sl, seasons, fish, result);
+						foreach(string fish in ovr.RemoveFish) {
+							RemoveFish(sl, seasons, fish, result);
 						}
 
 				}

@@ -8,7 +8,7 @@ namespace Leclair.Stardew.Common.Crafting {
 
 		// Identity
 
-		int SortValue { get; }
+		string SortValue { get; }
 
 		string Name { get; }
 		string DisplayName { get; }

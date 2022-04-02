@@ -21,11 +21,11 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 		public Rectangle? HoverSource { get; set; }
 		public Color? HoverColor { get; set; }
 
-
 		public bool Selected { get; set; }
 		public bool Hovered { get; private set; }
 		public IFlowNode[] Nodes { get; }
 		public Alignment Alignment { get; }
+		public int? Width { get; }
 
 		public string UniqueId { get; }
 		public object Extra { get; }
@@ -41,6 +41,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 
 		public SelectableNode(
 			IFlowNode[] nodes,
+			int? width = null,
 			Alignment? align = null,
 			Func<IFlowNodeSlice, int, int, bool> onClick = null,
 			Func<IFlowNodeSlice, int, int, bool> onHover = null,
@@ -49,6 +50,7 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			string id = null
 		) {
 			Nodes = nodes;
+			Width = width;
 			Alignment = align ?? Alignment.None;
 			delClick = onClick;
 			delHover = onHover;
@@ -75,24 +77,26 @@ namespace Leclair.Stardew.Common.UI.FlowNode
 			if (last != null)
 				return null;
 
+			int width = Width ?? (int) Math.Floor(maxWidth);
+
 			if (Flow.HasValue)
 				Flow = FlowHelper.CalculateFlow(
 					Flow.Value,
-					maxWidth: maxWidth - 24,
+					maxWidth: width - 24,
 					defaultFont: font
 				);
 			else
 				Flow = FlowHelper.CalculateFlow(
 					Nodes,
-					maxWidth: maxWidth - 24,
+					maxWidth: width - 24,
 					defaultFont: font
 				);
 
 			return new UnslicedNode(
 				this,
-				maxWidth,
+				width,
 				Flow.Value.Height + 24,
-				WrapMode.ForceAfter
+				WrapMode.None
 			);
 		}
 

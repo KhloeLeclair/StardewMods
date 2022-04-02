@@ -26,7 +26,7 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual bool Stackable { get; }
 
-		public virtual int SortValue => Recipe.itemToProduce[0];
+		public virtual string SortValue => Recipe.itemToProduce[0];
 
 		public virtual string Name => Recipe.name;
 
@@ -36,9 +36,8 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual int GetTimesCrafted(Farmer who) {
 			if (Recipe.isCookingRecipe) {
-				int idx = Recipe.getIndexOfMenuView();
-				if (who.recipesCooked.ContainsKey(idx))
-					return who.recipesCooked[idx];
+				if (who.recipesCooked.ContainsKey(Name))
+					return who.recipesCooked[Name];
 
 			} else if (who.craftingRecipes.ContainsKey(Name))
 					return who.craftingRecipes[Name];
@@ -48,13 +47,35 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual SpriteInfo Sprite => SpriteHelper.GetSprite(CreateItem());
 
-		public virtual Texture2D Texture => Recipe.bigCraftable ?
-			Game1.bigCraftableSpriteSheet :
-			Game1.objectSpriteSheet;
+		public virtual Texture2D Texture {
+			get {
+				ParsedItemData data;
+				if (Recipe.bigCraftable) {
+					data = Utility.GetItemTypeFromIdentifier("(BC)").GetItemDataForItemID(Recipe.itemToProduce[0]);
+				} else {
+					data = Utility.GetItemDataOrErrorObject(Recipe.itemToProduce[0]);
+				}
 
-		public virtual Rectangle SourceRectangle => Recipe.bigCraftable ?
-			Game1.getArbitrarySourceRect(Texture, 16, 32, Recipe.getIndexOfMenuView()) :
-			Game1.getSourceRectForStandardTileSheet(Texture, Recipe.getIndexOfMenuView(), 16, 16);
+				if (data == null)
+					return Game1.objectSpriteSheet;
+				return data.texture;
+			}
+		}
+
+		public virtual Rectangle SourceRectangle {
+			get {
+				ParsedItemData data;
+				if (Recipe.bigCraftable) {
+					data = Utility.GetItemTypeFromIdentifier("(BC)").GetItemDataForItemID(Recipe.itemToProduce[0]);
+				} else {
+					data = Utility.GetItemDataOrErrorObject(Recipe.itemToProduce[0]);
+				}
+
+				if (data == null)
+					return Rectangle.Empty;
+				return data.GetSourceRect(0);
+			}
+		}
 
 		public virtual int GridHeight => Recipe.bigCraftable ? 2 : 1;
 

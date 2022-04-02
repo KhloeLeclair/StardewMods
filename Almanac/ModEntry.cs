@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+
+using HarmonyLib;
 
 using Newtonsoft.Json.Linq;
-
-using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
@@ -49,6 +48,8 @@ namespace Leclair.Stardew.Almanac {
 		public static ModEntry Instance { get; private set; }
 		public static ModAPI API { get; private set; }
 
+		internal Harmony Harmony;
+
 		private readonly PerScreen<IClickableMenu> CurrentMenu = new();
 		private readonly PerScreen<IOverlay> CurrentOverlay = new();
 
@@ -83,8 +84,12 @@ namespace Leclair.Stardew.Almanac {
 
 			Instance = this;
 			API = new(this);
-
 			Assets = new(this);
+
+			// Patches
+			Harmony = new(ModManifest.UniqueID);
+			Patches.Game1_Patches.Patch(this);
+			Patches.GameStateQuery_Patches.Patch(this);
 
 			I18n.Init(Helper.Translation);
 
@@ -111,6 +116,7 @@ namespace Leclair.Stardew.Almanac {
 			RegisterBuilder(MinesPage.GetPage);
 			RegisterBuilder(NoticesPage.GetPage);
 			RegisterBuilder(FishingPage.GetPage);
+			RegisterBuilder(DebugItemsPage.GetPage);
 		}
 
 		public override object GetApi() {
@@ -216,7 +222,7 @@ namespace Leclair.Stardew.Almanac {
 
 #if DEBUG
 			if (e.Button == SButton.F8) {
-				GMCMIntegration?.OpenMenu();
+				OpenGMCM();
 				return;
 			}
 #endif
@@ -244,29 +250,10 @@ namespace Leclair.Stardew.Almanac {
 		[Subscriber]
 		[EventPriority(EventPriority.High)]
 		private void OnDayStarted(object sender, DayStartedEventArgs e) {
-			int seed = GetBaseWorldSeed();
+			ulong seed = GetBaseWorldSeed();
 
 			if (Config.EnableDeterministicLuck && Game1.IsMasterGame) {
 				Game1.player.team.sharedDailyLuck.Value = Luck.GetLuckForDate(seed, Game1.Date);
-			}
-
-			if (Config.EnableDeterministicWeather) {
-				WorldDate tomorrow = new(Game1.Date);
-				tomorrow.TotalDays++;
-
-				// Main Weather
-				Game1.weatherForTomorrow = Weather.GetWeatherForDate(seed, tomorrow, GameLocation.LocationContext.Default);
-				if (Game1.IsMasterGame)
-					Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).weatherForTomorrow.Value = Game1.weatherForTomorrow;
-
-				// Island Weather
-				if (Game1.IsMasterGame && Utility.doesAnyFarmerHaveOrWillReceiveMail("Visited_Island")) {
-					var ctx = GameLocation.LocationContext.Island;
-
-					Game1.netWorldState.Value.GetWeatherForLocation(ctx)
-						.weatherForTomorrow.Value = Weather
-							.GetWeatherForDate(seed, tomorrow, ctx);
-				}
 			}
 		}
 
@@ -303,7 +290,7 @@ namespace Leclair.Stardew.Almanac {
 					Log($"  - Which: {Game1.whichFarm}", LogLevel.Info);
 					Log($"  - Fish Override: {farm.getMapProperty("FarmFishLocationOverride")}", LogLevel.Info);
 				}
-				Log($"  - Fish Sample: {Game1.currentLocation.getFish(0f, 0, 4, Game1.player, 0, Microsoft.Xna.Framework.Vector2.Zero).Name}", LogLevel.Info);
+				Log($"  - Fish Sample: {Game1.currentLocation.getFish(0f, null, 4, Game1.player, 0, Microsoft.Xna.Framework.Vector2.Zero).Name}", LogLevel.Info);
 			});
 
 			Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", ThemeManager.PerformReloadCommand);
@@ -315,12 +302,21 @@ namespace Leclair.Stardew.Almanac {
 				}
 			});
 
+			Helper.ConsoleCommands.Add("al_now", "Print information about the in-game time.", (_, _) => {
+				Log($"Date: {Game1.Date.Localize()}", LogLevel.Info);
+				Log($"-   Year: {Game1.year}", LogLevel.Info);
+				Log($"- Season: {Game1.currentSeason}", LogLevel.Info);
+				Log($"-  DayOf: {Game1.dayOfMonth}", LogLevel.Info);
+				Log($"-  TDays: {Game1.Date.TotalDays}", LogLevel.Info);
+				Log($"DaysPlayed: {Game1.stats.DaysPlayed}", LogLevel.Info);
+			});
+
 			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
-				int seed = GetBaseWorldSeed();
+				ulong seed = GetBaseWorldSeed();
 				WorldDate date = new(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
-					int weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
-					Log($"Date: {date.Localize()} -- Weather: {WeatherHelper.GetWeatherName(weather)}");
+					string weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
+					Log($"Date: {date.Localize()} -- Weather: {weather}");
 					date.TotalDays++;
 				}
 			});
@@ -734,9 +730,9 @@ namespace Leclair.Stardew.Almanac {
 
 		#endregion
 
-		public int GetBaseWorldSeed() {
+		public ulong GetBaseWorldSeed() {
 			// TODO: Check configuration?
-			return (int) Game1.uniqueIDForThisGame;
+			return Game1.uniqueIDForThisGame;
 		}
 
 		public bool DoesTranslationExist(string key) {

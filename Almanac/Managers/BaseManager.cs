@@ -13,10 +13,10 @@ namespace Leclair.Stardew.Almanac.Managers {
 			Name = name ?? GetType().Name;
 		}
 
-		protected void Log(string message, LogLevel level = LogLevel.Debug, Exception ex = null) {
+		protected void Log(string message, LogLevel level = LogLevel.Debug, Exception ex = null, LogLevel? exLevel = null) {
 			Mod.Monitor.Log($"[{Name}] {message}", level: level);
 			if (ex != null)
-				Mod.Monitor.Log($"[{Name}] Details:\n{ex}", level: level);
+				Mod.Monitor.Log($"[{Name}] Details:\n{ex}", level: exLevel ?? level);
 		}
 
 	}

@@ -283,12 +283,12 @@ namespace Leclair.Stardew.Almanac.Managers {
 				bush = new();
 
 			if (gathering && bush.inBloom(date.Season, date.DayOfMonth)) {
-				SObject berry = null;
+				Item berry = null;
 				if (date.SeasonIndex == 0)
-					berry = new(296, 1); // Salmonberry
+					berry = Utility.CreateItemByID("(O)296", 1); // Salmonberry
 
 				else if (date.SeasonIndex == 2)
-					berry = new(410, 1); // Blackberry
+					berry = Utility.CreateItemByID("(O)410", 1); // Blackberry
 
 				if (berry != null) {
 					bool first_day = date.DayOfMonth == 1 || !bush.inBloom(date.Season, date.DayOfMonth - 1);
@@ -404,7 +404,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							LocalizedContentManager.LanguageCode.de &&
 								(last == 'x' || last == 'ß' || last == 'z');
 
-						var pendant = new SObject(460, 1);
+						var pendant = Utility.CreateItemByID("(O)460", 1);
 						var sprite = SpriteHelper.GetSprite(pendant);
 
 						// Wedding?
@@ -482,7 +482,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 							I18n.Page_Notices_Summer() : null,
 						null,
 						SpriteHelper.GetSprite(
-							new SObject(394, 1) // Rainbow Shell
+							Utility.CreateItemByID("(O)391", 1) // Rainbow Shell
 						)
 					);
 				}
@@ -492,7 +492,7 @@ namespace Leclair.Stardew.Almanac.Managers {
 			else if (date.SeasonIndex == 2) {
 
 				if (gathering && date.DayOfMonth >= 15 && date.DayOfMonth <= 28) {
-					SObject nut = new(408, 1);
+					Item nut = Utility.CreateItemByID("(O)408", 1);
 
 					yield return new RichEvent(
 						null,

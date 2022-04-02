@@ -477,15 +477,10 @@ namespace Leclair.Stardew.Common {
 
 			// Boots and Rings
 			if (item is Boots || item is Ring) {
-				int idx;
-				if (item is Boots boots)
-					idx = boots.indexInTileSheet.Value;
-				else
-					idx = (item as Ring).indexInTileSheet.Value;
-
+				var data = Utility.GetItemDataForItemID(item.QualifiedItemID);
 				return new SpriteInfo(
-					Game1.objectSpriteSheet,
-					Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx, tileSize, tileSize)
+					data.texture,
+					data.GetSourceRect(0)
 				);
 			}
 
@@ -532,13 +527,14 @@ namespace Leclair.Stardew.Common {
 
 			// Hat
 			if (item is Hat hat) {
-				int idx = hat.which.Value;
+				var data = Utility.GetItemTypeFromIdentifier("(H)").GetItemDataForItemID(hat.ItemID);
+				int idx = data.parentSheetIndex;
 
 				return new SpriteInfo(
-					FarmerRenderer.hatsTexture,
+					data.texture,
 					new Rectangle(
-						idx * 20 % FarmerRenderer.hatsTexture.Width,
-						idx * 20 / FarmerRenderer.hatsTexture.Width * 20 * 4,
+						idx * 20 % data.texture.Width,
+						idx * 20 / data.texture.Width * 20 * 4,
 						20, 20
 					)
 				);

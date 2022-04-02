@@ -19,7 +19,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 
 		public static readonly Rectangle CRYSTAL_BALL = new(272, 352, 16, 16);
 
-		private readonly int Seed;
+		private readonly ulong Seed;
 		private double[] Luck;
 		private SpriteInfo[] Sprites;
 		private SpriteInfo[][] Extras;

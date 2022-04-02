@@ -57,7 +57,7 @@ namespace Leclair.Stardew.SeeMeRollin {
 			}
 		};
 
-		public static readonly int BUFF = -9999;
+		public static readonly string BUFF = "leclair.seemerollin/rollin";
 
 		public static ModEntry instance;
 
@@ -117,14 +117,16 @@ namespace Leclair.Stardew.SeeMeRollin {
 			return true;
 		}
 
-		private void ApplyBuff() {
-			if (!Game1.buffsDisplay.hasBuff(BUFF))
-				Game1.buffsDisplay.addOtherBuff(new RollinBuff(Config.SpeedModifier));
+		private void ApplyBuff(Farmer who = null) {
+			who ??= Game1.player;
+			if (!who.buffs.IsApplied(BUFF))
+				who.buffs.Apply(new RollinBuff(Config.SpeedModifier));
 		}
 
-		private void RemoveBuff() {
-			if (Game1.buffsDisplay.hasBuff(BUFF))
-				Game1.buffsDisplay.removeOtherBuff(BUFF);
+		private void RemoveBuff(Farmer who = null) {
+			who ??= Game1.player;
+			if (who.buffs.IsApplied(BUFF))
+				who.buffs.Remove(BUFF);
 		}
 
 		public void StartRolling(Farmer who) {
@@ -200,12 +202,12 @@ namespace Leclair.Stardew.SeeMeRollin {
 					c => c.UseKey,
 					(c, v) => c.UseKey = v
 				)
-				.Add(
+				/*.Add(
 					I18n.Setting_ShowBuff,
 					I18n.Setting_ShowBuff_Desc,
 					c => c.ShowBuff,
 					(c, v) => c.ShowBuff = v
-				)
+				)*/
 				.Add(
 					I18n.Setting_SpeedMod,
 					I18n.Setting_SpeedMod_Desc,

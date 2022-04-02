@@ -15,7 +15,7 @@ using Leclair.Stardew.Almanac.Menus;
 namespace Leclair.Stardew.Almanac.Pages {
 	public class MinesPage : BasePage<BaseState>, ICalendarPage {
 
-		private readonly int Seed;
+		private readonly ulong Seed;
 
 		private Dictionary<LevelType, SpriteInfo> Sprites;
 		private Dictionary<LevelType, List<int>>[] Levels;
@@ -36,15 +36,15 @@ namespace Leclair.Stardew.Almanac.Pages {
 			Sprites = new();
 
 			Sprites[LevelType.Mushroom] = SpriteHelper.GetSprite(
-				new Object(420, 1) // Red Mushroom
+				Utility.CreateItemByID("(O)420", 1) // Red Mushroom
 			);
 
 			Sprites[LevelType.InfestedMonster] = SpriteHelper.GetSprite(
-				new StardewValley.Tools.MeleeWeapon(0) // Rusty Sword
+				Utility.CreateItemByID("(W)0", 1) // Rusty Sword
 			);
 
 			Sprites[LevelType.InfestedSlime] = SpriteHelper.GetSprite(
-				new Object(766, 1) // Slime
+				Utility.CreateItemByID("(O)766", 1) // Slime
 			);
 
 			Sprites[LevelType.Quarry] = new SpriteInfo(
@@ -58,7 +58,7 @@ namespace Leclair.Stardew.Almanac.Pages {
 			);
 
 			Sprites[LevelType.Dino] = SpriteHelper.GetSprite(
-				new Object(107, 1) // Dino Egg
+				Utility.CreateItemByID("(O)107", 1) // Dino Egg
 			);
 
 			Update();
