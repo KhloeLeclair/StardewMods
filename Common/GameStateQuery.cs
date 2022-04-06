@@ -12,85 +12,53 @@ using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.Common
 {
-
-	public record GSQState(
-		Random rnd,
-		WorldDate date,
-		int timeOfDay,
-		int ticks,
-		double pickedValue,
-		Farmer farmer,
-		GameLocation location,
-		Item item,
-		IMonitor monitor,
-		bool trace
-	);
-
-	public record ParsedCondition(
-		string input,
-		bool inverted,
-		Func<GSQState, bool> method
-	);
-
-	public struct ParsedQuery {
-
-		public static readonly ParsedQuery EMPTY = new ParsedQuery(null);
-
-		public readonly ParsedCondition[] Conditions;
-
-		public ParsedQuery(ParsedCondition[] conditions) {
-			Conditions = conditions;
-		}
-
-		public bool Evaluate(GSQState state) {
-			if (Conditions == null || Conditions.Length == 0)
-				return true;
-
-			foreach (var condition in Conditions) {
-				try {
-					if (state.trace)
-						state.monitor?.Log($"[GameStateQuery] Condition: {condition.input}", LogLevel.Trace);
-
-					bool result = condition.method(state);
-					if (condition.inverted)
-						result = !result;
-
-					if (state.trace)
-						state.monitor?.Log($"[GameStateQuery]    Result: {result}", LogLevel.Trace);
-
-					if (!result)
-						return false;
-
-				} catch(Exception ex) {
-					state.monitor?.Log($"[GameStateQuery] An error occurred in condition handler for \"{condition.input}\":\n{ex}", LogLevel.Error);
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		public bool Evaluate(Random rnd = null, WorldDate date = null, int? time = null, int? tick = null, double? picked = null, Farmer who = null, GameLocation location = null, Item item = null, IMonitor monitor = null, bool trace = false) {
-			rnd ??= Game1.random;
-
-			return Evaluate(new GSQState(
-				rnd: rnd,
-				date: date ?? Game1.Date,
-				timeOfDay: time ?? Game1.timeOfDay,
-				ticks: tick ?? Game1.ticks,
-				pickedValue: picked ?? rnd.NextDouble(),
-				farmer: who ?? Game1.player,
-				location: location,
-				item: item,
-				monitor: monitor,
-				trace: trace
-			));
-		}
-	};
-
     public static class GameStateQuery {
 
-		public static Dictionary<string, Func<string[], Func<GSQState, bool>>> Conditions = new();
+		#region Storage
+
+		public static Dictionary<string, Func<string[], Func<GameState, bool>>> Conditions = new();
+
+		#endregion
+
+		#region Registration
+
+		public static void RegisterCondition(string key, Func<string[], GameState, bool> method) {
+			RegisterCondition(key, args => state => method(args, state));
+		}
+
+		public static void RegisterCondition(string key, Func<int, GameState, bool> method) {
+			RegisterCondition(key, args => {
+				int value = int.Parse(args[0]);
+				return state => method(value, state);
+			});
+		}
+
+		public static void RegisterCondition(string key, Func<string, GameState, bool> method) {
+			RegisterCondition(key, args => {
+				string joined = string.Join(' ', args);
+				return state => method(joined, state);
+			});
+		}
+
+		public static void RegisterCondition(string key, Func<int, int, GameState, bool> method) {
+			RegisterCondition(key, args => {
+				int item1 = int.Parse(args[0]);
+				int item2 = int.Parse(args[1]);
+				return state => method(item1, item2, state);
+			});
+		}
+
+		public static void RegisterCondition(string key, Func<string[], Func<GameState, bool>> method) {
+			lock ((Conditions as ICollection).SyncRoot) {
+				if (!Conditions.ContainsKey(key))
+					Conditions.Add(key, method);
+			}
+		}
+
+		#endregion
+
+		#region Initialization
+
 		private static bool Initialized = false;
 
 		private static void Initialize() {
@@ -631,7 +599,11 @@ namespace Leclair.Stardew.Common
 			);
 		}
 
-		public static bool CheckMatchingPlayers(string who, GSQState state, Func<Farmer, bool> func) {
+		#endregion
+
+		#region Helper Methods
+
+		public static bool CheckMatchingPlayers(string who, GameState state, Func<Farmer, bool> func) {
 			if (who == "Current")
 				return func(Game1.player);
 			if (who == "Host")
@@ -664,7 +636,7 @@ namespace Leclair.Stardew.Common
 			return func(farmer);
 		}
 
-		public static bool CheckMatchingNPCs(string who, GSQState state, Func<NPC, bool> func) {
+		public static bool CheckMatchingNPCs(string who, GameState state, Func<NPC, bool> func) {
 			if (who == "Any" || who == "AnyDateable") {
 				foreach(var n in Utility.getAllCharacters()) {
 					if (who == "Any" || n.datable.Value) {
@@ -686,7 +658,7 @@ namespace Leclair.Stardew.Common
 			return func(npc);
 		}
 
-		public static GameLocation GetLocation(string name, GSQState state) {
+		public static GameLocation GetLocation(string name, GameState state) {
 			if (name == "Here")
 				return Game1.currentLocation;
 			if (name == "Target")
@@ -694,38 +666,9 @@ namespace Leclair.Stardew.Common
 			return Game1.getLocationFromName(name);
 		}
 
-		public static void RegisterCondition(string key, Func<string[], GSQState, bool> method) {
-			RegisterCondition(key, args => state => method(args, state));
-		}
+		#endregion
 
-		public static void RegisterCondition(string key, Func<int, GSQState, bool> method) {
-			RegisterCondition(key, args => {
-				int value = int.Parse(args[0]);
-				return state => method(value, state);
-			});
-		}
-
-		public static void RegisterCondition(string key, Func<string, GSQState, bool> method) {
-			RegisterCondition(key, args => {
-				string joined = string.Join(' ', args);
-				return state => method(joined, state);
-			});
-		}
-
-		public static void RegisterCondition(string key, Func<int, int, GSQState, bool> method) {
-			RegisterCondition(key, args => {
-				int item1 = int.Parse(args[0]);
-				int item2 = int.Parse(args[1]);
-				return state => method(item1, item2, state);
-			});
-		}
-
-		public static void RegisterCondition(string key, Func<string[], Func<GSQState, bool>> method) {
-			lock((Conditions as ICollection).SyncRoot) {
-				if (! Conditions.ContainsKey(key))
-					Conditions.Add(key, method);
-			}
-		}
+		#region Parsing
 
 		public static ParsedQuery ParseConditions(string query, bool skip_unknown = false, bool skip_error = false, IMonitor monitor = null) {
 			if (string.IsNullOrEmpty(query))
@@ -748,7 +691,7 @@ namespace Leclair.Stardew.Common
 					key = key[1..];
 
 				if (Conditions.TryGetValue(key, out var cond)) {
-					Func<GSQState, bool> method;
+					Func<GameState, bool> method;
 					try {
 						method = cond.Invoke(parts[1..]);
 					} catch (Exception ex) {
@@ -776,10 +719,14 @@ namespace Leclair.Stardew.Common
 			return new ParsedQuery(results.ToArray());
 		}
 
+		#endregion
+
+		#region API Compatibility
+
 		public static bool CheckConditions(string query, Random rnd = null, WorldDate date = null, int? time = null, int? tick = null, double? picked = null, Farmer who = null, GameLocation location = null, Item item = null, IMonitor monitor = null, bool trace = false) {
 			rnd ??= Game1.random;
 
-			return CheckConditions(query, new GSQState(
+			return CheckConditions(query, new GameState(
 				rnd: rnd,
 				date: date ?? Game1.Date,
 				timeOfDay: time ?? Game1.timeOfDay,
@@ -793,7 +740,7 @@ namespace Leclair.Stardew.Common
 			));
 		}
 
-		public static bool CheckConditions(string query, GSQState state) {
+		public static bool CheckConditions(string query, GameState state) {
 			return ParseConditions(
 				query: query,
 				skip_unknown: true,
@@ -801,5 +748,120 @@ namespace Leclair.Stardew.Common
 				monitor: state?.monitor
 			).Evaluate(state);
 		}
-    }
+
+		#endregion
+
+		#region Data Types
+
+		/// <summary>
+		/// GSQState represents a snapshot of game state against which conditions
+		/// can be checked.
+		/// </summary>
+		/// <param name="rnd">The <see cref="Random"/> instance to use for Random number generation.</param>
+		/// <param name="date">A <see cref="WorldDate"/> instance representing the in-game date being checked.</param>
+		/// <param name="timeOfDay">The time of day, such that 600 is 6:00am, 1330 is 1:30pm, and 2600 is 2:00am.</param>
+		/// <param name="ticks">The number of elapsed game ticks.</param>
+		/// <param name="pickedValue">A static random value to be reused for multiple conditions.</param>
+		/// <param name="farmer">The player being checked.</param>
+		/// <param name="location">The location being checked.</param>
+		/// <param name="item">The item being checked.</param>
+		/// <param name="monitor">An optional <see cref="IMonitor"/> to use for logging.</param>
+		/// <param name="trace">Whether or not trace level logging should be performed.</param>
+		public record GameState(
+			Random rnd,
+			WorldDate date,
+			int timeOfDay,
+			int ticks,
+			double pickedValue,
+			Farmer farmer,
+			GameLocation location,
+			Item item,
+			IMonitor monitor,
+			bool trace
+		);
+
+		/// <summary>
+		/// A singular parsed condition.
+		/// </summary>
+		/// <param name="input">The string that was parsed.</param>
+		/// <param name="inverted">Whether or not the result should be inverted.</param>
+		/// <param name="method">The method to call to check this condition.</param>
+		public record ParsedCondition(
+			string input,
+			bool inverted,
+			Func<GameState, bool> method
+		);
+
+		/// <summary>
+		/// A parsed query, made up of multiple conditions.
+		/// </summary>
+		public struct ParsedQuery {
+
+			/// <summary>
+			/// An empty query with no conditions. Always evaluates to true.
+			/// </summary>
+			public static readonly ParsedQuery EMPTY = new ParsedQuery(null);
+
+			/// <summary>
+			/// An array of this query's conditions.
+			/// </summary>
+			public readonly ParsedCondition[] Conditions;
+
+			public ParsedQuery(ParsedCondition[] conditions) {
+				Conditions = conditions;
+			}
+
+			/// <summary>
+			/// Evaluate the query with the given <paramref name="state"/>.
+			/// </summary>
+			/// <param name="state">The game state we're checking against.</param>
+			/// <returns>Whether or not the conditions match the provided game state.</returns>
+			public bool Evaluate(GameState state) {
+				if (Conditions == null || Conditions.Length == 0)
+					return true;
+
+				foreach (var condition in Conditions) {
+					try {
+						if (state.trace)
+							state.monitor?.Log($"[GameStateQuery] Condition: {condition.input}", LogLevel.Trace);
+
+						bool result = condition.method(state);
+						if (condition.inverted)
+							result = !result;
+
+						if (state.trace)
+							state.monitor?.Log($"[GameStateQuery]    Result: {result}", LogLevel.Trace);
+
+						if (!result)
+							return false;
+
+					} catch (Exception ex) {
+						state.monitor?.Log($"[GameStateQuery] An error occurred in condition handler for \"{condition.input}\":\n{ex}", LogLevel.Error);
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			public bool Evaluate(Random rnd = null, WorldDate date = null, int? time = null, int? tick = null, double? picked = null, Farmer who = null, GameLocation location = null, Item item = null, IMonitor monitor = null, bool trace = false) {
+				rnd ??= Game1.random;
+
+				return Evaluate(new GameState(
+					rnd: rnd,
+					date: date ?? Game1.Date,
+					timeOfDay: time ?? Game1.timeOfDay,
+					ticks: tick ?? Game1.ticks,
+					pickedValue: picked ?? rnd.NextDouble(),
+					farmer: who ?? Game1.player,
+					location: location,
+					item: item,
+					monitor: monitor,
+					trace: trace
+				));
+			}
+		};
+
+		#endregion
+	}
 }
