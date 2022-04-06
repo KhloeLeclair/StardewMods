@@ -35,6 +35,13 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 				height = Math.Max(height, size.Y);
 			}
 
+			if (Quantity > 0) {
+				float qScale = (float) Math.Round(Scale * 0.75f);
+				float qX = (16*Scale) - Utility.getWidthOfTinyDigitString(Quantity, qScale) + qScale;
+				if (qX < 0)
+					width -= qX;
+			}
+
 			return new Vector2(width, height);
 		}
 
@@ -43,11 +50,13 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 			float itemSize = 16 * Scale;
 			float offsetY = (size.Y - itemSize) / 2;
 
+			float offsetX = 0;
+
 			// Draw Object
 			Sprite?.Draw(
 				batch,
-				offsetY != 0 ?
-					new Vector2(position.X, position.Y + offsetY)
+				offsetY != 0 || offsetX != 0 ?
+					new Vector2(position.X + offsetX, position.Y + offsetY)
 					: position,
 				Scale
 			);
@@ -58,7 +67,10 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 				float qX = position.X + itemSize - Utility.getWidthOfTinyDigitString(Quantity, qScale) + qScale;
 				float qY = position.Y + itemSize - 6f * qScale + 2f;
 
-				Utility.drawTinyDigits(Quantity, batch, new Vector2(qX, qY), qScale, 1f, Color.White * alpha);
+				if (qX < position.X)
+					offsetX = position.X - qX;
+
+				Utility.drawTinyDigits(Quantity, batch, new Vector2(qX + offsetX, qY), qScale, 1f, Color.White * alpha);
 			}
 
 			// Draw Label
@@ -70,7 +82,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 						text: Label,
 						font: Game1.smallFont,
 						position: new Vector2(
-							position.X + itemSize + (4 * Scale),
+							position.X + offsetX + itemSize + (4 * Scale),
 							position.Y + ((size.Y - labelSize.Y) / 2)
 							),
 						color: (defaultColor ?? Game1.textColor) * alpha,
@@ -82,7 +94,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout {
 						text: Label,
 						font: Game1.smallFont,
 						position: new Vector2(
-							position.X + itemSize + (4 * Scale),
+							position.X + offsetX + itemSize + (4 * Scale),
 							position.Y + ((size.Y - labelSize.Y) / 2)
 							),
 						color: (defaultColor ?? Game1.textColor) * alpha

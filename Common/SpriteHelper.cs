@@ -34,7 +34,7 @@ namespace Leclair.Stardew.Common {
 		public static void LoadKeyTexture() {
 			lock (loadLock) {
 				if (KeyTexture == null)
-					KeyTexture = modHelper.Content.Load<Texture2D>("assets/keys.png");
+					KeyTexture = modHelper.ModContent.Load<Texture2D>("assets/keys.png");
 			}
 		}
 

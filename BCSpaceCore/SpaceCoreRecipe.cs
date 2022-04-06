@@ -56,6 +56,11 @@ namespace Leclair.Stardew.BCSpaceCore {
 		public string DisplayName => Recipe.Name;
 		public string Description => Recipe.Description;
 
+		public virtual bool HasRecipe(Farmer who) {
+			// TODO: Cooking?
+			return who.craftingRecipes.ContainsKey(Name);
+		}
+
 		public virtual int GetTimesCrafted(Farmer who) {
 			// TODO: Cooking?
 
@@ -100,9 +105,16 @@ namespace Leclair.Stardew.BCSpaceCore {
 
 		public bool Stackable { get; }
 
+		public bool CanCraft(Farmer who) {
+			return true;
+		}
+
 		public Item CreateItem() {
 			return Recipe.CreateResult();
 		}
 
+		public void PerformCraft(IPerformCraftEvent evt) {
+			evt.Complete();
+		}
 	}
 }

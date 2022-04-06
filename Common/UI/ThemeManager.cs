@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Diagnostics.CodeAnalysis;
 
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 namespace Leclair.Stardew.Common.UI {
@@ -145,15 +146,16 @@ namespace Leclair.Stardew.Common.UI {
 		/// </summary>
 		private Tuple<DataT, IContentPack> BaseThemeData = null;
 
+		/// <summary>
+		/// Assets in the process of being loaded are stored in this
+		/// dictionary so we can continue to take advantage of types when
+		/// loading assets.
+		/// </summary>
+		private readonly Dictionary<string, object> LoadingAssets = new();
+
 		#endregion
 
 		#region Public Fields
-
-		/// <summary>
-		/// The Loader is the private IAssetLoader we use for redirecting asset
-		/// loading through game content to allow Content Patcher to work.
-		/// </summary>
-		public readonly ThemeAssetLoader Loader;
 
 		/// <summary>
 		/// The AssetLoaderPrefix is prepended to asset names when redirecting
@@ -239,9 +241,8 @@ namespace Leclair.Stardew.Common.UI {
 					assetLoaderPrefix
 				);
 
-			// Register this class as an asset loader.
-			Loader = new ThemeAssetLoader(this);
-			Mod.Helper.Content.AssetLoaders.Add(Loader);
+			// Register an event listener so we can provide assets.
+			Mod.Helper.Events.Content.AssetRequested += OnAssetRequested;
 		}
 
 		#endregion
@@ -816,7 +817,7 @@ namespace Leclair.Stardew.Common.UI {
 			if (!string.IsNullOrEmpty(themeId))
 				key = PathUtilities.NormalizeAssetName(Path.Join(AssetLoaderPrefix, themeId));
 
-			Mod.Helper.Content.InvalidateCache(info => info.AssetName.StartsWith(key));
+			Mod.Helper.GameContent.InvalidateCache(info => info.Name.StartsWith(key));
 		}
 
 		/// <summary>
@@ -837,8 +838,19 @@ namespace Leclair.Stardew.Common.UI {
 			if (!UsingAssetRedirection || BaseThemeData == null)
 				return InternalLoad<T>(path);
 
-			path = PathUtilities.NormalizeAssetName(Path.Join(AssetLoaderPrefix, ActiveThemeId, path));
-			return Mod.Helper.Content.Load<T>(path, ContentSource.GameContent);
+			string assetPath = PathUtilities.NormalizeAssetName(Path.Join(AssetLoaderPrefix, ActiveThemeId, path));
+
+			lock ((LoadingAssets as ICollection).SyncRoot) {
+				LoadingAssets[assetPath] = InternalLoad<T>(path);
+			}
+
+			try {
+				return Mod.Helper.GameContent.Load<T>(assetPath);
+			} finally {
+				lock ((LoadingAssets as ICollection).SyncRoot) {
+					LoadingAssets.Remove(assetPath);
+				}
+			}
 		}
 
 		/// <summary>
@@ -882,7 +894,7 @@ namespace Leclair.Stardew.Common.UI {
 
 				if (BaseThemeData.Item2.HasFile(lpath))
 					try {
-						return BaseThemeData.Item2.LoadAsset<T>(lpath);
+						return BaseThemeData.Item2.ModContent.Load<T>(lpath);
 					} catch (Exception ex) {
 						Log($"Failed to load asset \"{path}\" from theme {ActiveThemeId}.", LogLevel.Warn, ex);
 					}
@@ -892,56 +904,25 @@ namespace Leclair.Stardew.Common.UI {
 			if (!string.IsNullOrEmpty(DefaultAssetPrefix))
 				path = Path.Join(DefaultAssetPrefix, path);
 
-			return Mod.Helper.Content.Load<T>(path);
+			return Mod.Helper.ModContent.Load<T>(path);
 		}
 
 		#endregion
 
-		#region IAssetLoader Implementation
+		#region AssetRequested Handling
 
-		/// <summary>
-		/// ThemeAssetLoader is a simple <see cref="IAssetLoader"/> used to
-		/// load assets from a theme as a game asset, thus allowing
-		/// Content Patcher to modify the file.
-		/// </summary>
-		public class ThemeAssetLoader : IAssetLoader {
+		private void OnAssetRequested(object sender, AssetRequestedEventArgs e) {
+			if (e.Name.StartsWith(AssetLoaderPrefix)) {
+				// We "load" assets from a dictionary where we store loaded
+				// assets temporarily. So if we don't have a matching entry
+				// then just return and don't load anything.
+				if (!LoadingAssets.ContainsKey(e.Name.BaseName))
+					return;
 
-			private readonly ThemeManager<DataT> Manager;
-
-			public ThemeAssetLoader(ThemeManager<DataT> manager) {
-				Manager = manager;
-			}
-
-			public bool CanLoad<T>(IAssetInfo asset) {
-				// We can only load our own assets.
-				if (!asset.AssetName.StartsWith(Manager.AssetLoaderPrefix))
-					return false;
-
-				string path = Path.GetRelativePath(Manager.AssetLoaderPrefix, asset.AssetName);
-
-				// We only care about the currently used theme. There's no need to
-				// load assets from inactive themes.
-				if (!path.StartsWith(Manager.ActiveThemeId))
-					return false;
-
-				path = Path.GetRelativePath(Manager.ActiveThemeId, path);
-				return Manager.HasFile(path);
-			}
-
-			public T Load<T>(IAssetInfo asset) {
-				// We can only load our own assets.
-				if (!asset.AssetName.StartsWith(Manager.AssetLoaderPrefix))
-					return (T) (object) null;
-
-				string path = Path.GetRelativePath(Manager.AssetLoaderPrefix, asset.AssetName);
-
-				// We only care about the currently used theme. There's no need to
-				// load assets from inactive themes.
-				if (!path.StartsWith(Manager.ActiveThemeId))
-					return (T) (object) null;
-
-				path = Path.GetRelativePath(Manager.ActiveThemeId, path);
-				return Manager.InternalLoad<T>(path);
+				e.LoadFrom(
+					() => LoadingAssets[e.Name.BaseName],
+					priority: AssetLoadPriority.Low
+				);
 			}
 		}
 

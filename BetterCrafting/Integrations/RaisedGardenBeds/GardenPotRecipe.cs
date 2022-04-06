@@ -45,6 +45,10 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 		public string DisplayName { get; }
 		public string Description { get; }
 
+		public virtual bool HasRecipe(Farmer who) {
+			return who.craftingRecipes.ContainsKey(Name);
+		}
+
 		public virtual int GetTimesCrafted(Farmer who) {
 			if (who.craftingRecipes.ContainsKey(Name))
 				return who.craftingRecipes[Name];
@@ -74,8 +78,16 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 
 		public bool Stackable => true;
 
+		public bool CanCraft(Farmer who) {
+			return true;
+		}
+
 		public Item CreateItem() {
 			return RGB.MakeOutdoorPot(Variant);
+		}
+
+		public void PerformCraft(IPerformCraftEvent evt) {
+			evt.Complete();
 		}
 	}
 }

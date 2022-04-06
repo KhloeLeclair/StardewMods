@@ -227,17 +227,35 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 		#region Data Loading
 
 		public IRecipe GetProvidedRecipe(string name, bool cooking) {
-			CraftingRecipe raw = new(name, cooking);
+			CraftingRecipe raw;
+			try {
+				raw = new(name, cooking);
+			} catch(Exception ex) {
+				Log($"An error occurred creating a crafting recipe instance for \"{name}\" (cooking:{cooking}). The recipe will be skipped.", LogLevel.Warn, ex);
+				return null;
+			}
 
 			lock ((Providers as ICollection).SyncRoot) {
 				foreach (IRecipeProvider provider in Providers) {
-					IRecipe recipe = provider.GetRecipe(raw);
+					IRecipe recipe;
+					try {
+						recipe = provider.GetRecipe(raw);
+					} catch (Exception ex) {
+						Log($"An error occurred in a recipe provider getting a recipe for \"{name}\" (cooking:{cooking}).", LogLevel.Warn, ex);
+						continue;
+					}
+
 					if (recipe != null)
 						return recipe;
 				}
 			}
 
-			return GetRecipe(raw);
+			try {
+				return GetRecipe(raw);
+			} catch(Exception ex) {
+				Log($"An error occurred creating a recipe instance for \"{name}\" (cooking:{cooking}). The recipe will be skipped.", LogLevel.Warn, ex);
+				return null;
+			}
 		}
 
 
@@ -255,6 +273,8 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 				// Cooking
 				foreach (string key in CraftingRecipe.cookingRecipes.Keys) {
 					IRecipe recipe = GetProvidedRecipe(key, true);
+					if (recipe == null)
+						continue;
 
 					CookingRecipesByName.Value.Add(key, recipe);
 					CookingRecipes.Value.Add(recipe);
@@ -264,6 +284,9 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 					var recipes = provider.GetAdditionalRecipes(true);
 					if (recipes != null)
 						foreach(IRecipe recipe in recipes) {
+							if (recipe == null)
+								continue;
+
 							CookingRecipesByName.Value.Add(recipe.Name, recipe);
 							CookingRecipes.Value.Add(recipe);
 						}
@@ -274,6 +297,9 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 				// Crafting
 				foreach (string key in CraftingRecipe.craftingRecipes.Keys) {
 					IRecipe recipe = GetProvidedRecipe(key, false);
+					if (recipe == null)
+						continue;
+
 					CraftingRecipesByName.Value.Add(key, recipe);
 					CraftingRecipes.Value.Add(recipe);
 				}
@@ -282,6 +308,9 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 					var recipes = provider.GetAdditionalRecipes(false);
 					if (recipes != null)
 						foreach (IRecipe recipe in recipes) {
+							if (recipe == null)
+								continue;
+
 							CraftingRecipesByName.Value.Add(recipe.Name, recipe);
 							CraftingRecipes.Value.Add(recipe);
 						}

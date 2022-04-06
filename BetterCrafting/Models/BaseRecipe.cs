@@ -21,7 +21,14 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 				.Select(val => new BaseIngredient(val.Key, val.Value))
 				.ToArray();
 
-			Stackable = CreateItem().maximumStackSize() > 1;
+			Stackable = (CreateItem()?.maximumStackSize() ?? 0) > 1;
+		}
+
+		public virtual bool HasRecipe(Farmer who) {
+			if (Recipe.isCookingRecipe)
+				return who.cookingRecipes.ContainsKey(Name);
+			else
+				return who.craftingRecipes.ContainsKey(Name);
 		}
 
 		public virtual bool Stackable { get; }
@@ -64,8 +71,17 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual IIngredient[] Ingredients { get; private set; }
 
+
+		public virtual bool CanCraft(Farmer who) {
+			return true;
+		}
+
 		public virtual Item CreateItem() {
 			return Recipe.createItem();
+		}
+
+		public virtual void PerformCraft(IPerformCraftEvent evt) {
+			evt.Complete();
 		}
 
 		public virtual CraftingRecipe CraftingRecipe => Recipe;

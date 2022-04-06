@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BCBuildings": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}

@@ -84,46 +84,43 @@ namespace Leclair.Stardew.Common
 				string path = $"{prefix}.{locale}.{postfix}";
 
 				if (pack.HasFile(path))
-					return pack.LoadAsset<T>(path);
+					return pack.ModContent.Load<T>(path);
 
 				int i = locale.IndexOf('-');
 				if (i != -1) {
 					path = $"{prefix}.{locale.Substring(0, i)}.{postfix}";
 
 					if (pack.HasFile(path))
-						return pack.LoadAsset<T>(path);
+						return pack.ModContent.Load<T>(path);
 				}
 			}
 
 			// Still here? Return the bare resource.
-			return pack.LoadAsset<T>(key);
+			return pack.ModContent.Load<T>(key);
 		}
 
-
-		public static T LoadLocalized<T>(this IContentHelper helper, string key, string locale = null, ContentSource source = ContentSource.ModFolder) {
-			locale ??= helper.CurrentLocale;
+		public static T LoadLocalized<T>(this IModContentHelper helper, string key, string locale = null) {
 			int idx = string.IsNullOrEmpty(locale) ? -1 : key.LastIndexOf('.');
 
 			// If we have an index, let's try loading various language versions.
 			if (idx != -1) {
-				string prefix = key.Substring(0, idx);
-				string postfix = key.Substring(idx + 1);
-
+				string prefix = key[..idx];
+				string postfix = key[(idx + 1)..];
 				string path = $"{prefix}.{locale}.{postfix}";
 
 				try {
-					return helper.Load<T>(path, source);
-				} catch (Exception e) {
+					return helper.Load<T>(path);
+				} catch(Exception e) {
 					if (!e.Message.Contains("path doesn't exist"))
 						throw;
 				}
 
 				int i = locale.IndexOf('-');
 				if (i != -1) {
-					path = $"{prefix}.{locale.Substring(0, i)}.{postfix}";
+					path = $"{prefix}.{locale[..i]}.{postfix}";
 
 					try {
-						return helper.Load<T>(path, source);
+						return helper.Load<T>(path);
 					} catch (Exception e) {
 						if (!e.Message.Contains("path doesn't exist"))
 							throw;
@@ -132,7 +129,7 @@ namespace Leclair.Stardew.Common
 			}
 
 			// Still here? Return the bare resource.
-			return helper.Load<T>(key, source);
+			return helper.Load<T>(key);
 		}
 	}
 }

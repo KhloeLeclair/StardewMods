@@ -1,7 +1,10 @@
+using System;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.Crafting {
 	public interface IRecipe {
@@ -13,6 +16,8 @@ namespace Leclair.Stardew.Common.Crafting {
 		string Name { get; }
 		string DisplayName { get; }
 		string Description { get; }
+
+		bool HasRecipe(Farmer who);
 
 		int GetTimesCrafted(Farmer who);
 
@@ -36,8 +41,11 @@ namespace Leclair.Stardew.Common.Crafting {
 
 		bool Stackable { get; }
 
+		bool CanCraft(Farmer who);
+
 		Item CreateItem();
 
+		void PerformCraft(IPerformCraftEvent evt);
 	}
 
 	public interface IRecipeSprite {

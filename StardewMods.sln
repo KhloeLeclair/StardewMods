@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeeMeRollin", "SeeMeRollin\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ledger", "Ledger\Ledger.csproj", "{B255563F-7605-4271-80D2-688C1EE8347A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BCBuildings", "BCBuildings\BCBuildings.csproj", "{2481E747-58E1-4858-A4F1-4D533ABACE8F}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{13180c19-64f0-4053-9fff-538b7b0b0855}*SharedItemsImports = 13
@@ -84,6 +86,10 @@ Global
 		{B255563F-7605-4271-80D2-688C1EE8347A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B255563F-7605-4271-80D2-688C1EE8347A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B255563F-7605-4271-80D2-688C1EE8347A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2481E747-58E1-4858-A4F1-4D533ABACE8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2481E747-58E1-4858-A4F1-4D533ABACE8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2481E747-58E1-4858-A4F1-4D533ABACE8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2481E747-58E1-4858-A4F1-4D533ABACE8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

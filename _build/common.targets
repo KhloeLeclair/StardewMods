@@ -8,7 +8,8 @@
 
 		<LangVersion>latest</LangVersion>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<GameModsPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\DevMods</GameModsPath>
+        <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.5.6 with 3.14.0</GamePath>
+		<GameModsPath>$(GamePath)\DevMods</GameModsPath>
 		<EnableModZip Condition="$(Configuration) != 'Release'">False</EnableModZip>
 		<ModZipPath>$(SolutionDir)\_releases</ModZipPath>
 	</PropertyGroup>
@@ -23,5 +24,6 @@
 	<ItemGroup>
         <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
+        <PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="1.0.3" />
 	</ItemGroup>
 </Project>

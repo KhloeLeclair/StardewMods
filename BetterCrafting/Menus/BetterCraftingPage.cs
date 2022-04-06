@@ -609,12 +609,12 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					if (!string.IsNullOrEmpty(name)) {
 						RecipesByName.TryGetValue(name, out IRecipe recipe);
 
-						if (recipe != null)
-							return SpriteHelper.GetSprite(recipe.CreateItem());
+						if (recipe != null && recipe.CreateItem() is Item itm)
+							return SpriteHelper.GetSprite(itm);
 					}
 
-					if (recipes != null && recipes.Count > 0)
-						return SpriteHelper.GetSprite(recipes[0].CreateItem());
+					if (recipes != null && recipes.Count > 0 && recipes[0].CreateItem() is Item item)
+						return SpriteHelper.GetSprite(item);
 
 					return new SpriteInfo(
 						Game1.mouseCursors,
@@ -628,7 +628,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 					if (!string.IsNullOrEmpty(icon.Path))
 						try {
-							texture = Mod.Helper.Content.Load<Texture2D>(icon.Path) ?? texture;
+							texture = Mod.Helper.GameContent.Load<Texture2D>(icon.Path) ?? texture;
 						} catch (Exception ex) {
 							Log($"Unable to load texture \"{icon.Path}\" for category icon", LogLevel.Warn, ex);
 						}
@@ -658,6 +658,10 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 
 		public void UpdateCategorySprite(IRecipe recipe) {
 			if (!Editing || CurrentTab == null || recipe == null)
+				return;
+
+			Item item = recipe.CreateItem();
+			if (item == null)
 				return;
 
 			UpdateCategorySprite(new CategoryIcon() {
@@ -696,8 +700,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 				SpriteInfo sprite = null;
 
 				if (CurrentTab.Category.Recipes.Count > 0) {
-					if (RecipesByName.TryGetValue(CurrentTab.Category.Recipes.First(), out IRecipe val))
-						sprite = SpriteHelper.GetSprite(val.CreateItem());
+					if (RecipesByName.TryGetValue(CurrentTab.Category.Recipes.First(), out IRecipe val) && val.CreateItem() is Item item)
+						sprite = SpriteHelper.GetSprite(item);
 				}
 
 				if (sprite == null)
@@ -736,10 +740,8 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			RecipesByName.Clear();
 			Favorites.Clear();
 
-			var knownRecipes = cooking ? Game1.player.cookingRecipes : Game1.player.craftingRecipes;
-
 			foreach (IRecipe recipe in Mod.Recipes.GetRecipes(cooking)) {
-				if (!Editing && !knownRecipes.ContainsKey(recipe.Name) && (!cooking || Mod.Config.HideUnknown))
+				if (!Editing && !recipe.HasRecipe(Game1.player) && (!cooking || Mod.Config.HideUnknown))
 					continue;
 
 				if (!Editing && ListedRecipes != null && !ListedRecipes.Contains(recipe.Name))
@@ -1215,10 +1217,15 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			if (!recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality))
 				return false;
 
+			if (!recipe.CanCraft(Game1.player))
+				return false;
+
 			if (HeldItem == null)
 				return true;
 
 			Item obj = recipe.CreateItem();
+			if (obj == null)
+				return true;
 
 			return (HeldItem.Name.Equals(obj.Name)
 				&& HeldItem.getOne().canStackWith(obj.getOne())
@@ -1227,134 +1234,194 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		}
 
 		public void PerformCraft(IRecipe recipe, int times, Action<int> DoneAction = null, bool playSound = true, bool moveResultToInventory = false) {
-			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, locked => {
+			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
 
-				int success = 0;
-				bool used_additional = false;
 				List<Item> items = GetActualContainerContents(locked);
-
 				List<Chest> chests = ChestsOnly ? locked
 					.Where(x => x.Object is Chest)
 					.Select(x => x.Object as Chest)
 					.ToList() : null;
 
-				for (int i = 0; i < times; i++) {
-					bool made = false;
+				PerformCraftRecursive(
+					recipe, 0, times,
+					(successes, used_additional) => {
+						onDone();
 
-					if (!recipe.HasIngredients(Game1.player, items, locked, Quality))
-						break;
+						if (successes > 0 && playSound)
+							Game1.playSound("coin");
+						if (used_additional && playSound)
+							Game1.playSound("breathin");
 
-					Item obj = recipe.CreateItem();
-					IIngredient[] ingredients = null;
-					bool consume = true;
-					bool seasoningInventories = Mod.Config.UseSeasoning != SeasoningMode.InventoryOnly;
-
-					if (cooking) {
-						if (Mod.intCSkill.IsLoaded) {
-							consume = Mod.intCSkill.ModifyCookedItem(
-								recipe.CraftingRecipe,
-								obj,
-								chests
-							);
+						if (successes > 0 && HeldItem != null) {
+							bool move_item = (Game1.options.gamepadControls || (moveResultToInventory && HeldItem.maximumStackSize() == 1)) && Game1.player.couldInventoryAcceptThisItem(HeldItem);
+							if (move_item && Game1.player.addItemToInventoryBool(HeldItem))
+								HeldItem = null;
 						}
 
-						if (Mod.Config.UseSeasoning != SeasoningMode.Disabled && obj is SObject sobj && sobj.Quality == 0) {
-							ingredients = SEASONING_RECIPE;
-
-							if (CraftingHelper.HasIngredients(
-								ingredients,
-								Game1.player,
-								seasoningInventories ? items : null,
-								seasoningInventories ? locked : null,
-								Quality
-							))
-								sobj.Quality = 2;
-							else
-								ingredients = null;
-						}
-					}
-
-					if (HeldItem == null) {
-						HeldItem = obj;
-						made = true;
-
-					} else if (HeldItem.Name.Equals(obj.Name)
-							&& HeldItem.getOne().canStackWith(obj.getOne())
-							&& HeldItem.Stack + recipe.QuantityPerCraft <= HeldItem.maximumStackSize()
-					) {
-						HeldItem.Stack += recipe.QuantityPerCraft;
-						made = true;
-					}
-
-					if (!made)
-						continue;
-
-					success++;
-
-					// Consume ingredients and rebuild our item list.
-					if (consume) {
-						// If we are cooking and using the Cooking Skill mod and
-						// we have a recipe and we're only operating on chests,
-						// then go ahead and use the vanilla CookingRecipe's
-						// consumeIngredients method.
-						if (cooking && Mod.intCSkill.IsLoaded && ChestsOnly && recipe.CraftingRecipe != null)
-							recipe.CraftingRecipe.consumeIngredients(chests);
-						else
-							recipe.Consume(Game1.player, locked, Quality, Mod.Config.LowQualityFirst);
-					}
-
-					// Even if consume is false, Cooking Skill may have
-					// modified items so refresh our list.
-					items = GetActualContainerContents(locked);
-
-					if (ingredients != null) {
-						used_additional = true;
-
-						// Consume ingredients and rebuild our item list.
-						CraftingHelper.ConsumeIngredients(ingredients, Game1.player, seasoningInventories ? locked : null, Quality, Mod.Config.LowQualityFirst);
-						items = GetActualContainerContents(locked);
-
-						// Show a notice if the user used their last seasoning.
-						if (!CraftingHelper.HasIngredients(ingredients, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null, Quality))
-							Game1.showGlobalMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Seasoning_UsedLast"));
-					}
-
-					Game1.player.checkForQuestComplete(null, -1, -1, obj, null, 2);
-
-					if (!cooking && Game1.player.craftingRecipes.ContainsKey(recipe.Name))
-						Game1.player.craftingRecipes[recipe.Name] += recipe.QuantityPerCraft;
-
-					if (cooking) {
-						Game1.player.cookedRecipe(HeldItem.ParentSheetIndex);
-
-						if (obj is SObject sobj)
-							Mod.intCSkill.AddCookingExperience(
-								Game1.player,
-								sobj.Edibility
-							);
-					}
-
-					if (!cooking)
-						Game1.stats.checkForCraftingAchievements();
-					else
-						Game1.stats.checkForCookingAchievements();
-				}
-
-				if (success > 0 && playSound)
-					Game1.playSound("coin");
-				if (used_additional && playSound)
-					Game1.playSound("breathin");
-
-				if (success > 0 && HeldItem != null) {
-					bool move_item = (Game1.options.gamepadControls || (moveResultToInventory && HeldItem.maximumStackSize() == 1)) && Game1.player.couldInventoryAcceptThisItem(HeldItem);
-					if (move_item && Game1.player.addItemToInventoryBool(HeldItem))
-						HeldItem = null;
-				}
-
-				DoneAction?.Invoke(success);
+						DoneAction?.Invoke(successes);
+					},
+					locked, items, chests
+				);
 			});
 		}
 
+		private void PerformCraftRecursive(
+			IRecipe recipe, int successes, int times, Action<int, bool> onDone,
+			IList<IInventory> locked, List<Item> items, List<Chest> chests,
+			bool used_additional = false
+		) {
+			if (!recipe.HasIngredients(Game1.player, items, locked, Quality)) {
+				onDone(successes, used_additional);
+				return;
+			}
+
+			Item obj = recipe.CreateItem();
+			PerformCraftEvent pce = new(Game1.player, obj, this);
+
+			recipe.PerformCraft(pce);
+
+			if (pce.IsDone) {
+				FinishCraftRecursive(
+					recipe, successes, times, onDone,
+					locked, items, chests,
+					used_additional, pce
+				);
+				return;
+			}
+
+			pce.OnDone = () => {
+				FinishCraftRecursive(
+					recipe, successes, times, onDone,
+					locked, items, chests,
+					used_additional, pce
+				);
+			};
+		}
+
+		private void FinishCraftRecursive(
+			IRecipe recipe, int successes, int times, Action<int, bool> onDone,
+			IList<IInventory> locked, List<Item> items, List<Chest> chests,
+			bool used_additional, PerformCraftEvent pce
+		) {
+			if (!pce.Success) {
+				onDone(successes, used_additional);
+				return;
+			}
+
+			Item obj = pce.Item;
+			bool made = false;
+
+			IIngredient[] ingredients = null;
+			bool consume = true;
+			bool seasoningInventories = Mod.Config.UseSeasoning != SeasoningMode.InventoryOnly;
+
+			if (cooking) {
+				if (Mod.intCSkill.IsLoaded) {
+					consume = Mod.intCSkill.ModifyCookedItem(
+						recipe.CraftingRecipe,
+						obj,
+						chests
+					);
+				}
+
+				if (Mod.Config.UseSeasoning != SeasoningMode.Disabled && obj is SObject sobj && sobj.Quality == 0) {
+					ingredients = SEASONING_RECIPE;
+
+					if (CraftingHelper.HasIngredients(
+						ingredients,
+						Game1.player,
+						seasoningInventories ? items : null,
+						seasoningInventories ? locked : null,
+						Quality
+					))
+						sobj.Quality = 2;
+					else
+						ingredients = null;
+				}
+			}
+
+			if (obj == null) {
+				made = true;
+
+			} else if (HeldItem == null) {
+				HeldItem = obj;
+				made = true;
+
+			} else if (HeldItem.Name.Equals(obj.Name)
+					&& HeldItem.getOne().canStackWith(obj.getOne())
+					&& HeldItem.Stack + recipe.QuantityPerCraft <= HeldItem.maximumStackSize()
+			) {
+				HeldItem.Stack += recipe.QuantityPerCraft;
+				made = true;
+			}
+
+			if (!made) {
+				onDone(successes, used_additional);
+				return;
+			}
+
+			successes++;
+
+			// Consume ingredients and rebuild our item list.
+			if (consume) {
+				// If we are cooking and using the Cooking Skill mod and
+				// we have a recipe and we're only operating on chests,
+				// then go ahead and use the vanilla CookingRecipe's
+				// consumeIngredients method.
+				if (cooking && Mod.intCSkill.IsLoaded && ChestsOnly && recipe.CraftingRecipe != null)
+					recipe.CraftingRecipe.consumeIngredients(chests);
+				else
+					recipe.Consume(Game1.player, locked, Quality, Mod.Config.LowQualityFirst);
+			}
+
+			// Even if consume is false, Cooking Skill may have
+			// modified items so refresh our list.
+			items = GetActualContainerContents(locked);
+
+			if (ingredients != null) {
+				used_additional = true;
+
+				// Consume ingredients and rebuild our item list.
+				CraftingHelper.ConsumeIngredients(ingredients, Game1.player, seasoningInventories ? locked : null, Quality, Mod.Config.LowQualityFirst);
+				items = GetActualContainerContents(locked);
+
+				// Show a notice if the user used their last seasoning.
+				if (!CraftingHelper.HasIngredients(ingredients, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null, Quality))
+					Game1.showGlobalMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Seasoning_UsedLast"));
+			}
+
+			if (obj != null)
+				Game1.player.checkForQuestComplete(null, -1, -1, obj, null, 2);
+
+			if (!cooking && Game1.player.craftingRecipes.ContainsKey(recipe.Name))
+				Game1.player.craftingRecipes[recipe.Name] += recipe.QuantityPerCraft;
+
+			if (cooking) {
+				Game1.player.cookedRecipe(HeldItem.ParentSheetIndex);
+
+				if (obj is SObject sobj)
+					Mod.intCSkill.AddCookingExperience(
+						Game1.player,
+						sobj.Edibility
+					);
+			}
+
+			if (!cooking)
+				Game1.stats.checkForCraftingAchievements();
+			else
+				Game1.stats.checkForCookingAchievements();
+
+			if (times > 1) {
+				PerformCraftRecursive(
+					recipe, successes, times - 1, onDone,
+					locked, items, chests,
+					used_additional
+				);
+
+			} else {
+				onDone(successes, used_additional);
+			}
+		}
 
 		#endregion
 
@@ -1380,7 +1447,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 					name: "",
 					bounds: new Rectangle(0, 0, 64, 64),
 					label: null,
-					hoverText: cooking && !Game1.player.cookingRecipes.ContainsKey(recipe.Name) ? "ghosted" : "",
+					hoverText: cooking && !recipe.HasRecipe(Game1.player) ? "ghosted" : "",
 					texture: recipe.Texture, // recipe.BigCraftable ? Game1.bigCraftableSpriteSheet : Game1.objectSpriteSheet,
 					sourceRect: recipe.SourceRectangle,
 					//sourceRect: recipe.BigCraftable ?
@@ -2694,7 +2761,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 						drawn = true;
 						cmp.DrawBounded(b, Color.Black * 0.35f, 0.89f);
 
-					} else if (Editing ? !in_category : !recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality)) {
+					} else if (Editing ? !in_category : (!recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality) || !recipe.CanCraft(Game1.player))) {
 						// Recipe without Ingredients
 						drawn = true;
 						cmp.DrawBounded(b, Color.DimGray * 0.4f, 0.89f);
@@ -3246,7 +3313,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 		// We might want to support this for filtering out recipes
 		// that we don't want to show. But we might not?
 		public void layoutRecipes(List<string> recipes) {
-			UpdateListedRecipes(recipes);
+			//UpdateListedRecipes(recipes);
 		}
 
 #pragma warning restore IDE0051 // Remove unused private members

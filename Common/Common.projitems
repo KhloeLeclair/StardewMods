@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)CombinedRingSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingPageHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Crafting\IPerformCraftEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\Season.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\TimeScale.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\TransferMode.cs" />
@@ -26,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventSubscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\Subscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IIngredient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameStateQuery.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\ColorConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TranslationHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\CaseInsensitiveDictionary.cs" />
@@ -86,8 +88,5 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\UnslicedNode.cs" />
     <Compile Include="..\Common\UI\SimpleLayout\ISimpleNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\IFlowNode.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Crafting\" />
   </ItemGroup>
 </Project>
