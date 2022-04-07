@@ -64,8 +64,8 @@
 	"weather.rain": "Yağmurlu",
 	"weather.debris": "Rüzgarlı",
 	"weather.lightning": "Gök Gürültülü Fırtınalı",
-	"weather.festival": "Sunny",
-	"weather.snow": "Snow",
+	"weather.festival": "Güneşli",
+	"weather.snow": "Karlı",
 
 	"page.train": "Tren Programı",
 	"page.train.about": "@BUyarı:@b Trenler şu zamanlarda Yıldızçiyi Vadisi İstasyonu'ndan geçiyor olacak. Güvenliğiniz için, tren geldiğinde her zaman raylardan uzak durun.",
@@ -120,7 +120,7 @@
 	"page.notices.birthday.s": "Bugün {{name}} kişisinin doğum günü!",
 
 	"page.notices.merchant": "Gezgin Tüccar kasabada olacak.",
-	"page.notices.merchant.stock": "Gezgin Tüccar şunları satacak::",
+	"page.notices.merchant.stock": "Gezgin Tüccar şunları satacak:",
 
 	"page.notices.train": "{{time}} saatinde bir trenin istasyondan geçmesi bekleniyor.",
 
