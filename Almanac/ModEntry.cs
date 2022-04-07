@@ -293,9 +293,23 @@ namespace Leclair.Stardew.Almanac {
 
 			// Commands
 			Helper.ConsoleCommands.Add("gsq", "Run a GameStateQuery", (name, args) => {
-				string query = string.Join(' ', args);
+				int seed = -1;
+				try {
+					seed = int.Parse(args[0]);
+				} catch { }
+
+				string query;
+				if (seed == -1)
+					query = string.Join(' ', args);
+				else
+					query = string.Join(' ', args[1..]);
+
+				Random rnd = seed == -1 ? Game1.random : new Random(seed);
+
 				Log($" Query: {query}");
-				Log($"Result: {GameStateQuery.CheckConditions(query, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
+				if (seed != -1)
+					Log($"  Seed: {seed}");
+				Log($"Result: {GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
 			});
 
 			Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
