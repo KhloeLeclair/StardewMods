@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+#nullable enable
 
-namespace Leclair.Stardew.Common.Types
-{
-	public record struct RecommendedIntegration(
-		string Id,
-		string Name,
-		string Url,
+namespace Leclair.Stardew.Common.Types;
 
-		string[] Mods
-	);
-}
+public record struct RecommendedIntegration(
+	string Id,
+	string Name,
+	string Url,
+
+	string[] Mods
+);

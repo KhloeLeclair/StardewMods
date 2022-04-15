@@ -149,6 +149,8 @@
 
 	"tooltip.quality-unsupported": "This recipe does not support quality settings.",
 
+	"ingredient.error": "Invalid Ingredient",
+
 	// Bulk Crafting
 	"bulk.crafting": "Bulk Crafting",
 	"bulk.craftable": "{{count}} Craftable",

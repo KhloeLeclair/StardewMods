@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
 namespace Leclair.Stardew.BetterCrafting.Models {
-	public class BaseRecipe : IRecipe, IRecipeSprite {
+	public class BaseRecipe : IRecipe {
 
 		public readonly ModEntry Mod;
 		public readonly CraftingRecipe Recipe;
@@ -21,7 +21,7 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 				.Select(val => new BaseIngredient(val.Key, val.Value))
 				.ToArray();
 
-			Stackable = (CreateItem()?.maximumStackSize() ?? 0) > 1;
+			Stackable = (this.CreateItemSafe()?.maximumStackSize() ?? 0) > 1;
 		}
 
 		public virtual bool HasRecipe(Farmer who) {
@@ -53,8 +53,6 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 			return 0;
 		}
 
-		public virtual SpriteInfo Sprite => SpriteHelper.GetSprite(CreateItem());
-
 		public virtual Texture2D Texture => Recipe.bigCraftable ?
 			Game1.bigCraftableSpriteSheet :
 			Game1.objectSpriteSheet;
@@ -74,6 +72,10 @@ namespace Leclair.Stardew.BetterCrafting.Models {
 
 		public virtual bool CanCraft(Farmer who) {
 			return true;
+		}
+
+		public virtual string GetTooltipExtra(Farmer who) {
+			return null;
 		}
 
 		public virtual Item CreateItem() {

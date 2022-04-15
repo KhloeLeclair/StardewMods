@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
@@ -19,7 +21,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
 		/// <returns>whether or not the object is valid</returns>
-		bool IsValid(object obj, GameLocation location, Farmer who);
+		bool IsValid(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// Check to see if items can be inserted into this object.
@@ -28,7 +30,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
 		/// <returns></returns>
-		bool CanInsertItems(object obj, GameLocation location, Farmer who);
+		bool CanInsertItems(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// Check to see if items can be extracted from this object.
@@ -37,7 +39,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
 		/// <returns></returns>
-		bool CanExtractItems(object obj, GameLocation location, Farmer who);
+		bool CanExtractItems(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// For objects larger than a single tile on the map, return the rectangle representing
@@ -47,7 +49,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
 		/// <returns></returns>
-		Rectangle? GetMultiTileRegion(object obj, GameLocation location, Farmer who);
+		Rectangle? GetMultiTileRegion(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// Return the real position of the object. If the object has no position, returns null.
@@ -56,8 +58,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
-		/// <returns></returns>
-		Vector2? GetTilePosition(object obj, GameLocation location, Farmer who);
+		Vector2? GetTilePosition(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// Get the NetMutex that locks the object for multiplayer synchronization. This method must
@@ -66,8 +67,18 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
-		/// <returns></returns>
-		NetMutex GetMutex(object obj, GameLocation location, Farmer who);
+		NetMutex? GetMutex(object obj, GameLocation? location, Farmer? who);
+
+		/// <summary>
+		/// Whether or not a mutex is required for interacting with this object's inventory.
+		/// You should always use a mutex to ensure items are handled safely with multiplayer,
+		/// but in case you're doing something exceptional and Better Crafting should not
+		/// worry about locking, you can explicitly disable mutex handling.
+		/// </summary>
+		/// <param name="obj">the object</param>
+		/// <param name="location">the map where the object is</param>
+		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
+		bool IsMutexRequired(object obj, GameLocation? location, Farmer? who) => true;
 
 		/// <summary>
 		/// Get a list of items in the object's inventory, for modification or viewing. Assume that
@@ -76,8 +87,16 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
-		/// <returns></returns>
-		IList<Item> GetItems(object obj, GameLocation location, Farmer who);
+		IList<Item?>? GetItems(object obj, GameLocation? location, Farmer? who);
+
+		/// <summary>
+		/// Check to see if a specific item is allowed to be stored in the object's inventory.
+		/// </summary>
+		/// <param name="obj">the object</param>
+		/// <param name="location">the map where the object is</param>
+		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
+		/// <param name="item">the item we're checking</param>
+		bool IsItemValid(object obj, GameLocation? location, Farmer? who, Item item) => true;
 
 		/// <summary>
 		/// Clean the inventory of the object. This is for removing null entries, organizing, etc.
@@ -85,7 +104,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
-		void CleanInventory(object obj, GameLocation location, Farmer who);
+		void CleanInventory(object obj, GameLocation? location, Farmer? who);
 
 		/// <summary>
 		/// Get the actual inventory capacity of the object's inventory. New items may be added to the
@@ -94,8 +113,7 @@ namespace Leclair.Stardew.Common.Inventory {
 		/// <param name="obj">the object</param>
 		/// <param name="location">the map where the object is</param>
 		/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
-		/// <returns></returns>
-		int GetActualCapacity(object obj, GameLocation location, Farmer who);
+		int GetActualCapacity(object obj, GameLocation? location, Farmer? who);
 
 	}
 }

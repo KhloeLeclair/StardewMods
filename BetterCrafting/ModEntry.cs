@@ -217,11 +217,6 @@ namespace Leclair.Stardew.BetterCrafting {
 					var where = page.GetBenchPosition(Game1.player);
 					var area = page.GetBenchRegion(Game1.player);
 
-					// Get recipes
-					var recipes = cooking ?
-						intCCStation.GetCookingRecipes() :
-						intCCStation.GetCraftingRecipes();
-
 					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(page);
 
@@ -233,8 +228,7 @@ namespace Leclair.Stardew.BetterCrafting {
 						area: area,
 						cooking: cooking,
 						standalone_menu: true,
-						material_containers: chests,
-						listed_recipes: recipes
+						material_containers: chests
 					);
 				}
 			}
@@ -299,7 +293,6 @@ namespace Leclair.Stardew.BetterCrafting {
 							cooking: false,
 							standalone_menu: false,
 							material_containers: (IList<LocatedInventory>) null,
-							listed_recipes: intCCStation.GetCraftingRecipes(),
 							x: gm.xPositionOnScreen,
 							y: gm.yPositionOnScreen
 						);

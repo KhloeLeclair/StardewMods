@@ -53,7 +53,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus {
 			if (!Menu.cooking || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
 				Seasoning = SeasoningMode.Disabled;
 			else {
-				Item obj = Recipe.CreateItem();
+				Item obj = Recipe.CreateItemSafe();
 				if (obj is SObject sobj && sobj.Quality == 0) {
 					Seasoning = Mod.Config.UseSeasoning;
 					SeasonIngred = BetterCraftingPage.SEASONING_RECIPE[0];

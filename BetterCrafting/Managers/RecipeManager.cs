@@ -127,10 +127,33 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 				LoadRecipes();
 			}
 
-			if (cooking)
-				return CookingRecipes.Value;
+			List<IRecipe> result;
 
-			return CraftingRecipes.Value;
+			if (cooking)
+				result = CookingRecipes.Value;
+			else
+				result = CraftingRecipes.Value;
+
+			bool forked = false;
+
+			WithRecipeProviders(() => {
+				foreach (var provider in Providers) {
+					if (provider.CacheAdditionalRecipes)
+						continue;
+
+					var extra = provider.GetAdditionalRecipes(cooking);
+					if (extra != null) {
+						if (!forked) {
+							result = result.ToList();
+							forked = true;
+						}
+
+						result.AddRange(extra);
+					}
+				}
+			});
+
+			return result;
 		}
 
 
@@ -183,7 +206,18 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 		#region IRecipeProvider
 
 		public IRecipe GetRecipe(CraftingRecipe recipe) {
-			return new BaseRecipe(Mod, recipe);
+			IRecipe result = new BaseRecipe(Mod, recipe);
+
+			// We don't care if CreateItem returns null, but it
+			// cannot throw an exception.
+			try {
+				result.CreateItem();
+			} catch (Exception ex) {
+				Log($"An error occurred creating an item for the recipe \"{result.Name}\". The recipe will be skipped.", LogLevel.Warn, ex);
+				return null;
+			}
+
+			return result;
 		}
 
 		#endregion
@@ -245,8 +279,20 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 						continue;
 					}
 
-					if (recipe != null)
-						return recipe;
+					if (recipe == null)
+						continue;
+
+					// We don't care if CreateItem returns null, but it
+					// cannot throw an exception.
+					try {
+						recipe.CreateItem();
+
+					} catch (Exception ex) {
+						Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}. The recipe will be skipped.", LogLevel.Warn, ex);
+						return null;
+					}
+
+					return recipe;
 				}
 			}
 
@@ -281,11 +327,24 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 				}
 
 				foreach (IRecipeProvider provider in Providers) {
+					if (!provider.CacheAdditionalRecipes)
+						continue;
+
 					var recipes = provider.GetAdditionalRecipes(true);
 					if (recipes != null)
 						foreach(IRecipe recipe in recipes) {
 							if (recipe == null)
 								continue;
+
+							// We don't care if CreateItem returns null, but it
+							// cannot throw an exception.
+							try {
+								recipe.CreateItem();
+
+							} catch (Exception ex) {
+								Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}", LogLevel.Warn, ex);
+								continue;
+							}
 
 							CookingRecipesByName.Value.Add(recipe.Name, recipe);
 							CookingRecipes.Value.Add(recipe);
@@ -305,11 +364,24 @@ namespace Leclair.Stardew.BetterCrafting.Managers {
 				}
 
 				foreach (IRecipeProvider provider in Providers) {
+					if (!provider.CacheAdditionalRecipes)
+						continue;
+
 					var recipes = provider.GetAdditionalRecipes(false);
 					if (recipes != null)
 						foreach (IRecipe recipe in recipes) {
 							if (recipe == null)
 								continue;
+
+							// We don't care if CreateItem returns null, but it
+							// cannot throw an exception.
+							try {
+								recipe.CreateItem();
+
+							} catch (Exception ex) {
+								Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}", LogLevel.Warn, ex);
+								continue;
+							}
 
 							CraftingRecipesByName.Value.Add(recipe.Name, recipe);
 							CraftingRecipes.Value.Add(recipe);

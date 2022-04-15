@@ -145,6 +145,8 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 			return new GardenPotRecipe(this, recipe);
 		}
 
+		public bool CacheAdditionalRecipes => true;
+
 		public IEnumerable<IRecipe> GetAdditionalRecipes(bool cooking) {
 			return null;
 		}

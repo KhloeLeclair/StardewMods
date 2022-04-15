@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+???
+
+### Fixes
+
+* Improve error checking for recipes, since a lot of mods unfortunately
+  introduce recipes with data errors.
+* Stop repositioning the mouse cursor when using a gamepad and exiting
+  the menu.
+* Draw better tooltips when a recipe doesn't have ingredients.
+
+### API Changes
+
+* Improve support for custom recipes not based on an existing vanilla
+  `CraftingRecipe`, including support for recipes that don't produce
+  items at all.
+* The API now provides convenience methods for creating simple ingredients
+  so that external mods don't need to reinvent the wheel for basic tasks.
+
+
 ## 0.15.0
 Released March 15th, 2022.
 

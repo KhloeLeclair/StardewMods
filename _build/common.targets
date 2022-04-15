@@ -12,6 +12,7 @@
 		<GameModsPath>$(GamePath)\DevMods</GameModsPath>
 		<EnableModZip Condition="$(Configuration) != 'Release'">False</EnableModZip>
 		<ModZipPath>$(SolutionDir)\_releases</ModZipPath>
+        <DefineConstants Condition="$(EnableHarmony) == 'True'">HARMONY</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$(Configuration) != 'Release'">

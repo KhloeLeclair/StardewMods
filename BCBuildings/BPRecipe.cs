@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using Leclair.Stardew.Common.Crafting;
+using Leclair.Stardew.BetterCrafting;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,15 +11,15 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
 
-using Leclair.Stardew.BetterCrafting.Models;
-
 namespace Leclair.Stardew.BCBuildings; 
 
 public class BPRecipe : IRecipe {
 
+	public readonly ModEntry Mod;
 	public readonly BluePrint Blueprint;
 
 	public BPRecipe(BluePrint blueprint, ModEntry mod) {
+		Mod = mod;
 		Name = $"blueprint:{blueprint.name}";
 		Blueprint = blueprint;
 
@@ -27,10 +27,10 @@ public class BPRecipe : IRecipe {
 
 		if (blueprint.itemsRequired != null)
 			foreach (var entry in blueprint.itemsRequired)
-				ingredients.Add(new BaseIngredient(entry.Key, entry.Value));
+				ingredients.Add(mod.API.CreateBaseIngredient(entry.Key, entry.Value));
 
 		if (blueprint.moneyRequired > 0)
-			ingredients.Add(new CurrencyIngredient(CurrencyType.Money, blueprint.moneyRequired));
+			ingredients.Add(mod.API.CreateCurrencyIngredient("Money", blueprint.moneyRequired));
 
 		Ingredients = ingredients.ToArray();
 	}
@@ -89,12 +89,31 @@ public class BPRecipe : IRecipe {
 	}
 
 	public bool CanCraft(Farmer who) {
-		return who.currentLocation is BuildableGameLocation;
+		if (who.currentLocation is not BuildableGameLocation bgl)
+			return false;
+
+		if (Blueprint.isUpgrade()) {
+			return bgl.isBuildingConstructed(Blueprint.nameOfBuildingToUpgrade);
+		}
+
+		return true;
+	}
+
+	public string? GetTooltipExtra(Farmer who) {
+		if (who.currentLocation is not BuildableGameLocation bgl)
+			return "@C{red}You cannot build in your current location.";
+
+		if (Blueprint.isUpgrade() && !bgl.isBuildingConstructed(Blueprint.nameOfBuildingToUpgrade)) {
+			string other = new BluePrint(Blueprint.nameOfBuildingToUpgrade).displayName;
+			return $"@C{{red}}There is not an existing @B{other}@b to upgrade.";
+		}
+
+		return null;
 	}
 
 	public void PerformCraft(IPerformCraftEvent evt) {
 
-		var menu = new BuildMenu(Blueprint, evt);
+		var menu = new BuildMenu(Blueprint, Blueprint.isUpgrade() ? ActionType.Upgrade : ActionType.Build, evt, Mod);
 		var old_menu = Game1.activeClickableMenu;
 
 		Game1.activeClickableMenu = menu;

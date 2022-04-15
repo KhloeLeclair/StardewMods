@@ -82,6 +82,10 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
 			return true;
 		}
 
+		public string GetTooltipExtra(Farmer who) {
+			return null;
+		}
+
 		public Item CreateItem() {
 			return RGB.MakeOutdoorPot(Variant);
 		}

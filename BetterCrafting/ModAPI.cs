@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -12,28 +14,20 @@ using StardewValley;
 using StardewValley.Network;
 using StardewValley.Objects;
 
+using Leclair.Stardew.BetterCrafting.Models;
+
 namespace Leclair.Stardew.BetterCrafting {
 
 	public interface IBetterCrafting {
 
+		[Obsolete("Please use the other call with additional parameters.")]
 		bool OpenCraftingMenu(
 			bool cooking,
-			IList<Chest> containers = null,
-			GameLocation location = null,
+			IList<Chest>? containers = null,
+			GameLocation? location = null,
 			Vector2? position = null,
 			bool silent_open = false,
-			IList<string> listed_recipes = null
-		);
-
-		bool OpenCraftingMenu(
-			bool cooking,
-			IList<object> containers = null,
-			GameLocation location = null,
-			Vector2? position = null,
-			Rectangle? area = null,
-			bool silent_open = false,
-			bool discover_containers = true,
-			IList<string> listed_recipes = null
+			IList<string>? listed_recipes = null
 		);
 
 		/// <summary>
@@ -67,12 +61,12 @@ namespace Leclair.Stardew.BetterCrafting {
 		bool OpenCraftingMenu(
 			bool cooking,
 			bool silent_open = false,
-			GameLocation location = null,
+			GameLocation? location = null,
 			Vector2? position = null,
 			Rectangle? area = null,
 			bool discover_containers = true,
-			IList<Tuple<object, GameLocation>> containers = null,
-			IList<string> listed_recipes = null
+			IList<Tuple<object, GameLocation>>? containers = null,
+			IList<string>? listed_recipes = null
 		);
 
 		/// <summary>
@@ -113,22 +107,39 @@ namespace Leclair.Stardew.BetterCrafting {
 		/// <returns>A collection of the recipes.</returns>
 		IReadOnlyCollection<IRecipe> GetRecipes(bool cooking);
 
+		/// <summary>
+		/// Register an inventory provider with Better Crafting. Inventory
+		/// providers are used for interfacing with chests and other objects
+		/// in the world that contain items.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="provider"></param>
 		void RegisterInventoryProvider(Type type, IInventoryProvider provider);
 
+		/// <summary>
+		/// Unregister an inventory provider.
+		/// </summary>
+		/// <param name="type"></param>
 		void UnregisterInventoryProvider(Type type);
 
 		void RegisterInventoryProvider(
 			Type type,
-			Func<object, GameLocation, Farmer, bool> isValid,
-			Func<object, GameLocation, Farmer, bool> canExtractItems,
-			Func<object, GameLocation, Farmer, bool> canInsertItems,
-			Func<object, GameLocation, Farmer, NetMutex> getMutex,
-			Func<object, GameLocation, Farmer, int> getActualCapacity,
-			Func<object, GameLocation, Farmer, IList<Item>> getItems,
-			Action<object, GameLocation, Farmer> cleanInventory,
-			Func<object, GameLocation, Farmer, Rectangle?> getMultiTileRegion,
-			Func<object, GameLocation, Farmer, Vector2?> getTilePosition
+			Func<object, GameLocation?, Farmer?, bool>? isValid,
+			Func<object, GameLocation?, Farmer?, bool>? canExtractItems,
+			Func<object, GameLocation?, Farmer?, bool>? canInsertItems,
+			Func<object, GameLocation?, Farmer?, NetMutex?>? getMutex,
+			Func<object, GameLocation?, Farmer?, bool>? isMutexRequired,
+			Func<object, GameLocation?, Farmer?, int>? getActualCapacity,
+			Func<object, GameLocation?, Farmer?, IList<Item?>?>? getItems,
+			Func<object, GameLocation?, Farmer?, Item, bool>? isItemValid,
+			Action<object, GameLocation?, Farmer?>? cleanInventory,
+			Func<object, GameLocation?, Farmer?, Rectangle?>? getMultiTileRegion,
+			Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition
 		);
+
+		IIngredient CreateBaseIngredient(int item, int quantity);
+
+		IIngredient CreateCurrencyIngredient(string type, int quantity);
 	}
 
 
@@ -144,39 +155,12 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public bool OpenCraftingMenu(
 			bool cooking,
-			IList<Chest> containers = null,
-			GameLocation location = null,
+			IList<Chest>? containers = null,
+			GameLocation? location = null,
 			Vector2? position = null,
 			bool silent_open = false,
-			IList<string> listed_recipes = null
+			IList<string>? listed_recipes = null
 		) {
-
-			return OpenCraftingMenu(
-				cooking: cooking,
-				containers: containers?.ToList<object>(),
-				location: location,
-				position: position,
-				silent_open: silent_open,
-				discover_containers: false,
-				listed_recipes: listed_recipes
-			);
-		}
-
-		public bool OpenCraftingMenu(
-			bool cooking,
-			IList<object> containers = null,
-			GameLocation location = null,
-			Vector2? position = null,
-			Rectangle? area = null,
-			bool silent_open = false,
-			bool discover_containers = true,
-			IList<string> listed_recipes = null
-		) {
-			if (listed_recipes == null)
-				listed_recipes = cooking ?
-					Mod.intCCStation.GetCookingRecipes() :
-					Mod.intCCStation.GetCraftingRecipes();
-
 			var menu = Game1.activeClickableMenu;
 			if (menu != null) {
 				if (!menu.readyToClose())
@@ -188,14 +172,13 @@ namespace Leclair.Stardew.BetterCrafting {
 
 			Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
 				Mod,
-				location,
-				position,
-				area,
+				location: location,
+				position: position,
 				cooking: cooking,
 				standalone_menu: true,
-				material_containers: containers,
+				material_containers: containers?.ToList<object>(),
+				discover_containers: true,
 				silent_open: silent_open,
-				discover_containers: discover_containers,
 				listed_recipes: listed_recipes
 			);
 
@@ -205,12 +188,12 @@ namespace Leclair.Stardew.BetterCrafting {
 		public bool OpenCraftingMenu(
 			bool cooking,
 			bool silent_open = false,
-			GameLocation location = null,
+			GameLocation? location = null,
 			Vector2? position = null,
 			Rectangle? area = null,
 			bool discover_containers = true,
-			IList<Tuple<object, GameLocation>> containers = null,
-			IList<string> listed_recipes = null
+			IList<Tuple<object, GameLocation>>? containers = null,
+			IList<string>? listed_recipes = null
 		) {
 			if (listed_recipes == null)
 				listed_recipes = cooking ?
@@ -278,31 +261,45 @@ namespace Leclair.Stardew.BetterCrafting {
 
 		public void RegisterInventoryProvider(
 			Type type,
-			Func<object, GameLocation, Farmer, bool> isValid,
-			Func<object, GameLocation, Farmer, bool> canExtractItems,
-			Func<object, GameLocation, Farmer, bool> canInsertItems,
-			Func<object, GameLocation, Farmer, NetMutex> getMutex,
-			Func<object, GameLocation, Farmer, int> getActualCapacity,
-			Func<object, GameLocation, Farmer, IList<Item>> getItems,
-			Action<object, GameLocation, Farmer> cleanInventory,
-			Func<object, GameLocation, Farmer, Rectangle?> getMultiTileRegion,
-			Func<object, GameLocation, Farmer, Vector2?> getTilePosition
+			Func<object, GameLocation?, Farmer?, bool>? isValid,
+			Func<object, GameLocation?, Farmer?, bool>? canExtractItems,
+			Func<object, GameLocation?, Farmer?, bool>? canInsertItems,
+			Func<object, GameLocation?, Farmer?, NetMutex?>? getMutex,
+			Func<object, GameLocation?, Farmer?, bool>? isMutexRequired,
+			Func<object, GameLocation?, Farmer?, int>? getActualCapacity,
+			Func<object, GameLocation?, Farmer?, IList<Item?>?>? getItems,
+			Func<object, GameLocation?, Farmer?, Item, bool>? isItemValid,
+			Action<object, GameLocation?, Farmer?>? cleanInventory,
+			Func<object, GameLocation?, Farmer?, Rectangle?>? getMultiTileRegion,
+			Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition
 		) {
 			
-
-			var provider = new Models.ModInventoryProvider(
+			var provider = new ModInventoryProvider(
 				canExtractItems: canExtractItems,
 				canInsertItems: canInsertItems,
 				cleanInventory: cleanInventory,
 				getActualCapacity: getActualCapacity,
 				getItems: getItems,
+				isItemValid: isItemValid,
 				getMultiTileRegion: getMultiTileRegion,
 				getTilePosition: getTilePosition,
 				getMutex: getMutex,
+				isMutexRequired: isMutexRequired,
 				isValid: isValid
 			);
 
 			Mod.RegisterInventoryProvider(type, provider);
+		}
+
+		public IIngredient CreateBaseIngredient(int item, int quantity) {
+			return new BaseIngredient(item, quantity);
+		}
+
+		public IIngredient CreateCurrencyIngredient(string type, int quantity) {
+			if (!Enum.TryParse(typeof(CurrencyType), type, out object? currency) || currency is not CurrencyType ctype)
+				return new ErrorIngredient();
+
+			return new CurrencyIngredient(ctype, quantity);
 		}
 	}
 }
