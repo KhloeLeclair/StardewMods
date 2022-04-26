@@ -4,21 +4,19 @@
 		<AssemblyName>BCSpaceCore</AssemblyName>
 		<Version>1.1.1</Version>
 		<RootNamespace>Leclair.Stardew.BCSpaceCore</RootNamespace>
-		<TargetFramework>net5.0</TargetFramework>
+
+		<EnableTranslation>true</EnableTranslation>
 	</PropertyGroup>
+
 	<Import Project="..\_build\common.targets" />
 	<ItemGroup>
-	  <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.0" />
+		<Reference Include="SpaceCore">
+			<HintPath>$(GameModsPath)\SpaceCore\SpaceCore.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj">
-	    <Private>false</Private>
-	  </ProjectReference>
-	</ItemGroup>
-	<ItemGroup>
-	  <Reference Include="SpaceCore">
-	    <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\DevMods\SpaceCore\SpaceCore.dll</HintPath>
-	    <Private>false</Private>
-	  </Reference>
-	</ItemGroup>
+	<PropertyGroup>
+		<DefineConstants>IS_BETTER_CRAFTING</DefineConstants>
+	</PropertyGroup>
 </Project>

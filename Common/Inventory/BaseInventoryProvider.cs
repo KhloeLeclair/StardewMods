@@ -78,7 +78,7 @@ public abstract class BaseInventoryProvider<T> : IInventoryProvider where T : cl
 
 	/// <inheritdoc />
 	public bool IsMutexRequired(object obj, GameLocation? location, Farmer? who) {
-		return obj is T tobj ? IsMutexRequired(tobj, location, who) : true;
+		return obj is not T tobj || IsMutexRequired(tobj, location, who);
 	}
 
 	/// <inheritdoc cref="IsMutexRequired(object, GameLocation?, Farmer?)" />

@@ -38,7 +38,7 @@ public class ScrollableFlow {
 
 	public readonly int Region;
 
-	private int lastID;
+	private readonly int lastID;
 
 	private int _x;
 	private int _y;
@@ -347,24 +347,24 @@ public class ScrollableFlow {
 
 	#region Flow Management
 
-	public void Set(IEnumerable<IFlowNode> nodes) {
+	public void Set(IEnumerable<IFlowNode>? nodes) {
 		Set(nodes, 4, ScrollOffset);
 	}
 
-	public void Set(IEnumerable<IFlowNode> nodes, int step) {
+	public void Set(IEnumerable<IFlowNode>? nodes, int step) {
 		Set(nodes, step, ScrollOffset);
 	}
 
-	public void Set(IEnumerable<IFlowNode> nodes, float step) {
+	public void Set(IEnumerable<IFlowNode>? nodes, float step) {
 		Set(nodes, step, ScrollOffset);
 	}
 
-	public void Set(IEnumerable<IFlowNode> nodes, int step, float scroll) {
+	public void Set(IEnumerable<IFlowNode>? nodes, int step, float scroll) {
 		Vector2 size = (DefaultFont ?? Game1.smallFont).MeasureString(@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
 		Set(nodes, size.Y * step, scroll);
 	}
 
-	public void Set(IEnumerable<IFlowNode> nodes, float step, float scroll) {
+	public void Set(IEnumerable<IFlowNode>? nodes, float step, float scroll) {
 		if (nodes == null) {
 			Flow = null;
 
@@ -449,7 +449,7 @@ public class ScrollableFlow {
 		return true;
 	}
 
-	public bool ScrollTo(IFlowNode node, float offset = 0) {
+	public bool ScrollTo(IFlowNode? node, float offset = 0) {
 		if (!Flow.HasValue || node == null)
 			return false;
 
@@ -472,7 +472,7 @@ public class ScrollableFlow {
 
 	#region Events
 
-	public bool LeftClickHeld(int x, int y, bool playSound = true) {
+	public bool LeftClickHeld(int x, int y) {
 		if (!Scrolling)
 			return false;
 
@@ -486,7 +486,7 @@ public class ScrollableFlow {
 		return true;
 	}
 
-	public void ReleaseLeftClick(int x, int y) {
+	public void ReleaseLeftClick() {
 		Scrolling = false;
 	}
 
@@ -536,7 +536,7 @@ public class ScrollableFlow {
 		return false;
 	}
 
-	public bool ReceiveRightClick(int x, int y, bool playSound = true) {
+	public bool ReceiveRightClick(int x, int y) {
 		if (x < _x || x > (_width + _x) || y < _y || y > (_height + _y))
 			return false;
 

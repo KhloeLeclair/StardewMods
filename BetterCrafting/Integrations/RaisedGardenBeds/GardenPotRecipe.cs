@@ -1,7 +1,8 @@
+#nullable enable
+
 using System.Linq;
 
 using Leclair.Stardew.BetterCrafting.Models;
-using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 
 using Microsoft.Xna.Framework;
@@ -9,89 +10,87 @@ using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
 
-namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds {
-	public class GardenPotRecipe : IRecipe {
+namespace Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
 
-		private readonly RGBIntegration RGB;
+public class GardenPotRecipe : IRecipe {
 
-		private readonly CraftingRecipe Recipe;
-		private readonly string Variant;
-		private readonly object Info;
-		private readonly string SpriteKey;
+	private readonly RGBIntegration RGB;
 
-		public GardenPotRecipe(RGBIntegration rgb, CraftingRecipe recipe) {
-			RGB = rgb;
-			Recipe = recipe;
+	private readonly CraftingRecipe Recipe;
+	private readonly string Variant;
+	private readonly object Info;
+	private readonly string SpriteKey;
 
-			Variant = RGB.GetVariantKeyFromName(Name);
-			DisplayName = RGB.GetDisplayNameFromVariantKey(Variant);
-			Description = RGB.GetRawDescription();
-			Info = RGB.GetItemDefinition(Variant);
+	public GardenPotRecipe(RGBIntegration rgb, CraftingRecipe recipe) {
+		RGB = rgb;
+		Recipe = recipe;
 
-			SpriteKey = RGB.GetSpriteKey(Info);
+		Variant = RGB.GetVariantKeyFromName(Name);
+		DisplayName = RGB.GetDisplayNameFromVariantKey(Variant);
+		Description = RGB.GetRawDescription();
+		Info = RGB.GetItemDefinition(Variant)!;
 
-			Ingredients = recipe.recipeList
-				.Select(val => new BaseIngredient(val.Key, val.Value))
-				.ToArray();
-		}
+		SpriteKey = RGB.GetSpriteKey(Info);
 
-		// Identity
+		Ingredients = recipe.recipeList
+			.Select(val => new BaseIngredient(val.Key, val.Value))
+			.ToArray();
+	}
 
-		public int SortValue => Recipe.itemToProduce[0];
+	// Identity
 
-		// Display
+	public int SortValue => Recipe.itemToProduce[0];
 
-		public string Name => Recipe.name;
-		public string DisplayName { get; }
-		public string Description { get; }
+	// Display
 
-		public virtual bool HasRecipe(Farmer who) {
-			return who.craftingRecipes.ContainsKey(Name);
-		}
+	public string Name => Recipe.name;
+	public string DisplayName { get; }
+	public string Description { get; }
 
-		public virtual int GetTimesCrafted(Farmer who) {
-			if (who.craftingRecipes.ContainsKey(Name))
-				return who.craftingRecipes[Name];
+	public virtual bool HasRecipe(Farmer who) {
+		return who.craftingRecipes.ContainsKey(Name);
+	}
 
-			return 0;
-		}
+	public virtual int GetTimesCrafted(Farmer who) {
+		if (who.craftingRecipes.ContainsKey(Name))
+			return who.craftingRecipes[Name];
 
-		public CraftingRecipe CraftingRecipe => Recipe;
+		return 0;
+	}
 
-		// Display
+	public CraftingRecipe CraftingRecipe => Recipe;
 
-		//public SpriteInfo Sprite => new(Texture, SourceRectangle);
+	// Display
 
-		public Texture2D Texture => RGB.GetSprite(SpriteKey);
+	public Texture2D Texture => RGB.GetSprite(SpriteKey);
 
-		public Rectangle SourceRectangle => RGB.GetSpriteSourceRectangle(spriteIndex: RGB.GetSpriteIndex(Info));
+	public Rectangle SourceRectangle => RGB.GetSpriteSourceRectangle(spriteIndex: RGB.GetSpriteIndex(Info));
 
-		public int GridHeight => Recipe.bigCraftable ? 2 : 1;
+	public int GridHeight => Recipe.bigCraftable ? 2 : 1;
 
-		public int GridWidth => 1;
+	public int GridWidth => 1;
 
-		// Cost
+	// Cost
 
-		public int QuantityPerCraft => Recipe.numberProducedPerCraft;
+	public int QuantityPerCraft => Recipe.numberProducedPerCraft;
 
-		public IIngredient[] Ingredients { get; }
+	public IIngredient[] Ingredients { get; }
 
-		public bool Stackable => true;
+	public bool Stackable => true;
 
-		public bool CanCraft(Farmer who) {
-			return true;
-		}
+	public bool CanCraft(Farmer who) {
+		return true;
+	}
 
-		public string GetTooltipExtra(Farmer who) {
-			return null;
-		}
+	public string? GetTooltipExtra(Farmer who) {
+		return null;
+	}
 
-		public Item CreateItem() {
-			return RGB.MakeOutdoorPot(Variant);
-		}
+	public Item? CreateItem() {
+		return RGB.MakeOutdoorPot(Variant);
+	}
 
-		public void PerformCraft(IPerformCraftEvent evt) {
-			evt.Complete();
-		}
+	public void PerformCraft(IPerformCraftEvent evt) {
+		evt.Complete();
 	}
 }

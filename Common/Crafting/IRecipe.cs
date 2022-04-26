@@ -7,6 +7,14 @@ using StardewValley;
 
 namespace Leclair.Stardew.Common.Crafting;
 
+// Remember to update IBetterCrafting whenever this changes!
+
+/// <summary>
+/// An <c>IRecipe</c> represents a single crafting recipe, though it need not
+/// be associated with a vanilla <see cref="StardewValley.CraftingRecipe"/>.
+/// Recipes usually produce <see cref="Item"/>s, but they are not required
+/// to do so.
+/// </summary>
 public interface IRecipe {
 
 	#region Identity
@@ -122,7 +130,7 @@ public interface IRecipe {
 	/// a building, if they cannot.
 	/// </summary>
 	/// <param name="who">The player we're asking about.</param>
-	string GetTooltipExtra(Farmer who);
+	string? GetTooltipExtra(Farmer who);
 
 	/// <summary>
 	/// Create an instance of the Item this recipe crafts, if this recipe

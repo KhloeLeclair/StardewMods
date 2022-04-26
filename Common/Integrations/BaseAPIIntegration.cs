@@ -27,6 +27,9 @@ public abstract class BaseAPIIntegration<T, M> : BaseIntegration<M> where M : Mo
 		}
 	}
 
+	[MemberNotNullWhen(true, nameof(API))]
+	public override bool IsLoaded { get; protected set; }
+
 	[MemberNotNull(nameof(API))]
 	protected override void AssertLoaded() {
 		base.AssertLoaded();

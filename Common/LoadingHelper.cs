@@ -1,5 +1,7 @@
 #nullable enable
 
+#define PRE_314
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
@@ -34,7 +36,8 @@ public static class LoadingHelper {
 			string[] mods = itg.Mods
 				.Where(id => registry.IsLoaded(id))
 				.Select(id => registry.Get(id))
-				.Select(info => info.Manifest.Name)
+				.Where(info => info is not null)
+				.Select(info => info!.Manifest.Name)
 				.ToArray();
 
 			if (mods.Length == 0)
@@ -53,8 +56,8 @@ public static class LoadingHelper {
 
 		// If we have an index, let's try loading various language versions.
 		if (idx != -1) {
-			string prefix = key.Substring(0, idx);
-			string postfix = key.Substring(idx + 1);
+			string prefix = key[..idx];
+			string postfix = key[(idx + 1)..];
 
 			string path = $"{prefix}.{locale}.{postfix}";
 
@@ -63,7 +66,7 @@ public static class LoadingHelper {
 
 			int i = locale.IndexOf('-');
 			if (i != -1) {
-				path = $"{prefix}.{locale.Substring(0, i)}.{postfix}";
+				path = $"{prefix}.{locale[..i]}.{postfix}";
 
 				if (pack.HasFile(path))
 					return true;
@@ -74,33 +77,49 @@ public static class LoadingHelper {
 		return pack.HasFile(key);
 	}
 
-	internal static T LoadLocalizedAsset<T>(this IContentPack pack, string key, string locale) {
+	internal static T LoadLocalizedAsset<T>(this IContentPack pack, string key, string locale) where T : notnull {
 		int idx = string.IsNullOrEmpty(locale) ? -1 : key.LastIndexOf('.');
 
 		// If we have an index, let's try loading various language versions.
 		if (idx != -1) {
-			string prefix = key.Substring(0, idx);
-			string postfix = key.Substring(idx + 1);
+			string prefix = key[..idx];
+			string postfix = key[(idx + 1)..];
 
 			string path = $"{prefix}.{locale}.{postfix}";
 
 			if (pack.HasFile(path))
+#if PRE_314
+				return pack.LoadAsset<T>(path);
+#else
 				return pack.ModContent.Load<T>(path);
+#endif
+
 
 			int i = locale.IndexOf('-');
 			if (i != -1) {
-				path = $"{prefix}.{locale.Substring(0, i)}.{postfix}";
+				path = $"{prefix}.{locale[..i]}.{postfix}";
 
 				if (pack.HasFile(path))
+#if PRE_314
+					return pack.LoadAsset<T>(path);
+#else
 					return pack.ModContent.Load<T>(path);
+#endif
 			}
 		}
 
 		// Still here? Return the bare resource.
+#if PRE_314
+		return pack.LoadAsset<T>(key);
+#else
 		return pack.ModContent.Load<T>(key);
+#endif
 	}
 
-	internal static T LoadLocalized<T>(this IModContentHelper helper, string key, string? locale = null) {
+#if PRE_314
+
+#else
+	internal static T LoadLocalized<T>(this IModContentHelper helper, string key, string? locale = null) where T : notnull {
 		int idx = string.IsNullOrEmpty(locale) ? -1 : key.LastIndexOf('.');
 
 		// If we have an index, let's try loading various language versions.
@@ -132,4 +151,5 @@ public static class LoadingHelper {
 		// Still here? Return the bare resource.
 		return helper.Load<T>(key);
 	}
+#endif
 }

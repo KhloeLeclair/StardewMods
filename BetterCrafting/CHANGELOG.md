@@ -1,7 +1,7 @@
 # Changelog
 
-## Unreleased
-???
+## 1.0.0
+Released April 26th, 2022.
 
 ### Fixes
 
@@ -18,6 +18,24 @@
   items at all.
 * The API now provides convenience methods for creating simple ingredients
   so that external mods don't need to reinvent the wheel for basic tasks.
+* The API now provides convenience methods for creating simple recipes that
+  implement existing `CraftingRecipe`s with custom ingredients.
+* The API now lets mods create new default categories and add recipes to them.
+* Consolidate all interfaces used by the API into a single `.cs` file for easy
+  inclusion in other mods once SMAPI 3.14 is available.
+
+### Optional Add-Ons
+
+* Created a new add-on for Better Crafting that lets you craft buildings via
+  the crafting menu. Buildings constructed this way are finished instantly.
+  Due to the somewhat cheaty nature of the add-on, it is not included by
+  default but available as an optional download.
+
+### Maintenance
+
+* All Better Crafting code, including the API, now uses nullable annotations
+  and file-scoped namespaces.
+* General code cleanup.
 
 
 ## 0.15.0

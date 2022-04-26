@@ -16,7 +16,26 @@ public static class SimpleHelper {
 		return new(null, new LayoutNode(dir, null, margin, minSize, align));
 	}
 
-	public static void DrawHover(this ISimpleNode node, SpriteBatch batch, SpriteFont defaultFont, Color? defaultColor = null, Color? defaultShadowColor = null, int offsetX = 0, int offsetY = 0, int overrideX = -1, int overrideY = -1, float alpha = 1f, bool drawBG = true, Texture2D? bgTexture = null, Rectangle? bgSource = null, float bgScale = 1, Vector2? minSize = null) {
+	public static void DrawHover(
+		this ISimpleNode node,
+		SpriteBatch batch,
+		SpriteFont defaultFont,
+		Color? defaultColor = null,
+		Color? defaultShadowColor = null,
+		int offsetX = 0,
+		int offsetY = 0,
+		int overrideX = -1,
+		int overrideY = -1,
+		float alpha = 1f,
+		bool drawBG = true,
+		Texture2D? bgTexture = null,
+		Rectangle? bgSource = null,
+		float bgScale = 1,
+		Texture2D? divTexture = null,
+		Rectangle? divHSource = null,
+		Rectangle? divVSource = null,
+		Vector2? minSize = null
+	) {
 		// Get the node's size.
 		Vector2 size = node.GetSize(defaultFont, minSize ?? Vector2.Zero);
 
@@ -114,6 +133,11 @@ public static class SimpleHelper {
 
 		x += 16;
 		y += 16;
+
+		DividerNode.DefaultTexture = divTexture;
+		DividerNode.HorizontalSource = divHSource;
+		DividerNode.VerticalSource = divVSource;
+		DividerNode.Scale = divHSource.HasValue ? 4f : 1f;
 
 		node.Draw(batch, new Vector2(x, y), size, contSize, alpha, defaultFont, defaultColor, defaultShadowColor);
 	}

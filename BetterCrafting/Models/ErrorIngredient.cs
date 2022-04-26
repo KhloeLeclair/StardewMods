@@ -24,17 +24,17 @@ public class ErrorIngredient : IIngredient {
 
 	public string DisplayName => I18n.Ingredient_Error();
 
-	public Texture2D Texture => Game1.objectSpriteSheet;
+	public Texture2D Texture => Game1.mouseCursors;
 
 	public Rectangle SourceRectangle => SOURCE;
 
 	public int Quantity => 1;
 
-	public void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool low_quality_first) {
-			
+	public void Consume(Farmer who, IList<IInventory>? inventories, int max_quality, bool low_quality_first) {
+
 	}
 
-	public int GetAvailableQuantity(Farmer who, IList<Item?> items, IList<IInventory> inventories, int max_quality) {
+	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int max_quality) {
 		return 0;
 	}
 }

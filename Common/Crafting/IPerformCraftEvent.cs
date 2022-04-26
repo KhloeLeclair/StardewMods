@@ -5,13 +5,40 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.Crafting;
 
+// Remember to update IBetterCrafting whenever this changes!
+
+/// <summary>
+/// This event is dispatched by Better Crafting whenever a player performs a
+/// craft, and may be fired multiple times in quick succession if a player is
+/// performing bulk crafting.
+/// </summary>
 public interface IPerformCraftEvent {
 
+	/// <summary>
+	/// The player performing the craft.
+	/// </summary>
 	Farmer Player { get; }
+
+	/// <summary>
+	/// The item being crafted, may be null depending on the recipe.
+	/// </summary>
 	Item? Item { get; set; }
 
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player is
+	/// crafting from.
+	/// </summary>
 	IClickableMenu Menu { get; }
 
+	/// <summary>
+	/// Cancel the craft, marking it as a failure. The ingredients will not
+	/// be consumed and the player will not receive the item.
+	/// </summary>
 	void Cancel();
+
+	/// <summary>
+	/// Complete the craft, marking it as a success. The ingredients will be
+	/// consumed and the player will receive the item, if there is one.
+	/// </summary>
 	void Complete();
 }

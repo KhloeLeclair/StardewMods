@@ -101,7 +101,7 @@ public struct TextNode : IFlowNode {
 		bool pendingSpace = false;
 		Vector2 pendingSize = Vector2.Zero;
 
-		bool starting_line = remaining == maxWidth;
+		//bool starting_line = remaining == maxWidth;
 		bool had_new = false;
 
 		for (int idx = Text.IndexOfAny(seps, start); idx != -1; idx = Text.IndexOfAny(seps, idx + 1)) {
@@ -254,7 +254,7 @@ public struct TextNode : IFlowNode {
 	}
 
 	public override int GetHashCode() {
-		HashCode hash = new HashCode();
+		HashCode hash = new();
 		hash.Add(Text);
 		hash.Add(Style);
 		hash.Add(Alignment);

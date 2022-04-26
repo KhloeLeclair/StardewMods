@@ -6,8 +6,13 @@ using StardewValley;
 
 namespace Leclair.Stardew.Common.Crafting;
 
-public interface IRecipeProvider {
+// Remember to update IBetterCrafting whenever this changes!
 
+/// <summary>
+/// Better Crafting uses <c>IRecipeProvider</c> to discover crafting recipes
+/// for display in the menu.
+/// </summary>
+public interface IRecipeProvider {
 	/// <summary>
 	/// The priority of this recipe provider, sort sorting purposes.
 	/// When handling CraftingRecipe instances, the first provider
@@ -32,11 +37,10 @@ public interface IRecipeProvider {
 
 	/// <summary>
 	/// Get any additional recipes in IRecipe form. Additional recipes
-	/// are those recipes not included in the `CraftingRecipe.cookingRecipes`
-	/// and `CraftingRecipe.craftingRecipes` objects.
+	/// are those recipes not included in the <see cref="CraftingRecipe.cookingRecipes"/>
+	/// and <see cref="CraftingRecipe.craftingRecipes"/> objects.
 	/// </summary>
 	/// <param name="cooking">Whether we want cooking recipes or crafting recipes.</param>
 	/// <returns>An enumeration of this provider's additional recipes, or null.</returns>
 	IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking);
-
 }

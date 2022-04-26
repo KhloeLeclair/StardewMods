@@ -1,6 +1,7 @@
+#nullable enable
+
 using System.Collections.Generic;
 
-using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Inventory;
 
@@ -8,8 +9,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-
-using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -66,7 +65,7 @@ public class CurrencyIngredient : IIngredient {
 
 	public int Quantity { get; }
 
-	public void Consume(Farmer who, IList<IInventory> inventories, int max_quality, bool low_quality_first) {
+	public void Consume(Farmer who, IList<IInventory>? inventories, int max_quality, bool low_quality_first) {
 		switch (Type) {
 			case CurrencyType.Money:
 				who.Money -= Quantity;
@@ -83,7 +82,7 @@ public class CurrencyIngredient : IIngredient {
 		}
 	}
 
-	public int GetAvailableQuantity(Farmer who, IList<Item> items, IList<IInventory> inventories, int max_quality) {
+	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int max_quality) {
 		switch (Type) {
 			case CurrencyType.Money:
 				return who.Money;

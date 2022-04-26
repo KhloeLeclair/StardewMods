@@ -1,12 +1,11 @@
-#nullable enable
-
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
+#if IS_BETTER_CRAFTING
+using Leclair.Stardew.Common.Crafting;
+#else
 using Leclair.Stardew.BetterCrafting;
+#endif
 
 using StardewValley;
 using StardewValley.BellsAndWhistles;
@@ -34,9 +33,10 @@ internal class BuildMenu : IClickableMenu {
 	private BluePrint? DemolishCheckBlueprint = null;
 	private Building? MovingBuilding = null;
 
-	private string Message;
+	private readonly string Message;
 
 	private bool frozen = false;
+	private bool checkingDemolish = false;
 
 	public BuildMenu(BluePrint? bp, ActionType action, IPerformCraftEvent evt, ModEntry mod) : base() {
 		Mod = mod;
@@ -77,17 +77,20 @@ internal class BuildMenu : IClickableMenu {
 	protected override void cleanupBeforeExit() {
 		base.cleanupBeforeExit();
 
+		if (Location is not null)
+			foreach (Building building in Location.buildings)
+				building.color.Value = Color.White;
+
 		Game1.displayHUD = true;
 		Game1.viewportFreeze = false;
 		Game1.displayFarmer = true;
-
 	}
 
 	public override bool shouldClampGamePadCursor() {
 		return true;
 	}
 
-	public bool CanPaintHouse() {
+	public static bool CanPaintHouse() {
 		return Game1.MasterPlayer.HouseUpgradeLevel >= 2;
 	}
 
@@ -202,7 +205,10 @@ internal class BuildMenu : IClickableMenu {
 
 		Keys[] pressedKeys = Game1.oldKBState.GetPressedKeys();
 		foreach (Keys key in pressedKeys)
-			receiveKeyPress(key);
+			if (!Game1.options.doesInputListContain(Game1.options.menuButton, key))
+				receiveKeyPress(key);
+
+		checkingDemolish = false;
 
 		if (Game1.IsMultiplayer)
 			return;
@@ -219,7 +225,7 @@ internal class BuildMenu : IClickableMenu {
 		if (frozen || Action == ActionType.Build || Location == null)
 			return;
 
-		Vector2 mouseTile = new Vector2(
+		Vector2 mouseTile = new(
 			(Game1.viewport.X + Game1.getOldMouseX(ui_scale: false)) / 64,
 			(Game1.viewport.Y + Game1.getOldMouseY(ui_scale: false)) / 64
 		);
@@ -265,7 +271,7 @@ internal class BuildMenu : IClickableMenu {
 	}
 
 	public override bool readyToClose() {
-		if (MovingBuilding != null)
+		if (MovingBuilding != null || checkingDemolish)
 			return false;
 
 		return base.readyToClose();
@@ -313,7 +319,7 @@ internal class BuildMenu : IClickableMenu {
 		if (Location is null)
 			return;
 
-		Vector2 mouseTile = new Vector2(
+		Vector2 mouseTile = new(
 			(Game1.viewport.X + Game1.getOldMouseX(ui_scale: false)) / 64,
 			(Game1.viewport.Y + Game1.getOldMouseY(ui_scale: false)) / 64
 		);
@@ -398,11 +404,11 @@ internal class BuildMenu : IClickableMenu {
 					return;
 				}
 
-				Action lockFailed = delegate {
+				void lockFailed() {
 					Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString(@"Strings\UI:Carpenter_CantDemolish_LockFailed"), Color.Red, 3500f));
-				};
+				}
 
-				Action continueDemolish = delegate {
+				void continueDemolish() {
 					if (Location == null || !Location.buildings.Contains(building))
 						return;
 
@@ -463,7 +469,7 @@ internal class BuildMenu : IClickableMenu {
 							DemolishCheckBlueprint = new BluePrint(building.buildingType.Value);
 
 						if (DemolishCheckBlueprint != null) {
-							foreach(var entry in DemolishCheckBlueprint.itemsRequired) {
+							foreach (var entry in DemolishCheckBlueprint.itemsRequired) {
 								Game1.player.addItemToInventory(new StardewValley.Object(entry.Key, entry.Value));
 							}
 						}
@@ -474,9 +480,10 @@ internal class BuildMenu : IClickableMenu {
 							Game1.player.forceCanMove();
 						}, 2000);
 					}
-				};
+				}
 
 				if (cabin != null && cabin.farmhand.Value.isCustomized.Value) {
+					checkingDemolish = true;
 					Game1.currentLocation.createQuestionDialogue(
 						Game1.content.LoadString(@"Strings\UI:Carpenter_DemolishCabinConfirm", cabin.farmhand.Value.Name),
 						Game1.currentLocation.createYesNoResponses(),
@@ -596,12 +603,6 @@ internal class BuildMenu : IClickableMenu {
 		else if (Action == ActionType.Move)
 			DrawMove(b, mouseTile);
 
-		else if (Action == ActionType.Paint)
-			DrawPaint(b, mouseTile);
-
-		else if (Action == ActionType.Demolish)
-			DrawDemolish(b, mouseTile);
-
 		Game1.EndWorldDrawInUI(b);
 
 		if (!string.IsNullOrEmpty(Message))
@@ -623,7 +624,7 @@ internal class BuildMenu : IClickableMenu {
 		for (int y = 0; y < Blueprint.tilesHeight; y++) {
 			for (int x = 0; x < Blueprint.tilesWidth; x++) {
 				int idx = Blueprint.getTileSheetIndexForStructurePlacementTile(x, y);
-				Vector2 tile = new Vector2(mouseTile.X + x, mouseTile.Y + y);
+				Vector2 tile = new(mouseTile.X + x, mouseTile.Y + y);
 				if (!Location.isBuildable(tile))
 					idx++;
 
@@ -634,7 +635,7 @@ internal class BuildMenu : IClickableMenu {
 			int x = extra.X;
 			int y = extra.Y;
 			int idx = Blueprint.getTileSheetIndexForStructurePlacementTile(x, y);
-			Vector2 tile = new Vector2(mouseTile.X + (float) x, mouseTile.Y + (float) y);
+			Vector2 tile = new(mouseTile.X + x, mouseTile.Y + y);
 			if (!Location.isBuildable(tile))
 				idx++;
 			b.Draw(Game1.mouseCursors, Game1.GlobalToLocal(Game1.viewport, tile * 64f), new Rectangle(194 + idx * 16, 388, 16, 16), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.999f);
@@ -648,7 +649,7 @@ internal class BuildMenu : IClickableMenu {
 		for (int y = 0; y < MovingBuilding.tilesHigh.Value; y++) {
 			for (int x = 0; x < MovingBuilding.tilesWide.Value; x++) {
 				int idx = MovingBuilding.getTileSheetIndexForStructurePlacementTile(x, y);
-				Vector2 tile = new Vector2(mouseTile.X + x, mouseTile.Y + y);
+				Vector2 tile = new(mouseTile.X + x, mouseTile.Y + y);
 				bool occupying = Location.buildings.Contains(MovingBuilding) && MovingBuilding.occupiesTile(tile);
 				if (!Location.isBuildable(tile) && !occupying)
 					idx++;
@@ -660,19 +661,11 @@ internal class BuildMenu : IClickableMenu {
 			int x = extra.X;
 			int y = extra.Y;
 			int idx = MovingBuilding.getTileSheetIndexForStructurePlacementTile(x, y);
-			Vector2 tile = new Vector2(mouseTile.X + (float) x, mouseTile.Y + (float) y);
+			Vector2 tile = new(mouseTile.X + x, mouseTile.Y + y);
 			bool occupying = Location.buildings.Contains(MovingBuilding) && MovingBuilding.occupiesTile(tile);
 			if (!Location.isBuildable(tile) && !occupying)
 				idx++;
 			b.Draw(Game1.mouseCursors, Game1.GlobalToLocal(Game1.viewport, tile * 64f), new Rectangle(194 + idx * 16, 388, 16, 16), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.999f);
 		}
-	}
-
-	public void DrawPaint(SpriteBatch b, Vector2 mouseTile) {
-
-	}
-
-	public void DrawDemolish(SpriteBatch b, Vector2 mouseTile) {
-
 	}
 }

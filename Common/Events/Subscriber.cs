@@ -5,6 +5,6 @@ using System;
 namespace Leclair.Stardew.Common.Events;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class Subscriber : System.Attribute {
+public class Subscriber : Attribute {
 
 }

@@ -15,7 +15,8 @@ public abstract class BaseIntegration<M> where M : Mod {
 	public string? MinVersion { get; }
 	public string? MaxVersion { get; }
 
-	public bool IsLoaded { get; protected set; }
+	[MemberNotNullWhen(true, nameof(Manifest))]
+	public virtual bool IsLoaded { get; protected set; }
 
 	public IManifest? Manifest { get; }
 

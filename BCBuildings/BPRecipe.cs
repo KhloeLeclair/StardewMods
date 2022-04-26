@@ -1,15 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 
+using System.Collections.Generic;
+
+#if IS_BETTER_CRAFTING
+using Leclair.Stardew.Common.Crafting;
+using Leclair.Stardew.BetterCrafting.Models;
+#else
 using Leclair.Stardew.BetterCrafting;
+#endif
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
 using StardewValley.Locations;
-using StardewValley.Menus;
 
 namespace Leclair.Stardew.BCBuildings; 
 
@@ -27,12 +31,17 @@ public class BPRecipe : IRecipe {
 
 		if (blueprint.itemsRequired != null)
 			foreach (var entry in blueprint.itemsRequired)
-				ingredients.Add(mod.API.CreateBaseIngredient(entry.Key, entry.Value));
+				ingredients.Add(mod.API!.CreateBaseIngredient(entry.Key, entry.Value));
 
 		if (blueprint.moneyRequired > 0)
-			ingredients.Add(mod.API.CreateCurrencyIngredient("Money", blueprint.moneyRequired));
+			ingredients.Add(mod.API!.CreateCurrencyIngredient(CurrencyType.Money, blueprint.moneyRequired));
 
 		Ingredients = ingredients.ToArray();
+
+		if (mod.BuildingSources.TryGetValue(blueprint.name, out Rectangle? source)) {
+			SourceRectangle = source ?? Blueprint.texture.Bounds;
+		} else
+			SourceRectangle = Blueprint.sourceRectForMenuView;
 	}
 
 	// Identity
@@ -50,12 +59,12 @@ public class BPRecipe : IRecipe {
 		return 0;
 	}
 
-	public CraftingRecipe CraftingRecipe => null;
+	public CraftingRecipe? CraftingRecipe => null;
 
 	// Display
 
 	public Texture2D Texture => Blueprint.texture;
-	public Rectangle SourceRectangle => Blueprint.sourceRectForMenuView;
+	public Rectangle SourceRectangle { get; }
 
 	public int GridHeight {
 		get {
@@ -84,7 +93,7 @@ public class BPRecipe : IRecipe {
 
 	public bool Stackable => false;
 
-	public Item CreateItem() {
+	public Item? CreateItem() {
 		return null;
 	}
 
@@ -101,11 +110,11 @@ public class BPRecipe : IRecipe {
 
 	public string? GetTooltipExtra(Farmer who) {
 		if (who.currentLocation is not BuildableGameLocation bgl)
-			return "@C{red}You cannot build in your current location.";
+			return I18n.Error_NotBuildable();
 
 		if (Blueprint.isUpgrade() && !bgl.isBuildingConstructed(Blueprint.nameOfBuildingToUpgrade)) {
 			string other = new BluePrint(Blueprint.nameOfBuildingToUpgrade).displayName;
-			return $"@C{{red}}There is not an existing @B{other}@b to upgrade.";
+			return I18n.Error_CantUpgrade(other);
 		}
 
 		return null;

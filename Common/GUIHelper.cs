@@ -21,7 +21,7 @@ public static class GUIHelper {
 		return yPos / 10000f;
 	}
 
-	public static void LinkComponents(Side side, Func<int, ClickableComponent>? getComponent, params ClickableComponent[] components) {
+	public static void LinkComponents(Side side, Func<int, ClickableComponent>? getComponent, params ClickableComponent?[] components) {
 		ClickableComponent? last = null;
 
 		// Example:
@@ -33,7 +33,7 @@ public static class GUIHelper {
 		// [0] last: trashCan, cmp: btnInsert
 		// [1] last: btnInsert, cmp: btnExtract
 
-		foreach (ClickableComponent cmp in components) {
+		foreach (ClickableComponent? cmp in components) {
 			if (cmp == null)
 				continue;
 
@@ -41,25 +41,53 @@ public static class GUIHelper {
 				int myID = cmp.myID;
 				int lastID = last.myID;
 
-				// TODO: Re-link existing neighbors?
+				ClickableComponent? other = null;
 
 				switch (side) {
 					case Side.Up:
+						other = getComponent?.Invoke(last.upNeighborID);
+						if (other != null) {
+							cmp.upNeighborID = other.myID;
+							other.downNeighborID = myID;
+						}
+
 						cmp.downNeighborID = lastID;
 						last.upNeighborID = myID;
 						break;
+
 					case Side.Down:
+						other = getComponent?.Invoke(last.downNeighborID);
+						if (other != null) {
+							cmp.downNeighborID = other.myID;
+							other.upNeighborID = myID;
+						}
+
 						last.downNeighborID = myID;
 						cmp.upNeighborID = lastID;
 						break;
+
 					case Side.Left:
+						other = getComponent?.Invoke(last.leftNeighborID);
+						if (other != null) {
+							cmp.leftNeighborID = other.myID;
+							other.rightNeighborID = myID;
+						}
+
 						cmp.rightNeighborID = lastID;
 						last.leftNeighborID = myID;
 						break;
+
 					case Side.Right:
+						other = getComponent?.Invoke(last.rightNeighborID);
+						if (other != null) {
+							cmp.rightNeighborID = other.myID;
+							other.leftNeighborID = myID;
+						}
+
 						last.rightNeighborID = myID;
 						cmp.leftNeighborID = lastID;
 						break;
+
 					default:
 						return;
 				}
@@ -69,7 +97,7 @@ public static class GUIHelper {
 		}
 	}
 
-	public static void MoveComponents(Side side, int spacing = -1, params ClickableComponent[] components) {
+	public static void MoveComponents(Side side, int spacing = -1, params ClickableComponent?[] components) {
 		if (spacing < 0)
 			spacing = IClickableMenu.borderWidth;
 
@@ -84,7 +112,7 @@ public static class GUIHelper {
 		// [0] last: trashCan, cmp: btnInsert
 		// [1] last: btnInsert, cmp: btnExtract
 
-		foreach (ClickableComponent cmp in components) {
+		foreach (ClickableComponent? cmp in components) {
 			if (cmp == null)
 				continue;
 

@@ -112,7 +112,7 @@ public struct ComponentNode : IFlowNode {
 	}
 
 	public override int GetHashCode() {
-		HashCode hash = new HashCode();
+		HashCode hash = new();
 		hash.Add(Component);
 		hash.Add(Alignment);
 		hash.Add(UniqueId);

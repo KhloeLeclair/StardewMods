@@ -96,7 +96,7 @@ public struct SpriteNode : IFlowNode {
 	}
 
 	public override int GetHashCode() {
-		HashCode hash = new HashCode();
+		HashCode hash = new();
 		hash.Add(Sprite);
 		hash.Add(Scale);
 		hash.Add(Size);

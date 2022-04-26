@@ -1,10 +1,9 @@
 #nullable enable
 
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 using StardewValley;
@@ -37,173 +36,178 @@ public static class StringTokenizer {
 
 	#region Built-in Stuff
 
-	public static bool Handle_ArticleFor(string input, GameStateQuery.GameState state, out string result) {
-		result = Lexicon.getProperArticleForWord(input);
-		return true;
-	}
+	[SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Applies to children of class, not class itself. Don't be dumb VS")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Standardized API with Reflection for Discovery")]
+	public static class Builtins {
 
-	public static bool Handle_CharacterName(string input, GameStateQuery.GameState state, out string result) {
-		NPC who = Game1.getCharacterFromName(input);
-		result = who?.displayName ?? string.Empty;
-		return who != null;
-	}
+		public static bool Handle_ArticleFor(string input, GameStateQuery.GameState state, out string result) {
+			result = Lexicon.getProperArticleForWord(input);
+			return true;
+		}
 
-	public static bool Handle_DataString(string input, GameStateQuery.GameState state, out string result) {
-		try {
-			string[] args = input.Split(' ');
-			if (args.Length < 3) {
+		public static bool Handle_CharacterName(string input, GameStateQuery.GameState state, out string result) {
+			NPC who = Game1.getCharacterFromName(input);
+			result = who?.displayName ?? string.Empty;
+			return who != null;
+		}
+
+		public static bool Handle_DataString(string input, GameStateQuery.GameState state, out string result) {
+			try {
+				string[] args = input.Split(' ');
+				if (args.Length < 3) {
+					result = string.Empty;
+					return false;
+				}
+
+				Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(args[0]);
+				if (data.TryGetValue(args[1], out string? entry) && entry != null) {
+					int index = int.Parse(args[2]);
+					string[] bits = entry.Split('/');
+
+					if (index >= 0 && index < bits.Length) {
+						result = bits[index];
+						return true;
+					}
+				}
+
+			} catch { }
+
+			result = string.Empty;
+			return false;
+		}
+
+		public static bool Handle_DayOfMonth(string input, GameStateQuery.GameState state, out string result) {
+			result = state.date.DayOfMonth.ToString();
+			return true;
+		}
+
+		public static bool Handle_EscapedText(string input, GameStateQuery.GameState state, out string result) {
+			result = input.Replace(' ', '\u00a0');
+			return true;
+		}
+
+		public static bool Handle_FarmerUniqueID(string input, GameStateQuery.GameState state, out string result) {
+			if (state.farmer == null) {
 				result = string.Empty;
 				return false;
 			}
 
-			Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(args[0]);
-			if (data.TryGetValue(args[1], out string? entry) && entry != null) {
-				int index = int.Parse(args[2]);
-				string[] bits = entry.Split('/');
+			result = state.farmer.UniqueMultiplayerID.ToString();
+			return true;
+		}
 
-				if (index >= 0 && index < bits.Length) {
-					result = bits[index];
+		public static bool Handle_FarmName(string input, GameStateQuery.GameState state, out string result) {
+			if (state.farmer == null) {
+				result = string.Empty;
+				return false;
+			}
+
+			result = state.farmer.farmName.Value;
+			return true;
+		}
+
+		public static bool Handle_GenderedText(string input, GameStateQuery.GameState state, out string result) {
+			if (state.farmer == null) {
+				result = string.Empty;
+				return false;
+			}
+
+			string[] args = input.Split(' ');
+			result = state.farmer.IsMale || args.Length < 2 ? args[0] : args[1];
+			return true;
+		}
+
+		public static bool Handle_ItemCount(string input, GameStateQuery.GameState state, out string result) {
+			if (state.item == null) {
+				result = string.Empty;
+				return false;
+			}
+
+			result = state.item.Stack.ToString();
+			return true;
+		}
+
+		public static bool Handle_LocalizedText(string input, GameStateQuery.GameState state, out string result) {
+			string[] args = input.Split(' ');
+			if (args.Length > 1)
+				result = Game1.content.LoadString(args[0], args[1..]);
+			else
+				result = Game1.content.LoadString(args[0]);
+
+			return true;
+		}
+
+		public static bool Handle_LocationName(string input, GameStateQuery.GameState state, out string result) {
+			GameLocation loc = Game1.getLocationFromName(input);
+			if (loc == null) {
+				result = string.Empty;
+				return false;
+			}
+
+			// TODO: A way to look-up display names in 1.5.
+			result = loc.Name;
+			return true;
+		}
+
+		public static bool Handle_PositiveAdjective(string input, GameStateQuery.GameState state, out string result) {
+			result = Lexicon.getRandomPositiveAdjectiveForEventOrPerson();
+			return true;
+		}
+
+		public static bool Handle_Season(string input, GameStateQuery.GameState state, out string result) {
+			result = state.date.Season;
+			return true;
+		}
+
+		public static bool Handle_SpouseFarmerText(string input, GameStateQuery.GameState state, out string result) {
+			if (state.farmer != null) {
+				string[] args = input.Split(' ');
+				if (state.farmer.team.GetSpouse(state.farmer.UniqueMultiplayerID).HasValue) {
+					result = args[0];
+					return true;
+				}
+
+				if (state.farmer.getSpouse() != null) {
+					result = args[1];
 					return true;
 				}
 			}
 
-		} catch { }
-
-		result = string.Empty;
-		return false;
-	}
-
-	public static bool Handle_DayOfMonth(string input, GameStateQuery.GameState state, out string result) {
-		result = state.date.DayOfMonth.ToString();
-		return true;
-	}
-
-	public static bool Handle_EscapedText(string input, GameStateQuery.GameState state, out string result) {
-		result = input.Replace(' ', '\u00a0');
-		return true;
-	}
-
-	public static bool Handle_FarmerUniqueID(string input, GameStateQuery.GameState state, out string result) {
-		if (state.farmer == null) {
 			result = string.Empty;
 			return false;
 		}
 
-		result = state.farmer.UniqueMultiplayerID.ToString();
-		return true;
-	}
+		public static bool Handle_SpouseGenderedText(string input, GameStateQuery.GameState state, out string result) {
+			if (state.farmer != null) {
+				string[] args = input.Split(' ');
 
-	public static bool Handle_FarmName(string input, GameStateQuery.GameState state, out string result) {
-		if (state.farmer == null) {
-			result = string.Empty;
-			return false;
-		}
+				long? spouse = state.farmer.team.GetSpouse(state.farmer.UniqueMultiplayerID);
+				if (spouse.HasValue && Game1.getFarmerMaybeOffline(spouse.Value) is Farmer who) {
+					result = who.IsMale ?
+						args[0] : args[1];
+					return true;
+				}
 
-		result = state.farmer.farmName.Value;
-		return true;
-	}
-
-	public static bool Handle_GenderedText(string input, GameStateQuery.GameState state, out string result) {
-		if (state.farmer == null) {
-			result = string.Empty;
-			return false;
-		}
-
-		string[] args = input.Split(' ');
-		result = state.farmer.IsMale || args.Length < 2 ? args[0] : args[1];
-		return true;
-	}
-
-	public static bool Handle_ItemCount(string input, GameStateQuery.GameState state, out string result) {
-		if (state.item == null) {
-			result = string.Empty;
-			return false;
-		}
-
-		result = state.item.Stack.ToString();
-		return true;
-	}
-
-	public static bool Handle_LocalizedText(string input, GameStateQuery.GameState state, out string result) {
-		string[] args = input.Split(' ');
-		if (args.Length > 1)
-			result = Game1.content.LoadString(args[0], args[1..]);
-		else
-			result = Game1.content.LoadString(args[0]);
-
-		return true;
-	}
-
-	public static bool Handle_LocationName(string input, GameStateQuery.GameState state, out string result) {
-		GameLocation loc = Game1.getLocationFromName(input);
-		if (loc == null) {
-			result = string.Empty;
-			return false;
-		}
-
-		// TODO: A way to look-up display names in 1.5.
-		result = loc.Name;
-		return true;
-	}
-
-	public static bool Handle_PositiveAdjective(string input, GameStateQuery.GameState state, out string result) {
-		result = Lexicon.getRandomPositiveAdjectiveForEventOrPerson();
-		return true;
-	}
-
-	public static bool Handle_Season(string input, GameStateQuery.GameState state, out string result) {
-		result = state.date.Season;
-		return true;
-	}
-
-	public static bool Handle_SpouseFarmerText(string input, GameStateQuery.GameState state, out string result) {
-		if (state.farmer != null) {
-			string[] args = input.Split(' ');
-			if (state.farmer.team.GetSpouse(state.farmer.UniqueMultiplayerID).HasValue) {
-				result = args[0];
-				return true;
+				if (state.farmer.getSpouse() is NPC npc) {
+					result = npc.Gender == 0 ?
+						args[0] : args[1];
+					return true;
+				}
 			}
 
-			if (state.farmer.getSpouse() != null) {
-				result = args[1];
-				return true;
-			}
-		}
-
-		result = string.Empty;
-		return false;
-	}
-
-	public static bool Handle_SpouseGenderedText(string input, GameStateQuery.GameState state, out string result) {
-		if (state.farmer != null) {
-			string[] args = input.Split(' ');
-
-			long? spouse = state.farmer.team.GetSpouse(state.farmer.UniqueMultiplayerID);
-			if (spouse.HasValue && Game1.getFarmerMaybeOffline(spouse.Value) is Farmer who) {
-				result = who.IsMale ?
-					args[0] : args[1];
-				return true;
-			}
-
-			if (state.farmer.getSpouse() is NPC npc) {
-				result = npc.Gender == 0 ?
-					args[0] : args[1];
-				return true;
-			}
-		}
-
-		result = string.Empty;
-		return false;
-	}
-
-	public static bool Handle_SuggestedItem(string input, GameStateQuery.GameState state, out string result) {
-		if (state.item == null) {
 			result = string.Empty;
 			return false;
 		}
 
-		result = state.item.DisplayName;
-		return true;
+		public static bool Handle_SuggestedItem(string input, GameStateQuery.GameState state, out string result) {
+			if (state.item == null) {
+				result = string.Empty;
+				return false;
+			}
+
+			result = state.item.DisplayName;
+			return true;
+		}
 	}
 
 	#endregion
@@ -218,7 +222,7 @@ public static class StringTokenizer {
 
 		Initialized = true;
 
-		foreach (var method in typeof(StringTokenizer).GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)) {
+		foreach (var method in typeof(Builtins).GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)) {
 			if (!method.Name.StartsWith("Handle_"))
 				continue;
 
@@ -286,8 +290,8 @@ public static class StringTokenizer {
 					name = token;
 					trail = string.Empty;
 				} else {
-					name = token.Substring(0, space);
-					trail = token.Substring(space + 1);
+					name = token[..space];
+					trail = token[(space + 1)..];
 				}
 
 				if (Tokens.TryGetValue(name, out var handler)) {

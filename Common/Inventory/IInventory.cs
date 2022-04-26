@@ -9,6 +9,13 @@ using StardewValley.Network;
 
 namespace Leclair.Stardew.Common.Inventory;
 
+// Remember to update IBetterCrafting whenever this changes!
+
+/// <summary>
+/// An <c>IInventory</c> represents an item storage that
+/// Better Crafting is interacting with, whether by extracting
+/// items or inserting them.
+/// </summary>
 public interface IInventory {
 
 	/// <summary>

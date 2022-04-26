@@ -16,7 +16,7 @@ using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.BetterCrafting.Models;
 
-namespace Leclair.Stardew.BetterCrafting.Not;
+namespace Leclair.Stardew.BetterCrafting;
 
 #else
 
@@ -274,7 +274,7 @@ public interface IIngredient {
 	/// </summary>
 	Rectangle SourceRectangle { get; }
 
-#region Quantity
+	#region Quantity
 
 	/// <summary>
 	/// The amount of this ingredient required to perform a craft.
@@ -297,9 +297,9 @@ public interface IIngredient {
 	/// returns <c>false</c>.</param>
 	int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality);
 
-#endregion
+	#endregion
 
-#region Consumption
+	#region Consumption
 
 	/// <summary>
 	/// Consume this ingredient out of the player's inventory and the other
@@ -315,7 +315,7 @@ public interface IIngredient {
 	/// ingredients.</param>
 	void Consume(Farmer who, IList<IInventory>? inventories, int maxQuality, bool lowQualityFirst);
 
-#endregion
+	#endregion
 }
 
 
@@ -364,7 +364,7 @@ public interface IPerformCraftEvent {
 /// </summary>
 public interface IRecipe {
 
-#region Identity
+	#region Identity
 
 	/// <summary>
 	/// An addditional sorting value to apply to recipes in the Better Crafting
@@ -412,9 +412,9 @@ public interface IRecipe {
 	/// </summary>
 	CraftingRecipe? CraftingRecipe { get; }
 
-#endregion
+	#endregion
 
-#region Display
+	#region Display
 
 	/// <summary>
 	/// The texture to use when drawing this recipe in the menu.
@@ -436,9 +436,9 @@ public interface IRecipe {
 	/// </summary>
 	int GridWidth { get; }
 
-#endregion
+	#endregion
 
-#region Cost and Quantity
+	#region Cost and Quantity
 
 	/// <summary>
 	/// The quantity of item produced every time this recipe is crafted.
@@ -450,9 +450,9 @@ public interface IRecipe {
 	/// </summary>
 	IIngredient[]? Ingredients { get; }
 
-#endregion
+	#endregion
 
-#region Creation
+	#region Creation
 
 	/// <summary>
 	/// Whether or not the item created by this recipe is stackable, and thus
@@ -498,7 +498,7 @@ public interface IRecipe {
 		evt.Complete();
 	}
 
-#endregion
+	#endregion
 }
 
 
@@ -721,7 +721,9 @@ public interface IBetterCrafting {
 	/// <param name="Name">A human-readable name displayed in the menu.</param>
 	/// <param name="recipeNames">An enumeration of recipe names for recipes to
 	/// display in the category.</param>
-	void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null);
+	/// <param name="iconRecipe">The name of a recipe to use as the category's
+	/// default icon.</param>
+	void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null);
 
 	/// <summary>
 	/// Add recipes to a default category. If a player has modified their

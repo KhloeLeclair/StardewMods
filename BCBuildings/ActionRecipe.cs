@@ -1,17 +1,18 @@
 #nullable enable
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
+#if IS_BETTER_CRAFTING
+using Leclair.Stardew.Common.Crafting;
+#else
 using Leclair.Stardew.BetterCrafting;
+#endif
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
 using StardewValley.Locations;
-using StardewValley.Menus;
 
 namespace Leclair.Stardew.BCBuildings;
 
@@ -25,7 +26,7 @@ public enum ActionType {
 
 public class ActionRecipe : IRecipe {
 
-	public static Dictionary<ActionType, Rectangle> Sources = new Dictionary<ActionType, Rectangle>() {
+	public static readonly Dictionary<ActionType, Rectangle> Sources = new() {
 		[ActionType.Move] = new Rectangle(257, 284, 16, 16),
 		[ActionType.Paint] = new Rectangle(80, 208, 16, 16),
 		[ActionType.Demolish] = new Rectangle(348, 372, 17, 17)
@@ -104,9 +105,8 @@ public class ActionRecipe : IRecipe {
 		if (who.currentLocation is BuildableGameLocation)
 			return null;
 
-		return "@C{red}You cannot build in your current location.";
+		return I18n.Error_NotBuildable();
 	}
-
 
 	public void PerformCraft(IPerformCraftEvent evt) {
 

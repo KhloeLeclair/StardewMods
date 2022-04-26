@@ -115,7 +115,7 @@ public struct DividerNode : IFlowNode {
 	}
 
 	public override int GetHashCode() {
-		HashCode hash = new HashCode();
+		HashCode hash = new();
 		hash.Add(Color);
 		hash.Add(ShadowColor);
 		hash.Add(Size);

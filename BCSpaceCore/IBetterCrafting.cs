@@ -16,7 +16,7 @@ using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.BetterCrafting.Models;
 
-namespace Leclair.Stardew.BetterCrafting.Not;
+namespace Leclair.Stardew.BetterCrafting.Nope;
 
 #else
 
@@ -705,45 +705,6 @@ public interface IBetterCrafting {
 	/// <param name="lowQualityFirst">Whether or not to consume low quality
 	/// items first.</param>
 	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false);
-
-	#endregion
-
-	#region Categories
-
-	/// <summary>
-	/// Create a new default category for recipes. Every player will receive
-	/// this category, but they may delete it or alter it as they see fit.
-	/// </summary>
-	/// <param name="cooking">If true, this category is added to cooking.
-	/// Otherwise, crafting.</param>
-	/// <param name="categoryId">An internal ID for the category. Make sure
-	/// this is unique.</param>
-	/// <param name="Name">A human-readable name displayed in the menu.</param>
-	/// <param name="recipeNames">An enumeration of recipe names for recipes to
-	/// display in the category.</param>
-	void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null);
-
-	/// <summary>
-	/// Add recipes to a default category. If a player has modified their
-	/// category, this will not affect them.
-	/// </summary>
-	/// <param name="cooking">If true, we alter a cooking category.
-	/// Otherwise, crafting.</param>
-	/// <param name="categoryId">The ID of the category to alter.</param>
-	/// <param name="recipeNames">An enummeration of recipe names for recipes to
-	/// add to the category.</param>
-	void AddRecipesToDefaultCategory(bool cooking, string categoryId, IEnumerable<string> recipeNames);
-
-	/// <summary>
-	/// Remove recipes from a default category. If a player has modified their
-	/// category, this will not affect them.
-	/// </summary>
-	/// <param name="cooking">If true, we alter a cooking category.
-	/// Otherwise, crafting.</param>
-	/// <param name="categoryId">The ID of the category to alter.</param>
-	/// <param name="recipeNames">An enummeration of recipe names for recipes to
-	/// remove from the category.</param>
-	void RemoveRecipesFromDefaultCategory(bool cooking, string categoryId, IEnumerable<string> recipeNames);
 
 	#endregion
 

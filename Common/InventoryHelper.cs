@@ -171,8 +171,8 @@ public static class InventoryHelper {
 		Vector2 source,
 		GameLocation? location,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -196,8 +196,8 @@ public static class InventoryHelper {
 		Rectangle source,
 		GameLocation? location,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -234,8 +234,8 @@ public static class InventoryHelper {
 	public static List<LocatedInventory> DiscoverInventories(
 		AbsolutePosition source,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -268,10 +268,10 @@ public static class InventoryHelper {
 	public static List<LocatedInventory> DiscoverInventories(
 		Rectangle source,
 		GameLocation? location,
-		IEnumerable<LocatedInventory> sources,
+		IEnumerable<LocatedInventory>? sources,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -307,10 +307,10 @@ public static class InventoryHelper {
 	}
 
 	public static List<LocatedInventory> DiscoverInventories(
-		IEnumerable<LocatedInventory> sources,
+		IEnumerable<LocatedInventory>? sources,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -328,33 +328,34 @@ public static class InventoryHelper {
 			}
 		}
 
-		foreach (LocatedInventory source in sources) {
-			var provider = getProvider(source.Source);
-			if (provider != null && provider.IsValid(source.Source, source.Location, who)) {
-				var rect = provider.GetMultiTileRegion(source.Source, source.Location, who);
-				if (rect.HasValue) {
-					for (int x = 0; x < rect.Value.Width; x++) {
-						for (int y = 0; y < rect.Value.Height; y++) {
-							AbsolutePosition abs = new(source.Location, new(
-								rect.Value.X + x,
-								rect.Value.Y + y
-							));
+		if (sources != null)
+			foreach (LocatedInventory source in sources) {
+				var provider = getProvider(source.Source);
+				if (provider != null && provider.IsValid(source.Source, source.Location, who)) {
+					var rect = provider.GetMultiTileRegion(source.Source, source.Location, who);
+					if (rect.HasValue) {
+						for (int x = 0; x < rect.Value.Width; x++) {
+							for (int y = 0; y < rect.Value.Height; y++) {
+								AbsolutePosition abs = new(source.Location, new(
+									rect.Value.X + x,
+									rect.Value.Y + y
+								));
 
+								potentials.Add(abs);
+								origins[abs] = abs.Position;
+							}
+						}
+
+					} else {
+						var pos = provider.GetTilePosition(source.Source, source.Location, who);
+						if (pos.HasValue) {
+							AbsolutePosition abs = new(source.Location, pos.Value);
 							potentials.Add(abs);
 							origins[abs] = abs.Position;
 						}
 					}
-
-				} else {
-					var pos = provider.GetTilePosition(source.Source, source.Location, who);
-					if (pos.HasValue) {
-						AbsolutePosition abs = new(source.Location, pos.Value);
-						potentials.Add(abs);
-						origins[abs] = abs.Position;
-					}
 				}
 			}
-		}
 
 		int count = potentials.Count;
 
@@ -388,8 +389,8 @@ public static class InventoryHelper {
 	public static List<LocatedInventory> DiscoverInventories(
 		IEnumerable<AbsolutePosition> sources,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit = 5,
 		int scanLimit = 100,
 		int targetLimit = 20,
@@ -468,8 +469,8 @@ public static class InventoryHelper {
 		Dictionary<AbsolutePosition, Vector2> origins,
 		int start,
 		Farmer? who,
-		Func<object, IInventoryProvider> getProvider,
-		Func<object, bool> checkConnector,
+		Func<object, IInventoryProvider?> getProvider,
+		Func<object, bool>? checkConnector,
 		int distanceLimit,
 		int scanLimit,
 		int targetLimit,
@@ -496,7 +497,7 @@ public static class InventoryHelper {
 			}
 
 			bool want_neighbors = false;
-			IInventoryProvider provider;
+			IInventoryProvider? provider;
 
 			if (obj != null) {
 				provider = getProvider(obj);
@@ -556,14 +557,14 @@ public static class InventoryHelper {
 	public static List<LocatedInventory> LocateInventories(
 		IEnumerable<object> inventories,
 		IEnumerable<GameLocation> locations,
-		Func<object, IInventoryProvider> getProvider,
+		Func<object, IInventoryProvider?> getProvider,
 		GameLocation? first,
 		bool nullLocationValid = false
 	) {
 		List<LocatedInventory> result = new();
 
 		foreach (object obj in inventories) {
-			IInventoryProvider provider = getProvider(obj);
+			IInventoryProvider? provider = getProvider(obj);
 			if (provider == null)
 				continue;
 
@@ -593,7 +594,7 @@ public static class InventoryHelper {
 
 	public static List<IInventory> GetUnsafeInventories(
 		IEnumerable<object> inventories,
-		Func<object, IInventoryProvider> getProvider,
+		Func<object, IInventoryProvider?> getProvider,
 		GameLocation? location,
 		Farmer? who,
 		bool nullLocationValid = false
@@ -611,7 +612,7 @@ public static class InventoryHelper {
 
 	public static List<IInventory> GetUnsafeInventories(
 		IEnumerable<LocatedInventory> inventories,
-		Func<object, IInventoryProvider> getProvider,
+		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
 		bool nullLocationValid = false
 	) {
@@ -621,7 +622,7 @@ public static class InventoryHelper {
 			if (loc.Location == null && !nullLocationValid)
 				continue;
 
-			IInventoryProvider provider = getProvider(loc.Source);
+			IInventoryProvider? provider = getProvider(loc.Source);
 			if (provider == null || !provider.IsValid(loc.Source, loc.Location, who))
 				continue;
 
@@ -647,8 +648,8 @@ public static class InventoryHelper {
 	#region Mutex Handling
 
 	public static void WithInventories(
-		IEnumerable<LocatedInventory> inventories,
-		Func<object, IInventoryProvider> getProvider,
+		IEnumerable<LocatedInventory>? inventories,
+		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
 		Action<IList<IInventory>> withLocks,
 		bool nullLocationValid = false
@@ -666,19 +667,24 @@ public static class InventoryHelper {
 	}
 
 	public static void WithInventories(
-		IEnumerable<object> inventories,
-		Func<object, IInventoryProvider> getProvider,
+		IEnumerable<object>? inventories,
+		Func<object, IInventoryProvider?> getProvider,
 		GameLocation location,
 		Farmer? who,
 		Action<IList<IInventory>> withLocks,
 		bool nullLocationValid = false
 	) {
-		List<LocatedInventory> located = new();
-		foreach (object obj in inventories) {
-			if (obj is LocatedInventory inv)
-				located.Add(inv);
-			else
-				located.Add(new(obj, location));
+		List<LocatedInventory>? located;
+		if (inventories == null)
+			located = null;
+		else {
+			located = new();
+			foreach (object obj in inventories) {
+				if (obj is LocatedInventory inv)
+					located.Add(inv);
+				else
+					located.Add(new(obj, location));
+			}
 		}
 
 		WithInventories(located, getProvider, who, (locked, onDone) => {
@@ -694,8 +700,8 @@ public static class InventoryHelper {
 	}
 
 	public static void WithInventories(
-		IEnumerable<LocatedInventory> inventories,
-		Func<object, IInventoryProvider> getProvider,
+		IEnumerable<LocatedInventory>? inventories,
+		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
 		Action<IList<IInventory>, Action> withLocks,
 		bool nullLocationValid = false
@@ -708,7 +714,7 @@ public static class InventoryHelper {
 				if (loc.Location == null && !nullLocationValid)
 					continue;
 
-				IInventoryProvider provider = getProvider(loc.Source);
+				IInventoryProvider? provider = getProvider(loc.Source);
 				if (provider == null || !provider.IsValid(loc.Source, loc.Location, who))
 					continue;
 
@@ -778,52 +784,18 @@ public static class InventoryHelper {
 		return false;
 	}
 
-	public static void ConsumeIngredients(this CraftingRecipe recipe, Farmer who, IEnumerable<IInventory> inventories) {
-		ConsumeItems(recipe.recipeList, who, inventories);
-	}
-
 	/// <summary>
-	/// Remove a quantity of an item from an inventory.
+	/// Consume an item from a list of items.
 	/// </summary>
-	/// <param name="id">The ID of the item to consume</param>
-	/// <param name="amount">The quantity to remove</param>
-	/// <param name="items">The inventory we're searching</param>
-	/// <param name="nullified">whether or not one or more of the items in the inventory was replaced with null</param>
-	/// <returns>the remaining quantity to remove</returns>
-	public static int ConsumeItem(int id, int amount, IList<Item?> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
-		nullified = false;
-		passed_quality = false;
-
-		for (int idx = items.Count - 1; idx >= 0; --idx) {
-			Item? item = items[idx];
-			if (item == null)
-				continue;
-
-			int quality = item is SObject obj ? obj.Quality : 0;
-			if (quality > max_quality) {
-				passed_quality = true;
-				continue;
-			}
-
-			if (DoesItemMatchID(id, item)) {
-				int count = Math.Min(amount, item.Stack);
-				amount -= count;
-
-				if (item.Stack <= count) {
-					items[idx] = null;
-					nullified = true;
-
-				} else
-					item.Stack -= count;
-
-				if (amount <= 0)
-					return amount;
-			}
-		}
-
-		return amount;
-	}
-
+	/// <param name="matcher">A method matching the item to consume.</param>
+	/// <param name="amount">The quantity to consume.</param>
+	/// <param name="items">The list of items to consume the item from.</param>
+	/// <param name="nullified">Whether or not any slots in the list are set
+	/// to null.</param>
+	/// <param name="passed_quality">Whether or not any matching slots were passed
+	/// up because they exceeded the <see cref="max_quality"/></param>
+	/// <param name="max_quality">The maximum quality of item to consume.</param>
+	/// <returns>The number of items remaining to consume.</returns>
 	public static int ConsumeItem(Func<Item, bool> matcher, int amount, IList<Item?> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
 		nullified = false;
 		passed_quality = false;
@@ -859,66 +831,44 @@ public static class InventoryHelper {
 	}
 
 	/// <summary>
-	/// 
+	/// Consume matching items from a player, and also from a set of
+	/// <see cref="IInventory"/> instances.
 	/// </summary>
-	/// <param name="items"></param>
-	/// <param name="who"></param>
-	/// <param name="inventories"></param>
-	/// <param name="max_quality"></param>
-	/// <param name="low_quality_first"></param>
+	/// <param name="items">An enumeration of <see cref="KeyValuePair{int,int}"/>
+	/// instances where the first integer is the item ID to match and the
+	/// second integer is the quantity to consume.
+	/// <param name="who">The player to consume items from, if any.</param>
+	/// <param name="inventories">An enumeration of <see cref="IInventory"/>
+	/// instances to consume items from.</param>
+	/// <param name="max_quality">The maximum quality of item to consume.</param>
+	/// <param name="low_quality_first">Whether or not to consume low quality
+	/// items first.</param>
 	public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
-		IList<IInventory>? working = (inventories as IList<IInventory>) ?? inventories?.ToList();
-		bool[]? modified = working == null ? null : new bool[working.Count];
-		IList<Item?>?[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray() ?? Array.Empty<IList<Item?>?>();
+		if (items is null)
+			return;
 
-		foreach (KeyValuePair<int, int> pair in items) {
-			int id = pair.Key;
-			int remaining = pair.Value;
-
-			int mq = max_quality;
-			if (low_quality_first)
-				mq = 0;
-
-			for (int q = mq; q <= max_quality; q++) {
-				bool passed;
-				if (who != null)
-					remaining = ConsumeItem(id, remaining, who.Items, out bool m, out passed, q);
-				else
-					passed = false;
-
-				if (remaining <= 0)
-					break;
-
-				if (working != null)
-					for(int iidx = 0; iidx < working.Count; iidx++) {
-						IList<Item?>? inv = invs[iidx];
-						if (inv == null || inv.Count == 0)
-							continue;
-
-						remaining = ConsumeItem(id, remaining, inv, out bool modded, out bool p, q);
-						if (modded)
-							modified![iidx] = true;
-
-						if (p)
-							passed = true;
-
-						if (remaining <= 0)
-							break;
-					}
-
-				if (remaining <= 0 || ! passed)
-					break;
-			}
-		}
-
-		if (working != null)
-			for (int idx = 0; idx < modified!.Length; idx++) {
-				if (modified[idx])
-					working[idx].CleanInventory();
-			}
+		ConsumeItems(
+			items.Select<KeyValuePair<int, int>, (Func<Item, bool>, int)>(x => (item => DoesItemMatchID(x.Key, item), x.Value)),
+			who,
+			inventories,
+			max_quality,
+			low_quality_first
+		);
 	}
 
-	public static void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory> inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+	/// <summary>
+	/// Consume matching items from a player, and also from a set of
+	/// <see cref="IInventory"/> instances.
+	/// </summary>
+	/// <param name="items">An enumeration of tuples where the function
+	/// matches items, and the integer is the quantity to consume.</param>
+	/// <param name="who">The player to consume items from, if any.</param>
+	/// <param name="inventories">An enumeration of <see cref="IInventory"/>
+	/// instances to consume items from.</param>
+	/// <param name="max_quality">The maximum quality of item to consume.</param>
+	/// <param name="low_quality_first">Whether or not to consume low quality
+	/// items first.</param>
+	public static void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
 		IList<IInventory>? working = (inventories as IList<IInventory>) ?? inventories?.ToList();
 		bool[]? modified = working == null ? null : new bool[working.Count];
 		IList<Item?>?[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray() ?? Array.Empty<IList<Item?>?>();

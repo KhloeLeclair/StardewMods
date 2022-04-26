@@ -77,7 +77,7 @@ public class SimpleBuilder {
 		return this;
 	}
 
-	public SimpleBuilder Sprite(SpriteInfo sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None) {
+	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None) {
 		AssertState();
 		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align));
 		return this;
@@ -111,13 +111,13 @@ public class SimpleBuilder {
 		return FormatText(text, style, wrapText, minWidth, align);
 	}
 
-	public SimpleBuilder Text(string text, TextStyle style, Alignment align = Alignment.None) {
+	public SimpleBuilder Text(string? text, TextStyle style, Alignment align = Alignment.None) {
 		AssertState();
 		Nodes.Add(new TextNode(text, style, align));
 		return this;
 	}
 
-	public SimpleBuilder Text(string text, Color? color = null, bool? prismatic = null, SpriteFont? font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
+	public SimpleBuilder Text(string? text, Color? color = null, bool? prismatic = null, SpriteFont? font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None) {
 		TextStyle style = new(
 			color: color,
 			prismatic: prismatic,

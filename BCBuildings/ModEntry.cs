@@ -1,29 +1,64 @@
-#nullable enable
-
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
+using Microsoft.Xna.Framework;
 
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
+using Leclair.Stardew.Common.Types;
+
+#if IS_BETTER_CRAFTING
+using Leclair.Stardew.Common.Crafting;
+#endif
 using Leclair.Stardew.BetterCrafting;
 
 using StardewModdingAPI.Events;
 
 using StardewValley;
 using StardewValley.Menus;
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.BCBuildings;
 
 public class ModEntry : ModSubscriber, IRecipeProvider {
 
+	public static readonly string CategoryID = "leclair.bcbuildings/buildings";
+
 	internal IBetterCrafting? API;
 
-	[Subscriber]
-	private void OnGameLaunched(object sender, GameLaunchedEventArgs e) {
+	public CaseInsensitiveDictionary<Rectangle?> BuildingSources = new();
 
+	public override void Entry(IModHelper helper) {
+		base.Entry(helper);
+
+		SpriteHelper.SetHelper(Helper);
+
+		I18n.Init(Helper.Translation);
+	}
+
+	[Subscriber]
+	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		API = Helper.ModRegistry.GetApi<IBetterCrafting>("leclair.bettercrafting");
-		if (API != null)
-			API.AddRecipeProvider(this);
+		if (API is null)
+			return;
+
+		API.AddRecipeProvider(this);
+		API.CreateDefaultCategory(false, CategoryID, "Building");
+
+		CaseInsensitiveDictionary<Rectangle?>? buildings;
+		try {
+			buildings = Helper.Data.ReadJsonFile<CaseInsensitiveDictionary<Rectangle?>>(@"assets/source_overrides.json");
+			if (buildings is null)
+				throw new ArgumentNullException(nameof(buildings));
+
+		} catch (Exception ex) {
+			Log($"source_overrides.json is missing or invalid.", LogLevel.Warn, ex);
+			buildings = null;
+		}
+
+		if (buildings != null)
+			BuildingSources = buildings;
 	}
 
 	#region IRecipeProvider
@@ -53,13 +88,15 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		recipes.Add(new ActionRecipe(ActionType.Paint, this));
 		recipes.Add(new ActionRecipe(ActionType.Demolish, this));
 
+		API!.AddRecipesToDefaultCategory(false, CategoryID, recipes.Select(x => x.Name));
+
 		return recipes;
 	}
 
 	public IEnumerable<IRecipe> GetRecipesFromMenu(bool magical) {
 		List<IRecipe> result = new();
 
-		CarpenterMenu menu = new CarpenterMenu(magical);
+		CarpenterMenu menu = new(magical);
 		List<BluePrint>? blueprints = Helper.Reflection.GetField<List<BluePrint>>(menu, "blueprints", false)?.GetValue();
 
 		if (blueprints == null) {

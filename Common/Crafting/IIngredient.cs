@@ -11,8 +11,16 @@ using StardewValley;
 
 namespace Leclair.Stardew.Common.Crafting;
 
-public interface IIngredient {
+// Remember to update IBetterCrafting whenever this changes!
 
+/// <summary>
+/// An <c>IIngredient</c> represents a single ingredient used when crafting a
+/// recipe. An ingredient can be an item, a currency, or anything else.
+///
+/// The API provides methods for getting basic item and currency ingredients,
+/// so you need not use this unless you're doing something fancy.
+/// </summary>
+public interface IIngredient {
 	/// <summary>
 	/// Whether or not this <c>IIngredient</c> supports quality control
 	/// options, including using low quality first and limiting the maximum
@@ -57,7 +65,7 @@ public interface IIngredient {
 	/// <param name="maxQuality">The maximum item quality we are allowed to
 	/// count. This cannot be ignored unless <see cref="SupportsQuality"/>
 	/// returns <c>false</c>.</param>
-	int GetAvailableQuantity(Farmer who, IList<Item?> items, IList<IInventory> inventories, int maxQuality);
+	int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality);
 
 	#endregion
 
@@ -75,8 +83,7 @@ public interface IIngredient {
 	/// <param name="lowQualityFirst">Whether or not we should make an effort
 	/// to consume lower quality ingredients before ocnsuming higher quality
 	/// ingredients.</param>
-	void Consume(Farmer who, IList<IInventory> inventories, int maxQuality, bool lowQualityFirst);
+	void Consume(Farmer who, IList<IInventory>? inventories, int maxQuality, bool lowQualityFirst);
 
 	#endregion
-
 }

@@ -38,7 +38,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 		AssertLoaded();
 
 		if (!IsRegistered)
-			API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue ? ! allowInGameChanges.Value : false);
+			API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue && ! allowInGameChanges.Value);
 
 		// Am I a joke to you?
 		IsRegistered = true;
@@ -122,7 +122,8 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 
 	public GMCMIntegration<T, M> AddImage(string path, Rectangle? source = null, int scale = 4) {
 		AssertLoaded();
-		API.AddImage(Consumer, () => Self.Helper.ModContent.Load<Texture2D>(path), source, scale);
+		API.AddImage(Consumer, () => Self.Helper.Content.Load<Texture2D>(path), source, scale);
+		//API.AddImage(Consumer, () => Self.Helper.ModContent.Load<Texture2D>(path), source, scale);
 		return this;
 	}
 
