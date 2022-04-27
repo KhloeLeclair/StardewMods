@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>BCSpaceCore</AssemblyName>
-		<Version>1.1.1</Version>
+		<Version>1.2.0</Version>
 		<RootNamespace>Leclair.Stardew.BCSpaceCore</RootNamespace>
 
 		<EnableTranslation>true</EnableTranslation>
@@ -14,7 +14,9 @@
 			<HintPath>$(GameModsPath)\SpaceCore\SpaceCore.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
-		<ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj" />
+		<ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj">
+			<Private>false</Private>
+		</ProjectReference>
 	</ItemGroup>
 	<PropertyGroup>
 		<DefineConstants>IS_BETTER_CRAFTING</DefineConstants>

@@ -81,6 +81,13 @@ public interface IInventory {
 	IList<Item?>? GetItems();
 
 	/// <summary>
+	/// Check to see if a specific item is allowed to be stored in the
+	/// object's inventory.
+	/// </summary>
+	/// <param name="item">The item we're checking</param>
+	bool IsItemValid(Item item);
+
+	/// <summary>
 	/// Attempt to clean the object's inventory. This should remove null
 	/// entries, and run any other necessary logic.
 	/// </summary>

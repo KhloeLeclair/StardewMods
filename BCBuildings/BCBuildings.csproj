@@ -10,7 +10,9 @@
 	
 	<Import Project="..\_build\common.targets" />
 	<ItemGroup>
-		<ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj" />
+		<ProjectReference Include="..\BetterCrafting\BetterCrafting.csproj">
+			<Private>false</Private>
+		</ProjectReference>
 	</ItemGroup>
 	<PropertyGroup>
 		<DefineConstants>IS_BETTER_CRAFTING</DefineConstants>

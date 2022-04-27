@@ -32,6 +32,7 @@ public struct WorkingInventory : IInventory {
 	public Rectangle? GetMultiTileRegion() => Provider.GetMultiTileRegion(Object, Location, Player);
 	public Vector2? GetTilePosition() => Provider.GetTilePosition(Object, Location, Player);
 	public IList<Item?>? GetItems() => Provider.GetItems(Object, Location, Player);
+	public bool IsItemValid(Item item) => Provider.IsItemValid(Object, Location, Player, item);
 	public void CleanInventory() => Provider.CleanInventory(Object, Location, Player);
 	public int GetActualCapacity() => Provider.GetActualCapacity(Object, Location, Player);
 }

@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>BetterCrafting</AssemblyName>
-		<Version>0.15.0</Version>
+		<Version>1.0.0</Version>
 		<RootNamespace>Leclair.Stardew.BetterCrafting</RootNamespace>
 
 		<EnableHarmony>true</EnableHarmony>

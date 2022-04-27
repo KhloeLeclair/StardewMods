@@ -62,7 +62,7 @@ public class RecipeManager : BaseManager {
 
 	private static void AssertFarmer([NotNull] Farmer? who) {
 		if (who == null)
-			throw new ArgumentNullException("who cannot be null");
+			throw new ArgumentNullException(nameof(who));
 	}
 
 	#region Events
@@ -431,7 +431,7 @@ public class RecipeManager : BaseManager {
 
 	public void AddProvider(IRecipeProvider provider) {
 		if (provider == null)
-			throw new ArgumentNullException("provider cannot be null");
+			throw new ArgumentNullException(nameof(provider));
 
 		WithRecipeProviders(() => {
 			if (Providers.Contains(provider))

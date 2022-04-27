@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.Xna.Framework;
 
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
 
@@ -918,6 +919,161 @@ public static class InventoryHelper {
 				if (modified[idx])
 					working[idx].CleanInventory();
 			}
+	}
+
+	#endregion
+
+	#region Transfer Items
+
+	public static bool AddToInventories(IList<Item?> items, IEnumerable<IInventory> inventories, TransferBehavior behavior, Action<Item, int>? onTransfer = null) {
+		if (behavior.Mode == TransferMode.None)
+			return false;
+
+		int[] transfered = new int[items.Count];
+
+		foreach (IInventory inv in inventories) {
+			if (!inv.CanInsertItems())
+				continue;
+
+			if (FillInventory(items, inv, behavior, transfered, onTransfer))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static bool FillInventory(IList<Item?> items, IInventory inventory, TransferBehavior behavior, int[] transfered, Action<Item, int>? onTransfer = null) {
+		bool empty = true;
+
+		for(int idx = 0; idx < items.Count; idx++) {
+			Item? item = items[idx];
+			if (item != null && item.maximumStackSize() > 1 && inventory.IsItemValid(item)) {
+				// How many can we transfer?
+				int count = item.Stack;
+				int transfer;
+				switch (behavior.Mode) {
+					case TransferMode.All:
+						transfer = count;
+						break;
+					case TransferMode.AllButQuantity:
+						transfer = count - behavior.Quantity;
+						break;
+					case TransferMode.Half:
+						transfer = count / 2;
+						break;
+					case TransferMode.Quantity:
+						transfer = behavior.Quantity;
+						break;
+					case TransferMode.None:
+					default:
+						return false;
+				}
+
+				transfer -= transfered[idx];
+				transfer = Math.Clamp(transfer, 0, count);
+				if (transfer == 0)
+					continue;
+
+				int final;
+				bool had_transfered = transfered[idx] > 0;
+				if (AddItemToInventory(item, transfer, inventory) is null) {
+					items[idx] = null;
+					transfered[idx] += count;
+					final = -1;
+				} else {
+					final = item.Stack;
+					transfered[idx] += count - item.Stack;
+
+					if (final != (count - transfer))
+						empty = false;
+				}
+
+				if (count != final && ! had_transfered)
+					onTransfer?.Invoke(item, idx);
+			}
+		}
+
+		return empty;
+	}
+
+	public static Item? AddItemToInventory(Item item, int quantity, IInventory inventory) {
+		int initial = item.Stack;
+		if (quantity > initial)
+			quantity = initial;
+
+		if (quantity <= 0)
+			return item.Stack <= 0 ? null : item;
+
+		bool present = false;
+
+		IList<Item?>? items = inventory.GetItems();
+		if (items is null)
+			return item;
+
+		foreach(Item? oitem in items) {
+			if (oitem is not null && oitem.canStackWith(item)) {
+				present = true;
+				if (oitem.getRemainingStackSpace() > 0) {
+					int remainder = item.Stack - quantity;
+					item.Stack = quantity;
+					item.Stack = oitem.addToStack(item) + remainder;
+					quantity -= (initial - item.Stack);
+					if (quantity <= 0 || item.Stack <= remainder)
+						return item.Stack <= 0 ? null : item;
+				}
+			}
+		}
+
+		if (!present)
+			return item;
+
+		for(int idx = items.Count - 1; idx >= 0; idx--) {
+			if (items[idx] == null) {
+				if (quantity > item.maximumStackSize()) {
+					Item obj = items[idx] = item.getOne();
+
+					int removed = item.maximumStackSize();
+					obj.Stack = removed;
+					item.Stack -= removed;
+					quantity -= removed;
+
+				} else if (quantity < item.Stack) {
+					Item obj = items[idx] = item.getOne();
+					obj.Stack = quantity;
+					item.Stack -= quantity;
+					return item;
+
+				} else {
+					items[idx] = item;
+					return null;
+				}
+			}
+		}
+
+		int capacity = inventory.GetActualCapacity();
+		while (capacity > 0 && items.Count < capacity) {
+			if (quantity > item.maximumStackSize()) {
+				Item obj = item.getOne();
+				int removed = item.maximumStackSize();
+				obj.Stack = removed;
+				item.Stack -= removed;
+				quantity -= removed;
+				items.Add(obj);
+
+			} else if (quantity < item.Stack) {
+				Item obj = item.getOne();
+				obj.Stack = quantity;
+				item.Stack -= quantity;
+				items.Add(obj);
+				return item;
+
+			} else {
+				items.Add(item);
+				return null;
+			}
+		}
+
+		return item;
 	}
 
 	#endregion

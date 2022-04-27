@@ -11,6 +11,7 @@ using HarmonyLib;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.Inventory;
@@ -524,31 +525,17 @@ public class ModEntry : ModSubscriber {
 			);
 
 		GMCMIntegration
-			.AddLabel(I18n.Setting_Nearby)
-			.AddParagraph(I18n.Setting_Nearby_Tip)
-			.Add(
-				I18n.Setting_Nearby_Enable,
-				null,
-				c => c.UseDiscovery,
-				(c, v) => c.UseDiscovery = v
-			)
-			.Add(
-				I18n.Setting_Nearby_Diagonal,
-				I18n.Setting_Nearby_Diagonal_Tip,
-				c => c.UseDiagonalConnections,
-				(c, v) => c.UseDiagonalConnections = v
-			)
 			.AddLabel(
-				I18n.Setting_Nearby_Performance,
-				I18n.Setting_Nearby_Performance_Tip,
-				"page:perf"
+				I18n.Setting_Nearby,
+				I18n.Setting_Nearby_Tip,
+				"page:nearby"
 			)
-			.AddLabel(
-				I18n.Setting_Nearby_Connectors,
-				I18n.Setting_Nearby_Connectors_Tip,
-				"page:conn"
-			);
 
+			.AddLabel(
+				I18n.Setting_Transfer,
+				I18n.Setting_Transfer_About,
+				"page:transfer"
+			);
 
 		Dictionary<TTWhen, Func<string>> whens = new() {
 			[TTWhen.Never] = I18n.Setting_Ttwhen_Never,
@@ -579,6 +566,12 @@ public class ModEntry : ModSubscriber {
 				(c, v) => c.SuppressBC = v
 			)
 			.AddLabel("")
+			.Add(
+				I18n.Setting_Key_Modifier,
+				I18n.Setting_Key_Modifier_Tip,
+				c => c.ModiferKey,
+				(c, v) => c.ModiferKey = v
+			)
 			.Add(
 				I18n.Setting_Key_Search,
 				I18n.Setting_Key_Search_Tip,
@@ -689,6 +682,97 @@ public class ModEntry : ModSubscriber {
 						}
 					);
 		}
+
+		GMCMIntegration
+			.StartPage("page:nearby", I18n.Setting_Nearby)
+			.AddParagraph(I18n.Setting_Nearby_Tip)
+			.Add(
+				I18n.Setting_Nearby_Enable,
+				null,
+				c => c.UseDiscovery,
+				(c, v) => c.UseDiscovery = v
+			)
+			.Add(
+				I18n.Setting_Nearby_Diagonal,
+				I18n.Setting_Nearby_Diagonal_Tip,
+				c => c.UseDiagonalConnections,
+				(c, v) => c.UseDiagonalConnections = v
+			)
+			.AddLabel(
+				I18n.Setting_Nearby_Performance,
+				I18n.Setting_Nearby_Performance_Tip,
+				"page:perf"
+			)
+			.AddLabel(
+				I18n.Setting_Nearby_Connectors,
+				I18n.Setting_Nearby_Connectors_Tip,
+				"page:conn"
+			);
+
+		GMCMIntegration
+			.StartPage("page:transfer", I18n.Setting_Transfer)
+			.AddParagraph(I18n.Setting_Transfer_About);
+
+		GMCMIntegration
+			.Add(
+				I18n.Setting_Transfer_Enable,
+				null,
+				c => c.UseTransfer,
+				(c, v) => c.UseTransfer = v
+			)
+
+			.AddLabel("") // Spacer
+
+			.Add(
+				I18n.Setting_Key_Modifier,
+				I18n.Setting_Key_Modifier_Tip,
+				c => c.ModiferKey,
+				(c,v) => c.ModiferKey = v
+			)
+
+			.AddLabel(""); // Spacer
+
+		GMCMIntegration.AddLabel(() => I18n.Setting_Transfer_UseTool(string.Join(", ", Game1.options.useToolButton.Select(x => x.ToSButton().ToString()))));
+		AddBehaviorSettings(c => c.AddToBehaviors.UseTool);
+
+		GMCMIntegration.AddLabel(I18n.Setting_Transfer_UseToolModifier);
+		AddBehaviorSettings(c => c.AddToBehaviors.UseToolModified);
+
+		GMCMIntegration.AddLabel(""); // Spacer
+
+		GMCMIntegration.AddLabel(() => I18n.Setting_Transfer_Action(string.Join(", ", Game1.options.actionButton.Select(x => x.ToSButton().ToString()))));
+		AddBehaviorSettings(c => c.AddToBehaviors.Action);
+
+		GMCMIntegration.AddLabel(I18n.Setting_Transfer_ActionModifier);
+		AddBehaviorSettings(c => c.AddToBehaviors.ActionModified);
+	}
+
+	private void AddBehaviorSettings(Func<ModConfig, TransferBehavior> accessor) {
+		Dictionary<TransferMode, Func<string>> modes = new() {
+			{ TransferMode.None, I18n.Setting_Transfer_Behavior_None },
+			{ TransferMode.All, I18n.Setting_Transfer_Behavior_All },
+			{ TransferMode.AllButQuantity, I18n.Setting_Transfer_Behavior_AllQuantity },
+			{ TransferMode.Half, I18n.Setting_Transfer_Behavior_Half },
+			{ TransferMode.Quantity, I18n.Setting_Transfer_Behavior_Quantity }
+		};
+
+		GMCMIntegration!
+			.AddChoice(
+				I18n.Setting_Transfer_Behavior,
+				null,
+				c => accessor(c).Mode,
+				(c, v) => accessor(c).Mode = v,
+				modes
+			)
+
+			.Add(
+				I18n.Setting_Transfer_Quantity,
+				I18n.Setting_Transfer_Quantity_Tip,
+				c => accessor(c).Quantity,
+				(c,v) => accessor(c).Quantity = v,
+				min: 1,
+				max: 999
+			);
 	}
 
 	public static string GetInputLabel(InputButton[] buttons) {

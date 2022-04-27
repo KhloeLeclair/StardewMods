@@ -6,6 +6,7 @@ using System.Linq;
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
+using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
@@ -76,6 +77,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	public readonly ClickableTextureComponent trashCan;
 	public float trashCanLidRotation;
 
+	public ClickableTextureComponent? btnTransferTo;
+	public ClickableTextureComponent? btnTransferFrom;
 	public ClickableTextureComponent btnSearch;
 	public ClickableTextureComponent? btnToggleEdit;
 	public ClickableTextureComponent? btnSettings;
@@ -139,7 +142,13 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	// Better Tooltip
 	internal int hoverMode = -1;
 
+	// Item Transfer Stuff
+	private bool Working = false;
+	private readonly List<ItemGrabMenu.TransferredItemSprite> tSprites = new();
+
 	// Sprite Sources
+	public Rectangle SourceTransferTo => Sprites.Buttons.TO_INVENTORY;
+	public Rectangle SourceTransferFrom => Sprites.Buttons.FROM_INVENTORY;
 	public Rectangle SourceFilter => Filter == null ? Sprites.Buttons.SEARCH_OFF : Sprites.Buttons.SEARCH_ON;
 	public Rectangle SourceEdit => Sprites.Buttons.WRENCH;
 	public Rectangle SourceFavorites => FavoritesOnly ? Sprites.Buttons.FAVORITE_ON : Sprites.Buttons.FAVORITE_OFF;
@@ -359,6 +368,30 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		int btnX = xPositionOnScreen + width + 4;
 		int btnY = yPositionOnScreen + 128;
 
+		if (Mod.Config.UseTransfer) {
+			btnTransferTo = new ClickableTextureComponent(
+				bounds: new Rectangle(btnX, btnY, 64, 64),
+				texture: Sprites.Buttons.Texture,
+				sourceRect: SourceTransferTo,
+				scale: 4f
+			) {
+				myID = 200,
+				leftNeighborID = 100,
+				rightNeighborID = ClickableComponent.ID_ignore
+			};
+
+			/*btnTransferFrom = new ClickableTextureComponent(
+				bounds: new Rectangle(btnX, btnY, 64, 64),
+				texture: Sprites.Buttons.Texture,
+				sourceRect: SourceTransferFrom,
+				scale: 4f
+			) {
+				myID = 201,
+				leftNeighborID = 101,
+				rightNeighborID = ClickableComponent.ID_ignore
+			};*/
+		}
+
 		btnSearch = new ClickableTextureComponent(
 			bounds: new Rectangle(btnX, btnY, 64, 64),
 			texture: Sprites.Buttons.Texture,
@@ -476,6 +509,39 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 			trashCan
 		);
 
+		GUIHelper.LinkComponents(
+			GUIHelper.Side.Right,
+			id => getComponentWithID(id),
+			btnSearch,
+			btnTransferTo
+		);
+
+		GUIHelper.MoveComponents(
+			GUIHelper.Side.Right, 16,
+			btnSearch,
+			btnTransferTo
+		);
+
+		GUIHelper.LinkComponents(
+			GUIHelper.Side.Right,
+			id => getComponentWithID(id),
+			btnToggleEdit,
+			btnTransferFrom
+		);
+
+		GUIHelper.LinkComponents(
+			GUIHelper.Side.Down,
+			id => getComponentWithID(id),
+			btnTransferTo,
+			btnTransferFrom
+		);
+
+		GUIHelper.MoveComponents(
+			GUIHelper.Side.Down, 16,
+			btnTransferTo,
+			btnTransferFrom
+		);
+
 		// Initialize our state
 		DiscoverInventories();
 		DiscoverRecipes();
@@ -528,6 +594,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		LayoutRecipes();
 
 		// Visibility
+		if (btnTransferTo != null)
+			btnTransferTo.visible = !Editing;
+		if (btnTransferFrom != null)
+			btnTransferFrom.visible = !Editing;
 		if (btnToggleFavorites != null)
 			btnToggleFavorites.visible = !Editing;
 		if (btnToggleSeasoning != null)
@@ -797,7 +867,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 					I18nKey = "category.favorites",
 					Icon = new CategoryIcon() {
 						Type = CategoryIcon.IconType.Texture,
-						Source = Common.Enums.GameTexture.MouseCursors,
+						Source = GameTexture.MouseCursors,
 						Rect = new Rectangle(338, 400, 8, 8)
 					}
 				}, Favorites);
@@ -858,7 +928,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 					I18nKey = "category.misc",
 					Icon = new CategoryIcon() {
 						Type = CategoryIcon.IconType.Texture,
-						Source = Common.Enums.GameTexture.MouseCursors,
+						Source = GameTexture.MouseCursors,
 						Rect = cooking
 							? new Rectangle(0, 428, 10, 10)
 							: new Rectangle(50, 428, 10, 10)
@@ -1176,7 +1246,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		);
 
 #if DEBUG
-		Log($"Chests: {count} -- Valid: {CachedInventories.Count}", StardewModdingAPI.LogLevel.Debug);
+		Log($"Chests: {count} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
 #endif
 	}
 
@@ -1249,6 +1319,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	}
 
 	public void PerformCraft(IRecipe recipe, int times, Action<int>? DoneAction = null, bool playSound = true, bool moveResultToInventory = false) {
+		if (Working) {
+			DoneAction?.Invoke(0);
+			return;
+		}
+
+		Working = true;
 		InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
 
 			List<Item?> items = GetActualContainerContents(locked);
@@ -1261,6 +1337,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 				recipe, 0, times,
 				(successes, used_additional) => {
 					onDone();
+					Working = false;
 
 					if (successes > 0 && playSound)
 						Game1.playSound("coin");
@@ -1436,6 +1513,84 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 		} else {
 			onDone(successes, used_additional);
+		}
+	}
+
+	#endregion
+
+	#region Add to Inventories
+
+	protected void HandleTransferClick(bool fill, bool isAction) {
+		TransferBehavior behavior;
+		Behaviors behaviors = fill ? Mod.Config.FillFromBehaviors : Mod.Config.AddToBehaviors;
+
+		if (Mod.Config.ModiferKey?.IsDown() ?? false) {
+			if (isAction)
+				behavior = behaviors.ActionModified;
+			else
+				behavior = behaviors.UseToolModified;
+		} else {
+			if (isAction)
+				behavior = behaviors.Action;
+			else
+				behavior = behaviors.UseTool;
+		}
+
+		Action<Item?>? callback;
+		if (HeldItem is null)
+			callback = null;
+		else
+			callback = result => {
+				HeldItem = result;
+			};
+
+		PerformTransfer(behavior, HeldItem, onDoneAction: callback);
+	}
+
+	protected void PerformTransfer(TransferBehavior behavior, Item? item, Action<Item?>? onDoneAction = null) {
+		if (Working) {
+			onDoneAction?.Invoke(item);
+			return;
+		}
+
+		Working = true;
+		Game1.playSound("Ship");
+
+		if (item == null) {
+			// If we have no item, transfer everything.
+			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
+				void OnTransfer(Item item, int idx) {
+					if (idx < 0 || idx >= inventory.inventory.Count)
+						return;
+
+					var bounds = inventory.inventory[idx].bounds;
+					var sprite = new ItemGrabMenu.TransferredItemSprite(item.getOne(), bounds.X, bounds.Y);
+					tSprites.Add(sprite);
+				}
+
+				InventoryHelper.AddToInventories(inventory.actualInventory, locked, behavior, OnTransfer);
+				onDone();
+				Working = false;
+				onDoneAction?.Invoke(item);
+			});
+
+		} else {
+			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
+				List<Item?> items = new() { item };
+
+				InventoryHelper.AddToInventories(items, locked, behavior);
+
+				onDone();
+				Working = false;
+
+				if (items.Count > 1) {
+					// How did we get extra items?
+					for(int i = 1; i < items.Count; i++)
+						Utility.CollectOrDrop(items[i]);
+				}
+
+				onDoneAction?.Invoke(items.Count > 0 ? items[0] : null);
+			});
 		}
 	}
 
@@ -1993,6 +2148,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		return null;
 	}
 
+	public override void update(GameTime time) {
+		base.update(time);
+
+		for (int i = 0; i < tSprites.Count; i++) {
+			if (tSprites[i].Update(time)) {
+				tSprites.RemoveAt(i);
+				i--;
+			}
+		}
+	}
+
 	public override void releaseLeftClick(int x, int y) {
 		if (GetChildMenu() is IClickableMenu menu) {
 			if (!Standalone)
@@ -2112,6 +2278,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 				}
 			}
 
+		// Transfer To
+		if (!Editing && btnTransferTo != null && btnTransferTo.containsPoint(x, y) && CachedInventories!.Count > 0) {
+			HandleTransferClick(false, false);
+			btnTransferTo.scale = btnTransferTo.baseScale;
+			return;
+		}
+
+		// Transfer From
+		if (!Editing && btnTransferFrom != null && btnTransferFrom.containsPoint(x, y) && CachedInventories!.Count > 0) {
+			HandleTransferClick(true, false);
+			btnTransferFrom.scale = btnTransferFrom.baseScale;
+			return;
+		}
+
 		// Search
 		if (btnSearch != null && btnSearch.containsPoint(x, y)) {
 			ToggleSearch();
@@ -2230,6 +2410,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 		if (!Editing)
 			HeldItem = inventory.rightClick(x, y, HeldItem, playSound);
+
+		// Transfer To
+		if (!Editing && btnTransferTo != null && btnTransferTo.containsPoint(x, y) && CachedInventories!.Count > 0) {
+			HandleTransferClick(false, true);
+			btnTransferTo.scale = btnTransferTo.baseScale;
+			return;
+		}
+
+		// Transfer To
+		if (!Editing && btnTransferFrom != null && btnTransferFrom.containsPoint(x, y) && CachedInventories!.Count > 0) {
+			HandleTransferClick(true, true);
+			btnTransferFrom.scale = btnTransferFrom.baseScale;
+			return;
+		}
 
 		// Toggle Seasoning
 		if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
@@ -2475,6 +2669,25 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		if (btnPageDown != null)
 			btnPageDown.tryHover(x, pageIndex < Pages.Count - 1 ? y : -1);
 
+		// Transfer Buttons
+		if (btnTransferTo != null && CachedInventories!.Count > 0) {
+			btnTransferTo.tryHover(x, y);
+			if (btnTransferTo.containsPoint(x, y)) {
+				mode = (Mod.Config.ModiferKey?.IsDown() ?? false) ? 10 : 9;
+				if (HeldItem is not null)
+					hoverMode = 0;
+			}
+		}
+
+		if (btnTransferFrom != null && CachedInventories!.Count > 0) {
+			btnTransferFrom.tryHover(x, y);
+			if (btnTransferFrom.containsPoint(x, y)) {
+				mode = (Mod.Config.ModiferKey?.IsDown() ?? false) ? 12 : 11;
+				if (HeldItem is not null)
+					hoverMode = 0;
+			}
+		}
+
 		// Toggle Buttons
 		if (btnSearch != null) {
 			btnSearch.tryHover(x, y);
@@ -2539,6 +2752,40 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 						.Divider()
 						.Text(filter, color: Game1.textColor * 0.6f);
 				}
+
+				hoverNode = builder.GetLayout();
+			}
+
+			if (mode >= 9 && mode <= 12) {
+				bool fill = mode == 11 || mode == 12;
+				Behaviors behaviors = fill ? Mod.Config.FillFromBehaviors : Mod.Config.AddToBehaviors;
+
+				var builder = SimpleHelper.Builder()
+					.Text(fill ?
+						(HeldItem is null ? I18n.Tooltip_Transfer_From() : I18n.Tooltip_Transfer_FromItem()) :
+						(HeldItem is null ? I18n.Tooltip_Transfer_To() : I18n.Tooltip_Transfer_ToItem())
+					)
+					.Divider();
+
+				if (HeldItem != null)
+					builder
+						.Sprite(SpriteHelper.GetSprite(HeldItem), scale: 2, label: HeldItem.DisplayName, quantity: HeldItem.Stack)
+						.Divider();
+
+				bool modified = Mod.Config.ModiferKey?.IsDown() ?? false;
+				TransferBehavior behavior = modified ? behaviors.UseToolModified : behaviors.UseTool;
+				if (behavior.Mode != TransferMode.None)
+					builder.Group()
+						.Add(GetLeftClickNode())
+						.Text(GetBehaviorTip(behavior))
+						.EndGroup();
+
+				behavior = modified ? behaviors.ActionModified : behaviors.Action;
+				if (behavior.Mode != TransferMode.None)
+					builder.Group()
+						.Add(GetRightClickNode())
+						.Text(GetBehaviorTip(behavior))
+						.EndGroup();
 
 				hoverNode = builder.GetLayout();
 			}
@@ -2680,6 +2927,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		btnToggleUniform?.draw(b);
 
 		if (!Editing) {
+			if (CachedInventories!.Count > 0) {
+				btnTransferTo?.draw(b);
+				btnTransferFrom?.draw(b);
+			}
+
 			btnToggleFavorites?.draw(b);
 			btnToggleSeasoning?.draw(b);
 			btnToggleQuality?.draw(b);
@@ -2868,6 +3120,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 				menu.draw(b);
 			return;
 		}
+
+		// Transfer Sprites
+		foreach (var sprite in tSprites)
+			sprite.Draw(b);
 
 		// Hover Item
 		int offset = HeldItem != null ? 48 : 0;
@@ -3302,6 +3558,21 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 			builder.EndGroup();
 
 		return divided;
+	}
+
+	public static string? GetBehaviorTip(TransferBehavior behavior) {
+		switch(behavior.Mode) {
+			case TransferMode.All:
+				return I18n.Tooltip_Transfer_All();
+			case TransferMode.AllButQuantity:
+				return I18n.Tooltip_Transfer_ButQuantity(behavior.Quantity);
+			case TransferMode.Half:
+				return I18n.Tooltip_Transfer_Half();
+			case TransferMode.Quantity:
+				return I18n.Tooltip_Transfer_Quantity(behavior.Quantity);
+			default:
+				return null;
+		}
 	}
 
 	public static string? GetActionTip(ButtonAction action) {

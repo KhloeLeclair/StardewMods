@@ -3,6 +3,12 @@
 ## 1.0.0
 Released April 26th, 2022.
 
+### New Features
+
+* Added a button to transfer items from your inventory into all the
+  chests connected to a workbench / kitchen. This is like a chest's
+  "Add to Existing Stacks" button, but for a lot of chests at once.
+
 ### Fixes
 
 * Improve error checking for recipes, since a lot of mods unfortunately
@@ -23,6 +29,7 @@ Released April 26th, 2022.
 * The API now lets mods create new default categories and add recipes to them.
 * Consolidate all interfaces used by the API into a single `.cs` file for easy
   inclusion in other mods once SMAPI 3.14 is available.
+* Basically, a lot of API stuff happened and will be cool once 3.14 is out.
 
 ### Optional Add-Ons
 

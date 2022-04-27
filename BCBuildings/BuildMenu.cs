@@ -465,14 +465,15 @@ internal class BuildMenu : IClickableMenu {
 							)] = chest;
 						}
 
-						if (DemolishCheckBlueprint == null || DemolishCheckBlueprint.name != building.buildingType.Value)
+						// TODO: Config option to return materials to the player?
+						/*if (DemolishCheckBlueprint == null || DemolishCheckBlueprint.name != building.buildingType.Value)
 							DemolishCheckBlueprint = new BluePrint(building.buildingType.Value);
 
 						if (DemolishCheckBlueprint != null) {
 							foreach (var entry in DemolishCheckBlueprint.itemsRequired) {
 								Game1.player.addItemToInventory(new StardewValley.Object(entry.Key, entry.Value));
 							}
-						}
+						}*/
 
 						DelayedAction.functionAfterDelay(delegate {
 							Event.Complete();

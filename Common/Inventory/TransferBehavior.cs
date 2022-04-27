@@ -4,7 +4,7 @@ using Leclair.Stardew.Common.Enums;
 
 namespace Leclair.Stardew.Common.Inventory;
 
-public struct TransferBehavior {
+public class TransferBehavior {
 
 	public TransferMode Mode;
 	public int Quantity;

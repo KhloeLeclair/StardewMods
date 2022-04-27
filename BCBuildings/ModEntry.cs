@@ -32,7 +32,10 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 	public override void Entry(IModHelper helper) {
 		base.Entry(helper);
 
+#if IS_BETTER_CRAFTING
+#else
 		SpriteHelper.SetHelper(Helper);
+#endif
 
 		I18n.Init(Helper.Translation);
 	}
@@ -61,7 +64,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			BuildingSources = buildings;
 	}
 
-	#region IRecipeProvider
+#region IRecipeProvider
 
 	public int RecipePriority => 0;
 
@@ -132,6 +135,6 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 	}
 
 
-	#endregion
+#endregion
 
 }

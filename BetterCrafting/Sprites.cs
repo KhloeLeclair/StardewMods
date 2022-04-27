@@ -31,6 +31,8 @@ public static class Sprites {
 		public readonly static Rectangle QUALITY_2 = new(32, 32, 16, 16);
 		public readonly static Rectangle QUALITY_3 = new(48, 32, 16, 16);
 
+		public readonly static Rectangle TO_INVENTORY = new(0, 48, 16, 16);
+		public readonly static Rectangle FROM_INVENTORY = new(16, 48, 16, 16);
 	}
 
 }
