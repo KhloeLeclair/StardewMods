@@ -10,8 +10,8 @@
 		<LangVersion>latest</LangVersion>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
-        <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.5.6 with 3.13.4</GamePath>
-        <!--GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.5.6 with 3.14.0</GamePath-->
+		<!--GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.5.6 with 3.13.4</GamePath-->
+		<GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.5.6 with 3.14.0</GamePath>
 		<GameModsPath>$(GamePath)\DevMods</GameModsPath>
 
 		<EnableModZip Condition="$(Configuration) != 'Release'">False</EnableModZip>

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ThemeManagerExample": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}
