@@ -1,0 +1,9 @@
+{
+  "EntryDll": "BreakPintailClient.dll",
+  "Name": "BreakPintailClient",
+  "Author": "Khloe Leclair",
+  "Version": "1.0.0-Debug",
+  "Description": "Breaking Pintail for fun and profit",
+  "UniqueID": "leclair.breakpintail.client",
+  "MinimumApiVersion": "3.13.0"
+}

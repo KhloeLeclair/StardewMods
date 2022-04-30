@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BreakPintail-Client": {
+      "commandName": "Project",
+      "commandLineArgs": "--mods-path \"DevMods\""
+    }
+  }
+}

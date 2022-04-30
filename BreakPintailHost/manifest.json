@@ -1,0 +1,9 @@
+{
+  "EntryDll": "BreakPintailHost.dll",
+  "Name": "BreakPintailHost",
+  "Author": "Khloe Leclair",
+  "Version": "1.0.0-Debug",
+  "Description": "Breaking Pintail for fun and profit",
+  "UniqueID": "leclair.breakpintail.host",
+  "MinimumApiVersion": "3.13.0"
+}
