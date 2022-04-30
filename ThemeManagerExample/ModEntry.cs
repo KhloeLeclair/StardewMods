@@ -89,7 +89,10 @@ public class ModEntry : Mod {
 		if (api is null)
 			return;
 
-		ThemeManager = api.ManageTheme(ModManifest, ref Theme, OnThemeChanged);
+		ThemeManager = api.GetOrCreateManager<ThemeData>(ModManifest);
+
+		Theme = ThemeManager.Theme;
+		ThemeManager.ThemeChanged += OnThemeChanged;
 	}
 
 	private void OnThemeChanged(object? sender, IThemeChangedEvent<ThemeData> e) {
