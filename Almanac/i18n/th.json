@@ -96,10 +96,10 @@
 	"page.mines.about": "ข้อมูลดังนี้ เป็นบทสรุปเกี่ยวกับ กิจกรรมล่าสัตว์ประหลาด ที่คาดการณ์ไว้ใน {{Season}}",
 
 	"page.mines.type.Mushroom": "เห็ด",
-	"page.mines.type.InfestedMonster": "จุดเชื้อระบาด",
-	"page.mines.type.InfestedSlime": "จุดเชื้อสไลม์ระบาด",
+	"page.mines.type.InfestedMonster": "ชั้นที่มีมอนสเตอร์ชุกชุม",
+	"page.mines.type.InfestedSlime": "ชั้นที่มีสไลม์ชุกชุม",
 	"page.mines.type.Quarry": "เหมืองหิน",
-	"page.mines.type.InfestedQuarry": "จุดเชื้อระบาดในเหมืองหิน",
+	"page.mines.type.InfestedQuarry": "ชั้นที่มีมอนสเตอร์ ในเหมืองหินชุกชุม",
 	"page.mines.type.Dino": "ไดโนเสาร์ถ้ำ",
 
 	"page.notices": "ข่าวสารภายในเมือง",
