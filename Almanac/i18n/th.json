@@ -136,7 +136,7 @@
 	"page.fish.size.range": "มีขนาดตั้งแต่ @B{{min_inch}}\"@b ถึง @B{{max_inch}}\"@b",
 
 	"page.fish.weather.Sunny": "{{fish}} จับได้ในช่วง @Bแดดจัด@b เท่านั้น",
-	"page.fish.weather.Rainy": "{{fish}} จับได้ในช่วง @Brainy@b เท่านั้น",
+	"page.fish.weather.Rainy": "{{fish}} จับได้ในช่วง @Bฝนตก@b เท่านั้น",
 	"page.fish.weather.Any": "{{fish}} จับได้ตลอดเวลา ไม่ว่าจะมีฝนตกหรือแดดออก",
 	"page.fish.level": "คุณจำเป็นต้องมีทักษะ {{skill}} ระดับ @B{{level}}@b ถึงจะจับตัวนี้ได้",
 	"page.fish.legendary": "{{fish}} เป็นปลาในตำนาน",
