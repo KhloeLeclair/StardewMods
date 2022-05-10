@@ -8,8 +8,11 @@
 	"CoverTextColor": "#6D5955",
 	"CoverYearColor": "#593d40",
 
+	"CustomMouse": true,
+
 	"Standard": {
 		"CustomScroll": true,
+		"CustomTooltip": true,
 
 		"ScrollOffsetTop": 96,
 		"ScrollOffsetBottom": 0,
@@ -30,6 +33,7 @@
 
 	"Magic": {
 		"CustomScroll": true,
+		"CustomTooltip": true,
 
 		"ScrollOffsetTop": 32,
 		"ScrollOffsetBottom": -32,

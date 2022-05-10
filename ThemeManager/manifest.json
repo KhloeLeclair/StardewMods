@@ -5,6 +5,6 @@
   "Description": "Provides a framework for UI theme support in mods, as well as enhanced UI theming for the base game.",
   "UniqueID": "leclair.thememanager",
   "EntryDll": "ThemeManager.dll",
-  "MinimumApiVersion": "3.13.0",
+  "MinimumApiVersion": "3.14.0",
   "UpdateKeys": []
 }

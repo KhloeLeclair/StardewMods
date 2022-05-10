@@ -1,5 +1,3 @@
-//#define THEME_MANAGER_PRE_314
-
 using System;
 using System.IO;
 using System.Linq;
@@ -10,131 +8,13 @@ using System.Diagnostics.CodeAnalysis;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
+using Leclair.Stardew.ThemeManager.Models;
+
 namespace Leclair.Stardew.ThemeManager;
 
 public interface IThemeSelection {
 	void _SelectTheme(string? themeId, bool postReload = false);
 }
-
-public class ThemeManifest : IThemeManifest {
-	#region Constructor
-
-	internal ThemeManifest(string uniqueID, string name, IReadOnlyDictionary<string, string>? localizedNames, string? translationKey, IManifest providingMod, string[]? supportedMods, string[]? unsupportedMods, string? fallbackTheme, string? assetPrefix, bool? overrideRedirection) {
-		UniqueID = uniqueID;
-		Name = name;
-		LocalizedNames = localizedNames;
-		TranslationKey = translationKey;
-		ProvidingMod = providingMod;
-		SupportedMods = supportedMods;
-		UnsupportedMods = unsupportedMods;
-		FallbackTheme = fallbackTheme;
-		AssetPrefix = assetPrefix;
-		OverrideRedirection = overrideRedirection;
-	}
-
-	#endregion
-
-	#region Identification
-
-	public string UniqueID { get; }
-
-	public string Name { get; }
-
-	public IReadOnlyDictionary<string, string>? LocalizedNames { get; }
-
-	public string? TranslationKey { get; }
-
-	public IManifest ProvidingMod { get; }
-
-	#endregion
-
-	#region Theme Selection
-
-	public string[]? SupportedMods { get; }
-
-	public string[]? UnsupportedMods { get; }
-
-	#endregion
-
-	#region Asset Loading
-
-	public string? FallbackTheme { get; }
-
-	public string? AssetPrefix { get; }
-
-	public bool? OverrideRedirection { get; }
-
-	#endregion
-
-	#region Methods
-
-	public bool MatchesForAutomatic(IModRegistry registry) {
-		if (UnsupportedMods != null)
-			foreach (string mod in UnsupportedMods) {
-				if (!string.IsNullOrEmpty(mod) && registry.IsLoaded(mod))
-					return false;
-			}
-
-		if (SupportedMods != null)
-			foreach (string mod in SupportedMods) {
-				if (!string.IsNullOrEmpty(mod) && registry.IsLoaded(mod))
-					return true;
-			}
-
-		return false;
-	}
-
-	#endregion
-}
-
-public class ThemeChangedEventArgs<DataT> : EventArgs, IThemeChangedEvent<DataT> {
-	public string OldId { get; }
-
-	public string NewId { get; }
-
-	public DataT? OldData { get; }
-
-	public DataT NewData { get; }
-
-	public ThemeChangedEventArgs(string oldId, DataT? oldData, string newID, DataT newData) {
-		OldId = oldId;
-		NewId = newID;
-		OldData = oldData;
-		NewData = newData;
-	}
-}
-
-/// <summary>
-/// LoadableManifest is a basic class with manifest properties we support
-/// loading from theme.json files. These values are used for building a
-/// proper <see cref="ThemeManifest"/> instance for a theme.
-/// </summary>
-internal class LoadableManifest {
-	public string? UniqueID { get; set; }
-	public string? Name { get; set; }
-	public Dictionary<string, string>? LocalizedNames { get; set; }
-	public string? TranslationKey { get; set; }
-	public string[]? SupportedMods { get; set; }
-	public string[]? For { get; set; }
-	public string[]? UnsupportedMods { get; set; }
-	public string? FallbackTheme { get; set; }
-	public string? AssetPrefix { get; set; } = "assets";
-	public bool? OverrideRedirection { get; set; }
-}
-
-/// <summary>
-/// Theme records group together a theme's <typeparamref name="DataT"/>
-/// and <see cref="IContentPack"/> instances for convenience.
-/// </summary>
-/// <typeparam name="DataT">Your mod's BaseThemeData subclass</typeparam>
-/// <param name="Data">The theme's theme data.</param>
-/// <param name="Content">The theme's content pack.</param>
-internal record Theme<DataT>(
-	DataT Data,
-	ThemeManifest Manifest,
-	IContentPack Content,
-	string? RelativePath
-);
 
 public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection where DataT : class, new() {
 
@@ -295,6 +175,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 	private record LoadingTheme(
 		IManifest Mod,
+		LoadableManifest? Manifest,
 		IContentPack Pack,
 		string? RelativePath,
 		string ThemeFileName
@@ -307,8 +188,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	/// <param name="checkOwned">Whether or not to load themes from owned content packs</param>
 	/// <param name="checkEmbedded">Whether or not to load embedded themes.</param>
 	/// <param name="checkExternal">Whether or not to load external themes from other mods.</param>
-	/// <returns>The ThemeManager</returns>
-	public ITypedThemeManager<DataT> Discover(
+	public void Discover(
 		bool checkOwned = true,
 		bool checkEmbedded = true,
 		bool checkExternal = true
@@ -339,7 +219,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 					.Select(x => Mod.GetContentPackFor(x));
 				foreach (var cp in owned) { 
 					if (cp is not null && cp.HasFile("theme.json"))
-						packsWithIds[cp.Manifest.UniqueID] = new(cp.Manifest, cp, null, "theme.json");
+						packsWithIds[cp.Manifest.UniqueID] = new(cp.Manifest, null, cp, null, "theme.json");
 				}
 			}
 
@@ -362,11 +242,11 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 				LoadableManifest? loadable;
 				DataT? data;
 				try {
-					loadable = cp.Value.Pack.ReadJsonFile<LoadableManifest>(fpath);
+					loadable = cp.Value.Manifest ?? cp.Value.Pack.ReadJsonFile<LoadableManifest>(fpath);
 					if (loadable is null)
 						throw new Exception($"{file} is empty or invalid");
 
-					data = cp.Value.Pack.ReadJsonFile<DataT>(fpath);
+					data = Mod.ReadJsonFile<DataT>(fpath, cp.Value.Pack);
 					if (data is null)
 						throw new Exception($"{file} is empty or invalid");
 				} catch (Exception ex) {
@@ -376,6 +256,11 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 				string uid = loadable.UniqueID ?? cp.Key;
 
+				if (string.IsNullOrEmpty(loadable.Name)) {
+					if (cp.Value.Pack.Manifest.UniqueID != Other.UniqueID)
+						loadable.Name = cp.Value.Pack.Manifest.Name;
+				}
+					
 				ThemeManifest manifest = new(
 					uniqueID: uid,
 					name: loadable.Name ?? uid,
@@ -403,7 +288,6 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		// And select the new theme.
 		_SelectTheme(oldKey, true);
 		Mod.ConfigStale = true;
-		return this;
 	}
 
 	/// <summary>
@@ -439,7 +323,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 			LoadableManifest? manifest = null;
 			try {
-				manifest = Mod.Helper.Data.ReadJsonFile<LoadableManifest>(
+				manifest = OtherCP.ReadJsonFile<LoadableManifest>(
 					Path.Join(rel_path, "theme.json"));
 
 				if (manifest is null)
@@ -453,7 +337,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 			string uid = manifest.UniqueID ?? $"embedded.{folder}";
 
-			results[uid] = new(Other, OtherCP, rel_path, "theme.json");
+			results[uid] = new(Other, manifest, OtherCP, rel_path, "theme.json");
 			count++;
 
 			string name = manifest.Name ?? uid;
@@ -524,7 +408,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			string? folder = Path.GetDirectoryName(file);
 			file = Path.GetFileName(file);
 
-			results[mod.Manifest.UniqueID] = new(mod.Manifest, cp, folder, file);
+			results[mod.Manifest.UniqueID] = new(mod.Manifest, null, cp, folder, file);
 			count++;
 		}
 
@@ -764,11 +648,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		if (!string.IsNullOrEmpty(themeId))
 			key = PathUtilities.NormalizeAssetName(Path.Join(AssetLoaderPrefix, themeId));
 
-#if THEME_MANAGER_PRE_314
-		Mod.Helper.Content.InvalidateCache(info => info.AssetName.StartsWith(key));
-#else
 		Mod.Helper.GameContent.InvalidateCache(info => info.Name.StartsWith(key));
-#endif
 	}
 
 	/// <inheritdoc />
@@ -807,11 +687,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		}
 
 		try {
-#if THEME_MANAGER_PRE_314
-			return Mod.Helper.Content.Load<T>(assetPath, ContentSource.GameContent);
-#else
 			return Mod.Helper.GameContent.Load<T>(assetPath);
-#endif
 		} finally {
 			lock ((Mod.LoadingAssets as ICollection).SyncRoot) {
 				Mod.LoadingAssets.Remove(assetPath);
@@ -876,11 +752,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 			if (theme.Content.HasFile(lpath))
 				try {
-#if THEME_MANAGER_PRE_314
-					return theme.Content.LoadAsset<T>(lpath);
-#else
 					return theme.Content.ModContent.Load<T>(lpath);
-#endif
 				} catch (Exception ex) {
 					Log($"Failed to load asset \"{path}\" from theme {themeId}.", LogLevel.Warn, ex);
 				}
@@ -890,11 +762,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		if (!string.IsNullOrEmpty(DefaultAssetPrefix))
 			path = Path.Join(DefaultAssetPrefix, path);
 
-#if THEME_MANAGER_PRE_314
-		return OtherCP!.LoadAsset<T>(path);
-#else
 		return OtherCP!.ModContent.Load<T>(path);
-#endif
 	}
 
 	#endregion

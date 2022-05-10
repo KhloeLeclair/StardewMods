@@ -1,9 +1,9 @@
-using System;
+#nullable enable
 
-namespace Leclair.Stardew.Almanac.Models {
-	public class CropOverride {
+namespace Leclair.Stardew.Almanac.Models;
 
-		public bool Visible { get; set; } = true;
+public class CropOverride {
 
-	}
+	public bool Visible { get; set; } = true;
+
 }

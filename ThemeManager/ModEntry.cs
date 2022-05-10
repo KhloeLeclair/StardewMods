@@ -1,6 +1,5 @@
-//#define THEME_MANAGER_PRE_314
-
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -19,6 +18,7 @@ using StardewValley.Menus;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Toolkit.Serialization;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -36,13 +36,15 @@ public class ModEntry : ModSubscriber {
 
 	internal bool ConfigStale = false;
 
+	internal JsonHelper? JsonHelper;
+
 	internal readonly Dictionary<IManifest, IContentPack> ContentPacks = new();
 	internal readonly Dictionary<string, Func<object>> LoadingAssets = new();
 	internal readonly Dictionary<IManifest, (Type, IThemeManager)> Managers = new();
 
-#if THEME_MANAGER_PRE_314
-	internal ThemeAssetLoader? Loader;
-#endif
+	internal ThemeManager<Models.BaseTheme>? BaseThemeManager;
+
+	internal Models.BaseTheme? BaseTheme;
 
 	#region Construction
 
@@ -50,10 +52,34 @@ public class ModEntry : ModSubscriber {
 		base.Entry(helper);
 
 		Instance = this;
-		API = new ModAPI(this);
 
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
+
+		Patches.Billboard_Patches.Patch(this);
+		// TODO: BobberBar
+		Patches.CarpenterMenu_Patches.Patch(this);
+		Patches.CharacterCustomization_Patches.Patch(this);
+		Patches.CoopMenu_Patches.Patch(this);
+		Patches.DayTimeMoneyBox_Patches.Patch(this);
+		// TODO: DigitEntryMenu
+		Patches.ExitPage_Patches.Patch(this);
+		Patches.ForgeMenu_Patches.Patch(this);
+		Patches.IClickableMenu_Patches.Patch(this);
+		Patches.LetterViewerMenu_Patches.Patch(this);
+		Patches.LevelUpMenu_Patches.Patch(this);
+		Patches.LoadGameMenu_Patches.Patch(this);
+		Patches.MineElevatorMenu_Patches.Patch(this);
+		// TODO: MuseumMenu
+		// TODO: NumberSelectionMenu
+		Patches.OptionsDropDown_Patches.Patch(this);
+		Patches.QuestLog_Patches.Patch(this);
+		Patches.ShopMenu_Patches.Patch(this);
+		// TODO: SkillsPage
+		// TODO: SliderBar
+		Patches.SpriteText_Patches.Patch(this);
+		Patches.TutorialMenu_Patches.Patch(this);
+		Patches.Utility_Patches.Patch(this);
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
@@ -61,11 +87,20 @@ public class ModEntry : ModSubscriber {
 		// I18n
 		I18n.Init(Helper.Translation);
 
-		// Asset Loader
-		#if THEME_MANAGER_PRE_314
-		Loader = new ThemeAssetLoader(this);
-		Helper.Content.AssetLoaders.Add(Loader);
-		#endif
+		// Base Theme
+		BaseTheme = Models.BaseTheme.GetDefaultTheme();
+		BaseThemeManager = new ThemeManager<Models.BaseTheme>(
+			mod: this,
+			other: ModManifest,
+			selectedThemeId: Config.StardewTheme ?? "automatic",
+			defaultTheme: BaseTheme
+		);
+
+		BaseThemeManager.ThemeChanged += OnStardewThemeChanged;
+		BaseThemeManager.Discover();
+
+		// API
+		API = new ModAPI(this);
 	}
 
 	public override object GetApi() {
@@ -107,12 +142,25 @@ public class ModEntry : ModSubscriber {
 		intGMCM.Unregister();
 		intGMCM.Register(true);
 
+		var choices = BaseThemeManager!.GetThemeChoiceMethods();
+
+		intGMCM.AddChoice(
+			name: () => "Game Theme",
+			tooltip: () => "Override the game's color theme.",
+			get: c => c.StardewTheme,
+			set: (c,v) => {
+				c.StardewTheme = v;
+				BaseThemeManager!._SelectTheme(v);
+			},
+			choices: choices
+		);
+
 		intGMCM.AddLabel(I18n.Settings_ModThemes);
 
 		foreach (var entry in Managers) {
 
 			string uid = entry.Key.UniqueID;
-			var choices = entry.Value.Item2.GetThemeChoiceMethods();
+			var mchoices = entry.Value.Item2.GetThemeChoiceMethods();
 
 			string Getter(ModConfig cfg) {
 				if (cfg.SelectedThemes.TryGetValue(uid, out string? value))
@@ -131,7 +179,7 @@ public class ModEntry : ModSubscriber {
 				tooltip: null,
 				get: Getter,
 				set: Setter,
-				choices: choices
+				choices: mchoices
 			);
 		}
 
@@ -141,6 +189,35 @@ public class ModEntry : ModSubscriber {
 	#endregion
 
 	#region Content Pack Access
+
+	internal void GetJsonHelper() {
+		if (JsonHelper is not null)
+			return;
+
+		if (Helper.Data.GetType().GetField("JsonHelper", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(Helper.Data) is JsonHelper helper) {
+			JsonHelper = new();
+			var converters = JsonHelper.JsonSettings.Converters;
+			converters.Clear();
+			foreach(var converter in helper.JsonSettings.Converters)
+				if (converter.GetType().Name != "ColorConverter")
+					converters.Add(converter);
+
+			converters.Add(new Leclair.Stardew.Common.Serialization.Converters.ColorConverter());
+		}
+	}
+
+	internal TModel? ReadJsonFile<TModel>(string path, IContentPack pack) where TModel : class {
+		if (JsonHelper is null)
+			GetJsonHelper();
+
+		if (JsonHelper is not null) {
+			if (JsonHelper.ReadJsonFileIfExists(Path.Join(pack.DirectoryPath, path), out TModel? result))
+				return result;
+			return null;
+		}
+		
+		return pack.ReadJsonFile<TModel>(path);
+	}
 
 	internal IContentPack? GetContentPackFor(IManifest manifest) {
 		if (ContentPacks.TryGetValue(manifest, out IContentPack? cp))
@@ -181,12 +258,47 @@ public class ModEntry : ModSubscriber {
 
 	#region Events
 
+	private void OnStardewThemeChanged(object? sender, IThemeChangedEvent<Models.BaseTheme> e) {
+		BaseTheme = e.NewData;
+
+		Game1.textColor = BaseTheme.TextColor ?? BaseThemeManager!.DefaultTheme.TextColor!.Value;
+		Game1.textShadowColor = BaseTheme.TextShadowColor ?? BaseThemeManager!.DefaultTheme.TextShadowColor!.Value;
+	}
+
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		// Integrations
 		CheckRecommendedIntegrations();
 
+		// Commands
+		Helper.ConsoleCommands.Add("theme", "View available themes, reload themes, and change the current themes.", (_, args) => {
+
+		});
+
+		Helper.ConsoleCommands.Add("retheme", "Reload all themes.", (_, _) => {
+			BaseThemeManager!.Invalidate();
+			BaseThemeManager!.Discover();
+
+			foreach (var entry in Managers) {
+				entry.Value.Item2.Invalidate();
+				entry.Value.Item2.Discover();
+			}
+
+			Log($"Reloaded all themes across {Managers.Count + 1} managers.", LogLevel.Info);
+		});
+
+		// Settings
 		RegisterSettings();
+		Helper.Events.Display.RenderingActiveMenu += OnDrawMenu;
+	}
+
+	private void OnDrawMenu(object? sender, RenderingActiveMenuEventArgs e) {
+		// Rebuild our settings menu when first drawing the title menu, since
+		// the MenuChanged event doesn't handle the TitleMenu.
+		Helper.Events.Display.RenderingActiveMenu -= OnDrawMenu;
+
+		if (ConfigStale)
+			RegisterSettings();
 	}
 
 	[Subscriber]
@@ -204,7 +316,6 @@ public class ModEntry : ModSubscriber {
 		}
 	}
 
-	#if !THEME_MANAGER_PRE_314
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		Func<object>? loader;
@@ -218,30 +329,7 @@ public class ModEntry : ModSubscriber {
 			priority: AssetLoadPriority.Low
 		);
 	}
-#endif
 
 	#endregion
 
 }
-
-#if THEME_MANAGER_PRE_314
-internal class ThemeAssetLoader : IAssetLoader {
-
-	private readonly ModEntry Mod;
-
-	internal ThemeAssetLoader(ModEntry mod) {
-		Mod = mod;
-	}
-
-	public bool CanLoad<T>(IAssetInfo asset) {
-		return Mod.LoadingAssets.ContainsKey(asset.AssetName);
-	}
-
-	public T Load<T>(IAssetInfo asset) {
-		if (!Mod.LoadingAssets.TryGetValue(asset.AssetName, out var loader))
-			return (T) ((object?) null)!;
-
-		return (T) loader();
-	}
-}
-#endif

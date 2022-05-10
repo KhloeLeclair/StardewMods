@@ -31,7 +31,7 @@ internal static class SpriteText_Patches {
 
 	static bool getColorFromIndex__Prefix(int index, ref Color __result) {
 		try {
-			if (index > 100) {
+			if (index >= 100) {
 				__result = CommonHelper.UnpackColor(index - 100);
 				return false;
 			}

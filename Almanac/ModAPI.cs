@@ -300,7 +300,7 @@ namespace Leclair.Stardew.Almanac {
 			}
 		}
 
-		public void SetCropCallback(IManifest manifest, Action action) {
+		public void SetCropCallback(IManifest manifest, Action? action) {
 			var provider = Mod.Crops.GetModProvider(manifest, action != null);
 			if (provider != null)
 				provider.SetCallback(action);
@@ -310,7 +310,7 @@ namespace Leclair.Stardew.Almanac {
 			SetCropCallback(manifest, null);
 		}
 
-		private static SpriteInfo HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
+		private static SpriteInfo? HydrateSprite(Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?> input) {
 			if (input?.Item1 == null)
 				return null;
 
@@ -324,11 +324,11 @@ namespace Leclair.Stardew.Almanac {
 			);
 		}
 
-		private static List<SpriteInfo> HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
+		private static List<SpriteInfo?>? HydrateSprites(IEnumerable<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> input) {
 			if (input == null)
 				return null;
 
-			List<SpriteInfo> result = new();
+			List<SpriteInfo?> result = new();
 			foreach (var def in input) {
 				result.Add(HydrateSprite(def));
 			}
@@ -359,7 +359,7 @@ namespace Leclair.Stardew.Almanac {
 			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
-			provider.AddCrop(
+			provider!.AddCrop(
 				id: id,
 				item: item,
 				name: name,
@@ -403,7 +403,7 @@ namespace Leclair.Stardew.Almanac {
 			IReadOnlyCollection<Tuple<Texture2D, Rectangle?, Color?, Texture2D, Rectangle?, Color?>> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
-			provider.AddCrop(
+			provider!.AddCrop(
 				id: id,
 				item: item,
 				name: name,
@@ -445,7 +445,7 @@ namespace Leclair.Stardew.Almanac {
 			IReadOnlyCollection<SpriteInfo> phaseSprites
 		) {
 			var provider = Mod.Crops.GetModProvider(manifest);
-			provider.AddCrop(
+			provider!.AddCrop(
 				id: id,
 				item: item,
 				name: name,

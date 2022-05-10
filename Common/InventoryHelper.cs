@@ -61,6 +61,9 @@ public static class InventoryHelper {
 		if (item is Boots boots)
 			return $"(B){boots.indexInTileSheet.Value}";
 
+		if (item is Ring ring)
+			return $"(R){ring.indexInTileSheet.Value}";
+
 		if (item is Furniture furniture)
 			return $"(F){furniture.ParentSheetIndex}";
 
@@ -138,6 +141,9 @@ public static class InventoryHelper {
 			case "P":
 			case "S":
 				result = new Clothing(nid);
+				break;
+			case "R":
+				result = new Ring(nid);
 				break;
 			case "W":
 				result = new MeleeWeapon(nid);
