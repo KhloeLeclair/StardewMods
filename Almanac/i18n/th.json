@@ -6,7 +6,7 @@
 	"almanac.cover": "\nปฏิทินประจำปี\nของชาวไร่\nในเฟิร์นกิลล์",
 	"almanac.cover-island": "\nปฏิทินประจำปี\nของชาวไร่\nในเฟิร์นกิลล์\nและ\nหมู่เกาะใบเฟิร์น",
 
-	"calendar.when": "{{season}} ปี {{year}}",
+	"calendar.when": "{{season}} ปีที่ {{year}}",
 
 	"calendar.day.1": "จ.",
 	"calendar.day.2": "อ.",
