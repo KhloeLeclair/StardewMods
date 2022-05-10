@@ -10,6 +10,7 @@ using Leclair.Stardew.Common;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Locations;
 
 using Leclair.Stardew.Almanac.Models;
 
@@ -17,6 +18,11 @@ namespace Leclair.Stardew.Almanac {
 
 	public interface IAlmanacAPI {
 
+		/// <summary>
+		/// The detected number of days in a month, used when drawing calendar
+		/// pages. Some mods can change the length of a month, though Almanac
+		/// itself doesn't have the ability.
+		/// </summary>
 		int DaysPerMonth { get; }
 
 		#region Custom Pages
@@ -261,6 +267,25 @@ namespace Leclair.Stardew.Almanac {
 		/// </summary>
 		/// <param name="manifest">The manifest of the mod</param>
 		void ClearNoticesHook(IManifest manifest);
+
+		#endregion
+
+		#region Weather
+
+		/// <summary>
+		/// Get the weather for a specific date, within the location context for the
+		/// given location.
+		/// </summary>
+		/// <param name="date">The date we want weather for.</param>
+		/// <param name="location">The location we want weather for.</param>
+		string GetWeatherForDate(WorldDate date, GameLocation location);
+
+		/// <summary>
+		/// Get the weather for a specific date, within a specific location context.
+		/// </summary>
+		/// <param name="date">The date we want weather for.</param>
+		/// <param name="context">The context we want weather for.</param>
+		string GetWeatherForDate(WorldDate date, string context = "Default");
 
 		#endregion
 	}
@@ -517,6 +542,54 @@ namespace Leclair.Stardew.Almanac {
 
 		public void ClearNoticesHook(IManifest manifest) {
 			Mod.Notices.ClearHook(manifest);
+		}
+
+		#endregion
+
+		#region Weather
+
+		public string GetWeatherForDate(WorldDate date, GameLocation location) {
+			if (location is null)
+				throw new ArgumentNullException(nameof(location));
+
+			string val;
+
+			if (location is Desert)
+				val = "Desert";
+			else {
+				GameLocation.LocationContext ctx = location.GetLocationContext();
+				switch(ctx) {
+					case GameLocation.LocationContext.Default:
+						val = "Default";
+						break;
+					case GameLocation.LocationContext.Island:
+						val = "Island";
+						break;
+					default:
+						throw new ArgumentException("Invalid location context");
+				}
+			}
+
+			return GetWeatherForDate(date, val);
+		}
+
+		public string GetWeatherForDate(WorldDate date, string context = "Default") {
+			GameLocation.LocationContext ctx;
+			switch(context) {
+				case "Default":
+					ctx = GameLocation.LocationContext.Default;
+					break;
+				case "Island":
+					ctx = GameLocation.LocationContext.Island;
+					break;
+				case "Desert":
+					return "Sun";
+				default:
+					throw new ArgumentException("Invalid location context");
+			}
+
+			int weather = Mod.Weather.GetWeatherForDate(Mod.GetBaseWorldSeed(), date, ctx);
+			return WeatherHelper.GetWeatherStringID(weather);
 		}
 
 		#endregion

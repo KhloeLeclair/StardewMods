@@ -2,13 +2,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Enums;
+using Leclair.Stardew.Common.Events;
+using Leclair.Stardew.Common.UI;
 
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 
 using StardewValley;
 
@@ -70,11 +76,77 @@ public class LuckManager : BaseManager {
 	private readonly Dictionary<IManifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>>> ModHooks = new();
 	private readonly Dictionary<IManifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, IRichEvent>>>> InterfaceHooks = new();
 
+	private Dictionary<string, LocalNotice>? DataEvents;
+	private bool Loaded = false;
+
 	public LuckManager(ModEntry mod) : base(mod) { }
+
+	public void Invalidate() {
+		Loaded = false;
+		DataEvents = null;
+		Mod.Helper.GameContent.InvalidateCache(AssetManager.FortuneEventsPath);
+	}
 
 	#region Event Handlers
 
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach (var name in e.Names)
+			if (name.IsEquivalentTo(AssetManager.FortuneEventsPath)) {
+				Loaded = false;
+				DataEvents = null;
+			}
+	}
 
+	[Subscriber]
+	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		if (e.Name.IsEquivalentTo(AssetManager.FortuneEventsPath))
+			e.LoadFrom(
+				() => LoadEvents(),
+				priority: AssetLoadPriority.Low
+			);
+	}
+
+	#endregion
+
+	#region Loading
+
+	private Dictionary<string, LocalNotice> LoadEvents() {
+		Dictionary<string, LocalNotice> events = new();
+
+		foreach (var cp in Mod.Helper.ContentPacks.GetOwned()) {
+			if (!cp.HasFile("fortune_events.json"))
+				continue;
+
+			Dictionary<string, LocalNotice>? data;
+			try {
+				data = cp.ReadJsonFile<Dictionary<string, LocalNotice>>("fortune_events.json");
+				if (data == null)
+					throw new ArgumentNullException();
+			} catch (Exception ex) {
+				Log($"Invalid or empty fortune_events.json for content pack '{cp.Manifest.Name}'", LogLevel.Error, ex);
+				continue;
+			}
+
+			foreach (var entry in data) {
+				entry.Value.Translation = cp.Translation;
+				entry.Value.ModContent = cp.ModContent;
+				if (!events.ContainsKey(entry.Key))
+					events[entry.Key] = entry.Value;
+			}
+		}
+
+		return events;
+	}
+
+	[MemberNotNull(nameof(DataEvents))]
+	private void Load() {
+		if (Loaded && DataEvents != null)
+			return;
+
+		DataEvents = Mod.Helper.GameContent.Load<Dictionary<string, LocalNotice>>(AssetManager.FortuneEventsPath);
+		Loaded = true;
+	}
 
 	#endregion
 
@@ -159,9 +231,149 @@ public class LuckManager : BaseManager {
 
 	#region Events
 
+	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, GameStateQuery.GameState state, string? key = null) {
+		if (notice == null)
+			return null;
+
+		// Year Validation
+		if (notice.FirstYear > date.Year || notice.LastYear < date.Year)
+			return null;
+
+		if (notice.ValidYears != null && !notice.ValidYears.Contains(date.Year))
+			return null;
+
+		// Season Validation
+		if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains(Season.All) && !notice.ValidSeasons.Contains((Season) date.SeasonIndex))
+			return null;
+
+		// Date Range Validation
+		int day;
+
+		bool first = true;
+
+		switch (notice.Period) {
+			case TimeScale.Year:
+				day = date.TotalDays % (WorldDate.MonthsPerYear * ModEntry.DaysPerMonth);
+				break;
+			case TimeScale.Season:
+				day = date.DayOfMonth;
+				break;
+			case TimeScale.Week:
+				day = date.DayOfMonth % 7;
+				break;
+			default:
+				day = -1;
+				break;
+		}
+
+		if (notice.Ranges != null) {
+			bool matched = false;
+			first = false;
+			foreach (var range in notice.Ranges) {
+				if (range.Start <= day && range.End >= day && (range.Valid == null || range.Valid.Contains(day))) {
+					if (range.Start == day)
+						first = true;
+					matched = true;
+				}
+			}
+
+			if (!matched)
+				return null;
+		}
+
+		// Condition Validation
+		if (!string.IsNullOrEmpty(notice.Condition) && !GameStateQuery.CheckConditions(notice.Condition, state))
+			return null;
+
+		// Get icon
+		Item? item = null;
+		SpriteInfo? sprite;
+
+		// Try parsing the item.
+		// This will change in 1.6
+		if (!string.IsNullOrEmpty(notice.Item)) {
+			try {
+				item = InventoryHelper.CreateItemById(notice.Item, 1);
+			} catch (Exception ex) {
+				Log($"Unable to get item instance for: {notice.Item}", LogLevel.Warn, ex);
+				item = null;
+			}
+		}
+
+		if (notice.IconType == NoticeIconType.Item) {
+			sprite = item == null ? null : SpriteHelper.GetSprite(item);
+
+		} else if (notice.IconType == NoticeIconType.ModTexture) {
+			Texture2D? tex;
+			if (!string.IsNullOrEmpty(notice.IconPath) && notice.ModContent != null)
+				tex = notice.ModContent.Load<Texture2D>(notice.IconPath);
+			else
+				tex = null;
+
+			sprite = tex == null ? null : new SpriteInfo(
+				tex,
+				notice.IconSourceRect ?? tex.Bounds
+			);
+
+		} else if (notice.IconType == NoticeIconType.Texture) {
+			Texture2D? tex;
+			if (!string.IsNullOrEmpty(notice.IconPath))
+				tex = Mod.Helper.GameContent.Load<Texture2D>(notice.IconPath);
+			else if (notice.IconSource.HasValue)
+				tex = SpriteHelper.GetTexture(notice.IconSource.Value);
+			else
+				tex = null;
+
+			sprite = tex == null ? null : new SpriteInfo(
+				tex,
+				notice.IconSourceRect ?? tex.Bounds
+			);
+
+		} else {
+			item = null;
+			sprite = null;
+		}
+
+		if (notice.Translation != null && !string.IsNullOrEmpty(notice.I18nKey))
+			notice.Description = notice.Translation.Get(notice.I18nKey).ToString();
+
+		string? desc = string.IsNullOrEmpty(notice.Description) ? null : StringTokenizer.ParseString(notice.Description, state);
+		if (desc != null && Mod.Config.DebugMode && !string.IsNullOrEmpty(key))
+			desc = $"{desc} @C@c@h(#{key})";
+
+		return new RichEvent(
+			(first || notice.ShowEveryDay) ? desc : null,
+			null,
+			sprite,
+			item
+		);
+	}
+
 	public IEnumerable<IRichEvent> GetEventsForDate(ulong seed, WorldDate date) {
 
 		bool do_vanilla = true;
+
+		Load();
+
+		var state = new GameStateQuery.GameState(
+			rnd: Game1.random,
+			date: date,
+			timeOfDay: 600,
+			ticks: 0,
+			pickedValue: Game1.random.NextDouble(),
+			farmer: Game1.player,
+			location: null,
+			item: null,
+			monitor: Mod.Monitor,
+			trace: false
+		);
+
+		if (DataEvents != null)
+			foreach (var entry in DataEvents) {
+				IRichEvent? hydrated = HydrateEvent(entry.Value, date, state, entry.Key);
+				if (hydrated != null)
+					yield return hydrated;
+			}
 
 		foreach (var ihook in InterfaceHooks.Values) {
 			if (ihook != null)

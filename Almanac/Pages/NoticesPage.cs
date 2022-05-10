@@ -150,8 +150,6 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 				align: Alignment.Center
 			);
 
-		var notices = Mod.Notices.LoadExtraNotices();
-
 		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
 
 			FlowBuilder db = new();
@@ -160,7 +158,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 			date.DayOfMonth = day;
 			List<SpriteInfo> sprites = new();
 
-			foreach(var evt in Mod.Notices.GetEventsForDate(0, date, notices)) {
+			foreach(var evt in Mod.Notices.GetEventsForDate(0, date)) {
 				if (evt == null)
 					continue;
 

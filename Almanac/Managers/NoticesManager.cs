@@ -1,17 +1,20 @@
 #nullable enable
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Enums;
+using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.UI;
 
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 using StardewValley;
@@ -33,44 +36,84 @@ public class NoticesManager : BaseManager {
 	private readonly Dictionary<IManifest, Func<int, WorldDate, IEnumerable<Tuple<string, Texture2D, Rectangle?, Item>>>> ModHooks = new();
 	private readonly Dictionary<IManifest, Func<int, WorldDate, IEnumerable<IRichEvent>>> InterfaceHooks = new();
 
-	private Dictionary<WorldDate, List<IRichEvent>>? DataEvents;
-
+	private Dictionary<string, LocalNotice>? DataEvents;
 	private bool Loaded = false;
-	private string? Locale;
 
 	public NoticesManager(ModEntry mod) : base(mod) { }
 
 	public void Invalidate() {
 		Loaded = false;
+		DataEvents = null;
 		Mod.Helper.GameContent.InvalidateCache(AssetManager.LocalNoticesPath);
 		Mod.Helper.GameContent.InvalidateCache(AssetManager.NPCOverridesPath);
 	}
 
 	#region Event Handlers
 
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach(var name in e.Names)
+			if (name.IsEquivalentTo(AssetManager.LocalNoticesPath)) {
+				Loaded = false;
+				DataEvents = null;
+			}
+	}
 
+	[Subscriber]
+	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		if (e.Name.IsEquivalentTo(AssetManager.NPCOverridesPath))
+			e.LoadFrom(
+				() => new Dictionary<string, Models.NPCOverride>(),
+				priority: AssetLoadPriority.Low
+			);
+
+		if (e.Name.IsEquivalentTo(AssetManager.LocalNoticesPath))
+			e.LoadFrom(
+				() => LoadEvents(),
+				priority: AssetLoadPriority.Low
+			);
+	}
 
 	#endregion
 
 	#region Loading
 
-	private void Load() {
-		string locale = Mod.Helper.Translation.Locale;
-		if (Loaded && locale == Locale)
-			return;
+	private Dictionary<string, LocalNotice> LoadEvents() {
+		Dictionary<string, LocalNotice> events = new();
 
-		Dictionary<WorldDate, List<IRichEvent>> events = new();
-
-		foreach(var cp in Mod.Helper.ContentPacks.GetOwned()) {
-			if (!cp.HasLocalizedAsset("notices.json", locale))
+		foreach (var cp in Mod.Helper.ContentPacks.GetOwned()) {
+			if (!cp.HasFile("notices.json"))
 				continue;
+
+			Dictionary<string, LocalNotice>? data;
+			try {
+				data = cp.ReadJsonFile<Dictionary<string, LocalNotice>>("notices.json");
+				if (data == null)
+					throw new ArgumentNullException();
+			} catch (Exception ex) {
+				Log($"Invalid or empty notices.json for content pack '{cp.Manifest.Name}'", LogLevel.Error, ex);
+				continue;
+			}
+
+			foreach (var entry in data) {
+				entry.Value.Translation = cp.Translation;
+				entry.Value.ModContent = cp.ModContent;
+				if (!events.ContainsKey(entry.Key))
+					events[entry.Key] = entry.Value;
+			}
 		}
 
-		DataEvents = events;
-		Loaded = true;
-		Locale = locale;
+		return events;
 	}
 
+	[MemberNotNull(nameof(DataEvents))]
+	private void Load() {
+		if (Loaded && DataEvents != null)
+			return;
+
+		DataEvents = Mod.Helper.GameContent.Load<Dictionary<string, LocalNotice>>(AssetManager.LocalNoticesPath);
+		Loaded = true;
+	}
 
 	#endregion
 
@@ -108,7 +151,7 @@ public class NoticesManager : BaseManager {
 
 	#region Events
 
-	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date) {
+	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, GameStateQuery.GameState state, string? key = null) {
 		if (notice == null)
 			return null;
 
@@ -158,6 +201,10 @@ public class NoticesManager : BaseManager {
 				return null;
 		}
 
+		// Condition Validation
+		if (!string.IsNullOrEmpty(notice.Condition) && !GameStateQuery.CheckConditions(notice.Condition, state))
+			return null;
+
 		// Get icon
 		Item? item = null;
 		SpriteInfo? sprite;
@@ -176,10 +223,22 @@ public class NoticesManager : BaseManager {
 		if (notice.IconType == NoticeIconType.Item) {
 			sprite = item == null ? null : SpriteHelper.GetSprite(item);
 
+		} else if (notice.IconType == NoticeIconType.ModTexture) {
+			Texture2D? tex;
+			if (!string.IsNullOrEmpty(notice.IconPath) && notice.ModContent != null)
+				tex = notice.ModContent.Load<Texture2D>(notice.IconPath);
+			else
+				tex = null;
+
+			sprite = tex == null ? null : new SpriteInfo(
+				tex,
+				notice.IconSourceRect ?? tex.Bounds
+			);
+
 		} else if (notice.IconType == NoticeIconType.Texture) {
 			Texture2D? tex;
 			if (!string.IsNullOrEmpty(notice.IconPath))
-				tex = Game1.content.Load<Texture2D>(notice.IconPath);
+				tex = Mod.Helper.GameContent.Load<Texture2D>(notice.IconPath);
 			else if (notice.IconSource.HasValue)
 				tex = SpriteHelper.GetTexture(notice.IconSource.Value);
 			else
@@ -195,35 +254,44 @@ public class NoticesManager : BaseManager {
 			sprite = null;
 		}
 
+		if (notice.Translation != null && ! string.IsNullOrEmpty(notice.I18nKey))
+			notice.Description = notice.Translation.Get(notice.I18nKey).ToString();
+
+		string? desc = string.IsNullOrEmpty(notice.Description) ? null : StringTokenizer.ParseString(notice.Description, state);
+		if (desc != null && Mod.Config.DebugMode && !string.IsNullOrEmpty(key))
+			desc = $"{desc} @C@c@h(#{key})";
+
 		return new RichEvent(
-			(first || notice.ShowEveryDay) ? notice.Description : null,
+			(first || notice.ShowEveryDay) ? desc : null,
 			null,
 			sprite,
 			item
 		);
 	}
 
-	public LocalNotice[]? LoadExtraNotices() {
-		Dictionary<string, LocalNotice> notices = Mod.Helper.GameContent.Load<Dictionary<string, LocalNotice>>(AssetManager.LocalNoticesPath);
-		return notices?.Values?.ToArray();
-	}
-
-	public IEnumerable<IRichEvent> GetEventsForDate(int seed, WorldDate date, LocalNotice[]? extraNotices = null) {
+	public IEnumerable<IRichEvent> GetEventsForDate(int seed, WorldDate date) {
 
 		Load();
 
-		if (extraNotices != null) {
-			foreach(var notice in extraNotices) {
-				IRichEvent? hydrated = HydrateEvent(notice, date);
+		var state = new GameStateQuery.GameState(
+			rnd: Game1.random,
+			date: date,
+			timeOfDay: 600,
+			ticks: 0,
+			pickedValue: Game1.random.NextDouble(),
+			farmer: Game1.player,
+			location: null,
+			item: null,
+			monitor: Mod.Monitor,
+			trace: false
+		);
+
+		if (DataEvents != null)
+			foreach(var entry in DataEvents) {
+				IRichEvent? hydrated = HydrateEvent(entry.Value, date, state, entry.Key);
 				if (hydrated != null)
 					yield return hydrated;
 			}
-		}
-
-		if (DataEvents?.ContainsKey(date) ?? false) {
-			foreach(var evt in DataEvents[date])
-				yield return evt;
-		}
 
 		foreach (var ihook in InterfaceHooks.Values) {
 			if (ihook != null)

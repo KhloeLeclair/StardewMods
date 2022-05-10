@@ -46,6 +46,19 @@ public static class WeatherHelper {
 		};
 	}
 
+	public static string GetWeatherStringID(int weather) {
+		return weather switch {
+			0 => "Sun",
+			1 => "Rain",
+			2 => "Wind",
+			3 => "Storm",
+			4 => "Festival",
+			5 => "Snow",
+			6 => "Wedding",
+			_ => "unknown"
+		};
+	}
+
 	public static bool IsRainy(int weather) {
 		return weather == 1 || weather == 3;
 	}

@@ -22,6 +22,7 @@ public class AssetManager {
 	public static readonly string CropOverridesPath = PathUtilities.NormalizeAssetName(Path.Combine(ModAssetPath, "CropOverrides"));
 	public static readonly string FishOverridesPath = PathUtilities.NormalizeAssetName(Path.Combine(ModAssetPath, "FishOverrides"));
 	public static readonly string LocalNoticesPath = PathUtilities.NormalizeAssetName(Path.Combine(ModAssetPath, "ExtraLocalNotices"));
+	public static readonly string FortuneEventsPath = PathUtilities.NormalizeAssetName(Path.Combine(ModAssetPath, "FortuneEvents"));
 	public static readonly string NPCOverridesPath = PathUtilities.NormalizeAssetName(Path.Combine(ModAssetPath, "NPCOverrides"));
 
 	// Events
@@ -73,18 +74,6 @@ public class AssetManager {
 		if (e.Name.IsEquivalentTo(FishOverridesPath))
 			e.LoadFrom(
 				() => new Dictionary<string, Models.FishOverride>(),
-				priority: AssetLoadPriority.Low
-			);
-
-		if (e.Name.IsEquivalentTo(LocalNoticesPath))
-			e.LoadFrom(
-				() => new Dictionary<string, Models.LocalNotice>(),
-				priority: AssetLoadPriority.Low
-			);
-
-		if (e.Name.IsEquivalentTo(NPCOverridesPath))
-			e.LoadFrom(
-				() => new Dictionary<string, Models.NPCOverride>(),
 				priority: AssetLoadPriority.Low
 			);
 	}

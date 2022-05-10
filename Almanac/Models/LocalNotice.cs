@@ -1,14 +1,19 @@
 #nullable enable
 
+using Newtonsoft.Json;
+
 using Microsoft.Xna.Framework;
 
 using Leclair.Stardew.Common.Enums;
+
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.Almanac.Models;
 
 public enum NoticeIconType {
 	Item,
-	Texture
+	Texture,
+	ModTexture
 }
 
 public record struct DateRange(int Start, int End, int[]? Valid = null);
@@ -30,11 +35,13 @@ public class LocalNotice {
 		Season.Winter
 	};
 
+	public string? Condition { get; set; }
 
 	// Text
 	public bool ShowEveryDay { get; set; } = false;
 
 	public string? Description { get; set; }
+	public string? I18nKey { get; set; }
 
 	// Icon
 	public NoticeIconType IconType { get; set; }
@@ -46,4 +53,12 @@ public class LocalNotice {
 	public GameTexture? IconSource { get; set; } = null;
 	public string? IconPath { get; set; }
 	public Rectangle? IconSourceRect { get; set; }
+
+	// Translation
+	[JsonIgnore]
+	public ITranslationHelper? Translation { get; set; }
+
+	[JsonIgnore]
+	public IModContentHelper? ModContent { get; set; }
+
 }
