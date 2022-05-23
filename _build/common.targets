@@ -13,6 +13,7 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<Nullable>enable</Nullable>
 
+		<CodeAnalysisRuleSet>$(SolutionDir)\_build\Rules.ruleset</CodeAnalysisRuleSet>
 		<DefineConstants Condition="$(EnableHarmony) == 'True'">$(DefineConstants);HARMONY</DefineConstants>
 
 		<!-- game version -->
@@ -33,7 +34,6 @@
 		<EnableModZip>False</EnableModZip>
 		<DebugType>Portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
-		<CodeAnalysisRuleSet>$(SolutionDir)\_build\Rules.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
 
 	<!-- mod build package -->
