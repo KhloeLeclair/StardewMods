@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+Released May 23rd, 2022.
+
+* Fix an issue where the category name has no translation support.
+
+
 ## 1.1.0
 Released May 11th, 2022.
 

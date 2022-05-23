@@ -15,6 +15,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 using StardewModdingAPI;
+using StardewValley.Network;
 
 namespace Leclair.Stardew.BCBuildings;
 
@@ -50,7 +51,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			return;
 
 		BCAPI.AddRecipeProvider(this);
-		BCAPI.CreateDefaultCategory(false, CategoryID, "Building");
+		BCAPI.CreateDefaultCategory(false, CategoryID, I18n.Category_Name);
 
 		CaseInsensitiveDictionary<Rectangle?>? buildings;
 		try {
@@ -78,8 +79,6 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 	public bool CacheAdditionalRecipes => false;
 
 	public IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking) {
-		Log("Called GetAdditionalRecipes");
-
 		if (cooking)
 			return null;
 

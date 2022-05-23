@@ -725,11 +725,16 @@ public interface IBetterCrafting {
 	/// Otherwise, crafting.</param>
 	/// <param name="categoryId">An internal ID for the category. Make sure
 	/// this is unique.</param>
-	/// <param name="Name">A human-readable name displayed in the menu.</param>
+	/// <param name="Name">A method returning a human-readable name to be
+	/// displayed in the menu.</param>
 	/// <param name="recipeNames">An enumeration of recipe names for recipes to
 	/// display in the category.</param>
 	/// <param name="iconRecipe">The name of a recipe to use as the category's
 	/// default icon.</param>
+	///
+	void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null);
+
+	[Obsolete("Use the method that takes a function for the display-name instead.")]
 	void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null);
 
 	/// <summary>

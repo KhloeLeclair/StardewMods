@@ -268,7 +268,8 @@ public static class InventoryHelper {
 			distanceLimit,
 			scanLimit,
 			targetLimit,
-			includeDiagonal
+			includeDiagonal,
+			null
 		);
 	}
 
@@ -335,6 +336,8 @@ public static class InventoryHelper {
 			}
 		}
 
+		List<LocatedInventory> extra_located = new();
+
 		if (sources != null)
 			foreach (LocatedInventory source in sources) {
 				var provider = getProvider(source.Source);
@@ -359,6 +362,10 @@ public static class InventoryHelper {
 							AbsolutePosition abs = new(source.Location, pos.Value);
 							potentials.Add(abs);
 							origins[abs] = abs.Position;
+						} else {
+							// We couldn't find it, but we need to assume it's
+							// still valid.
+							extra_located.Add(new LocatedInventory(source.Source, source.Location));
 						}
 					}
 				}
@@ -389,7 +396,8 @@ public static class InventoryHelper {
 			distanceLimit,
 			scanLimit,
 			targetLimit,
-			includeDiagonal
+			includeDiagonal,
+			extra_located
 		);
 	}
 
@@ -435,7 +443,8 @@ public static class InventoryHelper {
 			distanceLimit,
 			scanLimit,
 			targetLimit,
-			includeDiagonal
+			includeDiagonal,
+			null
 		);
 	}
 
@@ -481,9 +490,13 @@ public static class InventoryHelper {
 		int distanceLimit,
 		int scanLimit,
 		int targetLimit,
-		bool includeDiagonal
+		bool includeDiagonal,
+		List<LocatedInventory>? extra
 	) {
 		List<LocatedInventory> result = new();
+
+		if (extra is not null)
+			result.AddRange(extra);
 
 		int i = start;
 

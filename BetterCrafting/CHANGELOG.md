@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0
+Released May 23rd, 2022.
+
+### Fixes
+
+* Add translation support for currency ingredients.
+* Do not write empty category arrays to a user's saved categories if the
+  data has not been initialized yet.
+* Fix support for inventory providers that don't have require mutexes, as
+  well as providers for inventories without a physical location.
+
+### API Changes
+
+* Add translation support for default categories added through the API.
+* Add methods for using game state queries and tokenizable string format in 1.5.
+
 ## 1.0.0
 Released April 26th, 2022.
 
@@ -16,6 +32,10 @@ Released April 26th, 2022.
 * Stop repositioning the mouse cursor when using a gamepad and exiting
   the menu.
 * Draw better tooltips when a recipe doesn't have ingredients.
+
+### Mod Compatibility
+
+* Added built-in support for Vintage Interface 1.
 
 ### API Changes
 
