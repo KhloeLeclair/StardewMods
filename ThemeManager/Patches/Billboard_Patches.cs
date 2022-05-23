@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 using HarmonyLib;
 
+using StardewValley;
 using StardewValley.Menus;
 using StardewModdingAPI;
 
@@ -33,24 +34,37 @@ internal static class Billboard_Patches {
 		}
 	}
 
-	public static Color GetDimColor() {
-		return Mod?.BaseTheme?.CalendarDimColor ?? Color.Gray;
+	internal static Color GetTextColor() {
+		return Mod!.BaseTheme?.BillboardTextColor ?? Game1.textColor;
 	}
 
-	public static Color GetTodayColor() {
-		return Mod?.BaseTheme?.CalendarTodayColor ?? Color.Blue;
+	internal static Color GetDimColor() {
+		return Mod!.BaseTheme?.CalendarDimColor ?? Color.Gray;
 	}
 
-	public static Color GetHoverColor() {
-		return Mod?.BaseTheme?.BillboardHoverColor ?? Mod?.BaseTheme?.ButtonHoverColor ?? Color.LightPink;
+	internal static Color GetTodayColor() {
+		return Mod!.BaseTheme?.CalendarTodayColor ?? Color.Blue;
+	}
+
+	internal static Color GetHoverColor() {
+		return Mod!.BaseTheme?.BillboardHoverColor ??
+			Mod!.BaseTheme?.ButtonHoverColor ??
+			Color.LightPink;
 	}
 
 	static IEnumerable<CodeInstruction> Draw_Transpiler(IEnumerable<CodeInstruction> instructions) {
-		return PatchUtils.ReplaceColors(instructions, typeof(Billboard_Patches), new Dictionary<string, string> {
-			{ nameof(Color.Gray), nameof(GetDimColor) },
-			{ nameof(Color.Blue), nameof(GetTodayColor) },
-			{ nameof(Color.LightPink), nameof(GetHoverColor) },
-		});
+		return PatchUtils.ReplaceColors(
+			instructions,
+			typeof(Billboard_Patches),
+			new Dictionary<string, string> {
+				{ nameof(Color.Gray), nameof(GetDimColor) },
+				{ nameof(Color.Blue), nameof(GetTodayColor) },
+				{ nameof(Color.LightPink), nameof(GetHoverColor) },
+			},
+			fieldReplacements: new Dictionary<string, string> {
+				{ nameof(Game1.textColor), nameof(GetTextColor) }
+			}.HydrateFieldKeys(typeof(Game1)).HydrateMethodValues(typeof(Billboard_Patches))
+		);
 	}
 
 }

@@ -48,7 +48,7 @@ internal static class Utility_Patches {
 		}
 	}
 
-	private static readonly Color DEFAULT_SHADOW_COLOR = new Color(221, 148, 84);
+	private static readonly Color DEFAULT_SHADOW_COLOR = new(221, 148, 84);
 
 	public static Color GetShadowColor() {
 		return Mod?.BaseTheme?.TextShadowAltColor ?? DEFAULT_SHADOW_COLOR;

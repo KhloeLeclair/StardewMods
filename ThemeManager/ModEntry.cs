@@ -9,6 +9,7 @@ using HarmonyLib;
 
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.Events;
+using Leclair.Stardew.Common.UI;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -33,6 +34,7 @@ public class ModEntry : ModSubscriber {
 
 	internal Harmony? Harmony;
 	internal GMCMIntegration<ModConfig, ModEntry>? intGMCM;
+	internal Integrations.ContentPatcher.CPIntegration? intCP;
 
 	internal bool ConfigStale = false;
 
@@ -70,19 +72,21 @@ public class ModEntry : ModSubscriber {
 		Patches.LevelUpMenu_Patches.Patch(this);
 		Patches.LoadGameMenu_Patches.Patch(this);
 		Patches.MineElevatorMenu_Patches.Patch(this);
+		Patches.MoneyDial_Patches.Patch(this);
 		// TODO: MuseumMenu
 		// TODO: NumberSelectionMenu
 		Patches.OptionsDropDown_Patches.Patch(this);
 		Patches.QuestLog_Patches.Patch(this);
 		Patches.ShopMenu_Patches.Patch(this);
-		// TODO: SkillsPage
-		// TODO: SliderBar
+		Patches.SkillsPage_Patches.Patch(this);
+		Patches.SpriteBatch_Patches.Patch(this);
 		Patches.SpriteText_Patches.Patch(this);
 		Patches.TutorialMenu_Patches.Patch(this);
 		Patches.Utility_Patches.Patch(this);
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
+		Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
 
 		// I18n
 		I18n.Init(Helper.Translation);
@@ -93,6 +97,7 @@ public class ModEntry : ModSubscriber {
 			mod: this,
 			other: ModManifest,
 			selectedThemeId: Config.StardewTheme ?? "automatic",
+			manifestKey: "stardew:theme",
 			defaultTheme: BaseTheme
 		);
 
@@ -113,10 +118,12 @@ public class ModEntry : ModSubscriber {
 
 	internal void ResetConfig() {
 		Config = new ModConfig();
+		Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
 	}
 
 	internal void SaveConfig() {
 		Helper.WriteConfig(Config);
+		Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
 	}
 
 	[MemberNotNullWhen(true, nameof(intGMCM))]
@@ -145,8 +152,8 @@ public class ModEntry : ModSubscriber {
 		var choices = BaseThemeManager!.GetThemeChoiceMethods();
 
 		intGMCM.AddChoice(
-			name: () => "Game Theme",
-			tooltip: () => "Override the game's color theme.",
+			name: I18n.Setting_GameTheme,
+			tooltip: I18n.Setting_GameTheme_Tip,
 			get: c => c.StardewTheme,
 			set: (c,v) => {
 				c.StardewTheme = v;
@@ -182,6 +189,113 @@ public class ModEntry : ModSubscriber {
 				choices: mchoices
 			);
 		}
+
+		intGMCM.AddLabel(I18n.Setting_Advanced);
+
+		intGMCM.Add(
+			name: I18n.Setting_FixText,
+			tooltip: I18n.Setting_FixText_Tip,
+			get: c => c.AlignText,
+			set: (c, v) => {
+				c.AlignText = v;
+				Patches.SpriteBatch_Patches.AlignText = v;
+			}
+		);
+
+		var clock_choices = new Dictionary<string, Func<string>> {
+			{ "by-theme", I18n.Setting_FromTheme },
+			{ "top-left", I18n.Alignment_TopLeft },
+			{ "top-center", I18n.Alignment_TopCenter },
+			{ "default", I18n.Alignment_Default },
+			{ "mid-left", I18n.Alignment_MidLeft },
+			{ "mid-center", I18n.Alignment_MidCenter },
+			{ "mid-right", I18n.Alignment_MidRight },
+			{ "bottom-left", I18n.Alignment_BottomLeft },
+			{ "bottom-center", I18n.Alignment_BottomCenter },
+			{ "bottom-right", I18n.Alignment_BottomRight }
+		};
+
+		intGMCM.AddChoice(
+			name: I18n.Setting_ClockPosition,
+			tooltip: I18n.Setting_ClockPosition_Tip,
+			get: c => {
+				if (c.ClockMode == ClockAlignMode.Default)
+					return "default";
+				if (c.ClockMode == ClockAlignMode.ByTheme)
+					return "by-theme";
+
+				Alignment align = c.ClockAlignment ?? Alignment.None;
+
+				if (align.HasFlag(Alignment.Middle)) {
+					if (align.HasFlag(Alignment.Left))
+						return "mid-left";
+					if (align.HasFlag(Alignment.Center))
+						return "mid-center";
+					return "mid-right";
+
+				} else if (align.HasFlag(Alignment.Bottom)) {
+					if (align.HasFlag(Alignment.Left))
+						return "bottom-left";
+					if (align.HasFlag(Alignment.Center))
+						return "bottom-center";
+					return "bottom-right";
+				}
+
+				if (align.HasFlag(Alignment.Left))
+					return "top-left";
+				if (align.HasFlag(Alignment.Center))
+					return "top-center";
+				return "top-right";
+			},
+			set: (c, v) => {
+				switch (v) {
+					case "default":
+						c.ClockMode = ClockAlignMode.Default;
+						return;
+					case "by-theme":
+						c.ClockMode = ClockAlignMode.ByTheme;
+						return;
+				}
+
+				Alignment align = Alignment.None;
+
+				switch (v) {
+					case "bottom-left":
+					case "bottom-center":
+					case "bottom-right":
+						align |= Alignment.Bottom;
+						break;
+					case "mid-left":
+					case "mid-center":
+					case "mid-right":
+						align |= Alignment.Middle;
+						break;
+					default:
+						align |= Alignment.Top;
+						break;
+				}
+
+				switch (v) {
+					case "top-left":
+					case "mid-left":
+					case "bottom-left":
+						align |= Alignment.Left;
+						break;
+					case "top-center":
+					case "mid-center":
+					case "bottom-center":
+						align |= Alignment.Center;
+						break;
+					default:
+						align |= Alignment.Right;
+						break;
+				}
+
+				c.ClockMode = ClockAlignMode.Manual;
+				c.ClockAlignment = align;
+			},
+			choices: clock_choices
+		);
 
 		ConfigStale = false;
 	}
@@ -268,12 +382,13 @@ public class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		// Integrations
+		intCP = new(this);
 		CheckRecommendedIntegrations();
 
 		// Commands
-		Helper.ConsoleCommands.Add("theme", "View available themes, reload themes, and change the current themes.", (_, args) => {
-
-		});
+		/*Helper.ConsoleCommands.Add("theme", "View available themes, reload themes, and change the current themes.", (_, args) => {
+			Log($"Not yet implemented.");
+		});*/
 
 		Helper.ConsoleCommands.Add("retheme", "Reload all themes.", (_, _) => {
 			BaseThemeManager!.Invalidate();

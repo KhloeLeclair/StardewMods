@@ -66,6 +66,13 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	public string AssetLoaderPrefix { get; }
 
 	/// <summary>
+	/// The key that should be checked when attempting to discover
+	/// themes in other mods' manifest files. If this is <c>null</c>,
+	/// a string will be built using the pattern <c>{UniqueId}:theme</c>
+	/// </summary>
+	public string? ManifestKey { get; }
+
+	/// <summary>
 	/// The relative path to where your mod keeps its embedded themes.
 	/// By default, this is <c>assets/themes</c>. If this is <c>null</c>,
 	/// no embedded themes will be loaded.
@@ -119,6 +126,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		IManifest other,
 		string selectedThemeId = "automatic",
 		DataT? defaultTheme = null,
+		string? manifestKey = null,
 		string? embeddedThemesPath = "assets/themes",
 		string? assetPrefix = "assets",
 		string? assetLoaderPrefix = null,
@@ -131,6 +139,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		SelectedThemeId = selectedThemeId;
 		DefaultAssetPrefix = assetPrefix;
 		EmbeddedThemesPath = embeddedThemesPath;
+		ManifestKey = manifestKey;
 
 		_DefaultTheme = defaultTheme ?? new DataT();
 
@@ -215,7 +224,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			// Now, check for your mod's owned content packs.
 			if (checkOwned) {
 				var owned = Mod.Helper.ModRegistry.GetAll()
-					.Where(x => x.IsContentPack && x.Manifest.ContentPackFor.UniqueID == Other.UniqueID)
+					.Where(x => x.IsContentPack && x.Manifest.ContentPackFor.UniqueID.Equals(Other.UniqueID, StringComparison.OrdinalIgnoreCase))
 					.Select(x => Mod.GetContentPackFor(x));
 				foreach (var cp in owned) { 
 					if (cp is not null && cp.HasFile("theme.json"))
@@ -357,8 +366,16 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		Dictionary<string, LoadingTheme> results = new();
 		int count = 0;
 
-		string themeKey = $"{Other.UniqueID}:theme";
-		string themeFile = $"{Other.UniqueID}.theme.json";
+		string themeKey;
+		if (string.IsNullOrEmpty(ManifestKey)) {
+			if (ManifestKey != null)
+				return results;
+
+			themeKey = $"{Other.UniqueID}:theme";
+		} else
+			themeKey = ManifestKey;
+
+		string themeFile = $"{themeKey.Replace(':', '.')}.json";
 
 		foreach (var mod in Mod.Helper.ModRegistry.GetAll()) {
 			// For every mod, try reading a special value from its manifest.

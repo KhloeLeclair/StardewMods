@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 
+using Leclair.Stardew.Common.UI;
+
 using Microsoft.Xna.Framework;
 
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.ThemeManager.Models;
+
 
 public class BaseTheme : IBaseTheme {
 
@@ -30,8 +33,8 @@ public class BaseTheme : IBaseTheme {
 
 	public Color? CalendarDimColor { get; set; }
 	public Color? CalendarTodayColor { get; set; }
-
 	public Color? BillboardHoverColor { get; set; }
+	public Color? BillboardTextColor { get; set; }
 
 	#endregion
 
@@ -57,6 +60,12 @@ public class BaseTheme : IBaseTheme {
 
 	#region DayTimeMoneyBox
 
+	public Alignment? DayTimeAlignment { get; set; }
+	public int? DayTimeOffsetX { get; set; }
+	public int? DayTimeOffsetY { get; set; }
+
+	public Color? DayTimeTextColor { get; set; }
+
 	public Color? DayTimeAfterMidnightColor { get; set; }
 
 	#endregion
@@ -75,6 +84,12 @@ public class BaseTheme : IBaseTheme {
 
 	#region IClickableMenu
 
+	public Color? HoverTextTextColor { get; set; }
+	public Color? HoverTextShadowColor { get; set; }
+
+	public Color? HoverTextInsufficientTextColor { get; set; }
+	public Color? HoverTextModifiedStatTextColor { get; set; }
+	public Color? HoverTextEnchantmentTextColor { get; set; }
 	public Color? HoverTextForgeCountTextColor { get; set; }
 	public Color? HoverTextForgedTextColor { get; set; }
 
@@ -106,6 +121,21 @@ public class BaseTheme : IBaseTheme {
 
 	#endregion
 
+	#region MoneyDial
+
+	public Color? MoneySparkleColor { get; set; }
+
+	public Color? MoneyTextColor { get; set; }
+
+	#endregion
+
+	#region OptionDropDown
+
+	public Color? DropDownTextColor { get; set; }
+	public Color? DropDownHoverColor { get; set; }
+
+	#endregion
+
 	#region QuestLog
 
 	public Color? QuestHoverColor { get; set; }
@@ -117,17 +147,18 @@ public class BaseTheme : IBaseTheme {
 
 	#endregion
 
-	#region OptionDropDown
-
-	public Color? DropDownTextColor { get; set; }
-	public Color? DropDownHoverColor { get; set; }
-
-	#endregion
-
 	#region ShopMenu
 
 	public Color? ShopSelectedColor { get; set; }
 	public Color? ShopQiSelectedColor { get; set; }
+
+	#endregion
+
+	#region SkillsPage
+
+	public Color? SkillsPageTextColor { get; set; }
+	public Color? SkillsPageModifiedNumberColor { get; set; }
+	public Color? SkillsPageNumberColor { get; set; }
 
 	#endregion
 

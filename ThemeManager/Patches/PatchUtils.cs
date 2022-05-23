@@ -142,7 +142,7 @@ internal static class PatchUtils {
 					int? val2 = in2.AsInt();
 
 					if (val0.HasValue && val1.HasValue && val2.HasValue) {
-						Color c = new Color(val0.Value, val1.Value, val2.Value);
+						Color c = new(val0.Value, val1.Value, val2.Value);
 						if (replDict.TryGetValue(c, out var repl)) {
 
 							yield return new CodeInstruction(
