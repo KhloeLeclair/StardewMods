@@ -556,8 +556,27 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 			snapToDefaultClickableComponent();
 	}
 
+	protected void ReleaseLocks() {
+		if (UnsafeInventories == null)
+			return;
+
+		int stuck = 0;
+
+		foreach(var inv in UnsafeInventories) {
+			if (inv.Mutex is not null && inv.Mutex.IsLockHeld()) {
+				stuck++;
+				inv.Mutex.ReleaseLock();
+			}
+		}
+
+		if (stuck > 0)
+			Log($"Released {stuck} mutexes when closing.", LogLevel.Debug);
+	}
+
 	public override void emergencyShutDown() {
 		base.emergencyShutDown();
+
+		ReleaseLocks();
 
 		if (HeldItem != null) {
 			Utility.CollectOrDrop(HeldItem);
@@ -567,6 +586,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 	protected override void cleanupBeforeExit() {
 		base.cleanupBeforeExit();
+
+		ReleaseLocks();
+
 		if (Editing)
 			SaveCategories();
 	}

@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>BetterCrafting</AssemblyName>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 		<RootNamespace>Leclair.Stardew.BetterCrafting</RootNamespace>
 
 		<EnableHarmony>true</EnableHarmony>
@@ -11,6 +11,13 @@
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />
+
+	<ItemGroup>
+		<Reference Include="SMAPI.Toolkit">
+			<HintPath>$(GamePath)\smapi-internal\Pintail.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
 
 	<PropertyGroup>
 		<DefineConstants>$(DefineConstants);IS_BETTER_CRAFTING</DefineConstants>

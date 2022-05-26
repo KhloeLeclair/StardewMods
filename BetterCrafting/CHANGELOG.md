@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1
+Released May 25th, 2022.
+
+### Fixes
+
+* Whenever closing the menu, make sure that we release all inventory locks so
+  that no chests / workbenches / etc. are left in a state where they only
+  function for one player in multiplayer scenarios.
+
+
 ## 1.1.0
 Released May 23rd, 2022.
 
@@ -14,7 +24,7 @@ Released May 23rd, 2022.
 ### API Changes
 
 * Add translation support for default categories added through the API.
-* Add methods for using game state queries and tokenizable string format in 1.5.
+
 
 ## 1.0.0
 Released April 26th, 2022.
