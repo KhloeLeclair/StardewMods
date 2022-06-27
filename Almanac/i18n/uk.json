@@ -269,7 +269,7 @@
 	"settings.notices.merchant-desc": "Якщо ввімкнено, навідини мандрівним купцем міста відображатимуться в \"Місцевих замітках\". Якщо ви хочете, можна налаштувати показ предметів, які він матиме в продажу.",
 	"settings.notices.merchant.Disabled": "Вимкнено",
 	"settings.notices.merchant.Visit": "Показувати лише навідини",
-	"settings.notices.merchant.Stock": "Показувати навідини та наявне в продажу",
+	"settings.notices.merchant.Stock": "Показувати навідини та наявні речі",
 
 	"settings.restore-state": "Відновлювати попередній стан",
 	"settings.restore-state.desc": "Якщо ввімкнено, щорічник запам'ятає, в якому стані він був, коли ви його загорните та знову розгорните.",
@@ -344,7 +344,6 @@
 	"location.Custom_Highlands.1": "River",
 	"location.Custom_HighlandsCavern": "The Highlands (Cavern)",
 	"location.Custom_JunimoWoods": "Junimo Woods",
-	//"location.Custom_MorrisProperty": "",
 	"location.Custom_ShearwaterBridge": "Shearwater Bridge",
 	"location.Custom_SpriteSpring2": "Sprite Spring"
 }
