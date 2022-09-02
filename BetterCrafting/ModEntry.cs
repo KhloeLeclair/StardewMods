@@ -346,6 +346,10 @@ public class ModEntry : ModSubscriber {
 		if (menu is GameMenu gm && Config.ReplaceCrafting) {
 			for (int i = 0; i < gm.pages.Count; i++) {
 				if (gm.pages[i] is CraftingPage cp) {
+
+					var chests = Helper.Reflection.GetField<List<Chest>>(cp, "_materialContainers", false).GetValue();
+					List<object>? containers = chests == null ? null : new(chests);
+
 					CommonHelper.YeetMenu(cp);
 
 					gm.pages[i] = Menus.BetterCraftingPage.Open(
@@ -356,7 +360,7 @@ public class ModEntry : ModSubscriber {
 						height: gm.height,
 						cooking: false,
 						standalone_menu: false,
-						material_containers: (IList<LocatedInventory>?) null,
+						material_containers: containers,
 						x: gm.xPositionOnScreen,
 						y: gm.yPositionOnScreen
 					);

@@ -1,7 +1,7 @@
 # Changelog
 
 ## 1.2.0
-Released ???
+Released September 2nd, 2022.
 
 ### New Features
 
@@ -10,6 +10,12 @@ Released ???
   displays gift tastes that you have already discovered in-game, as well as
   only appearing on tool-tips while Shift is being held.
 
+### Fixes
+
+* Do not ignore containers with a `null` location when performing crafting.
+* Do not ignore the existing container list when replacing the crafting menu
+  contained within GameMenu, in case other mods have added containers.
+
 ### Mod Compatibility
 
 * Added an option to change the priority of Better Crafting's menu event
@@ -17,6 +23,13 @@ Released ???
   access the game's default crafting menu.
 * Added built-in support for SpaceCore and Dynamic Game Assets. The extra file
   "SpaceCore Support" is no longer necessary.
+
+### API Changes
+
+* Added an event to allow other mods to easily add custom containers to any
+  Better Crafting menu, including the menu embedded in the GameMenu.
+* Added a method for getting a reference to the currently active Better Crafting
+  menu, in case other mods need it for some reason.
 
 
 ## 1.1.1

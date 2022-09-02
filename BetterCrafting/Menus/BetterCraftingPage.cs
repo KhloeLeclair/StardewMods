@@ -574,6 +574,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			snapToDefaultClickableComponent();
 	}
 
+	public IClickableMenu Menu => this;
+
 	protected void ReleaseLocks() {
 		if (UnsafeInventories == null)
 			return;
@@ -1288,7 +1290,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			CachedInventories,
 			provider,
 			Game1.player,
-			true
+			nullLocationValid: true
 		);
 
 #if DEBUG
@@ -1403,7 +1405,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				},
 				locked, items, chests
 			);
-		});
+		}, nullLocationValid: true);
 	}
 
 	private void PerformCraftRecursive(
@@ -1621,7 +1623,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				onDone();
 				Working = false;
 				onDoneAction?.Invoke(item);
-			});
+			}, nullLocationValid: true);
 
 		} else {
 			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
@@ -1639,7 +1641,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				}
 
 				onDoneAction?.Invoke(items.Count > 0 ? items[0] : null);
-			});
+			}, nullLocationValid: true);
 		}
 	}
 

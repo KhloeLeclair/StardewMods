@@ -25,9 +25,9 @@ namespace Leclair.Stardew.BetterCrafting;
 public class PopulateContainersEventArgs : IPopulateContainersEvent {
 	public IBetterCraftingMenu Menu { get; }
 
-	public IList<LocatedInventory> Containers { get; }
+	public IList<Tuple<object, GameLocation?>> Containers { get; }
 
-	public PopulateContainersEventArgs(IBetterCraftingMenu menu, IList<LocatedInventory> containers) {
+	public PopulateContainersEventArgs(IBetterCraftingMenu menu, IList<Tuple<object, GameLocation?>> containers) {
 		Menu = menu;
 		Containers = containers;
 	}
@@ -125,12 +125,40 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
+	public IBetterCraftingMenu? GetActiveMenu() {
+		var menu = Game1.activeClickableMenu;
+
+		while (menu is not null) {
+			if (menu is IBetterCraftingMenu bcm)
+				return bcm;
+
+			if (menu is GameMenu gm) {
+				for (int i = 0; i < gm.pages.Count; i++) {
+					if (gm.pages[i] is IBetterCraftingMenu bcm2)
+						return bcm2;
+				}
+			}
+
+			menu = menu.GetChildMenu();
+		}
+
+		return null;
+	}
+
+	/// <inheritdoc />
 	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;
 
 	internal void EmitMenuPopulate(BetterCraftingPage menu, ref IList<LocatedInventory>? containers) {
 		if (MenuPopulateContainers is not null) {
-			containers ??= new List<LocatedInventory>();
-			MenuPopulateContainers.Invoke(new PopulateContainersEventArgs(menu, containers));
+			List<Tuple<object, GameLocation?>> values = containers == null ? new() :
+				containers.Select(x => new Tuple<object, GameLocation?>(x.Source, x.Location)).ToList();
+
+			MenuPopulateContainers.Invoke(new PopulateContainersEventArgs(menu, values));
+
+			if (values.Count == 0)
+				containers = null;
+			else
+				containers = values.Select(x => new LocatedInventory(x.Item1, x.Item2)).ToList();
 		}
 	}
 
