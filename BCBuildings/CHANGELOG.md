@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0
+Released September 2nd, 2022.
+
+* Add settings for adjusting the prices to construct a building.
+* Add a setting to require additional items as a cost when constructing a building.
+* Add settings for adjusting the refund recieved when destroying a building.
+* Add a setting to allow moving the greenhouse before it's repaired. This is not
+  heavily tested, but I don't believe it breaks anything.
+
+* Fix the default icon for the Buildings category.
+
+
 ## 1.1.1
 Released May 23rd, 2022.
 

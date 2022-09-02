@@ -546,8 +546,6 @@ public interface IRecipeProvider {
 	IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking);
 }
 
-public record struct LocatedInventory(object Source, GameLocation? Location);
-
 #endif
 
 /// <summary>
@@ -555,6 +553,12 @@ public record struct LocatedInventory(object Source, GameLocation? Location);
 /// menu that may be useful for other mods.
 /// </summary>
 public interface IBetterCraftingMenu {
+
+	/// <summary>
+	/// The <see cref="IClickableMenu"/> instance for this menu. This is the
+	/// same object, but included for convenience due to how API proxying works.
+	/// </summary>
+	IClickableMenu Menu { get; }
 
 	/// <summary>
 	/// Whether or not this crafting menu is for cooking. If this is
@@ -614,7 +618,7 @@ public interface IPopulateContainersEvent {
 	/// The relevant Better Crafting menu.
 	/// </summary>
 	IBetterCraftingMenu Menu { get; }
-	//IList<LocatedInventory> Containers { get; }
+	IList<Tuple<object, GameLocation?>> Containers { get; }
 }
 
 public interface IBetterCrafting {
@@ -676,6 +680,12 @@ public interface IBetterCrafting {
 	/// </summary>
 	/// <returns>The BetterCraftingMenu type.</returns>
 	Type GetMenuType();
+
+	/// <summary>
+	/// Get the currently open Better Crafting menu. This may be <c>null</c> if
+	/// the menu is still opening.
+	/// </summary>
+	IBetterCraftingMenu? GetActiveMenu();
 
 	/// <summary>
 	/// This event is fired whenever a new Better Crafting menu is opened,

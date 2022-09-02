@@ -67,11 +67,8 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		if (BCAPI is null)
 			return;
 
-		BCAPI.RegisterInventoryProvider(typeof(Test), new TestProvider());
-		BCAPI.MenuPopulateContainers += OnPopulateContainers;
-
 		BCAPI.AddRecipeProvider(this);
-		BCAPI.CreateDefaultCategory(false, CategoryID, I18n.Category_Name);
+		BCAPI.CreateDefaultCategory(false, CategoryID, I18n.Category_Name, iconRecipe: "blueprint:Shed");
 
 		CaseInsensitiveDictionary<Rectangle?>? buildings;
 		try {
@@ -86,11 +83,6 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		if (buildings != null)
 			BuildingSources = buildings;
-	}
-
-	private void OnPopulateContainers(IPopulateContainersEvent e) {
-		Log($"Populate Containers Event {e.Menu}");
-		//e.Containers.Add(new(new Test(), null));
 	}
 
 	#region Configuration
@@ -336,50 +328,4 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 	#endregion
 
-}
-
-public class Test { }
-
-public class TestProvider : IInventoryProvider {
-	public bool CanExtractItems(object obj, GameLocation? location, Farmer? who) {
-		return true;
-	}
-
-	public bool CanInsertItems(object obj, GameLocation? location, Farmer? who) {
-		return false;
-	}
-
-	public void CleanInventory(object obj, GameLocation? location, Farmer? who) {
-		
-	}
-
-	public int GetActualCapacity(object obj, GameLocation? location, Farmer? who) {
-		return 1;
-	}
-
-	public IList<Item?>? GetItems(object obj, GameLocation? location, Farmer? who) {
-		return new List<Item?> {
-			new StardewValley.Object(StardewValley.Object.wood, 999)
-		};
-	}
-
-	public Rectangle? GetMultiTileRegion(object obj, GameLocation? location, Farmer? who) {
-		return null;
-	}
-
-	public NetMutex? GetMutex(object obj, GameLocation? location, Farmer? who) {
-		return null;
-	}
-
-	public bool IsMutexRequired(object obj, GameLocation? location, Farmer? who) {
-		return false;
-	}
-
-	public Vector2? GetTilePosition(object obj, GameLocation? location, Farmer? who) {
-		return null;
-	}
-
-	public bool IsValid(object obj, GameLocation? location, Farmer? who) {
-		return true;
-	}
 }
