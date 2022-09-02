@@ -16,8 +16,23 @@ using StardewValley.Network;
 using StardewValley.Objects;
 
 using Leclair.Stardew.BetterCrafting.Models;
+using Leclair.Stardew.BetterCrafting.Menus;
+using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting;
+
+
+public class PopulateContainersEventArgs : IPopulateContainersEvent {
+	public IBetterCraftingMenu Menu { get; }
+
+	public IList<LocatedInventory> Containers { get; }
+
+	public PopulateContainersEventArgs(IBetterCraftingMenu menu, IList<LocatedInventory> containers) {
+		Menu = menu;
+		Containers = containers;
+	}
+}
+
 
 public class ModAPI : IBetterCrafting {
 
@@ -107,6 +122,16 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public Type GetMenuType() {
 		return typeof(Menus.BetterCraftingPage);
+	}
+
+	/// <inheritdoc />
+	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;
+
+	internal void EmitMenuPopulate(BetterCraftingPage menu, ref IList<LocatedInventory>? containers) {
+		if (MenuPopulateContainers is not null) {
+			containers ??= new List<LocatedInventory>();
+			MenuPopulateContainers.Invoke(new PopulateContainersEventArgs(menu, containers));
+		}
 	}
 
 	#endregion

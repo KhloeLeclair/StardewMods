@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 using Leclair.Stardew.BetterCrafting.Models;
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Types;
@@ -42,6 +43,8 @@ public class RecipeManager : BaseManager {
 
 	private readonly PerScreen<List<IRecipe>> CraftingRecipes = new(() => new());
 	private readonly PerScreen<List<IRecipe>> CookingRecipes = new(() => new());
+
+	private readonly PerScreen<Dictionary<IRecipe, (List<string>, List<string>)?>> RecipeTastes = new(() => new());
 
 	// Categories
 	private Category[]? DefaultCraftingCategories;
@@ -161,6 +164,50 @@ public class RecipeManager : BaseManager {
 		return result;
 	}
 
+
+	#endregion
+
+	#region Gift Tastes
+
+	public void ClearGiftTastes() {
+		RecipeTastes.Value.Clear();
+	}
+
+	public (List<string>, List<string>)? GetGiftTastes(IRecipe recipe) {
+		if (RecipeTastes.Value.TryGetValue(recipe, out var cached))
+			return cached;
+
+		Item? item = recipe.CreateItemSafe();
+		if (item is null || item is not StardewValley.Object sobj || sobj.bigCraftable.Value) {
+			RecipeTastes.Value.Add(recipe, null);
+			return null;
+		}
+
+		List<string> loves = new();
+		List<string> likes = new();
+
+		foreach(NPC npc in Utility.getAllCharacters()) {
+			if (!npc.CanSocialize)
+				continue;
+
+			if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ParentSheetIndex))
+				continue;
+
+			int taste = npc.getGiftTasteForThisItem(item);
+			if (taste == NPC.gift_taste_love)
+				loves.Add(npc.displayName);
+			if (taste == NPC.gift_taste_like)
+				likes.Add(npc.displayName);
+		}
+
+		loves.Sort();
+		likes.Sort();
+
+		(List<string>, List<string>)? result = (loves.Count > 0 || likes.Count > 0) ? (loves, likes) : null;
+
+		RecipeTastes.Value.Add(recipe, result);
+		return result;
+	}
 
 	#endregion
 
@@ -481,6 +528,7 @@ public class RecipeManager : BaseManager {
 	public void Invalidate() {
 		CraftingCount.ResetAllScreens();
 		CookingCount.ResetAllScreens();
+		RecipeTastes.ResetAllScreens();
 	}
 
 	public void AddProvider(IRecipeProvider provider) {

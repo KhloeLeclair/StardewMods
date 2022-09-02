@@ -23,7 +23,9 @@ using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.Common;
 
-public struct LocatedInventory {
+public record struct LocatedInventory(object Source, GameLocation? Location);
+
+/*public struct LocatedInventory {
 	public object Source { get; }
 	public GameLocation? Location { get; }
 
@@ -49,7 +51,7 @@ public struct LocatedInventory {
 	public static bool operator !=(LocatedInventory left, LocatedInventory right) {
 		return !(left == right);
 	}
-}
+}*/
 
 public static class InventoryHelper {
 

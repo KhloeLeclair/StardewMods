@@ -10,6 +10,18 @@ using Leclair.Stardew.Common.Types;
 
 namespace Leclair.Stardew.BetterCrafting;
 
+public enum GiftMode {
+	Never,
+	Shift,
+	Always
+};
+
+public enum MenuPriority {
+	Low,
+	Normal,
+	High
+};
+
 public enum MaxQuality {
 	Disabled,
 	None,
@@ -41,6 +53,11 @@ public class ModConfig {
 	public bool UseCategories { get; set; } = true;
 
 	public bool ShowSettingsButton { get; set; } = true;
+
+	public MenuPriority MenuPriority { get; set; } = MenuPriority.Normal;
+
+	public GiftMode ShowTastes { get; set; } = GiftMode.Shift;
+	public bool ShowAllTastes { get; set; } = false;
 
 	// Quality
 	public MaxQuality MaxQuality { get; set; } = MaxQuality.Iridium;

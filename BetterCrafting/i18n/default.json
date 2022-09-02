@@ -5,11 +5,27 @@
 
 	"setting.general": "General Options",
 
+	"setting.priority": "Menu Handler Priority",
+	"setting.priority.tip": "Changing the menu handler priority might improve Better Crafting's compatibility with other mods. When set to Low, Better Crafting will perform its menu logic after other mods. When set to High, Better Crafting will perform its logic before other mods.",
+
+	"setting.priority.low": "Low",
+	"setting.priority.normal": "Normal",
+	"setting.priority.high": "High",
+
 	"setting.theme": "UI Theme",
 	"setting.theme-desc": "This UI theme will be used for Better Crafting's buttons. Note that most of Better Crafting's UI is drawn from standard game textures.",
 
 	"theme.automatic": "Automatic",
 	"theme.default": "Default",
+
+	"setting.gift-taste": "Show Gift Tastes",
+	"setting.gift-taste.tip": "When this is enabled, known gift tastes will be displayed in item tooltips for convenience. Matching gift tastes are always displayed when searching.",
+	"setting.gift-taste.never": "Never",
+	"setting.gift-taste.shift": "When Holding Shift",
+	"setting.gift-taste.always": "Always",
+
+	"setting.gift-taste-all": "Show Undiscovered Gift Tastes",
+	"setting.gift-taste-all.tip": "When this is enabled, Better Crafting will display all gift tastes. Even those you haven't discovered in game yet. This can be considered a bit cheaty, so it's disabled by default.",
 
 	"setting.alphabetic": "Sort Alphabetically",
 	"setting.alphabetic.tip": "When this is enabled, recipes will be sorted alphabetically rather than using the default order.",
@@ -145,6 +161,9 @@
 	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",
 
 	// Tooltips
+	"tooltip.loves": "Loves: {{npcs}}",
+	"tooltip.likes": "Likes: {{npcs}}",
+
 	"tooltip.crafted": "Crafted {{count}} Times",
 
 	"tooltip.toggle-recipe": "Toggle in Category",
@@ -169,9 +188,12 @@
 	"tooltip.settings": "Open Settings",
 
 	"tooltip.search": "Search Recipes",
-	"tooltip.search.tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients.",
+	"tooltip.search.old-tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients. Start your search with \"@B{{likes}}@b\" to also search by characters that like an item, or \"@B{{loves}}@b\" to also search by characters that love an item.",
+	"tooltip.search.tip": "Modifiers: Start your search with the following characters to also search by:\n\n \"@B{{prefix}}@b\": Ingredients\n \"@B{{likes}}@b\": Characters that Like\n \"@B{{loves}}@b\": Characters that Love",
 
 	"search.ingredient-prefix": "!",
+	"search.like-prefix": "#",
+	"search.love-prefix": "^",
 
 	"search.none": "There are no matching recipes.",
 	"search.none.category": "There are no matching recipes in this category.",

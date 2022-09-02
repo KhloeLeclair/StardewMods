@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.2.0
+Released ???
+
+### New Features
+
+* The crafting menu now displays NPC gift tastes in tool-tips, and allows
+  searching for items that specific NPCs like or love. By default, this only
+  displays gift tastes that you have already discovered in-game, as well as
+  only appearing on tool-tips while Shift is being held.
+
+### Mod Compatibility
+
+* Added an option to change the priority of Better Crafting's menu event
+  handler, potentially allowing for increased compatibility with some mods that
+  access the game's default crafting menu.
+* Added built-in support for SpaceCore and Dynamic Game Assets. The extra file
+  "SpaceCore Support" is no longer necessary.
+
+
 ## 1.1.1
 Released May 25th, 2022.
 

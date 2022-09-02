@@ -35,7 +35,7 @@ public class ModEntry : ModSubscriber {
 
 #nullable disable
 	public static ModEntry Instance { get; private set; }
-	public static IBetterCrafting API { get; private set; }
+	public static ModAPI API { get; private set; }
 #nullable enable
 
 	internal Harmony? Harmony;
@@ -60,6 +60,8 @@ public class ModEntry : ModSubscriber {
 	internal ThemeManager<Models.Theme> ThemeManager;
 
 #nullable enable
+
+	private MenuPriority? ActivePriority = null;
 
 	private readonly Hashtable invProviders = new();
 	private readonly object providerLock = new();
@@ -109,6 +111,7 @@ public class ModEntry : ModSubscriber {
 		//Sprites.Load(Helper.Content, Helper.ModRegistry);
 
 		CheckRecommendedIntegrations();
+		InjectMenuHandler();
 	}
 
 	public override object GetApi() {
@@ -117,6 +120,42 @@ public class ModEntry : ModSubscriber {
 
 
 	#region Events
+
+	private void InjectMenuHandler() {
+		if (Config is null)
+			return;
+
+		if (ActivePriority is not null) {
+			if (ActivePriority == Config.MenuPriority)
+				return;
+
+			switch(ActivePriority) {
+				case MenuPriority.Low:
+					Helper.Events.Display.MenuChanged -= LowMenuChanged;
+					break;
+				case MenuPriority.Normal:
+					Helper.Events.Display.MenuChanged -= NormalMenuChanged;
+					break;
+				case MenuPriority.High:
+					Helper.Events.Display.MenuChanged -= HighMenuChanged;
+					break;
+			}
+		}
+
+		switch(Config.MenuPriority) {
+			case MenuPriority.Low:
+				Helper.Events.Display.MenuChanged += LowMenuChanged;
+				ActivePriority = MenuPriority.Low;
+				return;
+			case MenuPriority.High:
+				Helper.Events.Display.MenuChanged += HighMenuChanged;
+				ActivePriority = MenuPriority.High;
+				return;
+		}
+
+		Helper.Events.Display.MenuChanged += NormalMenuChanged;
+		ActivePriority = MenuPriority.Normal;
+	}
 
 	private static void UpdateTextures(Texture2D? oldTex, Texture2D newTex, IClickableMenu menu) {
 		if (menu.allClickableComponents != null)
@@ -141,8 +180,21 @@ public class ModEntry : ModSubscriber {
 			UpdateTextures(oldTex, newTex, page);
 	}
 
-	[Subscriber]
-	private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
+	[EventPriority(EventPriority.Low)]
+	private void LowMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	private void NormalMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	[EventPriority(EventPriority.High)]
+	private void HighMenuChanged(object? sender, MenuChangedEventArgs e) {
+		HandleMenuChanged(e);
+	}
+
+	private void HandleMenuChanged(MenuChangedEventArgs e) {
 		IClickableMenu menu = Game1.activeClickableMenu;
 		if (CurrentMenu.Value == menu)
 			return;
@@ -350,9 +402,9 @@ public class ModEntry : ModSubscriber {
 			}
 		});
 
-		// Load Data
-		Recipes.LoadRecipes();
-		Recipes.LoadDefaults();
+		// Load Data -- Actually, this is unnecessary. Do it on demand.
+		// Recipes.LoadRecipes();
+		// Recipes.LoadDefaults();
 	}
 
 	[Subscriber]
@@ -373,6 +425,7 @@ public class ModEntry : ModSubscriber {
 
 	public void SaveConfig() {
 		Helper.WriteConfig(Config);
+		InjectMenuHandler();
 	}
 
 	[MemberNotNullWhen(true, nameof(GMCMIntegration))]
@@ -426,7 +479,7 @@ public class ModEntry : ModSubscriber {
 				I18n.Setting_Theme,
 				I18n.Setting_ThemeDesc,
 				c => c.Theme,
-				(c,v) => {
+				(c, v) => {
 					c.Theme = v;
 					ThemeManager.SelectTheme(v);
 				},
@@ -455,6 +508,34 @@ public class ModEntry : ModSubscriber {
 				I18n.Setting_EnableCategories_Tip,
 				c => c.UseCategories,
 				(c, val) => c.UseCategories = val
+			)
+			.AddChoice(
+				name: I18n.Setting_GiftTaste,
+				tooltip: I18n.Setting_GiftTaste_Tip,
+				get: c => c.ShowTastes,
+				set: (c, v) => c.ShowTastes = v,
+				choices: new Dictionary<GiftMode, Func<string>> {
+					{ GiftMode.Never, I18n.Setting_GiftTaste_Never },
+					{ GiftMode.Shift, I18n.Setting_GiftTaste_Shift },
+					{ GiftMode.Always, I18n.Setting_GiftTaste_Always }
+				}
+			)
+			.Add(
+				name: I18n.Setting_GiftTasteAll,
+				tooltip: I18n.Setting_GiftTasteAll_Tip,
+				get: c => c.ShowAllTastes,
+				set: (c, v) => c.ShowAllTastes = v
+			)
+			.AddChoice(
+				name: I18n.Setting_Priority,
+				tooltip: I18n.Setting_Priority_Tip,
+				get: c => c.MenuPriority,
+				set: (c, v) => c.MenuPriority = v,
+				choices: new Dictionary<MenuPriority, Func<string>> {
+					{ MenuPriority.Low, I18n.Setting_Priority_Low },
+					{ MenuPriority.Normal, I18n.Setting_Priority_Normal },
+					{ MenuPriority.High, I18n.Setting_Priority_High },
+				}
 			);
 
 		GMCMIntegration

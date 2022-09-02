@@ -2,7 +2,7 @@
   "profiles": {
     "BetterCrafting": {
       "commandName": "Project",
-      "commandLineArgs": "--mods-path \"DevMods\""
+      "commandLineArgs": "--mods-path \"$(ModSet)\""
     }
   }
 }

@@ -469,6 +469,10 @@ public static class FlowHelper {
 		);
 	}
 
+	public static string EscapeFormatText(string text) {
+		return text.Replace("@", "@@");
+	}
+
 	public static IEnumerable<IFlowNode> FormatText(
 		string text,
 		out TextStyle endStyle,

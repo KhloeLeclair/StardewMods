@@ -26,10 +26,11 @@ using StardewValley.Network;
 using StardewValley.Objects;
 
 using SObject = StardewValley.Object;
+using Leclair.Stardew.BetterCrafting.Managers;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class BetterCraftingPage : MenuSubscriber<ModEntry> {
+public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu {
 
 	public static readonly int MAX_TABS = 8;
 	public static readonly int VISIBLE_TABS = 8;
@@ -46,8 +47,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	public static bool FavoritesOnly { get; private set; } = false;
 
 	// Menu Mode
-	public readonly bool cooking;
-	public readonly bool Standalone;
+	public readonly bool cooking; // I forget why this is here but I think it was mod compat so I'm leaving it for now.
+
+	public bool Standalone { get; }
+	public bool Cooking => cooking;
 
 	public bool DrawBG = true;
 
@@ -91,7 +94,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	public ClickableTextureComponent? btnPageDown;
 
 	// Recipe Tracking
-	protected IList<string>? ListedRecipes;
+	protected List<string>? ListedRecipes;
 
 	protected List<IRecipe> Recipes = new();
 	protected Dictionary<string, IRecipe> RecipesByName = new();
@@ -120,6 +123,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	// Search
 	private string? Filter = null;
 	private bool FilterIngredients = false;
+	private bool FilterLikes = false;
+	private bool FilterLoves = false;
 	private Regex? FilterRegex = null;
 
 	// Components for IClickableComponent
@@ -143,7 +148,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	internal int hoverMode = -1;
 
 	// Item Transfer Stuff
-	private bool Working = false;
+	public bool Working { get; private set; } = false;
 	private readonly List<ItemGrabMenu.TransferredItemSprite> tSprites = new();
 
 	// Sprite Sources
@@ -215,7 +220,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		int x = -1,
 		int y = -1,
 		bool silent_open = false,
-		IList<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null
 	) {
 		if (width <= 0)
 			width = 800 + borderWidth * 2;
@@ -263,7 +268,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		int x = -1,
 		int y = -1,
 		bool silent_open = false,
-		IList<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null
 	) {
 		var located = material_containers == null ? null : InventoryHelper.LocateInventories(
 			material_containers,
@@ -306,7 +311,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		bool discover_containers = true,
 
 		IList<LocatedInventory>? material_containers = null,
-		IList<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null
 	) : base(mod, x, y, width, height) {
 
 		Location = location ?? Game1.player.currentLocation;
@@ -315,8 +320,19 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		this.cooking = cooking;
 		Standalone = standalone_menu;
 		DiscoverContainers = discover_containers;
+
+		// Run the event to populate containers.
+		ModEntry.API.EmitMenuPopulate(this, ref material_containers);
+
 		MaterialContainers = material_containers;
-		ListedRecipes = listed_recipes;
+
+		if (listed_recipes != null) {
+			if (listed_recipes is List<string> basic)
+				ListedRecipes = basic;
+			else
+				ListedRecipes = new List<string>(listed_recipes);
+		} else
+			ListedRecipes = null;
 
 		// If not given a specific list of recipes, then try loading them
 		// from Custom Crafting Stations.
@@ -326,6 +342,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		ChestsOnly = this.cooking && Mod.intCSkill != null && Mod.intCSkill.IsLoaded;
 
 		lastRecipeHover = new(key => hoverRecipe?.CreateItemSafe(CreateLog), () => hoverRecipe?.Name);
+
+		Mod.Recipes.ClearGiftTastes();
 
 		if (Location != null) {
 			// TODO: 
@@ -829,12 +847,18 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 	#region Recipes and Inventory
 
-	public virtual IList<string>? GetListedRecipes() {
+	public virtual IReadOnlyList<string>? GetListedRecipes() {
 		return ListedRecipes;
 	}
 
-	public virtual void UpdateListedRecipes(IList<string> recipes) {
-		ListedRecipes = recipes;
+	public virtual void UpdateListedRecipes(IEnumerable<string>? recipes) {
+		if (recipes != null) {
+			if (recipes is List<string> basic)
+				ListedRecipes = basic;
+			else
+				ListedRecipes = new List<string>(recipes);
+		} else
+			ListedRecipes = null;
 
 		// Rebuild the state from the ground up.
 		DiscoverRecipes();
@@ -1915,8 +1939,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 	#region Filtering
 
-	private string HighlightSearchTerms(string text, bool is_ingredient = false) {
-		if (FilterRegex == null || is_ingredient && !FilterIngredients)
+	private string HighlightSearchTerms(string text, bool is_ingredient = false, bool is_like = false, bool is_love = false) {
+		if (FilterRegex == null || is_ingredient && !FilterIngredients || is_like && !FilterLikes || is_love && !FilterLoves)
 			return text;
 
 		string color = "#FFD70050";
@@ -1948,6 +1972,23 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 			}
 		}
 
+		if (FilterLikes || FilterLoves) {
+			(List<string>, List<string>)? tastes = Mod.Recipes.GetGiftTastes(recipe);
+			if (tastes is not null) {
+				if (FilterLoves)
+					foreach (string npc in tastes.Value.Item1) {
+						if (FilterRegex.IsMatch(npc))
+							return true;
+					}
+
+				if (FilterLikes)
+					foreach (string npc in tastes.Value.Item2) {
+						if (FilterRegex.IsMatch(npc))
+							return true;
+					}
+			}
+		}
+
 		return false;
 	}
 
@@ -1957,6 +1998,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		string? old = Filter;
 		if (old != null && FilterIngredients)
 			old = $"{I18n.Search_IngredientPrefix()}{old}";
+
+		if (old != null && FilterLikes)
+			old = $"{I18n.Search_LikePrefix()}{old}";
+
+		if (old != null && FilterLoves)
+			old = $"{I18n.Search_LovePrefix()}{old}";
 
 		var search = new SearchBox(
 			Mod,
@@ -1985,10 +2032,39 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 	public bool UpdateFilter(string? filter) {
 		if (!string.IsNullOrEmpty(filter)) {
 			filter = filter.Trim();
-			string prefix = I18n.Search_IngredientPrefix();
-			FilterIngredients = filter.StartsWith(prefix);
-			if (FilterIngredients)
-				filter = filter[prefix.Length..].TrimStart();
+			string ing_prefix = I18n.Search_IngredientPrefix();
+			string like_prefix = I18n.Search_LikePrefix();
+			string love_prefix = I18n.Search_LovePrefix();
+			bool matched = true;
+
+			FilterIngredients = false;
+			FilterLikes = false;
+			FilterLoves = false;
+
+			while(matched) {
+				matched = false;
+
+				bool has = !FilterIngredients && filter.StartsWith(ing_prefix);
+				if (has) {
+					FilterIngredients = true;
+					matched = true;
+					filter = filter[ing_prefix.Length..].TrimStart();
+				}
+
+				has = !FilterLikes && filter.StartsWith(like_prefix);
+				if (has) {
+					FilterLikes = true;
+					matched = true;
+					filter = filter[like_prefix.Length..].TrimStart();
+				}
+
+				has = !FilterLoves && filter.StartsWith(love_prefix);
+				if (has) {
+					FilterLoves = true;
+					matched = true;
+					filter = filter[love_prefix.Length..].TrimStart();
+				}
+			}
 		}
 
 		if (string.IsNullOrEmpty(filter)) {
@@ -2003,6 +2079,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 		if (Filter == null) {
 			FilterRegex = null;
 			FilterIngredients = false;
+			FilterLikes = false;
+			FilterLoves = false;
 		} else
 			FilterRegex = new(Regex.Escape(Filter), RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
@@ -2773,6 +2851,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 					if (FilterIngredients)
 						filter = $"{I18n.Search_IngredientPrefix()}{filter}";
 
+					if (FilterLikes)
+						filter = $"{I18n.Search_LikePrefix()}{filter}";
+
+					if (FilterLoves)
+						filter = $"{I18n.Search_LovePrefix()}{filter}";
+
 					builder
 						.Divider()
 						.Text(filter, color: Game1.textColor * 0.6f);
@@ -3381,7 +3465,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 
 		divided = AddBuffsToTooltip(builder, recipeItem, buffIconsToDisplay, false, divided);
 
-		if (Game1.options.showAdvancedCraftingInformation && hoverRecipe != null) {
+		if (Game1.options.showAdvancedCraftingInformation) {
 			int count = hoverRecipe.GetTimesCrafted(Game1.player);
 			if (count > 0) {
 				if (!divided)
@@ -3392,6 +3476,22 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry> {
 						I18n.Tooltip_Crafted(count),
 						color: Game1.textColor * 0.5f
 					);
+			}
+		}
+
+		(List<string>, List<string>)? tastes = Mod.Recipes.GetGiftTastes(hoverRecipe);
+		if (tastes is not null) {
+			bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
+			bool show_likes = (FilterLikes || show) && tastes.Value.Item2.Count > 0;
+			bool show_loves = (FilterLoves || show) && tastes.Value.Item1.Count > 0;
+
+			if (show_likes || show_loves) {
+				builder.Divider();
+				if (show_loves)
+					builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Value.Item1), is_love: true)), wrapText: true);
+
+				if (show_likes)
+					builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Value.Item2), is_like: true)), wrapText: true);
 			}
 		}
 

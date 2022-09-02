@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using Microsoft.Xna.Framework;
 
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
+using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.Types;
 
 using Leclair.Stardew.BetterCrafting;
@@ -16,12 +18,22 @@ using StardewValley;
 using StardewValley.Menus;
 using StardewModdingAPI;
 using StardewValley.Network;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Leclair.Stardew.BCBuildings;
 
 public class ModEntry : ModSubscriber, IRecipeProvider {
 
 	public static readonly string CategoryID = "leclair.bcbuildings/buildings";
+
+#nullable disable
+	internal ModConfig Config;
+#nullable enable
+
+	private IEnumerable<IIngredient>? CachedAdditionalCost;
+	private bool HasCachedAdditionalCost = false;
+
+	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
 	internal ModApi? API;
 
@@ -38,6 +50,9 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		SpriteHelper.SetHelper(Helper);
 		I18n.Init(Helper.Translation);
+
+		// Read Config
+		Config = Helper.ReadConfig<ModConfig>();
 	}
 
 	public override object? GetApi() {
@@ -46,9 +61,14 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		RegisterConfig();
+
 		BCAPI = Helper.ModRegistry.GetApi<IBetterCrafting>("leclair.bettercrafting");
 		if (BCAPI is null)
 			return;
+
+		BCAPI.RegisterInventoryProvider(typeof(Test), new TestProvider());
+		BCAPI.MenuPopulateContainers += OnPopulateContainers;
 
 		BCAPI.AddRecipeProvider(this);
 		BCAPI.CreateDefaultCategory(false, CategoryID, I18n.Category_Name);
@@ -67,6 +87,173 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		if (buildings != null)
 			BuildingSources = buildings;
 	}
+
+	private void OnPopulateContainers(IPopulateContainersEvent e) {
+		Log($"Populate Containers Event {e.Menu}");
+		//e.Containers.Add(new(new Test(), null));
+	}
+
+	#region Configuration
+
+	public void SaveConfig() {
+		Helper.WriteConfig(Config);
+		BCAPI?.InvalidateRecipeCache();
+		HasCachedAdditionalCost = false;
+	}
+
+	public void ResetConfig() {
+		Config = new();
+		HasCachedAdditionalCost = false;
+	}
+
+	[MemberNotNullWhen(true, nameof(GMCMIntegration))]
+	public bool HasGMCM() {
+		return GMCMIntegration?.IsLoaded ?? false;
+	}
+
+	public void OpenGMCM() {
+		if (HasGMCM())
+			GMCMIntegration.OpenMenu();
+	}
+
+	internal void RegisterConfig() {
+		GMCMIntegration = new(this, () => Config, ResetConfig, SaveConfig);
+		if (!GMCMIntegration.IsLoaded)
+			return;
+
+		GMCMIntegration.Register(true);
+
+		GMCMIntegration.Add(
+			I18n.Setting_GreenhouseMove,
+			I18n.Setting_GreenhouseMove_Tip,
+			c => c.AllowMovingUnfinishedGreenhouse,
+			(c, v) => c.AllowMovingUnfinishedGreenhouse = v
+		);
+
+		GMCMIntegration
+			.AddLabel("")
+			.AddLabel(I18n.Setting_Cost)
+			.AddParagraph(I18n.Setting_Cost_Desc);
+
+		GMCMIntegration
+			.Add(
+				name: I18n.Setting_CostMaterial,
+				tooltip: I18n.Setting_CostMaterial_Tip,
+				get: c => c.CostMaterial,
+				set: (c, v) => c.CostMaterial = v,
+				min: 0,
+				max: 5000,
+				interval: 10,
+				format: v => $"{v}%"
+			)
+			.Add(
+				name: I18n.Setting_CostCurrency,
+				tooltip: I18n.Setting_CostCurrency_Tip,
+				get: c => c.CostCurrency,
+				set: (c, v) => c.CostCurrency = v,
+				min: 0,
+				max: 5000,
+				interval: 10,
+				format: v => $"{v}%"
+			)
+			.Add(
+				name: I18n.Setting_CostAdditional,
+				tooltip: I18n.Setting_CostAdditional_Tip,
+				get: c => c.CostAdditional ?? string.Empty,
+				set: (c, v) => {
+					if (string.IsNullOrWhiteSpace(v))
+						c.CostAdditional = null;
+					else
+						c.CostAdditional = v;
+				}
+			);
+
+		GMCMIntegration
+			.AddLabel("")
+			.AddLabel(I18n.Setting_Refund)
+			.AddParagraph(I18n.Setting_Refund_Desc);
+
+		GMCMIntegration
+			.Add(
+				name: I18n.Setting_RefundMaterial,
+				tooltip: I18n.Setting_RefundMaterial_Tip,
+				get: c => c.RefundMaterial,
+				set: (c, v) => c.RefundMaterial = v,
+				min: 0,
+				max: 100,
+				interval: 10,
+				format: v => $"{v}%"
+			)
+			.Add(
+				name: I18n.Setting_RefundCurrency,
+				tooltip: I18n.Setting_RefundCurrency_Tip,
+				get: c => c.RefundCurrency,
+				set: (c, v) => c.RefundCurrency = v,
+				min: 0,
+				max: 100,
+				interval: 10,
+				format: v => $"{v}%"
+			);
+	}
+
+	#endregion
+
+	#region Extra Cost
+
+	public IEnumerable<IIngredient>? GetAdditionalCost() {
+		if (BCAPI is null)
+			return null;
+
+		if (HasCachedAdditionalCost)
+			return CachedAdditionalCost;
+
+		HasCachedAdditionalCost = true;
+		CachedAdditionalCost = null;
+
+		if (string.IsNullOrWhiteSpace(Config.CostAdditional))
+			return null;
+
+		string[] parts = Config.CostAdditional.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		if (parts.Length == 0)
+			return null;
+
+		List<IIngredient> ingredients = new();
+		CachedAdditionalCost = ingredients;
+
+		foreach(string part in parts) {
+			int idx = part.IndexOf(':');
+			if ( idx == -1 ) {
+				Log($"Invalid additional cost entry. No delimiter for quantity in: \"{part}\"", LogLevel.Warn);
+				ingredients.Add(BCAPI.CreateErrorIngredient());
+				continue;
+			}
+
+			if (!int.TryParse(part[..idx], out int amount)) {
+				Log($"Invalid quantity parsing additional cost entry: \"{part}\"", LogLevel.Warn);
+				ingredients.Add(BCAPI.CreateErrorIngredient());
+				continue;
+			}
+
+			Item? item = InventoryHelper.CreateItemById(part[(idx + 1)..], amount, allow_null: true);
+			if (item is null) {
+				Log($"Invalid item in additional cost entry: \"{part}\"", LogLevel.Warn);
+				ingredients.Add(BCAPI.CreateErrorIngredient());
+				continue;
+			}
+
+			if (item is not StardewValley.Object sobj || sobj.bigCraftable.Value) {
+				Log($"Unsupported item in additional cost entry: \"{part}\"", LogLevel.Warn);
+				ingredients.Add(BCAPI.CreateErrorIngredient());
+				continue;
+			}
+
+			ingredients.Add(BCAPI.CreateBaseIngredient(sobj.ParentSheetIndex, amount));
+		}
+
+		return CachedAdditionalCost;
+	}
+
+	#endregion
 
 	#region IRecipeProvider
 
@@ -102,12 +289,12 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		List<IRecipe> recipes = new();
 
-		foreach (var bp in blueprints.Values)
-			recipes.Add(new BPRecipe(bp, this));
-
 		recipes.Add(new ActionRecipe(ActionType.Move, this));
 		recipes.Add(new ActionRecipe(ActionType.Paint, this));
 		recipes.Add(new ActionRecipe(ActionType.Demolish, this));
+
+		foreach (var bp in blueprints.Values)
+			recipes.Add(new BPRecipe(bp, this));
 
 		BCAPI!.AddRecipesToDefaultCategory(false, CategoryID, recipes.Select(x => x.Name));
 
@@ -149,4 +336,50 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 	#endregion
 
+}
+
+public class Test { }
+
+public class TestProvider : IInventoryProvider {
+	public bool CanExtractItems(object obj, GameLocation? location, Farmer? who) {
+		return true;
+	}
+
+	public bool CanInsertItems(object obj, GameLocation? location, Farmer? who) {
+		return false;
+	}
+
+	public void CleanInventory(object obj, GameLocation? location, Farmer? who) {
+		
+	}
+
+	public int GetActualCapacity(object obj, GameLocation? location, Farmer? who) {
+		return 1;
+	}
+
+	public IList<Item?>? GetItems(object obj, GameLocation? location, Farmer? who) {
+		return new List<Item?> {
+			new StardewValley.Object(StardewValley.Object.wood, 999)
+		};
+	}
+
+	public Rectangle? GetMultiTileRegion(object obj, GameLocation? location, Farmer? who) {
+		return null;
+	}
+
+	public NetMutex? GetMutex(object obj, GameLocation? location, Farmer? who) {
+		return null;
+	}
+
+	public bool IsMutexRequired(object obj, GameLocation? location, Farmer? who) {
+		return false;
+	}
+
+	public Vector2? GetTilePosition(object obj, GameLocation? location, Farmer? who) {
+		return null;
+	}
+
+	public bool IsValid(object obj, GameLocation? location, Farmer? who) {
+		return true;
+	}
 }
