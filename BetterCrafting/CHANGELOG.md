@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2.1
+Released September 3rd, 2022.
+
+### New Features
+
+* Display character heads for gift tastes by default, rather than names. This
+  should take up quite a bit less space for items that are liked and/or loved
+  by many characters. There is an option to display names instead.
+
+### Fixes
+
+* Do not error if an error is thrown when trying to determine if an NPC likes
+  a given item.
+
+### API Changes
+
+* Added a property to `IBetterCraftingMenu` for accessing the active `IRecipe`,
+  allowing other mods to more easily perform actions based on the current recipe.
+
+
 ## 1.2.0
 Released September 2nd, 2022.
 

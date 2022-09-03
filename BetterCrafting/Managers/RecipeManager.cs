@@ -44,7 +44,7 @@ public class RecipeManager : BaseManager {
 	private readonly PerScreen<List<IRecipe>> CraftingRecipes = new(() => new());
 	private readonly PerScreen<List<IRecipe>> CookingRecipes = new(() => new());
 
-	private readonly PerScreen<Dictionary<IRecipe, (List<string>, List<string>)?>> RecipeTastes = new(() => new());
+	private readonly PerScreen<Dictionary<IRecipe, (List<NPC>, List<NPC>)?>> RecipeTastes = new(() => new());
 
 	// Categories
 	private Category[]? DefaultCraftingCategories;
@@ -173,7 +173,7 @@ public class RecipeManager : BaseManager {
 		RecipeTastes.Value.Clear();
 	}
 
-	public (List<string>, List<string>)? GetGiftTastes(IRecipe recipe) {
+	public (List<NPC>, List<NPC>)? GetGiftTastes(IRecipe recipe) {
 		if (RecipeTastes.Value.TryGetValue(recipe, out var cached))
 			return cached;
 
@@ -183,8 +183,8 @@ public class RecipeManager : BaseManager {
 			return null;
 		}
 
-		List<string> loves = new();
-		List<string> likes = new();
+		List<NPC> loves = new();
+		List<NPC> likes = new();
 
 		foreach(NPC npc in Utility.getAllCharacters()) {
 			if (!npc.CanSocialize)
@@ -193,17 +193,24 @@ public class RecipeManager : BaseManager {
 			if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ParentSheetIndex))
 				continue;
 
-			int taste = npc.getGiftTasteForThisItem(item);
+			int taste;
+			try {
+				taste = npc.getGiftTasteForThisItem(item);
+			} catch {
+				// This will error for items without a gift taste. Just ignore it.
+				continue;
+			}
+
 			if (taste == NPC.gift_taste_love)
-				loves.Add(npc.displayName);
+				loves.Add(npc);
 			if (taste == NPC.gift_taste_like)
-				likes.Add(npc.displayName);
+				likes.Add(npc);
 		}
 
-		loves.Sort();
-		likes.Sort();
+		loves.Sort((a, b) => a.displayName.CompareTo(b.displayName));
+		likes.Sort((a, b) => a.displayName.CompareTo(b.displayName));
 
-		(List<string>, List<string>)? result = (loves.Count > 0 || likes.Count > 0) ? (loves, likes) : null;
+		(List<NPC>, List<NPC>)? result = (loves.Count > 0 || likes.Count > 0) ? (loves, likes) : null;
 
 		RecipeTastes.Value.Add(recipe, result);
 		return result;

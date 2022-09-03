@@ -28,10 +28,16 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 
 using Leclair.Stardew.BetterCrafting.Managers;
+using Leclair.Stardew.BetterCrafting.Models;
+using Newtonsoft.Json.Linq;
 
 namespace Leclair.Stardew.BetterCrafting;
 
 public class ModEntry : ModSubscriber {
+
+	public static readonly string NPCMapLocationPath = "Mods/Bouhm.NPCMapLocations/NPCs";
+
+	public static readonly string HeadsPath = "Mods/leclair.bettercrafting/Heads";
 
 #nullable disable
 	public static ModEntry Instance { get; private set; }
@@ -60,6 +66,8 @@ public class ModEntry : ModSubscriber {
 	internal ThemeManager<Models.Theme> ThemeManager;
 
 #nullable enable
+
+	private Dictionary<string, HeadSize>? HeadsCache = null;
 
 	private MenuPriority? ActivePriority = null;
 
@@ -423,6 +431,94 @@ public class ModEntry : ModSubscriber {
 		RegisterSettings();
 	}
 
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach(var name in e.Names) {
+			if (name.IsEquivalentTo(HeadsPath))
+				HeadsCache = null;
+		}
+	}
+
+	[Subscriber]
+	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		if (e.Name.IsEquivalentTo(HeadsPath))
+			e.LoadFrom(() => {
+				const string path = "assets/heads.json";
+				Dictionary<string, HeadSize>? heads = null;
+
+				try {
+					heads = Helper.Data.ReadJsonFile<Dictionary<string, HeadSize>>(path);
+					if (heads is null)
+						Log($"The {path} file is missing or invalid.", LogLevel.Error);
+				} catch(Exception ex) {
+					Log($"The {path} file is invalid.", LogLevel.Error, ex);
+				}
+
+				if (heads is null)
+					heads = new();
+
+				// Read any extra data files.
+				foreach (var cp in Helper.ContentPacks.GetOwned()) {
+					if (!cp.HasFile("heads.json"))
+						continue;
+
+					Dictionary<string, HeadSize>? extra = null;
+					try {
+						extra = cp.ReadJsonFile<Dictionary<string, HeadSize>>("heads.json");
+					} catch (Exception ex) {
+						Log($"The heads.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
+					}
+
+					if (extra != null)
+						foreach (var entry in extra)
+							if (!string.IsNullOrEmpty(entry.Key))
+								heads[entry.Key] = entry.Value;
+				}
+
+				// Now, read the data file used by NPC Map Locations. This is
+				// convenient because a lot of mods support it.
+				Dictionary<string, JObject>? content = null;
+
+				try {
+					content = Helper.GameContent.Load<Dictionary<string, JObject>>(NPCMapLocationPath);
+
+				} catch (Exception) {
+					/* Nothing~ */
+				}
+
+				if (content is not null) {
+					int count = 0;
+
+					foreach (var entry in content) {
+						if (heads.ContainsKey(entry.Key))
+							continue;
+
+						int offset;
+						try {
+							offset = entry.Value.Value<int>("MarkerCropOffset");
+						} catch (Exception) {
+							continue;
+						}
+
+						heads[entry.Key] = new() {
+							OffsetY = offset
+						};
+						count++;
+					}
+
+					Log($"Loaded {count} head offsets from NPC Map Location data.");
+				}
+
+				return heads;
+
+			}, AssetLoadPriority.High);
+	}
+
+	public Dictionary<string, HeadSize> GetHeads() {
+		HeadsCache ??= Helper.GameContent.Load<Dictionary<string, HeadSize>>(HeadsPath);
+		return HeadsCache;
+	}
+
 	#endregion
 
 	#region Configuration
@@ -522,6 +618,16 @@ public class ModEntry : ModSubscriber {
 					{ GiftMode.Never, I18n.Setting_GiftTaste_Never },
 					{ GiftMode.Shift, I18n.Setting_GiftTaste_Shift },
 					{ GiftMode.Always, I18n.Setting_GiftTaste_Always }
+				}
+			)
+			.AddChoice(
+				name: I18n.Setting_GiftTasteStyle,
+				tooltip: I18n.Setting_GiftTasteStyle_Tip,
+				get: c => c.TasteStyle,
+				set: (c, v) => c.TasteStyle = v,
+				choices: new Dictionary<GiftStyle, Func<string>> {
+					{ GiftStyle.Heads, I18n.Setting_GiftTasteStyle_Heads },
+					{ GiftStyle.Names, I18n.Setting_GiftTasteStyle_Names }
 				}
 			)
 			.Add(

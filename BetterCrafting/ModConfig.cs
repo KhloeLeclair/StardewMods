@@ -10,6 +10,11 @@ using Leclair.Stardew.Common.Types;
 
 namespace Leclair.Stardew.BetterCrafting;
 
+public enum GiftStyle {
+	Heads,
+	Names
+};
+
 public enum GiftMode {
 	Never,
 	Shift,
@@ -58,6 +63,7 @@ public class ModConfig {
 
 	public GiftMode ShowTastes { get; set; } = GiftMode.Shift;
 	public bool ShowAllTastes { get; set; } = false;
+	public GiftStyle TasteStyle { get; set; } = GiftStyle.Heads;
 
 	// Quality
 	public MaxQuality MaxQuality { get; set; } = MaxQuality.Iridium;

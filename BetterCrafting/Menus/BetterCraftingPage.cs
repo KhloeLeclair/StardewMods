@@ -141,8 +141,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	internal int hoverAmount = -1;
 	public Item? HoveredItem = null;
 
+	private readonly Dictionary<NPC, SpriteInfo> Heads = new();
+
 	internal IRecipe? hoverRecipe = null;
 	internal readonly Cache<Item?, string?> lastRecipeHover;
+	internal IRecipe? activeRecipe = null;
+
+	/// <inheritdoc />
+	public IRecipe? ActiveRecipe => activeRecipe ?? hoverRecipe;
 
 	// Better Tooltip
 	internal int hoverMode = -1;
@@ -1376,6 +1382,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		Working = true;
+		activeRecipe = recipe;
+
 		InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
 
 			List<Item?> items = GetActualContainerContents(locked);
@@ -1388,7 +1396,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				recipe, 0, times,
 				(successes, used_additional) => {
 					onDone();
+
 					Working = false;
+					activeRecipe = null;
 
 					if (successes > 0 && playSound)
 						Game1.playSound("coin");
@@ -1975,17 +1985,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		if (FilterLikes || FilterLoves) {
-			(List<string>, List<string>)? tastes = Mod.Recipes.GetGiftTastes(recipe);
+			(List<NPC>, List<NPC>)? tastes = Mod.Recipes.GetGiftTastes(recipe);
 			if (tastes is not null) {
 				if (FilterLoves)
-					foreach (string npc in tastes.Value.Item1) {
-						if (FilterRegex.IsMatch(npc))
+					foreach (NPC npc in tastes.Value.Item1) {
+						if (FilterRegex.IsMatch(npc.displayName))
 							return true;
 					}
 
 				if (FilterLikes)
-					foreach (string npc in tastes.Value.Item2) {
-						if (FilterRegex.IsMatch(npc))
+					foreach (NPC npc in tastes.Value.Item2) {
+						if (FilterRegex.IsMatch(npc.displayName))
 							return true;
 					}
 			}
@@ -2640,9 +2650,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			exitFunction = () => {
 				if (Game1.options.SnappyMenus)
 					snapCursorToCurrentSnappedComponent();
+				activeRecipe = null;
 			}
 		};
 
+		activeRecipe = recipe;
 		SetChildMenu(bulk);
 		performHoverAction(0, 0);
 		return true;
@@ -3481,7 +3493,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			}
 		}
 
-		(List<string>, List<string>)? tastes = Mod.Recipes.GetGiftTastes(hoverRecipe);
+		(List<NPC>, List<NPC>)? tastes = Mod.Recipes.GetGiftTastes(hoverRecipe);
 		if (tastes is not null) {
 			bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
 			bool show_likes = (FilterLikes || show) && tastes.Value.Item2.Count > 0;
@@ -3489,11 +3501,41 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 			if (show_likes || show_loves) {
 				builder.Divider();
-				if (show_loves)
-					builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Value.Item1), is_love: true)), wrapText: true);
+				if (show_loves) {
+					if (Mod.Config.TasteStyle == GiftStyle.Names)
+						builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Value.Item1.Select(x => x.displayName)), is_love: true)), wrapText: true);
+					else {
+						var b2 = FlowHelper.Builder();
+						b2.FormatText(I18n.Tooltip_Loves(""));
+						for(int i = 0; i < tastes.Value.Item1.Count; i++) {
+							if (i > 0)
+								b2.Text(" ");
 
-				if (show_likes)
-					builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Value.Item2), is_like: true)), wrapText: true);
+							var sprite = GetHead(tastes.Value.Item1[i]);
+							if (sprite is not null)
+								b2.Sprite(sprite, scale: 2f);
+						}
+						builder.Flow(b2.Build());
+					}
+				}
+
+				if (show_likes) {
+					if (Mod.Config.TasteStyle == GiftStyle.Names)
+						builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Value.Item2.Select(x => x.displayName)), is_like: true)), wrapText: true);
+					else {
+						var b2 = FlowHelper.Builder();
+						b2.FormatText(I18n.Tooltip_Likes(""));
+						for (int i = 0; i < tastes.Value.Item2.Count; i++) {
+							if (i > 0)
+								b2.Text(" ");
+
+							var sprite = GetHead(tastes.Value.Item2[i]);
+							if (sprite is not null)
+								b2.Sprite(sprite, scale: 2f);
+						}
+						builder.Flow(b2.Build());
+					}
+				}
 			}
 		}
 
@@ -3685,6 +3727,36 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			builder.EndGroup();
 
 		return divided;
+	}
+
+	private SpriteInfo? GetHead(NPC? npc) {
+		if (npc is null)
+			return null;
+
+		if (Heads.TryGetValue(npc, out SpriteInfo? sprite))
+			return sprite;
+
+		Texture2D texture;
+		try {
+			texture = Game1.content.Load<Texture2D>(@"Characters\" + npc.getTextureName());
+		} catch (Exception) {
+			texture = npc.Sprite.Texture;
+		}
+
+		Mod.GetHeads().TryGetValue(npc.Name, out HeadSize? info);
+
+		sprite = new SpriteInfo(
+			texture,
+			new Rectangle(
+				info?.OffsetX ?? 0,
+				info?.OffsetY ?? 0,
+				info?.Width ?? 16,
+				info?.Height ?? 15
+			)
+		);
+
+		Heads[npc] = sprite;
+		return sprite;
 	}
 
 	public static string? GetBehaviorTip(TransferBehavior behavior) {

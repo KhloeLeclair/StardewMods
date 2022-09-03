@@ -585,6 +585,14 @@ public interface IBetterCraftingMenu {
 	bool Working { get; }
 
 	/// <summary>
+	/// Get the current recipe. This is normally the recipe that the
+	/// player's cursor is hovering over, but when performing a craft
+	/// or when the bulk crafting menu is open, it will return the
+	/// relevant recipe.
+	/// </summary>
+	IRecipe? ActiveRecipe { get; }
+
+	/// <summary>
 	/// Calling this method will toggle edit mode, as though the user
 	/// clicked the button themselves.
 	/// </summary>

@@ -18,6 +18,11 @@
 	"theme.automatic": "Automatic",
 	"theme.default": "Default",
 
+	"setting.gift-taste-style": "Gift Taste Style",
+	"setting.gift-taste-style.heads": "Heads",
+	"setting.gift-taste-style.names": "Names",
+	"setting.gift-taste-style.tip": "When set to Heads, gift tastes will be indicated using the heads of each character. When set to names, their names will be displayed instead.",
+
 	"setting.gift-taste": "Show Gift Tastes",
 	"setting.gift-taste.tip": "When this is enabled, known gift tastes will be displayed in item tooltips for convenience. Matching gift tastes are always displayed when searching.",
 	"setting.gift-taste.never": "Never",
