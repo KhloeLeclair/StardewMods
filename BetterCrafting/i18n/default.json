@@ -240,5 +240,16 @@
 	"currency.gold": "Gold",
 	"currency.festival-points": "Points",
 	"currency.club-coins": "Club Coins",
-	"currency.qi-gems": "Qi Gems"
+	"currency.qi-gems": "Qi Gems",
+
+	// Ingredient Categories
+	"item.category.cooking": "Cooking (Any)",
+	"item.category.crafting": "Crafting (Any)",
+	"item.category.mineral": "Mineral (Any)",
+	"item.category.meat": "Meat (Any)",
+	"item.category.fertilizer": "Fertilizer (Any)",
+	"item.category.junk": "Junk (Any)",
+	"item.category.seeds": "Seeds (Any)",
+	"item.category.fruit": "Fruit (Any)",
+	"item.category.flower": "Flower (Any)"
 }

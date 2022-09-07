@@ -678,7 +678,7 @@ public interface IBetterCrafting {
 		Vector2? position = null,
 		Rectangle? area = null,
 		bool discover_containers = true,
-		IList<Tuple<object, GameLocation>>? containers = null,
+		IList<Tuple<object, GameLocation?>>? containers = null,
 		IList<string>? listed_recipes = null
 	);
 

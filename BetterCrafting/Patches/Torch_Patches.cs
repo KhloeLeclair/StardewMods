@@ -1,7 +1,8 @@
-#nullable enable
-
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 using HarmonyLib;
 
@@ -12,7 +13,7 @@ using StardewValley.Objects;
 
 namespace Leclair.Stardew.BetterCrafting.Patches;
 
-public static class Workbench_Patches {
+public static class Torch_Patches {
 
 	private static IMonitor? Monitor;
 
@@ -21,18 +22,22 @@ public static class Workbench_Patches {
 
 		try {
 			mod.Harmony!.Patch(
-				original: AccessTools.Method(typeof(Workbench), nameof(Workbench.checkForAction)),
-				prefix: new HarmonyMethod(typeof(Workbench_Patches), nameof(Workbench_Patches.checkForAction_Prefix))
+				original: AccessTools.Method(typeof(Torch), nameof(Torch.checkForAction)),
+				prefix: new HarmonyMethod(typeof(Torch_Patches), nameof(Torch_Patches.checkForAction_Prefix))
 			);
 		} catch(Exception ex) {
-			mod.Log("An error occurred while registering a harmony patch for the Workbench.", LogLevel.Warn, ex);
+			mod.Log("An error occurred while registering a harmony patch for the Cookout Kit.", LogLevel.Warn, ex);
 		}
 	}
 
-	public static bool checkForAction_Prefix(Workbench __instance, Farmer who, bool justCheckingForActivity, ref bool __result) {
+	public static bool checkForAction_Prefix(Torch __instance, Farmer who, bool justCheckingForActivity, ref bool __result) {
 		try {
+			// We only care about the Cookout Kit specifically.
+			if (!__instance.bigCraftable.Value || __instance.ParentSheetIndex != 278)
+				return true;
+
 			ModEntry mod = ModEntry.Instance;
-			if (mod.Config.ReplaceCrafting && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
+			if (mod.Config.EnableCookoutTweaks && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
 				// If we're not just checking, open the menu.
 				if (!justCheckingForActivity && Game1.activeClickableMenu is null)
 					Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
@@ -40,6 +45,7 @@ public static class Workbench_Patches {
 						who.currentLocation,
 						__instance.TileLocation,
 						standalone_menu: true,
+						cooking: true,
 						material_containers: (IList<object>?) null
 					);
 
@@ -49,7 +55,7 @@ public static class Workbench_Patches {
 			}
 
 		} catch(Exception ex) {
-			Monitor?.Log("An error occurred while attempting to interact with a Workbench.", LogLevel.Warn);
+			Monitor?.Log("An error occurred while attempting to interact with a Torch.", LogLevel.Warn);
 			Monitor?.Log($"Details:\n{ex}", LogLevel.Warn);
 		}
 

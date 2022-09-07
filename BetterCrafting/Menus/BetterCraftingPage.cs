@@ -886,6 +886,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			if (!Editing && ListedRecipes != null && !ListedRecipes.Contains(recipe.Name))
 				continue;
 
+			if (RecipesByName.ContainsKey(recipe.Name))
+				continue;
+
 			Recipes.Add(recipe);
 			RecipesByName.Add(recipe.Name, recipe);
 
@@ -1213,7 +1216,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							scanLimit: Mod.Config.MaxCheckedTiles,
 							targetLimit: Mod.Config.MaxInventories,
 							includeSource: true,
-							includeDiagonal: Mod.Config.UseDiagonalConnections
+							includeDiagonal: Mod.Config.UseDiagonalConnections,
+							expandSource: Mod.Config.MaxWorkbenchGap
 						);
 					else
 						CachedInventories = InventoryHelper.DiscoverInventories(
@@ -1241,7 +1245,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							scanLimit: Mod.Config.MaxCheckedTiles,
 							targetLimit: Mod.Config.MaxInventories,
 							includeSource: true,
-							includeDiagonal: Mod.Config.UseDiagonalConnections
+							includeDiagonal: Mod.Config.UseDiagonalConnections,
+							expandSource: Mod.Config.MaxWorkbenchGap
 						);
 					else
 						CachedInventories = InventoryHelper.DiscoverInventories(
@@ -1270,7 +1275,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					scanLimit: Mod.Config.MaxCheckedTiles,
 					targetLimit: Mod.Config.MaxInventories,
 					includeSource: true,
-					includeDiagonal: Mod.Config.UseDiagonalConnections
+					includeDiagonal: Mod.Config.UseDiagonalConnections,
+					expandSource: Mod.Config.MaxWorkbenchGap
 				);
 			else
 				CachedInventories = InventoryHelper.DiscoverInventories(
@@ -1289,8 +1295,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		} else
 			CachedInventories = MaterialContainers;
 
-		if (CachedInventories == null)
-			CachedInventories = new List<LocatedInventory>();
+		CachedInventories ??= new List<LocatedInventory>();
+
+		int removed = CachedInventories.Count;
+		InventoryHelper.DeduplicateInventories(ref CachedInventories);
+		removed -= CachedInventories.Count;
 
 		UnsafeInventories = InventoryHelper.GetUnsafeInventories(
 			CachedInventories,
@@ -1300,7 +1309,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		);
 
 #if DEBUG
-		Log($"Chests: {count} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
+		Log($"Sources: {count} -- Duplicates: {removed} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
 #endif
 	}
 
@@ -3302,8 +3311,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		string[]? buffIconsToDisplay = null;
 		Item? recipeItem = lastRecipeHover.Value;
-		if (cooking && recipeItem != null) {
-			string[] temp = Game1.objectInformation[recipeItem.ParentSheetIndex].Split('/');
+		if (cooking && recipeItem != null && Game1.objectInformation.TryGetValue(recipeItem.ParentSheetIndex, out string? oinfo)) {
+			string[] temp = oinfo.Split('/');
 			if (temp.Length > 7)
 				buffIconsToDisplay = temp[7].Split(' ');
 		}
@@ -3434,8 +3443,29 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				.Text(
 					Game1.content.LoadString("Strings\\StringsFromCSFiles:CraftingRecipe.cs.567"),
 					color: Game1.textColor * 0.75f
-				)
-				.AddSpacedRange(4, ingredients);
+				);
+
+			if (ingredients.Count <= 5)
+				builder.AddSpacedRange(4, ingredients);
+			else {
+				List<ISimpleNode> left = new();
+				List<ISimpleNode> right = new();
+
+				bool is_left = true;
+				for(int i = 0; i < ingredients.Count; i++) {
+					if (is_left)
+						left.Add(ingredients[i]);
+					else
+						right.Add(ingredients[i]);
+					is_left = !is_left;
+				}
+
+				builder.Group(align: Alignment.Top)
+					.Group(align: Alignment.Top).AddSpacedRange(4, left).EndGroup()
+					.Divider()
+					.Group(align: Alignment.Top).AddSpacedRange(4, right).EndGroup()
+					.EndGroup();
+			}
 
 			if (!supports_quality && (Mod.Config.LowQualityFirst || Mod.Config.MaxQuality != MaxQuality.Disabled))
 				builder.Flow(

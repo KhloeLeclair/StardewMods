@@ -99,10 +99,14 @@ public class ModConfig {
 	public int MaxInventories { get; set; } = 32;
 	public int MaxDistance { get; set; } = 20;
 	public int MaxCheckedTiles { get; set; } = 500;
+	public int MaxWorkbenchGap { get; set; } = 0;
 
 	public bool UseDiagonalConnections { get; set; } = true;
 
 	public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();
+
+	// Better Cookout Kit
+	public bool EnableCookoutTweaks { get; set; } = true;
 
 	// Transfer Behavior
 

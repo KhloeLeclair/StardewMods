@@ -161,6 +161,8 @@ public class RecipeManager : BaseManager {
 			}
 		});
 
+		result.Add(new TestRecipe());
+
 		return result;
 	}
 

@@ -20,6 +20,7 @@ using StardewValley.Network;
 using StardewValley.TerrainFeatures;
 
 using SObject = StardewValley.Object;
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.Common;
 
@@ -211,12 +212,13 @@ public static class InventoryHelper {
 		int scanLimit = 100,
 		int targetLimit = 20,
 		bool includeSource = true,
-		bool includeDiagonal = true
+		bool includeDiagonal = true,
+		int expandSource = 0
 	) {
 		List<AbsolutePosition> positions = new();
 
-		for (int x = 0; x < source.Width; x++) {
-			for (int y = 0; y < source.Height; y++) {
+		for (int x = -expandSource; x < source.Width + expandSource; x++) {
+			for (int y = -expandSource; y < source.Height + expandSource; y++) {
 				positions.Add(new(
 					location,
 					new(
@@ -249,11 +251,20 @@ public static class InventoryHelper {
 		int scanLimit = 100,
 		int targetLimit = 20,
 		bool includeSource = true,
-		bool includeDiagonal = true
+		bool includeDiagonal = true,
+		int expandSource = 0
 	) {
-		List<AbsolutePosition> potentials = new() {
-			source
-		};
+		List<AbsolutePosition> potentials = new();
+
+		if (expandSource == 0)
+			potentials.Add(source);
+		else {
+			for(int x = -expandSource; x < expandSource; x++) {
+				for(int y = -expandSource; y < expandSource; y++) {
+					potentials.Add(new(source.Location, new Vector2(source.Position.X + x, source.Position.Y + y)));
+				}
+			}
+		}
 
 		Dictionary<AbsolutePosition, Vector2> origins = new();
 		origins[source] = source.Position;
@@ -275,6 +286,18 @@ public static class InventoryHelper {
 		);
 	}
 
+	public static void DeduplicateInventories(ref IList<LocatedInventory> inventories) {
+		HashSet<object> objects = new();
+		for(int i = 0; i < inventories.Count; i++) {
+			LocatedInventory inv = inventories[i];
+			if (objects.Contains(inv.Source)) {
+				inventories.RemoveAt(i);
+				i--;
+			} else
+				objects.Add(inv.Source);
+		}
+	}
+
 	public static List<LocatedInventory> DiscoverInventories(
 		Rectangle source,
 		GameLocation? location,
@@ -286,12 +309,13 @@ public static class InventoryHelper {
 		int scanLimit = 100,
 		int targetLimit = 20,
 		bool includeSource = true,
-		bool includeDiagonal = true
+		bool includeDiagonal = true,
+		int expandSource = 0
 	) {
 		List<AbsolutePosition> positions = new();
 
-		for (int x = 0; x < source.Width; x++) {
-			for (int y = 0; y < source.Height; y++) {
+		for (int x = -expandSource; x < source.Width + expandSource; x++) {
+			for (int y = -expandSource; y < source.Height + expandSource; y++) {
 				positions.Add(new(
 					location,
 					new(
@@ -504,7 +528,6 @@ public static class InventoryHelper {
 
 		while(i < potentials.Count && i < scanLimit) {
 			AbsolutePosition abs = potentials[i++];
-
 			SObject? obj;
 			SObject? furn;
 			TerrainFeature? feature;

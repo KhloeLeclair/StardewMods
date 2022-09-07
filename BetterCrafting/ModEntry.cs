@@ -99,6 +99,8 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		Patches.Workbench_Patches.Patch(this);
+		Patches.Torch_Patches.Patch(this);
+
 		SpriteText_Patches.Patch(Harmony, Monitor);
 
 		// Read Config
@@ -281,9 +283,8 @@ public class ModEntry : ModSubscriber {
 			bool cooking = CraftingPageHelper.IsCooking(page);
 			if (cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
 
-				// Make a copy of the existing chests, in case yeeting
-				// the menu creates an issue.
-				List<object> chests = new(page._materialContainers);
+				// Make a copy of the existing chests.
+				List<object>? chests = page._materialContainers is null ? null : new(page._materialContainers);
 
 				// Find our bench
 				var where = page.GetBenchPosition(Game1.player);
@@ -331,11 +332,13 @@ public class ModEntry : ModSubscriber {
 				if (crafting == 0 || cooking == 0 && names.Count > 0) {
 					bool is_cooking = cooking > 0;
 
+					// Make a copy of the existing chests.
 					var chests = Helper.Reflection.GetField<List<Chest>>(menu, "_materialContainers", false).GetValue();
-					List<object>? containers = chests == null ? null : new(chests);
+					List<object>? containers = chests is null ? null : new(chests);
 
 					// TODO: Find the bench
 
+					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(menu);
 
 					menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
@@ -354,10 +357,10 @@ public class ModEntry : ModSubscriber {
 		if (menu is GameMenu gm && Config.ReplaceCrafting) {
 			for (int i = 0; i < gm.pages.Count; i++) {
 				if (gm.pages[i] is CraftingPage cp) {
+					// Make a copy of the existing chests.
+					List<object>? containers = cp._materialContainers is null ? null : new(cp._materialContainers);
 
-					var chests = Helper.Reflection.GetField<List<Chest>>(cp, "_materialContainers", false).GetValue();
-					List<object>? containers = chests == null ? null : new(chests);
-
+					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(cp);
 
 					gm.pages[i] = Menus.BetterCraftingPage.Open(
