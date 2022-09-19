@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 
 using HarmonyLib;
 
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using Leclair.Stardew.Common;
@@ -79,6 +80,7 @@ public class ModEntry : ModSubscriber {
 
 	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
+	internal Integrations.ProducerFrameworkMod.PFMIntegration? intPFM;
 	internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
 	internal Integrations.StackSplitRedux.SSRIntegration? intSSR;
 	internal Integrations.CookingSkill.CSIntegration? intCSkill;
@@ -393,6 +395,7 @@ public class ModEntry : ModSubscriber {
 		RegisterSettings();
 
 		// Integrations
+		intPFM = new(this);
 		intRGB = new(this);
 		intSSR = new(this);
 		intCSkill = new(this);
@@ -443,7 +446,42 @@ public class ModEntry : ModSubscriber {
 	}
 
 	[Subscriber]
+	private void OnObjectsChanged(object? sender, ObjectListChangedEventArgs e) {
+		if (!Config.EnableCookoutLongevity)
+			return;
+
+		// Disable the destroyOvernight flag on Cookout Kits when they're placed.
+		if (e.Added is not null)
+			foreach(var pair in e.Added) {
+				var obj = pair.Value;
+				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278) {
+					torch.destroyOvernight = false;
+				}
+			}
+
+		// When a Cookout Kit is removed, drop the Cookout Kit item at its location.
+		if (e.Removed is not null)
+			foreach(var pair in e.Removed) {
+				var obj = pair.Value;
+				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278 && torch.Fragility != 2) {
+					e.Location.debris.Add(new Debris(new StardewValley.Object(926, 1), new Vector2(pair.Key.X * 64 + 32, pair.Key.Y * 64 + 32)));
+				}
+			}
+	}
+
+	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		// Edit the cookout kit's recipe.
+		if (Config.EnableCookoutExpensive && e.NameWithoutLocale.IsEquivalentTo(@"Data\CraftingRecipes"))
+			e.Edit(data => {
+				var recipes = data.AsDictionary<string, string>();
+				if (recipes.Data.TryGetValue("Cookout Kit", out string? value)) {
+					string[] parts = value.Split('/');
+					parts[0] = "390 45 388 15 382 8 335 2";
+					recipes.Data["Cookout Kit"] = string.Join('/', parts);
+				}
+			});
+
 		if (e.Name.IsEquivalentTo(HeadsPath))
 			e.LoadFrom(() => {
 				const string path = "assets/heads.json";
@@ -528,6 +566,7 @@ public class ModEntry : ModSubscriber {
 
 	public void SaveConfig() {
 		Helper.WriteConfig(Config);
+		Helper.GameContent.InvalidateCache(@"Data\CraftingRecipes");
 		InjectMenuHandler();
 	}
 
@@ -726,6 +765,12 @@ public class ModEntry : ModSubscriber {
 			)
 
 			.AddLabel(
+				I18n.Setting_Cookout,
+				I18n.Setting_Cookout_About,
+				"page:cookout"
+			)
+
+			.AddLabel(
 				I18n.Setting_Transfer,
 				I18n.Setting_Transfer_About,
 				"page:transfer"
@@ -904,6 +949,30 @@ public class ModEntry : ModSubscriber {
 			);
 
 		GMCMIntegration
+			.StartPage("page:cookout", I18n.Setting_Cookout)
+			.AddParagraph(I18n.Setting_Cookout_About);
+
+		GMCMIntegration
+			.Add(
+				I18n.Setting_Cookout_Workbench,
+				I18n.Setting_Cookout_Workbench_Tip,
+				c => c.EnableCookoutWorkbench,
+				(c, v) => c.EnableCookoutWorkbench = v
+			)
+			.Add(
+				I18n.Setting_Cookout_Durable,
+				I18n.Setting_Cookout_Durable_Tip,
+				c => c.EnableCookoutLongevity,
+				(c, v) => c.EnableCookoutLongevity = v
+			)
+			.Add(
+				I18n.Setting_Cookout_Expensive,
+				I18n.Setting_Cookout_Expensive_Tip,
+				c => c.EnableCookoutExpensive,
+				(c, v) => c.EnableCookoutExpensive = v
+			);
+
+		GMCMIntegration
 			.StartPage("page:transfer", I18n.Setting_Transfer)
 			.AddParagraph(I18n.Setting_Transfer_About);
 
@@ -997,6 +1066,7 @@ public class ModEntry : ModSubscriber {
 		int rows = who.MaxItems / 12;
 		if (rows < 3) rows = 3;
 		if (rows < 4 && HasBiggerBackpacks()) rows = 4;
+		if (rows > 4) rows = 3;
 		return rows;
 	}
 

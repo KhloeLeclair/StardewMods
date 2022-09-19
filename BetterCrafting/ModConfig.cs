@@ -106,7 +106,9 @@ public class ModConfig {
 	public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();
 
 	// Better Cookout Kit
-	public bool EnableCookoutTweaks { get; set; } = true;
+	public bool EnableCookoutWorkbench { get; set; } = true;
+	public bool EnableCookoutLongevity { get; set; } = false;
+	public bool EnableCookoutExpensive { get; set; } = false;
 
 	// Transfer Behavior
 

@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 
+using Leclair.Stardew.BetterCrafting.DynamicTypes;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 

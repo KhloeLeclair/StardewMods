@@ -129,6 +129,17 @@
 	"setting.transfer.quantity": "Quantity",
 	"setting.transfer.quantity.tip": "The quantity to transfer if using \"Transfer Quantity\" or the amount to leave behind if using \"Transfer All But Quantity\".",
 
+	"setting.cookout": "Cookout Kit Tweaks",
+	"setting.cookout.about": "These settings tweak the behavior of Cookout Kits, making them behave more like Workbenches.",
+
+	"setting.cookout.workbench": "Workbench-like Connectivity",
+	"setting.cookout.workbench.tip": "When enabled, Cookout Kits will draw materials from nearby containers just like Workbenches can.",
+
+	"setting.cookout.durable": "Long Lasting Kits",
+	"setting.cookout.durable.tip": "When enabled, Cookout Kits will not vanish overnight and they won't disappear when you break them.",
+
+	"setting.cookout.expensive": "More Expensive Kits",
+	"setting.cookout.expensive.tip": "When enabled, the crafting recipe for Cookout Kits will be tweaked to make them a bit more expensive to help balance the increased longevity.",
 
 	// Quality
 
@@ -185,12 +196,18 @@
 	"tooltip.transfer.half": "Transfer Half",
 	"tooltip.transfer.quantity": "Transfer {{count}}",
 
+	"tooltip.edit-filter-locked": "Individual recipes cannot be enabled or disabled when using Dynamic Filters for a category. Please adjust your filters, or disable Dynamic Filters.",
+
 	// Buttons
 	"tooltip.edit-mode": "Edit Categories",
 	"tooltip.favorites": "Only Show Favorites",
 	"tooltip.seasoning": "Use Seasoning",
 	"tooltip.uniform": "Use Uniform Grid",
 	"tooltip.settings": "Open Settings",
+
+	"tooltip.filter.enabled": "Dynamic Filters: Enabled",
+	"tooltip.filter.disabled": "Dynamic Filters: Disabled",
+	"tooltip.filter.about": "This let you create categories based on rules, rather than by manually selecting individual recipes.",
 
 	"tooltip.search": "Search Recipes",
 	"tooltip.search.old-tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients. Start your search with \"@B{{likes}}@b\" to also search by characters that like an item, or \"@B{{loves}}@b\" to also search by characters that love an item.",
@@ -251,5 +268,27 @@
 	"item.category.junk": "Junk (Any)",
 	"item.category.seeds": "Seeds (Any)",
 	"item.category.fruit": "Fruit (Any)",
-	"item.category.flower": "Flower (Any)"
+	"item.category.flower": "Flower (Any)",
+
+	// Dynamic Filters
+	"filter.add-new": "Add New Rule",
+
+	"filter.buff": "Buff: {{type}}",
+	"filter.buff.about": "This rule matches items that give the {{type}} buff when consumed.",
+
+	"filter.uncrafted": "Not Yet Crafted",
+	"filter.uncrafted.about": "This rule matches items that you haven't crafted yet.",
+
+	"filter.search": "Search",
+	"filter.search.about": "This rule matches items against a search, using the same rules as the crafting menu.",
+
+	"filter.machine": "Machines",
+	"filter.machine.about": "This rule matches items that act as machines, processing items or performing some other function.",
+
+	"filter.sprinkler": "Sprinklers",
+	"filter.sprinkler.about": "This rule matches sprinklers.",
+
+	"filter.light": "Light",
+	"filter.light.about": "This rule matches placable lights."
+
 }

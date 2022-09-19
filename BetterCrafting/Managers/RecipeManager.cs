@@ -7,11 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+using Leclair.Stardew.BetterCrafting.DynamicTypes;
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Events;
-using Leclair.Stardew.Common.Types;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -54,6 +54,9 @@ public class RecipeManager : BaseManager {
 	private readonly Dictionary<long, Category[]> CraftingCategories = new();
 	private readonly Dictionary<long, Category[]> CookingCategories = new();
 
+	// Dynamic Types
+	private readonly Dictionary<string, IDynamicTypeHandler> TypeHandlers = new();
+
 	private readonly Dictionary<long, AppliedDefaults> AppliedDefaults = new();
 
 	private readonly AddedAPICategories API_Cooking = new();
@@ -64,7 +67,10 @@ public class RecipeManager : BaseManager {
 
 	public bool DefaultsLoaded = false;
 
-	public RecipeManager(ModEntry mod) : base(mod) { }
+	public RecipeManager(ModEntry mod) : base(mod) {
+		RegisterDefaultTypeHandlers();
+
+	}
 
 	private static void AssertFarmer([NotNull] Farmer? who) {
 		if (who == null)
@@ -72,6 +78,16 @@ public class RecipeManager : BaseManager {
 	}
 
 	#region Events
+
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach(var name in e.NamesWithoutLocale) {
+			if (name.IsEquivalentTo(@"Data\CraftingRecipes") || name.IsEquivalentTo(@"Data\CookingRecipes")) {
+				Invalidate();
+				break;
+			}
+		}
+	}
 
 	[Subscriber]
 	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
@@ -185,10 +201,18 @@ public class RecipeManager : BaseManager {
 			return null;
 		}
 
+		DisposableList<NPC> chars;
+		try {
+			chars = Utility.getAllCharacters();
+		} catch(Exception ex) {
+			Log("Unable to get character list due to error. Gift tastes will not function.", LogLevel.Warn, ex);
+			return null;
+		}
+
 		List<NPC> loves = new();
 		List<NPC> likes = new();
 
-		foreach(NPC npc in Utility.getAllCharacters()) {
+		foreach (NPC npc in chars) {
 			if (!npc.CanSocialize)
 				continue;
 
@@ -509,6 +533,79 @@ public class RecipeManager : BaseManager {
 					CraftingCategories[id] = array;
 			}
 		});
+	}
+
+	#endregion
+
+	#region Dynamic Types
+
+	private void RegisterDefaultTypeHandlers() {
+		RegisterTypeHandler("Uncrafted", new UncraftedTypeHandler());
+		RegisterTypeHandler("Search", new SearchTypeHandler(Mod));
+		RegisterTypeHandler("Machine", new MachineTypeHandler(Mod));
+		RegisterTypeHandler("Sprinkler", new SprinklerTypeHandler());
+		//RegisterTypeHandler("Light", new LightTypeHandler());
+		RegisterTypeHandler("BuffFarming", new BuffTypeHandler(BuffTypeHandler.FARMING));
+		RegisterTypeHandler("BuffFishing", new BuffTypeHandler(BuffTypeHandler.FISHING));
+		RegisterTypeHandler("BuffMining", new BuffTypeHandler(BuffTypeHandler.MINING));
+		RegisterTypeHandler("BuffLuck", new BuffTypeHandler(BuffTypeHandler.LUCK));
+		RegisterTypeHandler("BuffForaging", new BuffTypeHandler(BuffTypeHandler.FORAGING));
+		RegisterTypeHandler("BuffMaxEnergy", new BuffTypeHandler(BuffTypeHandler.MAX_ENERGY));
+		RegisterTypeHandler("BuffMagnetism", new BuffTypeHandler(BuffTypeHandler.MAGNETISM));
+		RegisterTypeHandler("BuffSpeed", new BuffTypeHandler(BuffTypeHandler.SPEED));
+		RegisterTypeHandler("BuffDefense", new BuffTypeHandler(BuffTypeHandler.DEFENSE));
+		RegisterTypeHandler("BuffAttack", new BuffTypeHandler(BuffTypeHandler.ATTACK));
+		RegisterTypeHandler("BuffGarlic", new SingleItemTypeHandler(772));
+		RegisterTypeHandler("BuffLife", new SingleItemTypeHandler(773));
+		RegisterTypeHandler("BuffMuscle", new SingleItemTypeHandler(351));
+		RegisterTypeHandler("BuffSquidInk", new SingleItemTypeHandler(921));
+		RegisterTypeHandler("BuffMonsterMusk", new SingleItemTypeHandler(879));
+	}
+
+	public bool RegisterTypeHandler(string key, IDynamicTypeHandler handler) {
+		lock(TypeHandlers) {
+			if (TypeHandlers.ContainsKey(key))
+				return false;
+
+			TypeHandlers.Add(key, handler);
+
+			return true;
+		}
+	}
+
+	public KeyValuePair<string, IDynamicTypeHandler>[] GetTypeHandlers() {
+		return TypeHandlers.ToArray();
+	}
+
+	public bool TryGetTypeHandler(string key, [NotNullWhen(true)] out IDynamicTypeHandler? handler) {
+		lock(TypeHandlers) {
+			return TypeHandlers.TryGetValue(key, out handler);
+		}
+	}
+
+	public (IDynamicTypeHandler, object?, DynamicType)[]? HydrateDynamicTypes(IEnumerable<DynamicType>? types) {
+		if (types is null)
+			return null;
+
+		List<(IDynamicTypeHandler, object?, DynamicType)> result = new();
+
+		lock (TypeHandlers) {
+			foreach (DynamicType type in types) {
+				if (TypeHandlers.TryGetValue(type.Id, out var handler)) {
+					object? state;
+					try {
+						state = handler.ParseState(type);
+					} catch (Exception ex) {
+						Log("An error occurred while executing a dynamic type handler.", LogLevel.Error, ex);
+						continue;
+					}
+
+					result.Add((handler, state, type));
+				}
+			}
+		}
+
+		return result.Count > 0 ? result.ToArray() : null;
 	}
 
 	#endregion

@@ -9,6 +9,8 @@ using Leclair.Stardew.Common.UI.SimpleLayout;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewValley.Menus;
+
 namespace Leclair.Stardew.Common.UI;
 
 public class SimpleBuilder {
@@ -50,6 +52,12 @@ public class SimpleBuilder {
 				Nodes.Add(n);
 			Nodes.Add(node);
 		}
+		return this;
+	}
+
+	public SimpleBuilder Component(ClickableComponent component, ComponentSNode.DrawDelegate? onDraw = null, Alignment align = Alignment.None) {
+		AssertState();
+		Nodes.Add(new ComponentSNode(component, onDraw: onDraw, align: align));
 		return this;
 	}
 

@@ -26,14 +26,16 @@ using StardewValley.Network;
 using StardewValley.Objects;
 
 using SObject = StardewValley.Object;
-using Leclair.Stardew.BetterCrafting.Managers;
+using Leclair.Stardew.BetterCrafting.DynamicTypes;
+using StardewValley.Characters;
+using System.Reflection;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
 public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu {
 
-	public static readonly int MAX_TABS = 8;
-	public static readonly int VISIBLE_TABS = 8;
+	public readonly int MAX_TABS;
+	public readonly int VISIBLE_TABS;
 
 	// TODO: Stop hard-coding seasoning.
 	public static readonly IIngredient[] SEASONING_RECIPE = new IIngredient[] {
@@ -72,6 +74,13 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public ClickableComponent? btnCategoryIcon;
 	public TextBox? txtCategoryName;
 	public ClickableComponent? btnCategoryName;
+	public ClickableTextureComponent? btnCategoryFilter;
+
+	public List<ClickableComponent>? FlowComponents;
+	public ClickableTextureComponent? btnFlowUp;
+	public ClickableTextureComponent? btnFlowDown;
+
+	private ScrollableFlow? Flow;
 
 	// Menu Components
 	[SkipForClickableAggregation]
@@ -163,6 +172,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public Rectangle SourceFilter => Filter == null ? Sprites.Buttons.SEARCH_OFF : Sprites.Buttons.SEARCH_ON;
 	public Rectangle SourceEdit => Sprites.Buttons.WRENCH;
 	public Rectangle SourceFavorites => FavoritesOnly ? Sprites.Buttons.FAVORITE_ON : Sprites.Buttons.FAVORITE_OFF;
+	public Rectangle SourceCatFilter => (CurrentTab?.Category?.UseFilters ?? false) ? Sprites.Buttons.FILTER_ON : Sprites.Buttons.FILTER_OFF;
 	public Rectangle SourceSeasoning {
 		get {
 			switch (Mod.Config.UseSeasoning) {
@@ -234,10 +244,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			height = 600 + borderWidth * 2;
 
 		int rows = mod.GetBackpackRows(Game1.player);
-		if (rows > 3)
-			height += Game1.tileSize * (rows - 3);
+		//rows = 1;
+		if (rows != 3)
+			height += (4 + Game1.tileSize) * (rows - 3);
 
-		Vector2 pos = Utility.getTopLeftPositionForCenteringOnScreen(width, height);
+		Vector2 pos = x == -1 || y == -1 ? Utility.getTopLeftPositionForCenteringOnScreen(width, height) : Vector2.Zero;
 		if (x == -1) x = (int) pos.X;
 		if (y == -1) y = (int) pos.Y;
 
@@ -327,6 +338,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		Standalone = standalone_menu;
 		DiscoverContainers = discover_containers;
 
+		MAX_TABS = (height - 120) / 64;
+		VISIBLE_TABS = (height - 120) / 64;
+
 		// Run the event to populate containers.
 		ModEntry.API.EmitMenuPopulate(this, ref material_containers);
 
@@ -359,6 +373,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		// InventoryMenu
 		int rows = Mod.GetBackpackRows(Game1.player);
+		//rows = 1;
 
 		inventory = new InventoryMenu(
 			xPositionOnScreen + spaceToClearSideBorder + borderWidth,
@@ -627,6 +642,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	#region Editing
 
+	public void ToggleFilterMode() {
+		if (!Editing || CurrentTab?.Category is null)
+			return;
+
+		CurrentTab.Category.UseFilters = !CurrentTab.Category.UseFilters;
+
+		// TODO: Initialize selected recipes based on filters, maybe?
+
+		if (btnCategoryFilter is not null)
+			btnCategoryFilter.sourceRect = SourceCatFilter;
+
+		LayoutRecipes();
+	}
+
 	public void ToggleEditMode() {
 		if (Editing) {
 			// Save any last state.
@@ -657,10 +686,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		// Buttons~
 		if (Editing) {
-			int x = CraftingPageX() + 72;
+			int x = BasePageX() + 72;
 			int y = CraftingPageY() - 96;
 
-			int txtWidth = width - 2 * (IClickableMenu.borderWidth + IClickableMenu.spaceToClearSideBorder) - 72;
+			int txtWidth = width - 2 * (IClickableMenu.borderWidth + IClickableMenu.spaceToClearSideBorder) - 72 - 80;
 
 			txtCategoryName = new TextBox(
 				textBoxTexture: Game1.content.Load<Texture2D>("LooseSprites\\textBox"),
@@ -688,12 +717,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 				leftNeighborID = 535,
-				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
+				rightNeighborID = 537
 			};
 
 			btnCategoryIcon = new ClickableComponent(
 				bounds: new Rectangle(
-					CraftingPageX() + 12 - 16,
+					BasePageX() + 12 - 16,
 					yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 12,
 					64, 64
 				),
@@ -706,17 +735,139 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				rightNeighborID = 536
 			};
 
+			btnCategoryFilter = new ClickableTextureComponent(
+				bounds: new Rectangle(
+					x + txtWidth + 16,
+					y - 8,
+					64, 64
+				),
+				texture: Sprites.Buttons.Texture,
+				sourceRect: SourceCatFilter,
+				scale: 4f
+			) {
+				myID = 537,
+				upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				leftNeighborID = 536,
+				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
+			};
+
+			Flow = new(
+				this,
+				BasePageX() - 12,
+				CraftingPageY(),
+				432 - 8,
+				height - 248,
+				firstID: 10000
+			);
+
+			btnFlowUp = Flow.btnPageUp;
+			btnFlowDown = Flow.btnPageDown;
+			FlowComponents = Flow.DynamicComponents;
+
+			UpdateFlow();
+
 		} else {
 			txtCategoryName = null;
 			btnCategoryName = null;
 			btnCategoryIcon = null;
+			btnCategoryFilter = null;
+			FlowComponents = null;
+			Flow = null;
 		}
+	}
+
+	public void UpdateFlow() {
+		if (Flow is null)
+			return;
+
+		Category? cat = CurrentTab?.Category;
+		if (cat is null)
+			return;
+
+		var types = cat.CachedTypes;
+		if (types is null)
+			types = cat.CachedTypes = Mod.Recipes.HydrateDynamicTypes(cat.DynamicFilters);
+
+		var builder = FlowHelper.Builder();
+
+		bool added = false;
+
+		if (types is not null)
+			for(int i = 0; i < types.Length; i++) {
+				IDynamicTypeHandler handler = types[i].Item1;
+				object? state = types[i].Item2;
+				DynamicType data = types[i].Item3;
+
+				var sb = FlowHelper.Builder()
+					.Texture(
+						texture: handler.Texture,
+						source: handler.Source,
+						scale: handler.Source.Height < 16 ? 3f : handler.Source.Height < 32 ? 2f : 1f,
+						align: Alignment.Middle
+					)
+					.Text(" ")
+					.FormatText(handler.DisplayName, align: Alignment.Middle);
+
+				var extra = handler.GetExtraInfo(state);
+				if (extra is not null)
+					sb.Text("\n").AddRange(extra);
+
+				int index = i;
+
+				var node = new Common.UI.FlowNode.SelectableNode(
+					sb.Build(),
+					onClick: (_, _, _) => {
+						if (OpenRuleEditor(cat, index))
+							Game1.playSound("bigSelect");
+						return false;
+					}
+				) {
+					SelectedTexture = Sprites.Buttons.Texture,
+					SelectedSource = Sprites.Buttons.SELECT_BG,
+					HoverTexture = Sprites.Buttons.Texture,
+					HoverSource = Sprites.Buttons.SELECT_BG,
+					HoverColor = Color.White * 0.4f
+				};
+
+				builder.Add(node);
+				added = true;
+			}
+
+		if (added)
+			builder.Divider(size: 1, shadowOffset: 1);
+
+		var sb2 = FlowHelper.Builder()
+			.Texture(Game1.mouseCursors, new Rectangle(0, 428, 10, 10), 4f, align: Alignment.Middle)
+			.Text(" ")
+			.FormatText(I18n.Filter_AddNew(), align: Alignment.Middle);
+
+		var node2 = new Common.UI.FlowNode.SelectableNode(
+			sb2.Build(),
+			onClick: (_, _, _) => {
+				if (OpenRulePicker(cat))
+					Game1.playSound("bigSelect");
+				return false;
+			}
+		) {
+			SelectedTexture = Sprites.Buttons.Texture,
+			SelectedSource = Sprites.Buttons.SELECT_BG,
+			HoverTexture = Sprites.Buttons.Texture,
+			HoverSource = Sprites.Buttons.SELECT_BG,
+			HoverColor = Color.White * 0.4f
+		};
+
+		builder.Add(node2);
+
+		builder.Text("\n\n");
+
+		Flow.Set(builder.Build());
 	}
 
 	public void SaveCategories() {
 		var categories = Tabs
 			.Select(val => val.Category)
-			.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0);
+			.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0 || (val?.DynamicFilters?.Count ?? 0) > 0);
 
 		Mod.Recipes.SetCategories(Game1.player, categories, cooking);
 		Mod.Recipes.SaveCategories();
@@ -837,8 +988,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					sprite = SpriteHelper.GetSprite(item);
 			}
 
-			if (sprite == null)
-				sprite = new SpriteInfo(
+			sprite ??= new SpriteInfo(
 					Game1.mouseCursors,
 					new Rectangle(173, 423, 16, 16)
 				);
@@ -848,7 +998,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	public bool IsRecipeInCategory(IRecipe recipe) {
-		return CurrentTab?.Category.Recipes?.Contains(recipe.Name) ?? false;
+		Category? cat = CurrentTab?.Category;
+		if (cat is null)
+			return false;
+
+		if (cat.UseFilters && cat.CachedRecipes is not null && cat.CachedRecipes.Contains(recipe))
+			return true;
+
+		return !cat.UseFilters && cat.Recipes is not null && cat.Recipes.Contains(recipe.Name);
 	}
 
 	#endregion
@@ -939,9 +1096,36 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				//if (count > (misc == cat ? 7 : 6))
 				//	continue;
 
+				cat.CachedRecipes = null;
+				cat.CachedTypes = null;
+
 				List<IRecipe> recipes = new();
 
-				if (cat.Recipes != null)
+				if (cat.UseFilters) {
+					cat.CachedRecipes = recipes;
+					cat.CachedTypes = Mod.Recipes.HydrateDynamicTypes(cat.DynamicFilters);
+
+					if (cat.CachedTypes is not null) {
+						foreach (IRecipe recipe in Recipes) {
+							Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe());
+
+							bool matched = false;
+							foreach (var handler in cat.CachedTypes) {
+								if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
+									matched = true;
+									break;
+								}
+							}
+
+							if (matched) {
+								recipes.Add(recipe);
+								unused.Remove(recipe);
+							}
+						}
+					}
+				}
+
+				if (!cat.UseFilters && cat.Recipes is not null)
 					foreach (string name in cat.Recipes) {
 						if (!RecipesByName.TryGetValue(name, out IRecipe? recipe))
 							continue;
@@ -1668,9 +1852,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	#region Layout and Components
 
-	protected virtual int CraftingPageX() => xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + IClickableMenu.borderWidth;
+	protected virtual int BasePageX() => xPositionOnScreen
+		+ IClickableMenu.spaceToClearSideBorder
+		+ IClickableMenu.borderWidth;
+
+	protected virtual int CraftingPageX() => BasePageX()
+		+ (Editing && (CurrentTab?.Category?.UseFilters ?? false) ? 432 : 0);
+
 	protected virtual int CraftingPageY() => yPositionOnScreen
-		+ (Editing ? 96 : 0)
+		+ (Editing ? 88 : 0)
 		+ IClickableMenu.spaceToClearTopBorder
 		+ IClickableMenu.borderWidth
 		- 16;
@@ -1714,7 +1904,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	protected virtual ClickableTextureComponent[,] CreateNewPageLayout() {
-		return new ClickableTextureComponent[10, Editing ? 6 : 4];
+		int xSize = Editing && (CurrentTab?.Category?.UseFilters ?? false) ? 4 : 10;
+		int ySize = 4;
+		if (Editing)
+			ySize += Math.Max(0, height - 553) / 64;
+
+		return new ClickableTextureComponent[xSize, ySize];
 	}
 
 	protected virtual bool SpaceOccupied(ClickableTextureComponent[,] layout, int x, int y, int width, int height) {
@@ -1952,6 +2147,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Editing && txtCategoryName != null)
 			txtCategoryName.Text = CurrentTab?.Category.Name ?? "";
 
+		if (Editing && btnCategoryFilter != null)
+			btnCategoryFilter.sourceRect = SourceCatFilter;
+
+		if (Editing && Flow is not null)
+			UpdateFlow();
+
 		LayoutRecipes();
 		return true;
 	}
@@ -2140,6 +2341,67 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 	}
 
+	public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds) {
+		base.gameWindowSizeChanged(oldBounds, newBounds);
+
+		UpdateTabs();
+		LayoutRecipes();
+
+		inventory.xPositionOnScreen = xPositionOnScreen + spaceToClearSideBorder + borderWidth;
+		inventory.yPositionOnScreen = yPositionOnScreen + spaceToClearTopBorder + borderWidth + 320 - 16;
+
+		if (upperRightCloseButton is not null) { 
+			upperRightCloseButton.bounds.X = xPositionOnScreen + width - 36;
+			upperRightCloseButton.bounds.Y = yPositionOnScreen - 8;
+		}
+
+		// Buttons
+		int btnX = xPositionOnScreen + width + 4;
+		int btnY = yPositionOnScreen + 128;
+
+		var first = btnSearch ?? btnToggleEdit ?? btnToggleFavorites ?? btnToggleSeasoning ?? btnToggleQuality ?? btnToggleUniform ?? btnSettings ?? trashCan;
+		first.bounds.X = btnX;
+		first.bounds.Y = btnY;
+
+		GUIHelper.MoveComponents(
+			GUIHelper.Side.Down, 16,
+			btnSearch,
+			btnToggleEdit,
+			btnToggleFavorites,
+			btnToggleSeasoning,
+			btnToggleQuality,
+			btnToggleUniform,
+			btnSettings,
+			trashCan
+		);
+
+		GUIHelper.MoveComponents(
+			GUIHelper.Side.Right, 16,
+			btnSearch,
+			btnTransferTo
+		);
+
+		GUIHelper.LinkComponents(
+			GUIHelper.Side.Right,
+			id => getComponentWithID(id),
+			btnToggleEdit,
+			btnTransferFrom
+		);
+
+		GUIHelper.LinkComponents(
+			GUIHelper.Side.Down,
+			id => getComponentWithID(id),
+			btnTransferTo,
+			btnTransferFrom
+		);
+
+		GUIHelper.MoveComponents(
+			GUIHelper.Side.Down, 16,
+			btnTransferTo,
+			btnTransferFrom
+		);
+	}
+
 	public override void receiveGamePadButton(Buttons b) {
 		if (GetChildMenu() is IClickableMenu menu) {
 			if (!Standalone)
@@ -2230,13 +2492,24 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		base.receiveScrollWheelAction(direction);
+		int x = Game1.getOldMouseX();
+		int y = Game1.getOldMouseY();
 
-		if (Game1.getOldMouseX() < (xPositionOnScreen + 16 + 8)) {
+		if (x < (xPositionOnScreen + 16 + 8)) {
 			if (ScrollTabs(direction > 0 ? -1 : 1))
 				Game1.playSound("shwip");
 
 			return;
 		}
+
+		if (x < (xPositionOnScreen + 432 + 16 + 8) && Editing && (CurrentTab?.Category?.UseFilters ?? false)) {
+			if (Flow is not null && Flow.Scroll(direction > 0 ? -1 : 1))
+				Game1.playSound("shwip");
+			return;
+		}
+
+		if (!Editing && y >= inventory.yPositionOnScreen)
+			return;
 
 		int change;
 
@@ -2290,6 +2563,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		base.releaseLeftClick(x, y);
+		Flow?.ReleaseLeftClick();
 	}
 
 	public override void leftClickHeld(int x, int y) {
@@ -2299,6 +2573,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		base.leftClickHeld(x, y);
+		Flow?.LeftClickHeld(x, y);
 	}
 
 	public override void receiveLeftClick(int x, int y, bool playSound = true) {
@@ -2309,6 +2584,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		base.receiveLeftClick(x, y, playSound);
+
+		if (Editing && Flow is not null && Flow.ReceiveLeftClick(x, y, playSound))
+			return;
 
 		// Inventory
 		if (!Editing)
@@ -2336,6 +2614,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			if (playSound)
 				Game1.playSound("bigSelect");
 			SetChildMenu(picker);
+			return;
+		}
+
+		if (btnCategoryFilter != null && btnCategoryFilter.containsPoint(x, y)) {
+			ToggleFilterMode();
+			btnCategoryFilter.scale = btnCategoryFilter.baseScale;
+
+			if (playSound)
+				Game1.playSound("bigSelect");
 			return;
 		}
 
@@ -2388,9 +2675,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			foreach (var cmp in CurrentPage) {
 				if (cmp.containsPoint(x, y) && ComponentRecipes.TryGetValue(cmp, out IRecipe? recipe)) {
 					if (Editing) {
-						UpdateRecipeInCategory(recipe);
-						if (playSound)
-							Game1.playSound("smallSelect");
+						if (CurrentTab?.Category?.UseFilters ?? false) {
+							if (playSound)
+								Game1.playSound("stoneStep");
+						} else {
+							UpdateRecipeInCategory(recipe);
+							if (playSound)
+								Game1.playSound("smallSelect");
+						}
 
 					} else if (!cmp.hoverText.Equals("ghosted")) {
 						PerformAction(recipe, Mod.Config.LeftClick, playSound);
@@ -2645,6 +2937,109 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		return false;
 	}
 
+	private void RefreshCategoryFilters(Category category) {
+		if (category is null)
+			return;
+
+		category.CachedTypes = Mod.Recipes.HydrateDynamicTypes(category.DynamicFilters);
+
+		List<IRecipe> recipes = new();
+		category.CachedRecipes = recipes;
+
+		if (category.CachedTypes is not null) {
+			foreach (IRecipe recipe in Recipes) {
+				Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe());
+
+				bool matched = false;
+				foreach (var handler in category.CachedTypes) {
+					if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
+						matched = true;
+						break;
+					}
+				}
+
+				if (matched)
+					recipes.Add(recipe);
+			}
+		}
+	}
+
+	public bool OpenRulePicker(Category category) {
+		if (!Editing || category is null)
+			return false;
+
+		void OnFinished(DynamicType? data, bool openEditor) {
+			if (data is null)
+				return;
+
+			category.DynamicFilters ??= new();
+			category.DynamicFilters.Add(data);
+
+			RefreshCategoryFilters(category);
+			UpdateFlow();
+
+			if (openEditor)
+				OpenRuleEditor(category, category.DynamicFilters.Count - 1);
+		}
+
+		HashSet<string> existing = new();
+		if (category.DynamicFilters is not null) {
+			foreach (var entry in category.DynamicFilters)
+				existing.Add(entry.Id);
+		}
+
+		int w = width - 128;
+		int h = height - 256;
+
+		var pos = Utility.getTopLeftPositionForCenteringOnScreen(w, h);
+
+		var menu = new RulePickerDialog(Mod, (int) pos.X, (int) pos.Y, w, h, existing, OnFinished) {
+			exitFunction = () => {
+				if (Game1.options.SnappyMenus)
+					snapCursorToCurrentSnappedComponent();
+			}
+		};
+
+		SetChildMenu(menu);
+		performHoverAction(0, 0);
+		return true;
+	}
+
+	public bool OpenRuleEditor(Category category, int index) {
+		if (! Editing || category is null || category.DynamicFilters is null || category.DynamicFilters.Count <= index || index < 0)
+			return false;
+
+		DynamicType data = category.DynamicFilters[index];
+
+		if (!Mod.Recipes.TryGetTypeHandler(data.Id, out IDynamicTypeHandler? handler))
+			return false;
+
+		object? obj = handler.ParseState(data);
+
+		void OnFinished(bool save, bool delete, DynamicType data) {
+			if (delete)
+				category.DynamicFilters.RemoveAt(index);
+			else if (save)
+				category.DynamicFilters[index] = data;
+			else
+				return;
+
+			RefreshCategoryFilters(category);
+			UpdateFlow();
+		}
+
+		var menu = new RuleEditorDialog(Mod, this, handler, obj, data, OnFinished) {
+			exitFunction = () => {
+				if (Game1.options.SnappyMenus)
+					snapCursorToCurrentSnappedComponent();
+			}
+		};
+
+		SetChildMenu(menu);
+		performHoverAction(0, 0);
+		return true;
+	}
+
 	public bool OpenBulkCraft(IRecipe recipe) {
 		if (!recipe.Stackable)
 			return false;
@@ -2860,10 +3255,30 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (btnCategoryIcon != null && btnCategoryIcon.containsPoint(x, y))
 			mode = 6;
 
+		if (btnCategoryFilter != null) {
+			btnCategoryFilter.tryHover(x, y);
+			if (btnCategoryFilter.containsPoint(x, y))
+				mode = (CurrentTab?.Category?.UseFilters ?? false) ? 13 : 14;
+		}
+
 		// If the mode changed, regenerate the fancy tool-tip.
 		if (mode != hoverMode) {
 			hoverMode = mode;
 			hoverNode = null;
+
+			if (mode == 13 || mode == 14) {
+				// Toggle Dynamic Filtering
+				Category? cat = CurrentTab?.Category;
+				if (cat is not null) {
+					var builder = SimpleHelper.Builder()
+						.Text(cat.UseFilters ? I18n.Tooltip_Filter_Enabled() : I18n.Tooltip_Filter_Disabled())
+						.Divider()
+						.FormatText(I18n.Tooltip_Filter_About(), wrapText: true);
+
+					hoverNode = builder.GetLayout();
+				}
+			}
+
 			if (mode == 8) {
 				string? filter = Filter;
 
@@ -2985,12 +3400,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					break;
 				case 7:
 					// Search
-					string ing = FilterIngredients ? I18n.Search_IngredientPrefix() : "";
-
-					hoverText = Filter == null
-						? I18n.Tooltip_Search()
-						: $"{I18n.Tooltip_Search()}\n{ing}{Filter}";
+					hoverText = I18n.Tooltip_Search();
 					break;
+
 				default:
 					break;
 			}
@@ -3012,6 +3424,13 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 			} else
 				trashCanLidRotation = Math.Max(trashCanLidRotation - (float) Math.PI / 48f, 0f);
+		}
+
+		if (Flow is not null) {
+			if (Flow.PerformMiddleScroll(x, y))
+				return;
+
+			Flow.PerformHover(x, y);
 		}
 	}
 
@@ -3046,10 +3465,22 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Editing) {
 			drawHorizontalPartition(b, yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 64);
 			CurrentTab.Sprite?.Draw(b, new Vector2(
-				CraftingPageX() + 12 - 16,
+				BasePageX() + 12 - 16,
 				yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + 12
 			), 4f);
 			txtCategoryName?.Draw(b);
+			btnCategoryFilter?.draw(b);
+
+			if (CurrentTab?.Category?.UseFilters ?? false) {
+				drawVerticalIntersectingPartition(
+					b,
+					xPosition: xPositionOnScreen + 432,
+					yPosition: yPositionOnScreen + spaceToClearTopBorder + 64
+				);
+
+				Flow?.Draw(b);
+				Flow?.DrawMiddleScroll(b);
+			}
 		}
 
 		// Buttons
@@ -3523,25 +3954,24 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			}
 		}
 
-		(List<NPC>, List<NPC>)? tastes = Mod.Recipes.GetGiftTastes(hoverRecipe);
-		if (tastes is not null) {
-			bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
-			bool show_likes = (FilterLikes || show) && tastes.Value.Item2.Count > 0;
-			bool show_loves = (FilterLoves || show) && tastes.Value.Item1.Count > 0;
+		bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
+		if (show && Mod.Recipes.GetGiftTastes(hoverRecipe) is (List<NPC>, List<NPC>) tastes) { 
+			bool show_likes = (FilterLikes || show) && tastes.Item2.Count > 0;
+			bool show_loves = (FilterLoves || show) && tastes.Item1.Count > 0;
 
 			if (show_likes || show_loves) {
 				builder.Divider();
 				if (show_loves) {
 					if (Mod.Config.TasteStyle == GiftStyle.Names)
-						builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Value.Item1.Select(x => x.displayName)), is_love: true)), wrapText: true);
+						builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Item1.Select(x => x.displayName)), is_love: true)), wrapText: true);
 					else {
 						var b2 = FlowHelper.Builder();
 						b2.FormatText(I18n.Tooltip_Loves(""));
-						for(int i = 0; i < tastes.Value.Item1.Count; i++) {
+						for(int i = 0; i < tastes.Item1.Count; i++) {
 							if (i > 0)
 								b2.Text(" ");
 
-							var sprite = GetHead(tastes.Value.Item1[i]);
+							var sprite = GetHead(tastes.Item1[i]);
 							if (sprite is not null)
 								b2.Sprite(sprite, scale: 2f);
 						}
@@ -3551,15 +3981,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 				if (show_likes) {
 					if (Mod.Config.TasteStyle == GiftStyle.Names)
-						builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Value.Item2.Select(x => x.displayName)), is_like: true)), wrapText: true);
+						builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Item2.Select(x => x.displayName)), is_like: true)), wrapText: true);
 					else {
 						var b2 = FlowHelper.Builder();
 						b2.FormatText(I18n.Tooltip_Likes(""));
-						for (int i = 0; i < tastes.Value.Item2.Count; i++) {
+						for (int i = 0; i < tastes.Item2.Count; i++) {
 							if (i > 0)
 								b2.Text(" ");
 
-							var sprite = GetHead(tastes.Value.Item2[i]);
+							var sprite = GetHead(tastes.Item2[i]);
 							if (sprite is not null)
 								b2.Sprite(sprite, scale: 2f);
 						}

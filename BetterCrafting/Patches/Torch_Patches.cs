@@ -6,10 +6,14 @@ using System.Threading.Tasks;
 
 using HarmonyLib;
 
+using Microsoft.Xna.Framework;
+
 using StardewModdingAPI;
 
 using StardewValley;
 using StardewValley.Objects;
+
+using SObject = StardewValley.Object;
 
 namespace Leclair.Stardew.BetterCrafting.Patches;
 
@@ -23,7 +27,7 @@ public static class Torch_Patches {
 		try {
 			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(Torch), nameof(Torch.checkForAction)),
-				prefix: new HarmonyMethod(typeof(Torch_Patches), nameof(Torch_Patches.checkForAction_Prefix))
+				prefix: new HarmonyMethod(typeof(Torch_Patches), nameof(checkForAction_Prefix))
 			);
 		} catch(Exception ex) {
 			mod.Log("An error occurred while registering a harmony patch for the Cookout Kit.", LogLevel.Warn, ex);
@@ -37,7 +41,7 @@ public static class Torch_Patches {
 				return true;
 
 			ModEntry mod = ModEntry.Instance;
-			if (mod.Config.EnableCookoutTweaks && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
+			if (mod.Config.EnableCookoutWorkbench && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
 				// If we're not just checking, open the menu.
 				if (!justCheckingForActivity && Game1.activeClickableMenu is null)
 					Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
