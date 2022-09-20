@@ -18,6 +18,8 @@ using StardewValley.Objects;
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.BetterCrafting.Menus;
 using StardewValley.Menus;
+using Leclair.Stardew.BetterCrafting.DynamicRules;
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -225,11 +227,21 @@ public class ModAPI : IBetterCrafting {
 	#region Categories
 
 	/// <inheritdoc />
+	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
+		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe, useRules, rules);
+	}
+
+	[Obsolete("For compatibility after changing the API to use a function for the display name")]
+	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
+		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe, useRules, rules);
+	}
+
+	[Obsolete("For compatibility after adding API parameters")]
 	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
 		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe);
 	}
 
-	/// <inheritdoc />
+	[Obsolete("For compatibility after adding API parameters")]
 	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
 		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe);
 	}
@@ -242,6 +254,25 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public void RemoveRecipesFromDefaultCategory(bool cooking, string categoryId, IEnumerable<string> recipeNames) {
 		Mod.Recipes.RemoveRecipesFromDefaultCategory(cooking, categoryId, recipeNames);
+	}
+
+	#endregion
+
+	#region Dynamic Rules
+
+	public bool RegisterRuleHandler(IManifest manifest, string id, IDynamicRuleHandler handler) {
+		string fullId = $"{manifest.UniqueID}/{id}";
+		return Mod.Recipes.RegisterRuleHandler(fullId, handler);
+	}
+
+	public bool RegisterRuleHandler(IManifest manifest, string id, ISimpleInputRuleHandler handler) {
+		string fullId = $"{manifest.UniqueID}/{id}";
+		return Mod.Recipes.RegisterRuleHandler(fullId, handler);
+	}
+
+	public bool UnregisterRuleHandler(IManifest manifest, string id) {
+		string fullId = $"{manifest.UniqueID}/{id}";
+		return Mod.Recipes.UnregisterRuleHandler(fullId);
 	}
 
 	#endregion

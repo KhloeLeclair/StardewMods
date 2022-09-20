@@ -21,40 +21,20 @@ using StardewValley.TerrainFeatures;
 
 using SObject = StardewValley.Object;
 using StardewModdingAPI;
+using Leclair.Stardew.Common.Integrations.StackQuality;
 
 namespace Leclair.Stardew.Common;
 
 public record struct LocatedInventory(object Source, GameLocation? Location);
 
-/*public struct LocatedInventory {
-	public object Source { get; }
-	public GameLocation? Location { get; }
-
-	public LocatedInventory(object source, GameLocation? location) {
-		Source = source;
-		Location = location;
-	}
-
-	public override bool Equals(object? obj) {
-		return obj is LocatedInventory inventory &&
-			   EqualityComparer<object>.Default.Equals(Source, inventory.Source) &&
-			   EqualityComparer<GameLocation>.Default.Equals(Location, inventory.Location);
-	}
-
-	public override int GetHashCode() {
-		return HashCode.Combine(Source, Location);
-	}
-
-	public static bool operator ==(LocatedInventory left, LocatedInventory right) {
-		return left.Equals(right);
-	}
-
-	public static bool operator !=(LocatedInventory left, LocatedInventory right) {
-		return !(left == right);
-	}
-}*/
-
 public static class InventoryHelper {
+
+	private static SQIntegration? intSQ;
+
+	public static void InitializeStackQuality(Mod mod) {
+		intSQ ??= new SQIntegration(mod);
+	}
+
 
 	#region Item Creation
 
@@ -847,8 +827,85 @@ public static class InventoryHelper {
 
 		for (int idx = items.Count - 1; idx >= 0; --idx) {
 			Item? item = items[idx];
-			if (item == null)
+			if (item == null || ! matcher(item))
 				continue;
+
+			// Special logic for Stack Quality
+			if (intSQ is not null && item is SObject sobj) {
+				amount = intSQ.ConsumeItem(sobj, amount, out bool set_null, out bool set_quality, max_quality);
+				if (set_null) {
+					items[idx] = null;
+					nullified = true;
+				}
+
+				if (set_quality)
+					passed_quality = true;
+
+				if (amount <= 0)
+					return amount;
+
+				continue;
+			}
+
+			// Normal logic, without Stack Quality
+			int quality = item is SObject obj ? obj.Quality : 0;
+			if (quality > max_quality) {
+				passed_quality = true;
+				continue;
+			}
+
+			int count = Math.Min(amount, item.Stack);
+			amount -= count;
+
+			if (item.Stack <= count) {
+				items[idx] = null;
+				nullified = true;
+
+			} else
+				item.Stack -= count;
+
+			if (amount <= 0)
+				return amount;
+		}
+
+		return amount;
+	}
+
+	public static int CountItem(Func<Item, bool> matcher, Farmer? who, IList<Item?>? items, out bool passed_quality, int max_quality = int.MaxValue) {
+		int amount;
+
+		if (who is not null)
+			amount = CountItem(matcher, who.Items, out passed_quality, max_quality: max_quality);
+		else {
+			amount = 0;
+			passed_quality = false;
+		}
+
+		if (items is not null) {
+			amount += CountItem(matcher, items, out bool pq, max_quality: max_quality);
+			passed_quality |= pq;
+		}
+
+		return amount;
+	}
+
+	public static int CountItem(Func<Item, bool> matcher, IList<Item?> items, out bool passed_quality, int max_quality = int.MaxValue) {
+		passed_quality = false;
+		int amount = 0;
+
+		for(int idx = items.Count - 1; idx >= 0; --idx) {
+			Item? item = items[idx];
+			if (item == null || !matcher(item))
+				continue;
+
+			// Special logic for Stack Quality
+			if (intSQ is not null && item is SObject sobj) {
+				amount += intSQ.CountItem(sobj, out bool set_passed, max_quality);
+				if (set_passed)
+					passed_quality = true;
+
+				continue;
+			}
 
 			int quality = item is SObject obj ? obj.Quality : 0;
 			if (quality > max_quality) {
@@ -856,20 +913,7 @@ public static class InventoryHelper {
 				continue;
 			}
 
-			if (matcher(item)) {
-				int count = Math.Min(amount, item.Stack);
-				amount -= count;
-
-				if (item.Stack <= count) {
-					items[idx] = null;
-					nullified = true;
-
-				} else
-					item.Stack -= count;
-
-				if (amount <= 0)
-					return amount;
-			}
+			amount += item.Stack;
 		}
 
 		return amount;

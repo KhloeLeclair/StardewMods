@@ -29,6 +29,9 @@
 	"setting.refund-currency.tip": "You receive this percentage of currency back when demolishing a building. Set to 0% to disable currency refunds.",
 
 	"setting.greenhouse-move": "Allow Moving Broken Greenhouse",
-	"setting.greenhouse-move.tip": "When enabled, you'll be able to move the Greenhouse with BC: Buildings even before repairing it."
+	"setting.greenhouse-move.tip": "When enabled, you'll be able to move the Greenhouse with BC: Buildings even before repairing it.",
+
+	"filter.name": "Buildings and Actions",
+	"filter.about": "This rule matches buildings, and actions performed on buildings."
 
 }

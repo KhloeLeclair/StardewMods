@@ -13,7 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
 public record struct FilterInfo(
 	string? Input,
@@ -23,11 +23,11 @@ public record struct FilterInfo(
 	bool Loves
 );
 
-public class SearchTypeHandler : DynamicTypeHandler<FilterInfo>, ISimpleInputTypeHandler {
+public class SearchRuleHandler : DynamicTypeHandler<FilterInfo>, ISimpleInputRuleHandler {
 
 	public readonly ModEntry Mod;
 
-	public SearchTypeHandler(ModEntry mod) {
+	public SearchRuleHandler(ModEntry mod) {
 		Mod = mod;
 	}
 
@@ -42,6 +42,12 @@ public class SearchTypeHandler : DynamicTypeHandler<FilterInfo>, ISimpleInputTyp
 	public override bool AllowMultiple => true;
 
 	public override bool HasEditor => true;
+
+	public string HelpText => I18n.Tooltip_Search_Tip(
+		I18n.Search_IngredientPrefix(),
+		I18n.Search_LikePrefix(),
+		I18n.Search_LovePrefix()
+	);
 
 	public override bool DoesRecipeMatch(IRecipe recipe, Lazy<Item?> item, FilterInfo state) {
 		if (state.Regex is null)
@@ -80,7 +86,7 @@ public class SearchTypeHandler : DynamicTypeHandler<FilterInfo>, ISimpleInputTyp
 		return false;
 	}
 
-	public override IClickableMenu? GetEditor(IDynamicType type) {
+	public override IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) {
 		return null;
 	}
 
@@ -91,7 +97,7 @@ public class SearchTypeHandler : DynamicTypeHandler<FilterInfo>, ISimpleInputTyp
 		};
 	}
 
-	public override FilterInfo ParseStateT(IDynamicType type) {
+	public override FilterInfo ParseStateT(IDynamicRuleData type) {
 		if (!type.Fields.TryGetValue("Input", out var token))
 			return default;
 

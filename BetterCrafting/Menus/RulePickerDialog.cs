@@ -16,7 +16,7 @@ namespace Leclair.Stardew.BetterCrafting.Menus;
 
 public class RulePickerDialog : MenuSubscriber<ModEntry> {
 
-	public readonly Action<DynamicType?, bool> OnPick;
+	public readonly Action<DynamicRuleData?, bool> OnPick;
 
 	public List<ClickableComponent> FlowComponents;
 
@@ -27,7 +27,7 @@ public class RulePickerDialog : MenuSubscriber<ModEntry> {
 
 	private string? HoverText;
 
-	public RulePickerDialog(ModEntry mod, int x, int y, int width, int height, HashSet<string> existing, Action<DynamicType?, bool> onPick) : base(mod) {
+	public RulePickerDialog(ModEntry mod, int x, int y, int width, int height, HashSet<string> existing, Action<DynamicRuleData?, bool> onPick) : base(mod) {
 		OnPick = onPick;
 
 		initialize(x, y, width, height);
@@ -46,18 +46,24 @@ public class RulePickerDialog : MenuSubscriber<ModEntry> {
 
 		var builder = FlowHelper.Builder();
 
-		foreach(var entry in Mod.Recipes.GetTypeHandlers()) {
+		foreach(var entry in Mod.Recipes.GetRuleHandlers()) {
 			string id = entry.Key;
 			var handler = entry.Value;
 
 			if (!handler.AllowMultiple && existing.Contains(id))
 				continue;
 
+			float scale = 48f / handler.Source.Height;
+			if (scale >= 3)
+				scale = 3f;
+			else if (scale >= 1)
+				scale = MathF.Round(scale);
+
 			var b2 = FlowHelper.Builder()
 				.Texture(
 					texture: handler.Texture,
 					source: handler.Source,
-					scale: handler.Source.Height < 16 ? 3f : handler.Source.Height < 32 ? 2f : 1f,
+					scale: scale,
 					align: Alignment.Middle
 				)
 				.Text(" ")
@@ -93,7 +99,7 @@ public class RulePickerDialog : MenuSubscriber<ModEntry> {
 	private void Pick(string? id, bool openEditor) {
 		exitThisMenu();
 
-		OnPick(string.IsNullOrEmpty(id) ? null : new DynamicType {
+		OnPick(string.IsNullOrEmpty(id) ? null : new DynamicRuleData {
 			Id = id
 		}, openEditor);
 	}

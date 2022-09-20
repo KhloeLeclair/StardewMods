@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-using Leclair.Stardew.BetterCrafting.DynamicTypes;
+using Leclair.Stardew.BetterCrafting.DynamicRules;
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
@@ -54,8 +54,9 @@ public class RecipeManager : BaseManager {
 	private readonly Dictionary<long, Category[]> CraftingCategories = new();
 	private readonly Dictionary<long, Category[]> CookingCategories = new();
 
-	// Dynamic Types
-	private readonly Dictionary<string, IDynamicTypeHandler> TypeHandlers = new();
+	// Dynamic Rules
+	private readonly Dictionary<string, IDynamicRuleHandler> RuleHandlers = new();
+	private readonly InvalidRuleHandler invalidRuleHandler = new();
 
 	private readonly Dictionary<long, AppliedDefaults> AppliedDefaults = new();
 
@@ -68,7 +69,7 @@ public class RecipeManager : BaseManager {
 	public bool DefaultsLoaded = false;
 
 	public RecipeManager(ModEntry mod) : base(mod) {
-		RegisterDefaultTypeHandlers();
+		RegisterDefaultRuleHandlers();
 
 	}
 
@@ -177,7 +178,9 @@ public class RecipeManager : BaseManager {
 			}
 		});
 
+#if DEBUG
 		result.Add(new TestRecipe());
+#endif
 
 		return result;
 	}
@@ -265,7 +268,7 @@ public class RecipeManager : BaseManager {
 		return Mod.Helper.Translation.Get(category.I18nKey);
 	}
 
-	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
+	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
 
 		AddedAPICategories added = cooking ? API_Cooking : API_Crafting;
 		Dictionary<string, Func<string>> names = cooking ? API_DisplayName_Cooking : API_DisplayName_Crafting;
@@ -283,7 +286,10 @@ public class RecipeManager : BaseManager {
 			Icon = new CategoryIcon() {
 				Type = CategoryIcon.IconType.Item,
 				RecipeName = iconRecipe,
-			}
+			},
+			UseRules = useRules,
+			DynamicRules = rules?.
+				Select(x => DynamicRuleData.FromGeneric(x)).ToList()
 		};
 
 		if (recipeNames is not null)
@@ -297,7 +303,7 @@ public class RecipeManager : BaseManager {
 		Invalidate();
 	}
 
-	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
+	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
 
 		AddedAPICategories added = cooking ? API_Cooking : API_Crafting;
 
@@ -310,7 +316,10 @@ public class RecipeManager : BaseManager {
 			Icon = new CategoryIcon() {
 				Type = CategoryIcon.IconType.Item,
 				RecipeName = iconRecipe,
-			}
+			},
+			UseRules = useRules,
+			DynamicRules = rules?.
+				Select(x => DynamicRuleData.FromGeneric(x)).ToList()
 		};
 
 		if (recipeNames is not null)
@@ -445,7 +454,10 @@ public class RecipeManager : BaseManager {
 					Path = cat.Icon.Path,
 					Rect = cat.Icon.Rect,
 					Scale = cat.Icon.Scale,
-				}
+				},
+				UseRules = cat.UseRules,
+				DynamicRules = cat.DynamicRules?.
+					Select(x => DynamicRuleData.FromGeneric(x)).ToList()
 			};
 
 			if (cat.Recipes is not null)
@@ -537,70 +549,83 @@ public class RecipeManager : BaseManager {
 
 	#endregion
 
-	#region Dynamic Types
+	#region Dynamic Rules
 
-	private void RegisterDefaultTypeHandlers() {
-		RegisterTypeHandler("Uncrafted", new UncraftedTypeHandler());
-		RegisterTypeHandler("Search", new SearchTypeHandler(Mod));
-		RegisterTypeHandler("Machine", new MachineTypeHandler(Mod));
-		RegisterTypeHandler("Sprinkler", new SprinklerTypeHandler());
+	private void RegisterDefaultRuleHandlers() {
+		RegisterRuleHandler("Uncrafted", new UncraftedRuleHandler());
+		RegisterRuleHandler("Search", new SearchRuleHandler(Mod));
+		RegisterRuleHandler("Machine", new MachineRuleHandler(Mod));
+		RegisterRuleHandler("Sprinkler", new SprinklerRuleHandler());
 		//RegisterTypeHandler("Light", new LightTypeHandler());
-		RegisterTypeHandler("BuffFarming", new BuffTypeHandler(BuffTypeHandler.FARMING));
-		RegisterTypeHandler("BuffFishing", new BuffTypeHandler(BuffTypeHandler.FISHING));
-		RegisterTypeHandler("BuffMining", new BuffTypeHandler(BuffTypeHandler.MINING));
-		RegisterTypeHandler("BuffLuck", new BuffTypeHandler(BuffTypeHandler.LUCK));
-		RegisterTypeHandler("BuffForaging", new BuffTypeHandler(BuffTypeHandler.FORAGING));
-		RegisterTypeHandler("BuffMaxEnergy", new BuffTypeHandler(BuffTypeHandler.MAX_ENERGY));
-		RegisterTypeHandler("BuffMagnetism", new BuffTypeHandler(BuffTypeHandler.MAGNETISM));
-		RegisterTypeHandler("BuffSpeed", new BuffTypeHandler(BuffTypeHandler.SPEED));
-		RegisterTypeHandler("BuffDefense", new BuffTypeHandler(BuffTypeHandler.DEFENSE));
-		RegisterTypeHandler("BuffAttack", new BuffTypeHandler(BuffTypeHandler.ATTACK));
-		RegisterTypeHandler("BuffGarlic", new SingleItemTypeHandler(772));
-		RegisterTypeHandler("BuffLife", new SingleItemTypeHandler(773));
-		RegisterTypeHandler("BuffMuscle", new SingleItemTypeHandler(351));
-		RegisterTypeHandler("BuffSquidInk", new SingleItemTypeHandler(921));
-		RegisterTypeHandler("BuffMonsterMusk", new SingleItemTypeHandler(879));
+		RegisterRuleHandler("BuffFarming", new BuffRuleHandler(BuffRuleHandler.FARMING));
+		RegisterRuleHandler("BuffFishing", new BuffRuleHandler(BuffRuleHandler.FISHING));
+		RegisterRuleHandler("BuffMining", new BuffRuleHandler(BuffRuleHandler.MINING));
+		RegisterRuleHandler("BuffLuck", new BuffRuleHandler(BuffRuleHandler.LUCK));
+		RegisterRuleHandler("BuffForaging", new BuffRuleHandler(BuffRuleHandler.FORAGING));
+		RegisterRuleHandler("BuffMaxEnergy", new BuffRuleHandler(BuffRuleHandler.MAX_ENERGY));
+		RegisterRuleHandler("BuffMagnetism", new BuffRuleHandler(BuffRuleHandler.MAGNETISM));
+		RegisterRuleHandler("BuffSpeed", new BuffRuleHandler(BuffRuleHandler.SPEED));
+		RegisterRuleHandler("BuffDefense", new BuffRuleHandler(BuffRuleHandler.DEFENSE));
+		RegisterRuleHandler("BuffAttack", new BuffRuleHandler(BuffRuleHandler.ATTACK));
+		RegisterRuleHandler("BuffGarlic", new SingleItemRuleHandler(772));
+		RegisterRuleHandler("BuffLife", new SingleItemRuleHandler(773));
+		RegisterRuleHandler("BuffMuscle", new SingleItemRuleHandler(351));
+		RegisterRuleHandler("BuffSquidInk", new SingleItemRuleHandler(921));
+		RegisterRuleHandler("BuffMonsterMusk", new SingleItemRuleHandler(879));
 	}
 
-	public bool RegisterTypeHandler(string key, IDynamicTypeHandler handler) {
-		lock(TypeHandlers) {
-			if (TypeHandlers.ContainsKey(key))
+	public bool RegisterRuleHandler(string key, IDynamicRuleHandler handler) {
+		lock(RuleHandlers) {
+			if (RuleHandlers.ContainsKey(key))
 				return false;
 
-			TypeHandlers.Add(key, handler);
-
+			RuleHandlers.Add(key, handler);
 			return true;
 		}
 	}
 
-	public KeyValuePair<string, IDynamicTypeHandler>[] GetTypeHandlers() {
-		return TypeHandlers.ToArray();
-	}
+	public bool UnregisterRuleHandler(string key) {
+		lock(RuleHandlers) {
+			if (!RuleHandlers.ContainsKey(key))
+				return false;
 
-	public bool TryGetTypeHandler(string key, [NotNullWhen(true)] out IDynamicTypeHandler? handler) {
-		lock(TypeHandlers) {
-			return TypeHandlers.TryGetValue(key, out handler);
+			RuleHandlers.Remove(key);
+			return true;
 		}
 	}
 
-	public (IDynamicTypeHandler, object?, DynamicType)[]? HydrateDynamicTypes(IEnumerable<DynamicType>? types) {
-		if (types is null)
+	public KeyValuePair<string, IDynamicRuleHandler>[] GetRuleHandlers() {
+		lock (RuleHandlers) {
+			return RuleHandlers.ToArray();
+		}
+	}
+
+	public bool TryGetRuleHandler(string key, [NotNullWhen(true)] out IDynamicRuleHandler? handler) {
+		lock(RuleHandlers) {
+			return RuleHandlers.TryGetValue(key, out handler);
+		}
+	}
+
+	public (IDynamicRuleHandler, object?, DynamicRuleData)[]? HydrateDynamicRules(IEnumerable<DynamicRuleData>? ruleData) {
+		if (ruleData is null)
 			return null;
 
-		List<(IDynamicTypeHandler, object?, DynamicType)> result = new();
+		List<(IDynamicRuleHandler, object?, DynamicRuleData)> result = new();
 
-		lock (TypeHandlers) {
-			foreach (DynamicType type in types) {
-				if (TypeHandlers.TryGetValue(type.Id, out var handler)) {
+		lock (RuleHandlers) {
+			foreach (DynamicRuleData rule in ruleData) {
+				if (RuleHandlers.TryGetValue(rule.Id, out var handler)) {
 					object? state;
 					try {
-						state = handler.ParseState(type);
+						state = handler.ParseState(rule);
 					} catch (Exception ex) {
 						Log("An error occurred while executing a dynamic type handler.", LogLevel.Error, ex);
+
+						result.Add((invalidRuleHandler, invalidRuleHandler.ParseState(rule), rule));
 						continue;
 					}
 
-					result.Add((handler, state, type));
+					result.Add((handler, state, rule));
 				}
 			}
 		}

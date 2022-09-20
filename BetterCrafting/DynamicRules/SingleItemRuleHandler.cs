@@ -16,14 +16,14 @@ using StardewValley.Menus;
 
 using SObject = StardewValley.Object;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
-public class SingleItemTypeHandler : IDynamicTypeHandler {
+public class SingleItemRuleHandler : IDynamicRuleHandler {
 
 	public readonly int ItemId;
 	public readonly Lazy<Item> Item;
 
-	public SingleItemTypeHandler(int itemId) {
+	public SingleItemRuleHandler(int itemId) {
 		ItemId = itemId;
 		Item = new Lazy<Item>(() => new SObject(ItemId, 1));
 	}
@@ -39,10 +39,9 @@ public class SingleItemTypeHandler : IDynamicTypeHandler {
 
 	public bool HasEditor => false;
 
-	public IFlowNode[]? GetExtraInfo(object? state) => null;
-	public IClickableMenu? GetEditor(IDynamicType type) => null;
+	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) => null;
 
-	public object? ParseState(IDynamicType type) {
+	public object? ParseState(IDynamicRuleData type) {
 		return null;
 	}
 

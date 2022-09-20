@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Leclair.Stardew.Common.Events;
 
-using Leclair.Stardew.BetterCrafting.DynamicTypes;
+using Leclair.Stardew.BetterCrafting.DynamicRules;
 using StardewValley;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
@@ -23,14 +23,14 @@ namespace Leclair.Stardew.BetterCrafting.Menus;
 
 public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
-	public delegate void FinishedDelegate(bool save, bool delete, DynamicType data);
+	public delegate void FinishedDelegate(bool save, bool delete, DynamicRuleData data);
 
 	public readonly BetterCraftingPage Menu;
-	public readonly IDynamicTypeHandler Handler;
+	public readonly IDynamicRuleHandler Handler;
 
 	public readonly FinishedDelegate OnFinished;
 
-	private DynamicType Data;
+	private DynamicRuleData Data;
 	private object? Obj;
 
 	private ISimpleNode Layout;
@@ -42,14 +42,14 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 	public TextBox? txtText;
 	public ClickableComponent? btnText;
 
-	public RuleEditorDialog(ModEntry mod, BetterCraftingPage menu, IDynamicTypeHandler handler, object? obj, DynamicType data, FinishedDelegate onFinished) : base(mod) {
+	public RuleEditorDialog(ModEntry mod, BetterCraftingPage menu, IDynamicRuleHandler handler, object? obj, DynamicRuleData data, FinishedDelegate onFinished) : base(mod) {
 		Menu = menu;
 		Handler = handler;
 		Obj = obj;
 		Data = data;
 		OnFinished = onFinished;
 
-		if (Handler is ISimpleInputTypeHandler) {
+		if (Handler is ISimpleInputRuleHandler) {
 			string text = "";
 			if (Data.Fields.TryGetValue("Input", out var token) && token.Type == Newtonsoft.Json.Linq.JTokenType.String)
 				text = (string?) token ?? "";
@@ -175,10 +175,17 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 	[MemberNotNull(nameof(Layout))]
 	public void UpdateLayout() {
+
+		float scale = 48f / Handler.Source.Height;
+		if (scale >= 3)
+			scale = 3f;
+		else if (scale >= 1)
+			scale = MathF.Round(scale);
+
 		var builder = SimpleHelper.Builder(minSize: new Vector2(4 * 80, 0))
 			.Group(margin: 8)
 				.Space()
-				.Texture(Handler.Texture, Handler.Source, scale: 3, align: Alignment.Middle)
+				.Texture(Handler.Texture, Handler.Source, scale: scale, align: Alignment.Middle)
 				.Space(expand: false)
 				.Text(Handler.DisplayName, font: Game1.dialogueFont, align: Alignment.Middle)
 				.Space()
@@ -186,8 +193,13 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 		builder.Divider();
 
-		if (btnText is not null)
+		if (btnText is not null && Handler is ISimpleInputRuleHandler sir) {
+			if (!string.IsNullOrEmpty(sir.HelpText))
+				builder
+					.FormatText(sir.HelpText, wrapText: true);
+
 			builder.Component(btnText, onDraw: OnComponentDraw);
+		}
 
 		Layout = builder.GetLayout();
 		LayoutSize = Layout.GetSize(Game1.smallFont, new Vector2(400, 0));

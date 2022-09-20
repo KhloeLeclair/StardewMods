@@ -395,6 +395,8 @@ public class ModEntry : ModSubscriber {
 		RegisterSettings();
 
 		// Integrations
+		InventoryHelper.InitializeStackQuality(this);
+
 		intPFM = new(this);
 		intRGB = new(this);
 		intSSR = new(this);
@@ -1066,7 +1068,6 @@ public class ModEntry : ModSubscriber {
 		int rows = who.MaxItems / 12;
 		if (rows < 3) rows = 3;
 		if (rows < 4 && HasBiggerBackpacks()) rows = 4;
-		if (rows > 4) rows = 3;
 		return rows;
 	}
 

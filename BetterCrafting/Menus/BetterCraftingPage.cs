@@ -26,7 +26,7 @@ using StardewValley.Network;
 using StardewValley.Objects;
 
 using SObject = StardewValley.Object;
-using Leclair.Stardew.BetterCrafting.DynamicTypes;
+using Leclair.Stardew.BetterCrafting.DynamicRules;
 using StardewValley.Characters;
 using System.Reflection;
 
@@ -172,7 +172,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public Rectangle SourceFilter => Filter == null ? Sprites.Buttons.SEARCH_OFF : Sprites.Buttons.SEARCH_ON;
 	public Rectangle SourceEdit => Sprites.Buttons.WRENCH;
 	public Rectangle SourceFavorites => FavoritesOnly ? Sprites.Buttons.FAVORITE_ON : Sprites.Buttons.FAVORITE_OFF;
-	public Rectangle SourceCatFilter => (CurrentTab?.Category?.UseFilters ?? false) ? Sprites.Buttons.FILTER_ON : Sprites.Buttons.FILTER_OFF;
+	public Rectangle SourceCatFilter => (CurrentTab?.Category?.UseRules ?? false) ? Sprites.Buttons.FILTER_ON : Sprites.Buttons.FILTER_OFF;
 	public Rectangle SourceSeasoning {
 		get {
 			switch (Mod.Config.UseSeasoning) {
@@ -244,9 +244,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			height = 600 + borderWidth * 2;
 
 		int rows = mod.GetBackpackRows(Game1.player);
-		//rows = 1;
-		if (rows != 3)
-			height += (4 + Game1.tileSize) * (rows - 3);
+		if (rows != 3) {
+			// First, calculate the remaining height.
+			int totalHeight = Game1.uiViewport.Height - height;
+			if (y != -1)
+				totalHeight -= y;
+
+			int maxRows = 3 + totalHeight / (4 + Game1.tileSize);
+
+			if (rows > maxRows)
+				rows = maxRows;
+
+			if (rows != 3)
+				height += (4 + Game1.tileSize) * (rows - 3);
+		}
 
 		Vector2 pos = x == -1 || y == -1 ? Utility.getTopLeftPositionForCenteringOnScreen(width, height) : Vector2.Zero;
 		if (x == -1) x = (int) pos.X;
@@ -267,7 +278,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			discover_containers,
 
 			material_containers,
-			listed_recipes
+			listed_recipes,
+			rows: rows
 		);
 	}
 
@@ -328,7 +340,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool discover_containers = true,
 
 		IList<LocatedInventory>? material_containers = null,
-		IEnumerable<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null,
+		int? rows = null
+
 	) : base(mod, x, y, width, height) {
 
 		Location = location ?? Game1.player.currentLocation;
@@ -372,15 +386,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			Object = null;
 
 		// InventoryMenu
-		int rows = Mod.GetBackpackRows(Game1.player);
-		//rows = 1;
+		int nRows = rows ?? Mod.GetBackpackRows(Game1.player);
 
 		inventory = new InventoryMenu(
 			xPositionOnScreen + spaceToClearSideBorder + borderWidth,
 			yPositionOnScreen + spaceToClearTopBorder + borderWidth + 320 - 16,
 			false,
-			capacity: rows * 12,
-			rows: rows
+			capacity: nRows * 12,
+			rows: nRows
 		) {
 			showGrayedOutSlots = true
 		};
@@ -646,7 +659,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing || CurrentTab?.Category is null)
 			return;
 
-		CurrentTab.Category.UseFilters = !CurrentTab.Category.UseFilters;
+		CurrentTab.Category.UseRules = !CurrentTab.Category.UseRules;
 
 		// TODO: Initialize selected recipes based on filters, maybe?
 
@@ -785,9 +798,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (cat is null)
 			return;
 
-		var types = cat.CachedTypes;
+		var types = cat.CachedRules;
 		if (types is null)
-			types = cat.CachedTypes = Mod.Recipes.HydrateDynamicTypes(cat.DynamicFilters);
+			types = cat.CachedRules = Mod.Recipes.HydrateDynamicRules(cat.DynamicRules);
 
 		var builder = FlowHelper.Builder();
 
@@ -795,21 +808,25 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (types is not null)
 			for(int i = 0; i < types.Length; i++) {
-				IDynamicTypeHandler handler = types[i].Item1;
+				IDynamicRuleHandler handler = types[i].Item1;
 				object? state = types[i].Item2;
-				DynamicType data = types[i].Item3;
+				DynamicRuleData data = types[i].Item3;
+
+				float scale = 32f / handler.Source.Height;
+				if (scale >= 1)
+					scale = MathF.Round(scale);
 
 				var sb = FlowHelper.Builder()
 					.Texture(
 						texture: handler.Texture,
 						source: handler.Source,
-						scale: handler.Source.Height < 16 ? 3f : handler.Source.Height < 32 ? 2f : 1f,
+						scale: scale,
 						align: Alignment.Middle
 					)
 					.Text(" ")
 					.FormatText(handler.DisplayName, align: Alignment.Middle);
 
-				var extra = handler.GetExtraInfo(state);
+				var extra = handler is IExtraInfoRuleHandler info ? info.GetExtraInfo(state) : null;
 				if (extra is not null)
 					sb.Text("\n").AddRange(extra);
 
@@ -867,7 +884,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public void SaveCategories() {
 		var categories = Tabs
 			.Select(val => val.Category)
-			.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0 || (val?.DynamicFilters?.Count ?? 0) > 0);
+			.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0 || (val?.DynamicRules?.Count ?? 0) > 0);
 
 		Mod.Recipes.SetCategories(Game1.player, categories, cooking);
 		Mod.Recipes.SaveCategories();
@@ -1002,10 +1019,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (cat is null)
 			return false;
 
-		if (cat.UseFilters && cat.CachedRecipes is not null && cat.CachedRecipes.Contains(recipe))
+		if (cat.UseRules && cat.CachedRecipes is not null && cat.CachedRecipes.Contains(recipe))
 			return true;
 
-		return !cat.UseFilters && cat.Recipes is not null && cat.Recipes.Contains(recipe.Name);
+		return !cat.UseRules && cat.Recipes is not null && cat.Recipes.Contains(recipe.Name);
 	}
 
 	#endregion
@@ -1097,20 +1114,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				//	continue;
 
 				cat.CachedRecipes = null;
-				cat.CachedTypes = null;
+				cat.CachedRules = null;
 
 				List<IRecipe> recipes = new();
 
-				if (cat.UseFilters) {
+				if (cat.UseRules) {
 					cat.CachedRecipes = recipes;
-					cat.CachedTypes = Mod.Recipes.HydrateDynamicTypes(cat.DynamicFilters);
+					cat.CachedRules = Mod.Recipes.HydrateDynamicRules(cat.DynamicRules);
 
-					if (cat.CachedTypes is not null) {
+					if (cat.CachedRules is not null) {
 						foreach (IRecipe recipe in Recipes) {
 							Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe());
 
 							bool matched = false;
-							foreach (var handler in cat.CachedTypes) {
+							foreach (var handler in cat.CachedRules) {
 								if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
 									matched = true;
 									break;
@@ -1125,7 +1142,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					}
 				}
 
-				if (!cat.UseFilters && cat.Recipes is not null)
+				if (!cat.UseRules && cat.Recipes is not null)
 					foreach (string name in cat.Recipes) {
 						if (!RecipesByName.TryGetValue(name, out IRecipe? recipe))
 							continue;
@@ -1857,7 +1874,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		+ IClickableMenu.borderWidth;
 
 	protected virtual int CraftingPageX() => BasePageX()
-		+ (Editing && (CurrentTab?.Category?.UseFilters ?? false) ? 432 : 0);
+		+ (Editing && (CurrentTab?.Category?.UseRules ?? false) ? 432 : 0);
 
 	protected virtual int CraftingPageY() => yPositionOnScreen
 		+ (Editing ? 88 : 0)
@@ -1904,10 +1921,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	protected virtual ClickableTextureComponent[,] CreateNewPageLayout() {
-		int xSize = Editing && (CurrentTab?.Category?.UseFilters ?? false) ? 4 : 10;
+		int xSize = Editing && (CurrentTab?.Category?.UseRules ?? false) ? 4 : 10;
 		int ySize = 4;
 		if (Editing)
-			ySize += Math.Max(0, height - 553) / 64;
+			ySize += Math.Max(0, height - (256 + spaceToClearTopBorder + borderWidth + 48 + 88)) / 72;
 
 		return new ClickableTextureComponent[xSize, ySize];
 	}
@@ -2502,7 +2519,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			return;
 		}
 
-		if (x < (xPositionOnScreen + 432 + 16 + 8) && Editing && (CurrentTab?.Category?.UseFilters ?? false)) {
+		if (x < (xPositionOnScreen + 432 + 16 + 8) && Editing && (CurrentTab?.Category?.UseRules ?? false)) {
 			if (Flow is not null && Flow.Scroll(direction > 0 ? -1 : 1))
 				Game1.playSound("shwip");
 			return;
@@ -2675,7 +2692,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			foreach (var cmp in CurrentPage) {
 				if (cmp.containsPoint(x, y) && ComponentRecipes.TryGetValue(cmp, out IRecipe? recipe)) {
 					if (Editing) {
-						if (CurrentTab?.Category?.UseFilters ?? false) {
+						if (CurrentTab?.Category?.UseRules ?? false) {
 							if (playSound)
 								Game1.playSound("stoneStep");
 						} else {
@@ -2941,17 +2958,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (category is null)
 			return;
 
-		category.CachedTypes = Mod.Recipes.HydrateDynamicTypes(category.DynamicFilters);
+		category.CachedRules = Mod.Recipes.HydrateDynamicRules(category.DynamicRules);
 
 		List<IRecipe> recipes = new();
 		category.CachedRecipes = recipes;
 
-		if (category.CachedTypes is not null) {
+		if (category.CachedRules is not null) {
 			foreach (IRecipe recipe in Recipes) {
 				Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe());
 
 				bool matched = false;
-				foreach (var handler in category.CachedTypes) {
+				foreach (var handler in category.CachedRules) {
 					if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
 						matched = true;
 						break;
@@ -2968,23 +2985,23 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing || category is null)
 			return false;
 
-		void OnFinished(DynamicType? data, bool openEditor) {
+		void OnFinished(DynamicRuleData? data, bool openEditor) {
 			if (data is null)
 				return;
 
-			category.DynamicFilters ??= new();
-			category.DynamicFilters.Add(data);
+			category.DynamicRules ??= new();
+			category.DynamicRules.Add(data);
 
 			RefreshCategoryFilters(category);
 			UpdateFlow();
 
 			if (openEditor)
-				OpenRuleEditor(category, category.DynamicFilters.Count - 1);
+				OpenRuleEditor(category, category.DynamicRules.Count - 1);
 		}
 
 		HashSet<string> existing = new();
-		if (category.DynamicFilters is not null) {
-			foreach (var entry in category.DynamicFilters)
+		if (category.DynamicRules is not null) {
+			foreach (var entry in category.DynamicRules)
 				existing.Add(entry.Id);
 		}
 
@@ -3006,21 +3023,21 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	public bool OpenRuleEditor(Category category, int index) {
-		if (! Editing || category is null || category.DynamicFilters is null || category.DynamicFilters.Count <= index || index < 0)
+		if (! Editing || category is null || category.DynamicRules is null || category.DynamicRules.Count <= index || index < 0)
 			return false;
 
-		DynamicType data = category.DynamicFilters[index];
+		DynamicRuleData data = category.DynamicRules[index];
 
-		if (!Mod.Recipes.TryGetTypeHandler(data.Id, out IDynamicTypeHandler? handler))
+		if (!Mod.Recipes.TryGetRuleHandler(data.Id, out IDynamicRuleHandler? handler))
 			return false;
 
 		object? obj = handler.ParseState(data);
 
-		void OnFinished(bool save, bool delete, DynamicType data) {
+		void OnFinished(bool save, bool delete, DynamicRuleData data) {
 			if (delete)
-				category.DynamicFilters.RemoveAt(index);
+				category.DynamicRules.RemoveAt(index);
 			else if (save)
-				category.DynamicFilters[index] = data;
+				category.DynamicRules[index] = data;
 			else
 				return;
 
@@ -3258,7 +3275,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (btnCategoryFilter != null) {
 			btnCategoryFilter.tryHover(x, y);
 			if (btnCategoryFilter.containsPoint(x, y))
-				mode = (CurrentTab?.Category?.UseFilters ?? false) ? 13 : 14;
+				mode = (CurrentTab?.Category?.UseRules ?? false) ? 13 : 14;
 		}
 
 		// If the mode changed, regenerate the fancy tool-tip.
@@ -3271,7 +3288,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				Category? cat = CurrentTab?.Category;
 				if (cat is not null) {
 					var builder = SimpleHelper.Builder()
-						.Text(cat.UseFilters ? I18n.Tooltip_Filter_Enabled() : I18n.Tooltip_Filter_Disabled())
+						.Text(cat.UseRules ? I18n.Tooltip_Filter_Enabled() : I18n.Tooltip_Filter_Disabled())
 						.Divider()
 						.FormatText(I18n.Tooltip_Filter_About(), wrapText: true);
 
@@ -3471,7 +3488,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			txtCategoryName?.Draw(b);
 			btnCategoryFilter?.draw(b);
 
-			if (CurrentTab?.Category?.UseFilters ?? false) {
+			if (CurrentTab?.Category?.UseRules ?? false) {
 				drawVerticalIntersectingPartition(
 					b,
 					xPosition: xPositionOnScreen + 432,

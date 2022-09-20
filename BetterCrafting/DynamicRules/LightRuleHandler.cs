@@ -17,9 +17,9 @@ using StardewValley.Objects;
 
 using SObject = StardewValley.Object;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
-public class LightTypeHandler : IDynamicTypeHandler {
+public class LightRuleHandler : IDynamicRuleHandler {
 	public string DisplayName => I18n.Filter_Light();
 
 	public string Description => I18n.Filter_Light_About();
@@ -59,7 +59,7 @@ public class LightTypeHandler : IDynamicTypeHandler {
 		return false;
 	}
 
-	public IClickableMenu? GetEditor(IDynamicType type) {
+	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) {
 		return null;
 	}
 
@@ -67,7 +67,7 @@ public class LightTypeHandler : IDynamicTypeHandler {
 		return null;
 	}
 
-	public object? ParseState(IDynamicType type) {
+	public object? ParseState(IDynamicRuleData type) {
 		return null;
 	}
 }

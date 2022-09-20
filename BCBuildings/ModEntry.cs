@@ -17,10 +17,21 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 using StardewModdingAPI;
-using StardewValley.Network;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json.Linq;
 
 namespace Leclair.Stardew.BCBuildings;
+
+public class RuleData : IDynamicRuleData {
+
+	public RuleData(string id) {
+		Id = id;
+	}
+
+	public string Id { get; }
+
+	public IDictionary<string, JToken> Fields { get; } = new Dictionary<string, JToken>();
+
+}
 
 public class ModEntry : ModSubscriber, IRecipeProvider {
 
@@ -68,7 +79,17 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			return;
 
 		BCAPI.AddRecipeProvider(this);
-		BCAPI.CreateDefaultCategory(false, CategoryID, I18n.Category_Name, iconRecipe: "blueprint:Shed");
+		BCAPI.RegisterRuleHandler(ModManifest, "Building", new BuildingRuleHandler(this));
+		BCAPI.CreateDefaultCategory(
+			cooking: false,
+			categoryId: CategoryID,
+			Name: I18n.Category_Name,
+			iconRecipe: "blueprint:Shed",
+			useRules: true,
+			rules: new IDynamicRuleData[] {
+				new RuleData("leclair.bcbuildings/Building")
+			}
+		);
 
 		CaseInsensitiveDictionary<Rectangle?>? buildings;
 		try {

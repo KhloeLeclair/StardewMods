@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+Released ???.
+
+* Start using a dynamic rule for the Buildings category.
+
+
 ## 1.2.0
 Released September 2nd, 2022.
 

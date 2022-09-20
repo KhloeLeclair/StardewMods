@@ -45,7 +45,9 @@ public class MatcherIngredient : IIngredient {
 	public int Quantity { get; }
 
 	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality) {
-		int amount = 0;
+		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: maxQuality);
+
+		/*int amount = 0;
 
 		if (who != null)
 			foreach (var item in who.Items) {
@@ -64,7 +66,7 @@ public class MatcherIngredient : IIngredient {
 					amount += item.Stack;
 			}
 
-		return amount;
+		return amount;*/
 	}
 
 	public void Consume(Farmer who, IList<IInventory>? inventories, int maxQuality, bool lowQualityFirst) {

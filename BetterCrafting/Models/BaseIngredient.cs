@@ -172,7 +172,13 @@ public class BaseIngredient : IIngredient {
 	}
 
 	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int max_quality) {
-		int amount = 0;
+		bool ItemMatcher(Item item) {
+			return InventoryHelper.DoesItemMatchID(Index, item);
+		}
+
+		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: max_quality);
+
+		/*int amount = 0;
 
 		if (who != null)
 			foreach (var item in who.Items) {
@@ -192,6 +198,6 @@ public class BaseIngredient : IIngredient {
 					amount += item.Stack;
 			}
 
-		return amount;
+		return amount;*/
 	}
 }

@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.3.0
+Released ???.
+
+### New Features
+
+* Categories can now have their items selected using dynamic filters, rather
+  than being picked manually. This is now the default behavior for all
+  categories in the cooking menu.
+* Cookout Kits can now function as Workbenches, but for cooking! When enabled,
+  using a Cookout Kit will let you use items from nearby chests. Additionally,
+  Cookout Kits can be made longer lasting so that they don't vanish overnight
+  or when you break them.
+
+### Changes
+
+* The maximum number of visible tabs along the left side of the crafting menu
+  is now calculated based on the height of the menu, rather than being
+  hard coded.
+* Use two columns for displaying a recipe's ingredients if the recipe has more
+  than five ingredients.
+* Add support for more category ingredients with names and icons.
+
+### Fixes
+
+* When opening a Workbench, return that the action succeeded so that they game
+  won't try performing another action immediately.
+* Do not crash in the menu handler when replacing a crafting menu with no
+  material containers list.
+* The crafting menu handles it better when the game window changes size, though
+  it may still act a bit odd in some cases.
+* Catch an error if one is thrown while getting a list of all NPCs in the
+  game for the purpose of displaying likes/loves.
+* Do not scroll the recipe list when the mouse is over the inventory display,
+  to improve compatibility with certain mods that may modify the inventory.
+* Un-cache recipes whenever the recipe data assets are invalidated.
+* Do not crash in the cooking menu when hovering over a recipe that creates an
+  item with no objectInformation entry.
+* Do not crash in the crafting menu if more than one recipe is registered with
+  the same name.
+* Remove duplicate inventories from the inventories list after discovery to
+  avoid displaying inaccurate ingredient counts.
+
+### Mod Compatibility
+
+* Added support for [Stack Quality](https://www.nexusmods.com/stardewvalley/mods/13724)
+  when it comes to crafting. It will appropriately detect the number of items
+  in a stack of a given quality, particularly when limiting crafting by quality.
+* Added support for [Custom Backpack Framework](https://www.nexusmods.com/stardewvalley/mods/13826)
+  (and potentially other backpack mods) by allowing the crafting menu to expand
+  as necessary to display more inventory rows when there are more than 3 rows.
+
+### API Changes
+
+* Added method to register new dynamic rule handlers. Configuring rules is
+  still a work in progress, but a simple text input is supported.
+* The method to add a new default category now allows you to use rules.
+* Removed a couple deprecated methods from the API interface. They still work,
+  but new implementations shouldn't use them.
+
+
 ## 1.2.1
 Released September 3rd, 2022.
 

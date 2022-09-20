@@ -10,9 +10,9 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
-internal class UncraftedTypeHandler : IDynamicTypeHandler {
+internal class UncraftedRuleHandler : IDynamicRuleHandler {
 
 	public string DisplayName => I18n.Filter_Uncrafted();
 	public string Description => I18n.Filter_Uncrafted_About();
@@ -21,15 +21,13 @@ internal class UncraftedTypeHandler : IDynamicTypeHandler {
 
 	public Rectangle Source => new(32, 672, 16, 16);
 
-	public IFlowNode[]? GetExtraInfo(object? state) => null;
-
 	public bool AllowMultiple => false;
 
 	public bool HasEditor => false;
 
-	public IClickableMenu? GetEditor(IDynamicType type) => null;
+	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) => null;
 
-	public object? ParseState(IDynamicType type) {
+	public object? ParseState(IDynamicRuleData type) {
 		return null;
 	}
 

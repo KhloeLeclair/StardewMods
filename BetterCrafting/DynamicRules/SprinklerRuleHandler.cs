@@ -16,9 +16,9 @@ using StardewValley.Menus;
 
 using SObject = StardewValley.Object;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
-public class SprinklerTypeHandler : IDynamicTypeHandler {
+public class SprinklerRuleHandler : IDynamicRuleHandler {
 	public string DisplayName => I18n.Filter_Sprinkler();
 
 	public string Description => I18n.Filter_Sprinkler_About();
@@ -35,15 +35,11 @@ public class SprinklerTypeHandler : IDynamicTypeHandler {
 		return item.Value is SObject sobj && sobj.IsSprinkler();
 	}
 
-	public IClickableMenu? GetEditor(IDynamicType type) {
+	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) {
 		return null;
 	}
 
-	public IFlowNode[]? GetExtraInfo(object? state) {
-		return null;
-	}
-
-	public object? ParseState(IDynamicType type) {
+	public object? ParseState(IDynamicRuleData type) {
 		return null;
 	}
 }

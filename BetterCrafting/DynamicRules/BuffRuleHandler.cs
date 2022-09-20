@@ -12,9 +12,9 @@ using StardewValley.Menus;
 
 using SObject = StardewValley.Object;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
-public class BuffTypeHandler : IDynamicTypeHandler {
+public class BuffRuleHandler : IDynamicRuleHandler {
 
 	public const int FARMING = 0;
 	public const int FISHING = 1;
@@ -29,7 +29,7 @@ public class BuffTypeHandler : IDynamicTypeHandler {
 
 	public readonly int BuffIndex;
 
-	public BuffTypeHandler(int index) { 
+	public BuffRuleHandler(int index) { 
 		BuffIndex = index;
 		Source = new Rectangle(10 + 10 * BuffIndex, 428, 10, 10);
 	}
@@ -45,10 +45,10 @@ public class BuffTypeHandler : IDynamicTypeHandler {
 	public bool AllowMultiple => false;
 
 	public bool HasEditor => false;
-	public IFlowNode[]? GetExtraInfo(object? state) => null;
-	public IClickableMenu? GetEditor(IDynamicType type) => null;
 
-	public object? ParseState(IDynamicType type) {
+	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) => null;
+
+	public object? ParseState(IDynamicRuleData type) {
 		return null;
 	}
 

@@ -14,8 +14,8 @@
 					"Height": 10
 				}
 			},
-			"UseFilters": true,
-			"DynamicFilters": [
+			"UseRules": true,
+			"DynamicRules": [
 				{
 					"Id": "BuffFarming"
 				},
@@ -38,8 +38,8 @@
 					"Height": 10
 				}
 			},
-			"UseFilters": true,
-			"DynamicFilters": [
+			"UseRules": true,
+			"DynamicRules": [
 				{
 					"Id": "BuffMining"
 				},
@@ -62,8 +62,8 @@
 					"Height": 10
 				}
 			},
-			"UseFilters": true,
-			"DynamicFilters": [
+			"UseRules": true,
+			"DynamicRules": [
 				{
 					"Id": "BuffFishing"
 				}
@@ -83,8 +83,8 @@
 					"Height": 10
 				}
 			},
-			"UseFilters": true,
-			"DynamicFilters": [
+			"UseRules": true,
+			"DynamicRules": [
 				{
 					"Id": "BuffAttack"
 				},
@@ -122,8 +122,8 @@
 					"Height": 10
 				}
 			},
-			"UseFilters": true,
-			"DynamicFilters": [
+			"UseRules": true,
+			"DynamicRules": [
 				{
 					"Id": "BuffLuck"
 				},

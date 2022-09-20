@@ -9,13 +9,14 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Network;
 using StardewValley.Objects;
-using Leclair.Stardew.Common;
 using StardewValley.Menus;
+using StardewModdingAPI;
 
 #if IS_BETTER_CRAFTING
 
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Crafting;
+using Leclair.Stardew.BetterCrafting.DynamicRules;
 using Leclair.Stardew.BetterCrafting.Models;
 
 namespace Leclair.Stardew.BetterCrafting;
@@ -546,6 +547,122 @@ public interface IRecipeProvider {
 	IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking);
 }
 
+/// <summary>
+/// IDynamicRuleData instances represent all the configuration data associated
+/// with dynamic rules that have been added to categories.
+/// </summary>
+public interface IDynamicRuleData {
+
+	/// <summary>
+	/// The ID of the dynamic rule this data is for.
+	/// </summary>
+	public string Id { get; }
+
+	/// <summary>
+	/// A dictionary of configuration data for this dynamic rule, as parsed
+	/// by the game's JSON serializer.
+	/// </summary>
+	public IDictionary<string, JToken> Fields { get; }
+
+}
+
+/// <summary>
+/// IDynamicRuleHandler instances handle the logic of determining whether or
+/// not any given <see cref="IRecipe"/> matches a dynamic rule, and thus
+/// whether the recipe should be displayed in a category using rules.
+///
+/// It also handles anything necessary for displaying a user interface to
+/// the user for editing the rule's configuration.
+/// </summary>
+public interface IDynamicRuleHandler {
+
+	#region Display
+
+	/// <summary>
+	/// The name of the dynamic rule, to be displayed to the user when
+	/// editing a category.
+	/// </summary>
+	string DisplayName { get; }
+
+	/// <summary>
+	/// A description of what the dynamic rule matches, to be displayed
+	/// to the user when hovering over the rule in the interface to
+	/// add a new rule.
+	/// </summary>
+	string Description { get; }
+
+	/// <summary>
+	/// The source texture for an icon to display alongside this dynamic rule.
+	/// </summary>
+	Texture2D Texture { get; }
+
+	/// <summary>
+	/// The source area for an icon to display alongside this dynamic rule.
+	/// </summary>
+	Rectangle Source { get; }
+
+	/// <summary>
+	/// Whether or not this dynamic rule should be allowed to be added to a
+	/// category multiple times.
+	/// </summary>
+	bool AllowMultiple { get; }
+
+	#endregion
+
+	#region Editing
+
+	/// <summary>
+	/// Whether or not this dynamic rule has a custom editor.
+	/// </summary>
+	bool HasEditor { get; }
+
+	/// <summary>
+	/// WIP! This currently does not function. In the future, this will obtain
+	/// a new editor child menu that will be rendered within the rule editor.
+	/// </summary>
+	/// <param name="parent">The rule editor</param>
+	/// <param name="data">The data of the rule being edited</param>
+	IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData data);
+
+	#endregion
+
+	#region Processing
+
+	/// <summary>
+	/// This method is called before a dynamic rule is executed, allowing the
+	/// rule to parse its configuration into a state object that can be
+	/// re-used when checking recipes against the rule.
+	/// </summary>
+	/// <param name="data">The data of the rule</param>
+	/// <returns>A custom state object, or null if no state is required</returns>
+	object? ParseState(IDynamicRuleData data);
+
+	/// <summary>
+	/// This method checks whether a recipe matches this dynamic rule or not.
+	/// </summary>
+	/// <param name="recipe">The recipe being checked.</param>
+	/// <param name="item">The item output of the recipe being checked.</param>
+	/// <param name="state">The state object returned from <see cref="ParseState(IDynamicRuleData)"/></param>
+	bool DoesRecipeMatch(IRecipe recipe, Lazy<Item?> item, object? state);
+
+	#endregion
+}
+
+/// <summary>
+/// ISimpleInputRuleHandler is an <see cref="IDynamicRuleHandler"/> that only
+/// has a single text input for configuring it. This allows you to create
+/// basic rules without needing to implement a configuration interface.
+/// </summary>
+public interface ISimpleInputRuleHandler : IDynamicRuleHandler {
+
+	/// <summary>
+	/// If set to a string, this string will be displayed alongside the
+	/// text editor added to the rule editor for this rule.
+	/// </summary>
+	string? HelpText { get; }
+
+}
+
 #endif
 
 /// <summary>
@@ -825,10 +942,7 @@ public interface IBetterCrafting {
 	/// <param name="iconRecipe">The name of a recipe to use as the category's
 	/// default icon.</param>
 	///
-	void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null);
-
-	[Obsolete("Use the method that takes a function for the display-name instead.")]
-	void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null);
+	void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null);
 
 	/// <summary>
 	/// Add recipes to a default category. If a player has modified their
@@ -851,6 +965,38 @@ public interface IBetterCrafting {
 	/// <param name="recipeNames">An enummeration of recipe names for recipes to
 	/// remove from the category.</param>
 	void RemoveRecipesFromDefaultCategory(bool cooking, string categoryId, IEnumerable<string> recipeNames);
+
+	#endregion
+
+	#region Dynamic Rules
+
+	/// <summary>
+	/// Register a new dynamic rule handler for use with dynamic categories.
+	/// </summary>
+	/// <param name="manifest">The manifest of the mod (your mod) registering
+	/// this rule handler.</param>
+	/// <param name="id">An ID for the rule handler. This should be unique
+	/// within your mod, but can overlap with IDs from other mods as rule IDs
+	/// are prefixed with your mod ID internally.</param>
+	/// <param name="handler">The rule handler instance.</param>
+	/// <returns>Whether or not the handler was successfully registered.</returns>
+	bool RegisterRuleHandler(IManifest manifest, string id, IDynamicRuleHandler handler);
+
+	/// <summary>
+	/// See <see cref="RegisterRuleHandler(IManifest, string, IDynamicRuleHandler)"/>
+	/// for details. This method exists to ensure the API translation layer functions
+	/// as you would expect.
+	/// </summary>
+	bool RegisterRuleHandler(IManifest manifest, string id, ISimpleInputRuleHandler handler);
+
+	/// <summary>
+	/// Unregister a dynamic rule handler.
+	/// </summary>
+	/// <param name="manifest">The manifest of the mod (your mod) which
+	/// previously registered a rule handler.</param>
+	/// <param name="id">The ID of the rule handler.</param>
+	/// /// <returns>Whether or not the handler was successfully unregistered.</returns>
+	bool UnregisterRuleHandler(IManifest manifest, string id);
 
 	#endregion
 

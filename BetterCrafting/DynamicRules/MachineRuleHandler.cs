@@ -16,7 +16,7 @@ using StardewValley.Menus;
 
 using SObject = StardewValley.Object;
 
-namespace Leclair.Stardew.BetterCrafting.DynamicTypes;
+namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
 
 public record struct MachineInfo(
@@ -24,7 +24,7 @@ public record struct MachineInfo(
 );
 
 
-public class MachineTypeHandler : DynamicTypeHandler<MachineInfo> {
+public class MachineRuleHandler : DynamicTypeHandler<MachineInfo> {
 
 	public static string[] VANILLA_MACHINES = new string[] {
 		"9", // Lightning Rod
@@ -74,7 +74,7 @@ public class MachineTypeHandler : DynamicTypeHandler<MachineInfo> {
 
 	public readonly ModEntry Mod;
 
-	public MachineTypeHandler(ModEntry mod) {
+	public MachineRuleHandler(ModEntry mod) {
 		Mod = mod;
 	}
 
@@ -100,7 +100,7 @@ public class MachineTypeHandler : DynamicTypeHandler<MachineInfo> {
 		return state.KnownMachines.Contains(key);
 	}
 
-	public override IClickableMenu? GetEditor(IDynamicType type) {
+	public override IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData type) {
 		return null;
 	}
 
@@ -108,7 +108,7 @@ public class MachineTypeHandler : DynamicTypeHandler<MachineInfo> {
 		return null;
 	}
 
-	public override MachineInfo ParseStateT(IDynamicType type) {
+	public override MachineInfo ParseStateT(IDynamicRuleData type) {
 		HashSet<string> known = Mod.intPFM!.GetMachineIDs() ?? new();
 
 		foreach (string machine in VANILLA_MACHINES)
