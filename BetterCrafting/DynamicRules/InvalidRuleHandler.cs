@@ -42,7 +42,7 @@ public class InvalidRuleHandler : IDynamicRuleHandler, IExtraInfoRuleHandler {
 			return null;
 
 		return new IFlowNode[] {
-			new TextNode(data.Id)
+			new TextNode(data.Id, new Common.UI.TextStyle(shadow: false))
 		};
 	}
 

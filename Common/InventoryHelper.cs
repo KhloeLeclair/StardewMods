@@ -831,7 +831,7 @@ public static class InventoryHelper {
 				continue;
 
 			// Special logic for Stack Quality
-			if (intSQ is not null && item is SObject sobj) {
+			if (intSQ is not null && intSQ.IsLoaded && item is SObject sobj) {
 				amount = intSQ.ConsumeItem(sobj, amount, out bool set_null, out bool set_quality, max_quality);
 				if (set_null) {
 					items[idx] = null;
@@ -899,7 +899,7 @@ public static class InventoryHelper {
 				continue;
 
 			// Special logic for Stack Quality
-			if (intSQ is not null && item is SObject sobj) {
+			if (intSQ is not null && intSQ.IsLoaded && item is SObject sobj) {
 				amount += intSQ.CountItem(sobj, out bool set_passed, max_quality);
 				if (set_passed)
 					passed_quality = true;

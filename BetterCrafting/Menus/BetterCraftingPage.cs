@@ -3029,7 +3029,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		DynamicRuleData data = category.DynamicRules[index];
 
 		if (!Mod.Recipes.TryGetRuleHandler(data.Id, out IDynamicRuleHandler? handler))
-			return false;
+			handler = Mod.Recipes.GetInvalidRuleHandler();
 
 		object? obj = handler.ParseState(data);
 

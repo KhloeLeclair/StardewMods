@@ -196,7 +196,7 @@
 	"tooltip.transfer.half": "Transfer Half",
 	"tooltip.transfer.quantity": "Transfer {{count}}",
 
-	"tooltip.edit-filter-locked": "Individual recipes cannot be enabled or disabled when using Dynamic Filters for a category. Please adjust your filters, or disable Dynamic Filters.",
+	"tooltip.edit-filter-locked": "Individual recipes cannot be enabled or disabled when using Dynamic Rules for a category. Please adjust your rules, or disable Dynamic Rules.",
 
 	// Buttons
 	"tooltip.edit-mode": "Edit Categories",
@@ -205,9 +205,9 @@
 	"tooltip.uniform": "Use Uniform Grid",
 	"tooltip.settings": "Open Settings",
 
-	"tooltip.filter.enabled": "Dynamic Filters: Enabled",
-	"tooltip.filter.disabled": "Dynamic Filters: Disabled",
-	"tooltip.filter.about": "This let you create categories based on rules, rather than by manually selecting individual recipes.",
+	"tooltip.filter.enabled": "Dynamic Rules: Enabled",
+	"tooltip.filter.disabled": "Dynamic Rules: Disabled",
+	"tooltip.filter.about": "This lets you create categories based on rules, rather than by manually selecting individual recipes.",
 
 	"tooltip.search": "Search Recipes",
 	"tooltip.search.old-tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients. Start your search with \"@B{{likes}}@b\" to also search by characters that like an item, or \"@B{{loves}}@b\" to also search by characters that love an item.",

@@ -606,6 +606,10 @@ public class RecipeManager : BaseManager {
 		}
 	}
 
+	public IDynamicRuleHandler GetInvalidRuleHandler() {
+		return invalidRuleHandler;
+	}
+
 	public (IDynamicRuleHandler, object?, DynamicRuleData)[]? HydrateDynamicRules(IEnumerable<DynamicRuleData>? ruleData) {
 		if (ruleData is null)
 			return null;
@@ -626,7 +630,8 @@ public class RecipeManager : BaseManager {
 					}
 
 					result.Add((handler, state, rule));
-				}
+				} else
+					result.Add((invalidRuleHandler, invalidRuleHandler.ParseState(rule), rule));
 			}
 		}
 
