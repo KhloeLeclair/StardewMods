@@ -871,7 +871,7 @@ public static class InventoryHelper {
 		return amount;
 	}
 
-	public static int CountItem(Func<Item, bool> matcher, Farmer? who, IList<Item?>? items, out bool passed_quality, int max_quality = int.MaxValue) {
+	public static int CountItem(Func<Item, bool> matcher, Farmer? who, IEnumerable<Item?>? items, out bool passed_quality, int max_quality = int.MaxValue) {
 		int amount;
 
 		if (who is not null)
@@ -889,17 +889,17 @@ public static class InventoryHelper {
 		return amount;
 	}
 
-	public static int CountItem(Func<Item, bool> matcher, IList<Item?> items, out bool passed_quality, int max_quality = int.MaxValue) {
+	public static int CountItem(Func<Item, bool> matcher, IEnumerable<Item?> items, out bool passed_quality, int max_quality = int.MaxValue) {
 		passed_quality = false;
 		int amount = 0;
 
-		for(int idx = items.Count - 1; idx >= 0; --idx) {
-			Item? item = items[idx];
+		foreach(Item? item in items) { 
 			if (item == null || !matcher(item))
 				continue;
 
-			// Special logic for Stack Quality
-			if (intSQ is not null && intSQ.IsLoaded && item is SObject sobj) {
+			// Special logic for Stack Quality -- only needed if we're using
+			// a maximum quality lower than Iridium.
+			if (max_quality < 4 && intSQ is not null && intSQ.IsLoaded && item is SObject sobj) {
 				amount += intSQ.CountItem(sobj, out bool set_passed, max_quality);
 				if (set_passed)
 					passed_quality = true;

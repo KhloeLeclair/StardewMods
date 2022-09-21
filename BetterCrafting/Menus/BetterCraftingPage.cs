@@ -645,6 +645,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (Editing)
 			SaveCategories();
+
+		// Uncache our textures and the like. This might lead to some early
+		// unloads when playing split screen, but it probably isn't a big enough
+		// issue to care.
+		foreach(var recipe in Recipes) {
+			if (recipe is IRecipeWithCaching rwc)
+				rwc.ClearCache();
+		}
 	}
 
 	private void CreateLog(string message, LogLevel level = LogLevel.Debug, Exception? ex = null) {
@@ -2046,8 +2054,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			cmp.bounds = new Rectangle(
 				offsetX + x * (64 + marginX),
 				offsetY + y * 72,
-				64 * width,
-				64 * height
+				64 * width + (marginX * (width - 1)),
+				64 * height + (8 * (height - 1))
 			);
 
 			page.Add(cmp);

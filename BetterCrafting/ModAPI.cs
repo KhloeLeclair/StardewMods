@@ -193,6 +193,16 @@ public class ModAPI : IBetterCrafting {
 		return new RecipeWithIngredients(recipe, ingredients, onPerformCraft);
 	}
 
+	/// <inheritdoc />
+	public IRecipeBuilder RecipeBuilder(CraftingRecipe recipe) {
+		return new RecipeBuilder(recipe);
+	}
+
+	/// <inheritdoc />
+	public IRecipeBuilder RecipeBuilder(string name) {
+		return new RecipeBuilder(name);
+	}
+
 	#endregion
 
 	#region Ingredients
@@ -208,8 +218,14 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
-	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, string displayName, Texture2D texture, Rectangle? source = null) {
+	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null) {
 		return new MatcherIngredient(matcher, quantity, displayName, texture, source);
+	}
+
+	/// <inheritdoc />
+	[Obsolete("Use the method that takes functions instead.")]
+	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, string displayName, Texture2D texture, Rectangle? source = null) {
+		return new MatcherIngredient(matcher, quantity, () => displayName, () => texture, source);
 	}
 
 	/// <inheritdoc />
@@ -220,6 +236,11 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false) {
 		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst);
+	}
+
+	/// <inheritdoc />
+	public int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue) {
+		return InventoryHelper.CountItem(predicate, who, items, out bool _, max_quality: maxQuality);
 	}
 
 	#endregion
@@ -289,7 +310,7 @@ public class ModAPI : IBetterCrafting {
 		Mod.UnregisterInventoryProvider(type);
 	}
 
-	/// <inheritdoc />
+	[Obsolete("Included to avoid breaking API compatibility with older mods.")]
 	public void RegisterInventoryProvider(
 		Type type,
 		Func<object, GameLocation?, Farmer?, bool>? isValid,

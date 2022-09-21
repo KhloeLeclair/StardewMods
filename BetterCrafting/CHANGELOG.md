@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.3.1
+Released September 21st, 2022.
+
+### Fixes
+
+* Larger grid items in the Better Crafting menu were having their sizes
+  calculated incorrectly.
+
+### API Changes
+
+* Added a new recipe builder to make it easier for other C# mods to
+  manipulate recipes.
+* Added a new method to count items, which is compatible with Better Crafting's
+  quality settings and aware of the mod "Stack Quality".
+* Change `CreateMatcherIngredient` to use methods for setting a display name
+  and texture, to improve performance and i18n support.
+
+
 ## 1.3.0
 Released September 20th, 2022.
 
