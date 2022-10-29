@@ -19,7 +19,6 @@ using StardewValley.Locations;
 using StardewValley.Network;
 using StardewValley.TerrainFeatures;
 
-using SObject = StardewValley.Object;
 using StardewModdingAPI;
 using Leclair.Stardew.Common.Integrations.StackQuality;
 
@@ -729,7 +728,8 @@ public static class InventoryHelper {
 		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
 		Action<IList<IInventory>, Action> withLocks,
-		bool nullLocationValid = false
+		bool nullLocationValid = false,
+		IModHelper? helper = null
 	) {
 		List<IInventory> locked = new();
 		List<IInventory> lockable = new();
@@ -771,20 +771,21 @@ public static class InventoryHelper {
 			return;
 		}
 
-		List<NetMutex> mutexes = lockable.Where(entry => entry.Mutex != null).Select(entry => entry.Mutex!).ToList();
-		MultipleMutexRequest? mmr = null;
-		mmr = new MultipleMutexRequest(
+		List<NetMutex> mutexes = lockable.Where(entry => entry.Mutex != null).Select(entry => entry.Mutex!).Distinct().ToList();
+		AdvancedMultipleMutexRequest? mmr = null;
+		mmr = new AdvancedMultipleMutexRequest(
 			mutexes,
 			() => {
 				locked.AddRange(lockable);
 				withLocks(locked, () => {
-					mmr?.ReleaseLocks();
+					mmr?.ReleaseLock();
 					mmr = null;
 				});
 			},
 			() => {
 				withLocks(locked, () => { });
-			});
+			},
+			helper: helper);
 	}
 
 	#endregion
@@ -871,25 +872,28 @@ public static class InventoryHelper {
 		return amount;
 	}
 
-	public static int CountItem(Func<Item, bool> matcher, Farmer? who, IEnumerable<Item?>? items, out bool passed_quality, int max_quality = int.MaxValue) {
+	public static int CountItem(Func<Item, bool> matcher, Farmer? who, IEnumerable<Item?>? items, out bool passed_quality, int max_quality = int.MaxValue, int? limit = null) {
 		int amount;
 
 		if (who is not null)
-			amount = CountItem(matcher, who.Items, out passed_quality, max_quality: max_quality);
+			amount = CountItem(matcher, who.Items, out passed_quality, max_quality: max_quality, limit: limit);
 		else {
 			amount = 0;
 			passed_quality = false;
 		}
 
+		if (limit is not null && amount >= limit)
+			return amount;
+
 		if (items is not null) {
-			amount += CountItem(matcher, items, out bool pq, max_quality: max_quality);
+			amount += CountItem(matcher, items, out bool pq, max_quality: max_quality, limit: limit is not null ? limit - amount : null);
 			passed_quality |= pq;
 		}
 
 		return amount;
 	}
 
-	public static int CountItem(Func<Item, bool> matcher, IEnumerable<Item?> items, out bool passed_quality, int max_quality = int.MaxValue) {
+	public static int CountItem(Func<Item, bool> matcher, IEnumerable<Item?> items, out bool passed_quality, int max_quality = int.MaxValue, int? limit = null) {
 		passed_quality = false;
 		int amount = 0;
 
@@ -904,6 +908,9 @@ public static class InventoryHelper {
 				if (set_passed)
 					passed_quality = true;
 
+				if (limit is not null && amount >= limit)
+					return amount;
+
 				continue;
 			}
 
@@ -914,6 +921,8 @@ public static class InventoryHelper {
 			}
 
 			amount += item.Stack;
+			if (limit is not null && amount >= limit)
+				return amount;
 		}
 
 		return amount;

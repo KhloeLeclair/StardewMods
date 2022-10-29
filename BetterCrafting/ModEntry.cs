@@ -42,8 +42,9 @@ public class ModEntry : ModSubscriber {
 
 #nullable disable
 	public static ModEntry Instance { get; private set; }
-	public static ModAPI API { get; private set; }
 #nullable enable
+
+	internal readonly Dictionary<IManifest, ModAPI> APIInstances = new();
 
 	internal Harmony? Harmony;
 
@@ -95,7 +96,6 @@ public class ModEntry : ModSubscriber {
 		RenderHelper.SetHelper(helper);
 
 		Instance = this;
-		API = new ModAPI(this);
 
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
@@ -126,10 +126,15 @@ public class ModEntry : ModSubscriber {
 		InjectMenuHandler();
 	}
 
-	public override object GetApi() {
-		return API;
-	}
+	public override object? GetApi(IModInfo mod) {
+		if (!APIInstances.TryGetValue(mod.Manifest, out var api)) {
+			Log($"Creating specific API instance for {mod.Manifest.Name} ({mod.Manifest.UniqueID})", LogLevel.Debug);
+			api = new ModAPI(this, mod.Manifest);
+			APIInstances[mod.Manifest] = api;
+		}
 
+		return api;
+	}
 
 	#region Events
 

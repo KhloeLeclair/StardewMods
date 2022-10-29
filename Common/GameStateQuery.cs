@@ -10,8 +10,6 @@ using StardewValley.Locations;
 
 using StardewModdingAPI;
 
-using SObject = StardewValley.Object;
-
 namespace Leclair.Stardew.Common;
 
 /// <summary>
