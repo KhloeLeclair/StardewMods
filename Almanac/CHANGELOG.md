@@ -1,7 +1,30 @@
 # Changelog
 
+## 0.18.0
+Released ???
+
+### General
+
+* When hovering over a day on the crops calendar, if there are more than five
+  crops to display in the tooltip, display two columns.
+
+### Fixes
+
+* Better handling for invalid dates when displaying things on calendars.
+* Do not display anniversaries for NPCs with whom a player is divorced.
+* Improve seed handling for random number generation to hopefully fix issues
+  with some information in the Almanac appearing offset by a number of days.
+
+### Mod Compatibility
+
+* Added support for the Stardew Aquarium mod to the fishing page.
+* Switch to using new API endpoints when querying Json Assets and More Giant
+  Crops for giant crop information.
+* Added support for the as of yet unreleased Giant Crop Tweaks mod.
+
+
 ## 0.17.0
-Unreleased.
+Released May 10th, 2022.
 
 ### General
 

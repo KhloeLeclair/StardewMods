@@ -14,8 +14,6 @@ using StardewModdingAPI;
 
 using Leclair.Stardew.Almanac.Models;
 
-using SObject = StardewValley.Object;
-
 namespace Leclair.Stardew.Almanac.Fish;
 
 public class VanillaProvider : IFishProvider {

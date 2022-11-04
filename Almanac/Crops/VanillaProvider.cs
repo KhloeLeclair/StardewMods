@@ -12,8 +12,6 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewModdingAPI;
 
-using SObject = StardewValley.Object;
-
 namespace Leclair.Stardew.Almanac.Crops;
 
 public class VanillaProvider : ICropProvider {
@@ -77,6 +75,10 @@ public class VanillaProvider : ICropProvider {
 			try {
 				start = new(1, season, 1);
 				end = new(1, season, ModEntry.DaysPerMonth);
+
+				// Sanity check the seasons, just in case.
+				string test = start.Season;
+				test = end.Season;
 
 			} catch (Exception) {
 				ModEntry.Instance.Log($"Invalid season for crop {id} (harvest:{harvest}): {season}", LogLevel.Warn);
@@ -165,6 +167,15 @@ public class VanillaProvider : ICropProvider {
 				Game1.cropSpriteSheet,
 				new Rectangle(112 + which*48, 512, 48, 64)
 			);
+		}
+
+		// Giant Crop Tweaks Crops
+		if (!isGiantCrop && Mod.intGCT != null && Mod.intGCT.IsGiantCrop(harvest)) {
+			Texture2D? tex = Mod.intGCT.GetGiantCropTexture(harvest);
+			if (tex != null) {
+				isGiantCrop = true;
+				giantSprite = new(tex, Mod.intGCT.GetGiantCropSource(harvest) ?? tex.Bounds);
+			}
 		}
 
 		// JsonAssets Giant Crops

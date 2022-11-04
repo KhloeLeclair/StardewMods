@@ -20,9 +20,8 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.TerrainFeatures;
 
-using SObject = StardewValley.Object;
-
 using Leclair.Stardew.Almanac.Models;
+using StardewValley.GameData.Movies;
 
 namespace Leclair.Stardew.Almanac.Managers;
 
@@ -274,16 +273,15 @@ public class NoticesManager : BaseManager {
 		Load();
 
 		var state = new GameStateQuery.GameState(
-			rnd: Game1.random,
-			date: date,
-			timeOfDay: 600,
-			ticks: 0,
-			pickedValue: Game1.random.NextDouble(),
-			farmer: Game1.player,
-			location: null,
-			item: null,
-			monitor: Mod.Monitor,
-			trace: false
+			Random: Game1.random,
+			Date: date,
+			TimeOfDay: 600,
+			Ticks: 0,
+			Farmer: Game1.player,
+			Location: null,
+			Item: null,
+			Monitor: Mod.Monitor,
+			DoTrace: false
 		);
 
 		if (DataEvents != null)
@@ -411,7 +409,7 @@ public class NoticesManager : BaseManager {
 
 				foreach (GameLocation loc in Game1.locations) {
 					if (loc?.Name == where) {
-						where = Mod.GetLocationName(loc);
+						where = Mod.GetLocationName(loc) ?? where;
 						break;
 					}
 				}
@@ -423,8 +421,8 @@ public class NoticesManager : BaseManager {
 						new {
 							name,
 							where,
-							start = TimeHelper.FormatTime(start),
-							end = TimeHelper.FormatTime(end)
+							start = Mod.FormatTime(start),
+							end = Mod.FormatTime(end)
 						},
 						align: Alignment.Middle
 					),
@@ -455,6 +453,9 @@ public class NoticesManager : BaseManager {
 			if ((who.isEngaged() || who.isMarried()) && who.friendshipData != null) {
 				foreach (var entry in who.friendshipData.Pairs) {
 					if (entry.Value == null || entry.Value.WeddingDate == null)
+						continue;
+
+					if (entry.Value.IsDivorced())
 						continue;
 
 					WorldDate? wedding = entry.Value.WeddingDate;
@@ -524,7 +525,7 @@ public class NoticesManager : BaseManager {
 					FlowHelper.Translate(
 						Mod.Helper.Translation.Get("page.notices.train"),
 						new {
-							time = TimeHelper.FormatTime(time)
+							time = Mod.FormatTime(time)
 						},
 						align: Alignment.Middle
 					),
@@ -618,7 +619,7 @@ public class NoticesManager : BaseManager {
 				);
 
 			else {
-				var stock = Utility.getTravelingMerchantStock((int) ((long) Game1.uniqueIDForThisGame + date.TotalDays + 1));
+				var stock = Utility.getTravelingMerchantStock((int) (Game1.uniqueIDForThisGame + (uint)date.TotalDays + 1));
 				if (stock.Count > 0) {
 					var builder = FlowHelper.Builder()
 						.FormatText(I18n.Page_Notices_Merchant_Stock(), align: Alignment.Middle)

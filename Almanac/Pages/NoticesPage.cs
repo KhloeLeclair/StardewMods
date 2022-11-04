@@ -124,24 +124,6 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 		Sprites = new SpriteInfo[ModEntry.DaysPerMonth][];
 		WorldDate date = new(Menu.Date);
 
-		// Build a map of this month's birthdays.
-		foreach (NPC npc in Utility.getAllCharacters())
-			if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
-				// Don't show villagers we can't socialize with.
-				if (!npc.CanSocialize && !Game1.player.friendshipData.ContainsKey(npc.Name))
-					continue;
-
-				// Don't show forbidden villagers.
-				if (Overrides != null && Overrides.TryGetValue(npc.Name, out var ovr) && !ovr.Visible)
-					continue;
-
-				int day = npc.Birthday_Day;
-				if (Birthdays[day - 1] == null)
-					Birthdays[day - 1] = new();
-
-				Birthdays[day - 1].Add(npc);
-			}
-
 		FlowBuilder builder = new();
 
 		builder.FormatText(
@@ -149,6 +131,37 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 				fancy: true,
 				align: Alignment.Center
 			);
+
+		// Build a map of this month's birthdays.
+		DisposableList<NPC>? chars = null;
+		try {
+			chars = Utility.getAllCharacters();
+		} catch(Exception ex) {
+			Mod.Log($"Unable to load list of characters: {ex}", StardewModdingAPI.LogLevel.Error);
+			builder
+				.Text("\n\n")
+				.Sprite(new SpriteInfo(Game1.mouseCursors, new Rectangle(268, 470, 16, 16)), scale: 2f)
+				.Text(" ")
+				.Text(I18n.Page_Notices_BirthdayError(), color: Color.Red);
+		}
+
+		if (chars is not null)
+			foreach (NPC npc in chars)
+				if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
+					// Don't show villagers we can't socialize with.
+					if (!npc.CanSocialize && !Game1.player.friendshipData.ContainsKey(npc.Name))
+						continue;
+
+					// Don't show forbidden villagers.
+					if (Overrides != null && Overrides.TryGetValue(npc.Name, out var ovr) && !ovr.Visible)
+						continue;
+
+					int day = npc.Birthday_Day;
+					if (Birthdays[day - 1] == null)
+						Birthdays[day - 1] = new();
+
+					Birthdays[day - 1].Add(npc);
+				}
 
 		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
 
