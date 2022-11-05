@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.18.0
-Released ???
+Released November 4th, 2022.
 
 ### General
 
