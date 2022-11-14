@@ -1,12 +1,32 @@
 # Changelog
 
+## 0.18.1
+Released November 14th, 2022.
+
+### General
+
+* Changed how icons are displayed in Local Notices when there are more than
+  three notice icons on a given day.
+
+### Fixes
+
+* Add error handling if an error occurs in a page's activation or date
+  changed event handler.
+* Rewrite the logic of the Local Notices page to hopefully fix issues some
+  users are seeing that causes the Almanac to break.
+
+### Mod Compatibility
+
+* Added support for the Spenny mod.
+
+
 ## 0.18.0
 Released November 4th, 2022.
 
 ### General
 
 * When hovering over a day on the crops calendar, if there are more than five
-  crops to display in the tooltip, display two columns.
+  crops to display in the tool-tip, display two columns.
 
 ### Fixes
 
@@ -50,7 +70,7 @@ Released May 10th, 2022.
 
 ### API / Content Packs
 
-* Added mouse cursors, standard scroll elements, and standard tooltips to themes.
+* Added mouse cursors, standard scroll elements, and standard tool-tips to themes.
 * Added API endpoints for accessing weather data.
 * Added better handling for `Local Notices` via content packs, including support
   for Game State Query and token strings.
@@ -91,7 +111,7 @@ Released March 24th, 2022.
   textures for specific Almanac pages.
 * Now using the public version of [ThemeManager](https://github.com/KhloeLeclair/Stardew-ThemeManager)
   for theme support, which has a few changes. Notably, theme assets now
-  need to go into an `assets/` subfolder.
+  need to go into an `assets/` sub-folder.
 
 
 ## 0.15.0

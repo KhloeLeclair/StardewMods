@@ -23,8 +23,8 @@ namespace Leclair.Stardew.Almanac.Pages;
 public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 
 	private IFlowNode[]? Nodes;
-	private List<NPC>[]? Birthdays;
-	private SpriteInfo[]?[]? Sprites;
+	private List<NPC>?[]? Birthdays;
+	private List<SpriteInfo>?[]? Sprites;
 
 	private readonly Dictionary<NPC, SpriteInfo> Portraits = new();
 	private readonly Dictionary<NPC, SpriteInfo> Heads = new();
@@ -71,10 +71,21 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 			texture = npc.Sprite.Texture;
 		}
 
-		sprite = new SpriteInfo(
-			texture,
-			new Rectangle(0, 0, 16, 24)
-		);
+		// Spenny integration. Very important.
+		if (npc.Name == "Penny" && (Mod.Helper.ModRegistry.IsLoaded("spacechase0.SpennyLite") || Mod.Helper.ModRegistry.IsLoaded("spacechase0.Spenny")))
+			sprite = new SpriteInfo(
+				texture,
+				new Rectangle(0, 0, 16, 128),
+				baseFrames: 4,
+				framesPerRow: 1,
+				framePadY: 8,
+				frameTime: 133
+			);
+		else
+			sprite = new SpriteInfo(
+				texture,
+				new Rectangle(0, 0, 16, 24)
+			);
 
 		Portraits[npc] = sprite;
 		return sprite;
@@ -120,8 +131,8 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 		base.Update();
 
 		Nodes = new IFlowNode[ModEntry.DaysPerMonth];
-		Birthdays = new List<NPC>[ModEntry.DaysPerMonth];
-		Sprites = new SpriteInfo[ModEntry.DaysPerMonth][];
+		Birthdays = new List<NPC>?[ModEntry.DaysPerMonth];
+		Sprites = new List<SpriteInfo>?[ModEntry.DaysPerMonth];
 		WorldDate date = new(Menu.Date);
 
 		FlowBuilder builder = new();
@@ -156,11 +167,16 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 					if (Overrides != null && Overrides.TryGetValue(npc.Name, out var ovr) && !ovr.Visible)
 						continue;
 
-					int day = npc.Birthday_Day;
-					if (Birthdays[day - 1] == null)
-						Birthdays[day - 1] = new();
+					int day = npc.Birthday_Day - 1;
 
-					Birthdays[day - 1].Add(npc);
+					// Sanity check the birthday for being valid.
+					if (day >= Birthdays.Length)
+						continue;
+
+					if (Birthdays[day] is null)
+						Birthdays[day] = new();
+
+					Birthdays[day]!.Add(npc);
 				}
 
 		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
@@ -209,10 +225,10 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 					);
 			}
 
-			Sprites[day - 1] = sprites.Count > 0 ? sprites.ToArray() : null;
+			Sprites[day - 1] = sprites.Count > 0 ? sprites : null;
 
 			// Birthdays
-			List<NPC> birthdays = Birthdays[day - 1];
+			List<NPC>? birthdays = Birthdays[day - 1];
 			if (birthdays != null) {
 				foreach (NPC npc in birthdays) {
 					char last = npc.displayName.Last<char>();
@@ -303,14 +319,14 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 	public bool ShouldHighlightToday => true;
 
 	public void DrawUnderCell(SpriteBatch b, WorldDate date, Rectangle bounds) {
-		SpriteInfo[]? sprites = Sprites?[date.DayOfMonth - 1];
+		List<SpriteInfo>? sprites = Sprites?[date.DayOfMonth - 1];
 		List<NPC>? bdays = Birthdays?[date.DayOfMonth - 1];
 
 		double ms = Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
 
 		if (sprites != null) {
-			if (sprites.Length > 1 && sprites.Length < 4 && bdays == null) {
-				for (int i = 0; i < sprites.Length; i++) {
+			if (sprites.Count > 1 && sprites.Count < 4 && bdays == null) {
+				for (int i = 0; i < sprites.Count; i++) {
 					sprites[i]?.Draw(
 						b,
 						new Vector2(
@@ -322,17 +338,23 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 				}
 
 			} else {
-				int idx = (int) (ms / Mod.Config.CycleTime) % sprites.Length;
+				int to_show = Math.Min(sprites.Count, bdays == null ? 3 : 1);
+				int idx = (int) (ms / Mod.Config.CycleTime) % (int)Math.Ceiling(sprites.Count / (float) to_show) * to_show;
 
-				SpriteInfo sprite = sprites[idx];
-				sprite?.Draw(
-					b,
-					new Vector2(
-						bounds.X + bounds.Width - 36,
-						bounds.Y + 4
-					),
-					2f
-				);
+				for (int i = 0; i < to_show; i++) {
+					if (i + idx >= sprites.Count)
+						break;
+
+					SpriteInfo sprite = sprites[(idx + i) % sprites.Count];
+					sprite?.Draw(
+						b,
+						new Vector2(
+							bounds.X + bounds.Width - 36,
+							bounds.Y + 4 + (i * 36)
+						),
+						2f
+					);
+				}
 			}
 		}
 
@@ -362,7 +384,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 
 		while (day >= 0) {
 			// Do we have something click-worthy?
-			if ((Sprites?[day]?.Length ?? 0) == 0 && (Birthdays?[day]?.Count ?? 0) == 0)
+			if ((Sprites?[day]?.Count ?? 0) == 0 && (Birthdays?[day]?.Count ?? 0) == 0)
 				return false;
 
 			if (Nodes?[day] is IFlowNode node) {

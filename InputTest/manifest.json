@@ -1,0 +1,9 @@
+{
+  "EntryDll": "InputTest.dll",
+  "Name": "Input Tester",
+  "Author": "Khloe Leclair",
+  "Version": "0.1.0-Debug",
+  "Description": "A mod to test input events, so that casey will stop abusing Maru's Robot.",
+  "UniqueID": "leclair.inputtest",
+  "MinimumApiVersion": "3.16"
+}

@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Almanac": {
-      "commandName": "Project",
-      "commandLineArgs": "--mods-path \"$(ModSet)\""
-    }
-  }
-}

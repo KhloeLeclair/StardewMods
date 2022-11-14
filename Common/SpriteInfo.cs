@@ -28,7 +28,8 @@ public class SpriteInfo {
 	public int FramesPerRow;
 	public int FrameTime;
 	public int FrameDelay;
-
+	public int FramePadX;
+	public int FramePadY;
 
 	public SpriteInfo(
 		Texture2D texture,
@@ -44,7 +45,9 @@ public class SpriteInfo {
 		int overlayFrames = 1,
 		int framesPerRow = int.MaxValue,
 		int frameTime = 100,
-		int frameDelay = 0
+		int frameDelay = 0,
+		int framePadX = 0,
+		int framePadY = 0
 	) {
 		Texture = texture;
 		BaseSource = baseSource;
@@ -60,6 +63,8 @@ public class SpriteInfo {
 		FramesPerRow = framesPerRow;
 		FrameTime = frameTime;
 		FrameDelay = frameDelay;
+		FramePadX = framePadX;
+		FramePadY = framePadY;
 	}
 
 	public int Width {
@@ -72,6 +77,8 @@ public class SpriteInfo {
 					cols = BaseFrames;
 
 				result /= cols;
+				if (FramePadX != 0)
+					result -= (FramePadX * cols);
 			}
 
 			if (OverlaySource.HasValue) {
@@ -83,6 +90,9 @@ public class SpriteInfo {
 						cols = OverlayFrames;
 
 					overlayWidth /= cols;
+
+					if (FramePadX != 0)
+						overlayWidth -= (FramePadX * cols);
 				}
 
 				if (overlayWidth > result)
@@ -105,6 +115,8 @@ public class SpriteInfo {
 				int rows = (int) Math.Ceiling((double) BaseFrames / cols);
 
 				result /= rows;
+				if (FramePadY != 0)
+					result -= (FramePadY * rows);
 			}
 
 			if (OverlaySource.HasValue) {
@@ -118,6 +130,8 @@ public class SpriteInfo {
 					int rows = (int) Math.Ceiling((double) OverlayFrames / cols);
 
 					overlayHeight /= rows;
+					if (FramePadY != 0)
+						overlayHeight -= (FramePadY * rows);
 				}
 
 				if (overlayHeight > result)
@@ -129,7 +143,7 @@ public class SpriteInfo {
 	}
 
 
-	public static Rectangle GetFrame(Rectangle source, int frame, int frames, int cols, int frameTime = 100, int frameDelay = 0) {
+	public static Rectangle GetFrame(Rectangle source, int frame, int frames, int cols, int frameTime = 100, int frameDelay = 0, int framePadX = 0, int framePadY = 0) {
 		if (frames <= 1)
 			return source;
 
@@ -143,24 +157,33 @@ public class SpriteInfo {
 			cols = frames;
 
 		int rows = (int) Math.Ceiling((double) frames / cols);
-		int width = source.Width / cols;
-		int height = source.Height / rows;
+
+		int width = source.Width;
+		int height = source.Height;
+
+		if (framePadX != 0)
+			width -= framePadX * cols;
+		if (framePadY != 0)
+			height -= framePadY * rows;
+
+		width /= cols;
+		height /= rows;
 
 		int row = frame / cols;
 		int col = frame % cols;
 
 		return new Rectangle(
-			source.X + (col * width),
-			source.Y + (row * height),
+			source.X + (col * width) + ((col) * framePadX),
+			source.Y + (row * height) + ((row) * framePadY),
 			width,
 			height
 		);
 	}
 
 	public virtual void Draw(SpriteBatch batch, Vector2 location, float scale, int frame = -1, float size = 16, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
-		Rectangle source = GetFrame(BaseSource, frame, BaseFrames, FramesPerRow, FrameTime, FrameDelay);
+		Rectangle source = GetFrame(BaseSource, frame, BaseFrames, FramesPerRow, FrameTime, FrameDelay, FramePadX, FramePadY);
 		Rectangle? overlay = OverlaySource.HasValue ?
-			GetFrame(OverlaySource.Value, frame, OverlayFrames, FramesPerRow, FrameTime, FrameDelay)
+			GetFrame(OverlaySource.Value, frame, OverlayFrames, FramesPerRow, FrameTime, FrameDelay, FramePadX, FramePadY)
 			: null;
 
 		float width = source.Width * BaseScale;
@@ -227,9 +250,9 @@ public class SpriteInfo {
 	}
 
 	public virtual void Draw(SpriteBatch batch, Vector2 location, float scale, Vector2 size, int frame = -1, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
-		Rectangle source = GetFrame(BaseSource, frame, BaseFrames, FramesPerRow, FrameTime, FrameDelay);
+		Rectangle source = GetFrame(BaseSource, frame, BaseFrames, FramesPerRow, FrameTime, FrameDelay, FramePadX, FramePadY);
 		Rectangle? overlay = OverlaySource.HasValue ?
-			GetFrame(OverlaySource.Value, frame, OverlayFrames, FramesPerRow, FrameTime, FrameDelay)
+			GetFrame(OverlaySource.Value, frame, OverlayFrames, FramesPerRow, FrameTime, FrameDelay, FramePadX, FramePadY)
 			: null;
 
 		float width = source.Width * BaseScale;

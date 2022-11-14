@@ -102,6 +102,9 @@
 	"page.mines.type.InfestedQuarry": "Quarry Infestation",
 	"page.mines.type.Dino": "Cavern Dinosaurs",
 
+	"page.error": "Error",
+	"page.error.desc": "An error occurred within this menu page. See the game log for more details.",
+
 	"page.notices": "Local Notices",
 
 	"page.notices.birthday-error": "There was an error loading the list of game characters. Birthdays cannot be displayed. See the log for more details.",
@@ -243,7 +246,7 @@
 	"settings.fortune.deterministic-desc": "In order for the daily luck predictions of the Almanac to work, we replace the calculation for daily fortune with one that uses a predictable source of randomness. If this is causing problems, you can disable the behavior here. However, doing so will disable the daily luck forecast.",
 
 	"settings.fortune.exact": "Show Luck Percentages",
-	"settings.fortune.exact-desc": "When enabled, the exact daily luck percentage will be displayed in Fortune calendar tooltips.",
+	"settings.fortune.exact-desc": "When enabled, the exact daily luck percentage will be displayed in Fortune calendar tool-tips.",
 
 	"settings.train": "Page: Train Schedule",
 
