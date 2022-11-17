@@ -15,19 +15,10 @@ namespace Leclair.Stardew.ThemeManager;
 /// </summary>
 public interface IBaseTheme {
 
-	Color? TextColor { get; }
-
-	Color? TextShadowColor { get; }
-
-	Color? TextShadowAltColor { get; }
-
-	Color? ErrorTextColor { get; }
-
-	Color? HoverColor { get; }
-
-	Color? ButtonHoverColor { get; }
+	Dictionary<string, Color> Variables { get; }
 
 	Dictionary<int, Color> SpriteTextColors { get; }
+
 }
 
 /// <summary>
@@ -48,6 +39,16 @@ public interface IThemeChangedEvent<DataT> {
 	string NewId { get; }
 
 	/// <summary>
+	/// The manifest of the previously active theme.
+	/// </summary>
+	IThemeManifest? OldManifest { get; }
+
+	/// <summary>
+	/// The manifest of the newly active theme.
+	/// </summary>
+	IThemeManifest? NewManifest { get; }
+
+	/// <summary>
 	/// The theme data of the previously active theme.
 	/// </summary>
 	DataT? OldData { get; }
@@ -56,13 +57,20 @@ public interface IThemeChangedEvent<DataT> {
 	/// The theme data of the newly active theme.
 	/// </summary>
 	DataT NewData { get; }
+}
+
+public interface IThemesDiscoveredEvent<DataT> {
+
+	IReadOnlyDictionary<string, IThemeManifest> Manifests { get; }
+
+	IReadOnlyDictionary<string, DataT> Data { get; }
 
 }
 
 /// <summary>
 /// A manifest has necessary metadata for a theme for display in theme
 /// selection UI, for performing automatic theme selection, and for
-/// loading assets correctly from the filesystem.
+/// loading assets correctly from the file system.
 /// </summary>
 public interface IThemeManifest {
 
@@ -409,6 +417,13 @@ public interface ITypedThemeManager<DataT> : IThemeManager where DataT : new() {
 	/// </summary>
 	event EventHandler<IThemeChangedEvent<DataT>>? ThemeChanged;
 
+	/// <summary>
+	/// This event is fired whenever themes are discovered and theme data has
+	/// been loaded, but before theme selection runs. This can be used to
+	/// perform any extra processing of theme data.
+	/// </summary>
+	event EventHandler<IThemesDiscoveredEvent<DataT>>? ThemesDiscovered;
+
 	#endregion
 }
 
@@ -432,10 +447,21 @@ public interface IThemeManagerApi {
 	/// rather than throwing an <see cref="InvalidCastException"/>.
 	/// </summary>
 	/// <typeparam name="DataT">The type for the mod's theme data.</typeparam>
-	/// <param name="modManifest">The mod's manifest.</param>
 	/// <param name="themeManager">The <see cref="ITypedThemeManager{DataT}"/>
 	/// instance, if one exists.</param>
-	bool TryGetManager<DataT>(IManifest modManifest, [NotNullWhen(true)] out ITypedThemeManager<DataT>? themeManager) where DataT : class, new();
+	/// <param name="forMod">An optional manifest to get the theme manager
+	/// for a specific mod.</param>
+	bool TryGetManager<DataT>([NotNullWhen(true)] out ITypedThemeManager<DataT>? themeManager, IManifest? forMod = null) where DataT : class, new();
+
+	/// <summary>
+	/// Try to get an existing <see cref="IThemeManager"/> instance for a mod.
+	/// This will never create a new instance.
+	/// </summary>
+	/// <param name="themeManager">The <see cref="IThemeManager"/>
+	/// instance, if one exists.</param>
+	/// <param name="forMod">An optional manifest to get the theme manager
+	/// for a specific mod.</param>
+	bool TryGetManager([NotNullWhen(true)] out IThemeManager? themeManager, IManifest? forMod = null);
 
 	/// <summary>
 	/// Get an <see cref="ITypedThemeManager{DataT}"/> for a mod. If there is no
@@ -444,7 +470,6 @@ public interface IThemeManagerApi {
 	/// If there is an existing instance, the parameters are ignored.
 	/// </summary>
 	/// <typeparam name="DataT">The type for the mod's theme data.</typeparam>
-	/// <param name="modManifest">The mod's manifest.</param>
 	/// <param name="defaultTheme">A <typeparamref name="DataT"/> instance to
 	/// use for the <c>default</c> theme. If one is not provided, a new
 	/// instance will be created.</param>
@@ -462,38 +487,11 @@ public interface IThemeManagerApi {
 	/// manager with a different <typeparamref name="DataT"/> than it was
 	/// created with.</exception>
 	ITypedThemeManager<DataT> GetOrCreateManager<DataT>(
-		IManifest modManifest,
 		DataT? defaultTheme = null,
 		string? embeddedThemesPath = "assets/themes",
 		string? assetPrefix = "assets",
 		string? assetLoaderPrefix = null,
 		bool? forceAssetRedirection = null
-	) where DataT : class, new();
-
-	/// <summary>
-	/// Manage a <typeparamref name="DataT"/> instance for a mod using a
-	/// <see cref="ITypedThemeManager{DataT}"/>. This uses a <c>ref</c> parameter
-	/// to replace the existing theme instance with a new one when the
-	/// theme is changed.
-	///
-	/// If you need to change any of the parameters used to create a theme
-	/// manager, you should first call <see cref="GetOrCreateManager{DataT}(IManifest, DataT?, string?, string?, string?, bool?)"/>
-	/// before using this method.
-	/// </summary>
-	/// <typeparam name="DataT">The type for the mod's theme data.</typeparam>
-	/// <param name="modManifest">The mod's manifest.</param>
-	/// <param name="theme">The default <typeparamref name="DataT"/> instance.
-	/// If the <see cref="ITypedThemeManager{DataT}"/> instance was not already
-	/// created, this will be used as the <c>default</c> theme's data.</param>
-	/// <param name="onThemeChanged">An optional action to be called whenever
-	/// the theme is changed or reloaded.</param>
-	/// <exception cref="InvalidCastException">Thrown when attempting to get a
-	/// manager with a different <typeparamref name="DataT"/> than it was
-	/// created with.</exception>
-	ITypedThemeManager<DataT> ManageTheme<DataT>(
-		IManifest modManifest,
-		ref DataT theme,
-		EventHandler<IThemeChangedEvent<DataT>>? onThemeChanged = null
 	) where DataT : class, new();
 
 	#endregion

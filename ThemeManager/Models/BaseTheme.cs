@@ -1,17 +1,104 @@
+using System;
 using System.Collections.Generic;
 
-using Leclair.Stardew.Common.UI;
+using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
 
 using StardewValley;
 using StardewValley.BellsAndWhistles;
+using Newtonsoft.Json;
+using Leclair.Stardew.Common.UI;
 
 namespace Leclair.Stardew.ThemeManager.Models;
 
 
 public class BaseTheme : IBaseTheme {
 
+	internal static BaseTheme GetDefaultTheme() {
+		var theme = new BaseTheme() {
+			/*
+			// Generic Colors
+			TextColor = Game1.textColor,
+			TextShadowColor = Game1.textShadowColor,
+			TextShadowAltColor = new Color(221, 148, 84),
+
+			ErrorTextColor = Color.Red,
+			HoverColor = Color.Wheat,
+			ButtonHoverColor = Color.LightPink,
+
+			UnselectedOptionColor = Game1.unselectedOptionColor,
+			*/
+		};
+
+		theme.RawVariables ??= new();
+		theme.RawSpriteTextColors ??= new();
+
+		theme.Variables["Text"] = Game1.textColor;
+		theme.Variables["TextShadow"] = Game1.textShadowColor;
+		theme.Variables["UnselectedOption"] = Game1.unselectedOptionColor;
+		theme.Variables["TextShadowAlt"] = new Color(221, 148, 84);
+
+		theme.Variables["ErrorText"] = Color.Red;
+		theme.Variables["Hover"] = Color.Wheat;
+		theme.Variables["ButtonHover"] = Color.LightPink;
+
+		foreach (var entry in theme.Variables)
+			theme.RawVariables[entry.Key] = entry.Value.ToString();
+
+		for (int i = -1; i <= 8; i++) {
+			var color = SpriteText.getColorFromIndex(i);
+			theme.SpriteTextColors[i] = color;
+			theme.RawSpriteTextColors[i] = color.ToString();
+		}
+
+		return theme;
+	}
+
+	#region DayTimeMoneyBox
+
+	public Alignment? DayTimeAlignment { get; set; }
+	public int? DayTimeOffsetX { get; set; }
+	public int? DayTimeOffsetY { get; set; }
+
+	#endregion
+
+	[JsonProperty("Variables")]
+	public CaseInsensitiveDictionary<string>? RawVariables { get; set; }
+
+	[JsonProperty("SpriteTextColors")]
+	public Dictionary<int, string>? RawSpriteTextColors { get; set; }
+
+	[JsonProperty("Patches")]
+	public List<string>? RawPatches { get; set; }
+
+	#region Inherited Values
+
+	[JsonIgnore]
+	public CaseInsensitiveDictionary<string>? InheritedVariables { get; set; }
+
+	[JsonIgnore]
+	public Dictionary<int, string>? InheritedSpriteTextColors { get; set; }
+
+	[JsonIgnore]
+	public List<string>? InheritedPatches { get; set; }
+
+	#endregion
+
+	#region Hydrated Values
+
+	[JsonIgnore]
+	public Dictionary<string, Color> Variables { get; set; } = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase);
+
+	[JsonIgnore]
+	public Dictionary<int, Color> SpriteTextColors { get; set; } = new();
+
+	[JsonIgnore]
+	public List<string> Patches { get; set; } = new();
+
+	#endregion
+
+	/*
 	#region Generic Colors
 
 	public Color? TextColor { get; set; }
@@ -35,6 +122,16 @@ public class BaseTheme : IBaseTheme {
 	public Color? CalendarTodayColor { get; set; }
 	public Color? BillboardHoverColor { get; set; }
 	public Color? BillboardTextColor { get; set; }
+
+	#endregion
+
+	#region BobberBar
+
+	public Color? FishingPerfectTextColor { get; set; }
+	public Color? FishingPerfectSparkleColor { get; set; }
+	public Color? FishingTreasureBarColor { get; set; }
+	public Color? FishingProgressRedColor { get; set; }
+	public Color? FishingProgressGreenColor { get; set; }
 
 	#endregion
 
@@ -173,25 +270,6 @@ public class BaseTheme : IBaseTheme {
 	public Color? TutorialHoverColor { get; set; }
 
 	#endregion
-
-	internal static BaseTheme GetDefaultTheme() {
-		var theme = new BaseTheme() {
-			// Generic Colors
-			TextColor = Game1.textColor,
-			TextShadowColor = Game1.textShadowColor,
-			TextShadowAltColor = new Color(221, 148, 84),
-
-			ErrorTextColor = Color.Red,
-			HoverColor = Color.Wheat,
-			ButtonHoverColor = Color.LightPink,
-
-			UnselectedOptionColor = Game1.unselectedOptionColor,
-		};
-
-		for(int i = -1; i <= 8; i++)
-			theme.SpriteTextColors.Add(i, SpriteText.getColorFromIndex(i));
-
-		return theme;
-	}
+	*/
 
 }

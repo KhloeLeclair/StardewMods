@@ -15,9 +15,11 @@ namespace Leclair.Stardew.ThemeManager;
 public class ModAPI : IThemeManagerApi {
 
 	internal readonly ModEntry Mod;
+	internal readonly IManifest Other;
 
-	internal ModAPI(ModEntry mod) {
+	internal ModAPI(ModEntry mod, IManifest other) {
 		Mod = mod;
+		Other = other;
 
 		Mod.BaseThemeManager!.ThemeChanged += BaseThemeManager_ThemeChanged;
 	}
@@ -37,10 +39,10 @@ public class ModAPI : IThemeManagerApi {
 
 	#region Custom Themes
 
-	public ITypedThemeManager<DataT> GetOrCreateManager<DataT>(IManifest modManifest, DataT? defaultTheme = null, string? embeddedThemesPath = "assets/themes", string? assetPrefix = "assets", string? assetLoaderPrefix = null, bool? forceAssetRedirection = null) where DataT : class, new() {
+	public ITypedThemeManager<DataT> GetOrCreateManager<DataT>(DataT? defaultTheme = null, string? embeddedThemesPath = "assets/themes", string? assetPrefix = "assets", string? assetLoaderPrefix = null, bool? forceAssetRedirection = null) where DataT : class, new() {
 		ITypedThemeManager<DataT>? manager;
 		lock ((Mod.Managers as ICollection).SyncRoot) {
-			if (Mod.Managers.TryGetValue(modManifest, out var mdata)) {
+			if (Mod.Managers.TryGetValue(Other, out var mdata)) {
 				manager = mdata.Item2 as ITypedThemeManager<DataT>;
 				if (manager is null || mdata.Item1 != typeof(DataT))
 					throw new InvalidCastException($"Cannot convert {mdata.Item1} to {typeof(DataT)}");
@@ -49,12 +51,12 @@ public class ModAPI : IThemeManagerApi {
 			}
 		}
 
-		if (!Mod.Config.SelectedThemes.TryGetValue(modManifest.UniqueID, out string? selected))
+		if (!Mod.Config.SelectedThemes.TryGetValue(Other.UniqueID, out string? selected))
 			selected = "automatic";
 
 		manager = new ThemeManager<DataT>(
 			mod: Mod,
-			other: modManifest,
+			other: Other,
 			selectedThemeId: selected,
 			defaultTheme: defaultTheme,
 			embeddedThemesPath: embeddedThemesPath,
@@ -64,27 +66,28 @@ public class ModAPI : IThemeManagerApi {
 		);
 
 		lock ((Mod.Managers as ICollection).SyncRoot) {
-			Mod.Managers[modManifest] = (typeof(DataT), manager);
+			Mod.Managers[Other] = (typeof(DataT), manager);
 		}
 
 		manager.Discover();
 		return manager;
 	}
 
-	public ITypedThemeManager<DataT> ManageTheme<DataT>(IManifest modManifest, ref DataT theme, EventHandler<IThemeChangedEvent<DataT>>? onThemeChanged = null) where DataT : class, new() {
-		var manager = GetOrCreateManager<DataT>(modManifest, defaultTheme: theme);
+	public bool TryGetManager([NotNullWhen(true)] out IThemeManager? themeManager, IManifest? forMod = null) {
+		lock((Mod.Managers as ICollection).SyncRoot) {
+			if (!Mod.Managers.TryGetValue(forMod ?? Other, out var manager)) {
+				themeManager = null;
+				return false;
+			}
 
-		theme = manager.Theme;
-
-		if (onThemeChanged != null)
-			manager.ThemeChanged += onThemeChanged;
-
-		return manager;
+			themeManager = manager.Item2;
+			return true;
+		}
 	}
 
-	public bool TryGetManager<DataT>(IManifest modManifest, [NotNullWhen(true)] out ITypedThemeManager<DataT>? themeManager) where DataT : class, new() {
+	public bool TryGetManager<DataT>([NotNullWhen(true)] out ITypedThemeManager<DataT>? themeManager, IManifest? forMod = null) where DataT : class, new() {
 		lock ((Mod.Managers as ICollection).SyncRoot) {
-			if (!Mod.Managers.TryGetValue(modManifest, out var manager) || manager.Item1 != typeof(DataT)) {
+			if (!Mod.Managers.TryGetValue(forMod ?? Other, out var manager) || manager.Item1 != typeof(DataT)) {
 				themeManager = null;
 				return false;
 			}

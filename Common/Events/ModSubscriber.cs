@@ -7,6 +7,7 @@ using System.Reflection;
 using StardewModdingAPI;
 
 using Leclair.Stardew.Common.Types;
+using StardewModdingAPI.Events;
 
 namespace Leclair.Stardew.Common.Events;
 
@@ -16,6 +17,7 @@ public abstract class ModSubscriber : Mod {
 
 	public override void Entry(IModHelper helper) {
 		RegisterEvents();
+		Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
 	}
 
 	public virtual void Log(string message, LogLevel level = LogLevel.Debug, Exception? ex = null, LogLevel? exLevel = null) {
@@ -39,6 +41,10 @@ public abstract class ModSubscriber : Mod {
 
 		EventHelper.UnregisterEvents(Events);
 		Events = null;
+	}
+
+	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		EventHelper.RegisterConsoleCommands(this, Helper.ConsoleCommands, (msg, level) => Log(msg, level));
 	}
 
 	public void CheckRecommendedIntegrations() {

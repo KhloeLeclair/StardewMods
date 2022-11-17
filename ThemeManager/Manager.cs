@@ -287,6 +287,9 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			}
 		}
 
+		// Invoke the discovery event.
+		ThemesDiscovered?.Invoke(this, new ThemesDiscoveredEventArgs<DataT>(Themes));
+
 		// Store our currently selected theme.
 		string? oldKey = SelectedThemeId;
 
@@ -451,7 +454,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			return Mod.Helper.Translation.Get($"theme.default").ToString();
 
 		// Get the theme data. If the theme is the active theme, don't
-		// bother with a dictionary lookp.
+		// bother with a dictionary lookup.
 		Theme<DataT>? theme;
 		if (themeId == ActiveThemeId)
 			theme = BaseThemeData;
@@ -620,7 +623,13 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			Invalidate(postReload ? null : old_active);
 
 			// And emit our event.
-			ThemeChanged?.Invoke(this, new ThemeChangedEventArgs<DataT>(old_active, old_data?.Data, ActiveThemeId, Theme));
+			ThemeChanged?.Invoke(this, new ThemeChangedEventArgs<DataT>(
+				old_active,
+				old_data?.Manifest,
+				old_data?.Data,
+				ActiveThemeId,
+				ActiveThemeManifest,
+				Theme));
 		}
 	}
 
@@ -636,7 +645,14 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			DataT? oldData = Theme;
 			_DefaultTheme = value ?? new DataT();
 			if (is_default)
-				ThemeChanged?.Invoke(this, new ThemeChangedEventArgs<DataT>("default", oldData, "default", _DefaultTheme));
+				ThemeChanged?.Invoke(this, new ThemeChangedEventArgs<DataT>(
+					"default",
+					null,
+					oldData,
+					"default",
+					null,
+					_DefaultTheme
+				));
 		}
 	}
 
@@ -654,6 +670,9 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 	/// <inheritdoc />
 	public event EventHandler<IThemeChangedEvent<DataT>>? ThemeChanged;
+
+	/// <inheritdoc />
+	public event EventHandler<IThemesDiscoveredEvent<DataT>>? ThemesDiscovered;
 
 	#endregion
 
@@ -681,7 +700,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 		// Does this theme have this file?
 		if (theme is not null && !HasFile(path, themeId, false, false)) {
-			// If not, does the fallback theme have it? If so, then load it.
+			// If not, does the fall back theme have it? If so, then load it.
 			if (!string.IsNullOrEmpty(theme.Manifest.FallbackTheme) && HasFile(path, theme.Manifest.FallbackTheme, false, false))
 				return Load<T>(path, theme.Manifest.FallbackTheme);
 		}
@@ -732,7 +751,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			if (theme.Content.HasFile(lpath))
 				return true;
 
-			// Only fall-back once when using a fallback theme.
+			// Only fall-back once when using a fall back theme.
 			if (useFallback && !string.IsNullOrEmpty(theme.Manifest.FallbackTheme) && HasFile(path, theme.Manifest.FallbackTheme, false, false))
 				return true;
 		}
@@ -775,7 +794,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 				}
 		}
 
-		// Now fallback to the default theme
+		// Now fall back to the default theme
 		if (!string.IsNullOrEmpty(DefaultAssetPrefix))
 			path = Path.Join(DefaultAssetPrefix, path);
 

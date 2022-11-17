@@ -1,7 +1,7 @@
 {
   "Name": "Theme Manager",
   "Author": "Khloe Leclair",
-  "Version": "0.1.0",
+  "Version": "0.1.0-Debug",
   "Description": "Provides a framework for UI theme support in mods, as well as enhanced UI theme support for the base game.",
   "UniqueID": "leclair.thememanager",
   "EntryDll": "ThemeManager.dll",

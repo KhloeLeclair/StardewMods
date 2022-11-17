@@ -12,6 +12,8 @@ public enum ClockAlignMode {
 
 internal class ModConfig {
 
+	public bool DebugPatches { get; set; } = false;
+
 	public bool AlignText { get; set; } = true;
 
 	public ClockAlignMode ClockMode { get; set; } = ClockAlignMode.ByTheme;

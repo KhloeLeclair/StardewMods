@@ -7,11 +7,16 @@
 
 		<EnableHarmony>true</EnableHarmony>
 		<EnableTranslation>true</EnableTranslation>
+    
 	</PropertyGroup>
 	
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />
 
+  <PropertyGroup>
+    <EnableModZip>True</EnableModZip>
+  </PropertyGroup>
+  
 	<ItemGroup>
 		<Reference Include="SMAPI.Toolkit">
 			<HintPath>$(GamePath)\smapi-internal\SMAPI.Toolkit.dll</HintPath>

@@ -1,0 +1,13 @@
+{
+	"ID": "DrawHud",
+
+	"Patches": {
+		"StardewValley.Game1:drawHUD": {
+			"RedToGreenLerp": [
+				"$HUDHealthRed",
+				"$HUDHealthYellow",
+				"$HUDHealthGreen"
+			]
+		}
+	}
+}
