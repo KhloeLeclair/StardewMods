@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 
 using Leclair.Stardew.Common.Types;
 
@@ -20,6 +21,9 @@ public class PatchGroupData {
 	public CaseInsensitiveDictionary<string>? Variables { get; set; }
 
 	public Dictionary<string, PatchData>? Patches { get; set; }
+
+	[JsonIgnore]
+	public Dictionary<string, MethodInfo[]>? Methods { get; set; }
 
 }
 

@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
 
+using StardewValley.BellsAndWhistles;
+
 namespace Leclair.Stardew.ThemeManager;
 
 /// <summary>
@@ -15,8 +17,24 @@ namespace Leclair.Stardew.ThemeManager;
 /// </summary>
 public interface IBaseTheme {
 
+	/// <summary>
+	/// Try to get a color variable, or return <c>null</c> if there is no
+	/// variable with the provided name.
+	/// </summary>
+	/// <param name="key">The variable to get.</param>
+	Color? GetVariable(string key);
+
+	/// <summary>
+	/// A dictionary of all valid colors used by the theme. Keys are
+	/// not case-sensitive.
+	/// </summary>
 	Dictionary<string, Color> Variables { get; }
 
+	/// <summary>
+	/// A dictionary of all sprite text colors that are set by the theme.
+	/// You can just use <see cref="SpriteText.getColorFromIndex(int)"/>
+	/// rather than checking this list if using the active theme.
+	/// </summary>
 	Dictionary<int, Color> SpriteTextColors { get; }
 
 }
@@ -110,6 +128,14 @@ public interface IThemeManifest {
 	/// </summary>
 	IManifest ProvidingMod { get; }
 
+	/// <summary>
+	/// If a theme is non-selectable, it cannot be selected as the active
+	/// theme and will not be displayed in the UI to users. Non-selectable
+	/// themes are potentially useful for use in conjunction with
+	/// <see cref="FallbackTheme"/>.
+	/// </summary>
+	bool NonSelectable { get; }
+
 	#endregion
 
 	#region Theme Selection
@@ -165,7 +191,7 @@ public interface IThemeManager {
 	#region Basic Values
 
 	/// <summary>
-	/// The manifest of the mod that this <see cref="ITypedThemeManager{DataT}"/>
+	/// The manifest of the mod that this <see cref="IThemeManager"/>
 	/// instance is supporting.
 	/// </summary>
 	IManifest ModManifest { get; }
@@ -178,6 +204,14 @@ public interface IThemeManager {
 	string AssetLoaderPrefix { get; }
 
 	/// <summary>
+	/// A string that represents the path used when redirecting theme
+	/// data through game content to allow Content Patcher access to
+	/// your mod's theme data. By default, this value is
+	/// <c>Mods/{yourMod.UniqueId}/ThemeData</c>
+	/// </summary>
+	string ThemeLoaderPath { get; }
+
+	/// <summary>
 	/// The relative path to where your mod keeps its embedded themes.
 	/// By default, this is <c>assets/themes</c>. If this is <c>null</c>,
 	/// no embedded themes will be loaded.
@@ -185,7 +219,14 @@ public interface IThemeManager {
 	string? EmbeddedThemesPath { get; }
 
 	/// <summary>
-	/// Whether or not <see cref="ITypedThemeManager{DataT}"/> is redirecting
+	/// Whether or not this <see cref="IThemeManager"/> is redirecting
+	/// theme data loading through <see cref="IGameContentHelper"/> to
+	/// allow other mods, such as Content Patcher, to modify theme data.
+	/// </summary>
+	bool UsingThemeRedirection { get; }
+
+	/// <summary>
+	/// Whether or not this <see cref="IThemeManager"/> is redirecting
 	/// asset loading through <see cref="IGameContentHelper"/> to allow
 	/// other mods, such as Content Patcher, to modify theme assets.
 	/// </summary>
@@ -474,15 +515,20 @@ public interface IThemeManagerApi {
 	/// use for the <c>default</c> theme. If one is not provided, a new
 	/// instance will be created.</param>
 	/// <param name="embeddedThemesPath">The relative path to search for
-	/// embedded themes at. See <see cref="ITypedThemeManager{DataT}.EmbeddedThemesPath"/>.</param>
+	/// embedded themes at. See <see cref="IThemeManager.EmbeddedThemesPath"/>.</param>
 	/// <param name="assetPrefix">A string prepended to asset paths when
 	/// loading assets from the <c>default</c> theme. See
-	/// <see cref="ITypedThemeManager{DataT}.DefaultAssetPrefix"/>.</param>
+	/// <see cref="IThemeManager.DefaultAssetPrefix"/>.</param>
 	/// <param name="assetLoaderPrefix">A string prepended to asset names
 	/// when redirecting assets through <see cref="IGameContentHelper"/>.
-	/// See <see cref="ITypedThemeManager{DataT}.AssetLoaderPrefix"/>.</param>
+	/// See <see cref="IThemeManager.AssetLoaderPrefix"/>.</param>
+	/// <param name="themeLoaderPath">A string used when redirecting
+	/// theme data through <see cref="IGameContentHelper"/>.
+	/// See <see cref="IThemeManager.ThemeLoaderPath"/>.</param>
 	/// <param name="forceAssetRedirection">If set to a value, override
-	/// the default behavior of <see cref="ITypedThemeManager{DataT}.UsingAssetRedirection"/>.</param>
+	/// the default behavior of <see cref="IThemeManager.UsingAssetRedirection"/>.</param>
+	/// <param name="forceThemeRedirection">If set to a value, override
+	/// the default behavior of <see cref="IThemeManager.UsingThemeRedirection"/></param>
 	/// <exception cref="InvalidCastException">Thrown when attempting to get a
 	/// manager with a different <typeparamref name="DataT"/> than it was
 	/// created with.</exception>
@@ -491,7 +537,9 @@ public interface IThemeManagerApi {
 		string? embeddedThemesPath = "assets/themes",
 		string? assetPrefix = "assets",
 		string? assetLoaderPrefix = null,
-		bool? forceAssetRedirection = null
+		string? themeLoaderPath = null,
+		bool? forceAssetRedirection = null,
+		bool? forceThemeRedirection = null
 	) where DataT : class, new();
 
 	#endregion
@@ -501,7 +549,8 @@ public interface IThemeManagerApi {
 	/// <summary>
 	/// Parse a color from a string. This supports CSS hex format, CSS rgb()
 	/// format, a selection of color names, and basic "[r], [g], [b], [a]"
-	/// values separated by commas.
+	/// values separated by commas. This also attempts to use color variables
+	/// from the current game theme if your input starts with <c>$</c>.
 	/// </summary>
 	/// <param name="value">The input string to parse</param>
 	/// <param name="color">The resulting color, or null</param>

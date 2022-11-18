@@ -9,11 +9,11 @@
 	"Patches": {
 		"#OptionsDropDown:draw(SpriteBatch,,,)": {
 			"Colors": {
-				"Wheat": "$DropDownHover"
+				"Wheat": { "*": "$DropDownHover" }
 			},
 
 			"Fields": {
-				"textColor": "$DropDownText"
+				"textColor": { "*": "$DropDownText" }
 			}
 		}
 	}

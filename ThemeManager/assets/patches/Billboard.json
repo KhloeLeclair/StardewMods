@@ -8,12 +8,12 @@
 	"Patches": {
 		"#Billboard:draw(SpriteBatch)": {
 			"Colors": {
-				"Gray": "$CalendarDim",
-				"Blue": "$CalendarToday",
-				"LightPink": "$BillboardHover"
+				"Gray": { "*": "$CalendarDim" },
+				"Blue": { "*": "$CalendarToday" },
+				"LightPink": { "*": "$BillboardHover" }
 			},
 			"Fields": {
-				"textColor": "$BillboardText"
+				"textColor": { "*": "$BillboardText" }
 			}
 		}
 	}

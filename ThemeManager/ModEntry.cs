@@ -28,6 +28,8 @@ using Leclair.Stardew.Common.Types;
 using Leclair.Stardew.Common;
 
 using SMAPIJsonHelper = StardewModdingAPI.Toolkit.Serialization.JsonHelper;
+using System.Diagnostics;
+using SkiaSharp;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -50,6 +52,7 @@ public class ModEntry : ModSubscriber {
 	internal readonly Dictionary<IManifest, IContentPack> ContentPacks = new();
 	internal readonly Dictionary<string, Func<object>> LoadingAssets = new();
 	internal readonly Dictionary<IManifest, (Type, IThemeManager)> Managers = new();
+	internal readonly Dictionary<string, IThemeManager> ManagersByThemeAsset = new();
 	internal readonly Dictionary<IManifest, ModAPI> APIs = new();
 
 	internal Dictionary<string, PatchGroupData>? PatchGroups;
@@ -92,10 +95,11 @@ public class ModEntry : ModSubscriber {
 			other: ModManifest,
 			selectedThemeId: Config.StardewTheme ?? "automatic",
 			manifestKey: "stardew:theme",
-			defaultTheme: BaseTheme
+			defaultTheme: BaseTheme,
+			themeLoaderPath: $"Mods/{ModManifest.UniqueID}/GameThemeData"
 		);
 
-		BaseThemeManager.ThemesDiscovered += OnStardewThemesDiscovered;
+		ManagersByThemeAsset[BaseThemeManager.ThemeLoaderPath] = BaseThemeManager;
 		BaseThemeManager.ThemeChanged += OnStardewThemeChanged;
 	}
 
@@ -325,6 +329,16 @@ public class ModEntry : ModSubscriber {
 		}
 	}
 
+	internal TModel? Clone<TModel>(TModel input) where TModel : class {
+		if (JsonHelper is null)
+			GetJsonHelper();
+
+		if (JsonHelper is not null)
+			return JsonHelper.Deserialize<TModel>(JsonHelper.Serialize(input));
+
+		return null;
+	}
+
 	internal TModel? ReadJsonFile<TModel>(string path, IContentPack pack) where TModel : class {
 		if (JsonHelper is null)
 			GetJsonHelper();
@@ -391,15 +405,21 @@ public class ModEntry : ModSubscriber {
 		for (int i = 0; i < parms.Length; i++)
 			args[i] = parms[i].ParameterType?.Name ?? string.Empty;
 
-		return $"{type}:{method.Name}({string.Join(',', args)})";
+		string? assembly = method.DeclaringType?.Assembly.GetName().Name;
+		if (assembly is null || assembly == "Stardew Valley")
+			assembly = string.Empty;
+		else
+			assembly = $"{assembly}!";
+
+		return $"{assembly}{type}:{method.Name}({string.Join(',', args)})";
 	}
 
-	internal (Type, MethodInfo?)? ResolveMethod(string input, Type? current = null) {
+	internal (Type, MethodInfo)? ResolveMethod(string input, Type? current = null) {
 		var result = ResolveMethods(input, current);
 		return result.FirstOrDefault();
 	}
 
-	internal IEnumerable<(Type, MethodInfo?)> ResolveMethods(string input, Type? current = null) {
+	internal IEnumerable<(Type, MethodInfo)> ResolveMethods(string input, Type? current = null) {
 		if (input == null)
 			yield break;
 
@@ -407,21 +427,30 @@ public class ModEntry : ModSubscriber {
 		string typeName;
 		string methodName;
 
-		int idx = input.IndexOf('!');
-		if (idx == -1) {
-			assemblyName = "Stardew Valley";
-			typeName = input;
-		} else {
-			assemblyName = input[..idx];
-			typeName = input[(idx + 1)..];
+		int idx = input.IndexOf(':');
+		if (idx == -1)
+			methodName = "draw";
+		else {
+			methodName = input[(idx + 1)..];
+			input = input[..idx];
 		}
 
-		idx = typeName.IndexOf(':');
-		if (idx == -1) {
-			methodName = "draw";
+		if (string.IsNullOrWhiteSpace(input)) {
+			// If we don't have a class and we don't have a current target... boo.
+			if (current is null)
+				yield break;
+
+			assemblyName = current.Assembly.GetName().Name;
+			typeName = current.FullName ?? current.Name;
 		} else {
-			methodName = typeName[(idx + 1)..];
-			typeName = typeName[..idx];
+			idx = input.IndexOf('!');
+			if (idx == -1) {
+				assemblyName = "Stardew Valley";
+				typeName = input;
+			} else {
+				assemblyName = input[..idx];
+				typeName = input[(idx + 1)..];
+			}
 		}
 
 		if (typeName.StartsWith('#'))
@@ -489,7 +518,7 @@ public class ModEntry : ModSubscriber {
 	/// If <see cref="PatchGroups"/> is already populated, this does nothing.
 	/// </summary>
 	[MemberNotNull(nameof(PatchGroups))]
-	private void LoadPatchGroups() {
+	internal void LoadPatchGroups() {
 		if (PatchGroups is not null)
 			return;
 
@@ -597,10 +626,27 @@ public class ModEntry : ModSubscriber {
 	private void Command_MenuColors(string _, string[] args) {
 		// Use the current menu as the backup type.,
 		IClickableMenu menu = Game1.activeClickableMenu;
-		if (menu is TitleMenu && TitleMenu.subMenu is not null)
-			menu = TitleMenu.subMenu;
+		if (menu is not null) {
+			if (menu is TitleMenu && TitleMenu.subMenu is not null)
+				menu = TitleMenu.subMenu;
 
-		IClickableMenu child = menu.GetChildMenu();
+			if (menu is GameMenu gm && gm.currentTab < gm.pages.Count)
+				menu = gm.pages[gm.currentTab];
+
+		} else {
+			int x = Game1.getMouseX();
+			int y = Game1.getMouseY();
+			foreach(var m in Game1.onScreenMenus) {
+				if (m.xPositionOnScreen <= x && m.xPositionOnScreen + m.width >= x &&
+					m.yPositionOnScreen <= y && m.yPositionOnScreen + m.height >= y
+				) {
+					menu = m;
+					break;
+				}
+			}
+		}
+
+		IClickableMenu? child = menu?.GetChildMenu();
 		while (child is not null) {
 			menu = child;
 			child = menu.GetChildMenu();
@@ -650,10 +696,9 @@ public class ModEntry : ModSubscriber {
 				fields.Add(field, field.Name);
 		}
 
-		Dictionary<MethodInfo, string> colors = new();
-
 		var r2gLerp = AccessTools.Method(typeof(Utility), nameof(Utility.getRedToGreenLerpColor));
 
+		Dictionary<MethodInfo, string> colors = new();
 		foreach (var entry in typeof(Color).GetProperties()) {
 			if (entry.Name.Equals("White") || entry.Name.Equals("Black"))
 				continue;
@@ -663,12 +708,17 @@ public class ModEntry : ModSubscriber {
 			}
 		}
 
-		Log($"Method: {GetEasyString(info)}");
+		Log($"Method: {GetEasyString(info)}", LogLevel.Info);
 		Log($"Class: {type.FullName}", LogLevel.Trace);
 		Log($"Method (Raw): {info.FullDescription()}", LogLevel.Trace);
-		Log($"Present Colors:");
+		Log($"Detected Colors:", LogLevel.Info);
 
 		bool found = false;
+
+		Dictionary<string, List<int>> Colors = new();
+		Dictionary<string, List<int>> RawColors = new();
+		Dictionary<string, List<int>> Fields = new();
+		List<int> RedToGreenLerps = new();
 
 		for (int i = 0; i < Instructions.Count; i++) {
 			CodeInstruction in0 = Instructions[i];
@@ -676,17 +726,25 @@ public class ModEntry : ModSubscriber {
 			//Log($"{i}: {in0}", LogLevel.Debug);
 
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo method && colors.TryGetValue(method, out string? name)) {
-				Log($"-- Named Color: {name} at {i}");
+				if (!Colors.TryGetValue(name, out var list)) {
+					list = new();
+					Colors[name] = list;
+				}
+				list.Add(i);
 				found = true;
 			}
 
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo meth && meth == r2gLerp) {
-				Log($"-- Red to Green Lerp at {i}");
+				RedToGreenLerps.Add(i);
 				found = true;
 			}
 
 			if (in0.opcode == OpCodes.Ldsfld && in0.operand is FieldInfo fld && fields.TryGetValue(fld, out string? fname)) {
-				Log($"-- Field: {fname} at {i}");
+				if (!Fields.TryGetValue(fname, out var list)) {
+					list = new();
+					Fields[fname] = list;
+				}
+				list.Add(i);
 				found = true;
 			}
 
@@ -701,7 +759,12 @@ public class ModEntry : ModSubscriber {
 					int? val2 = in2.AsInt();
 
 					if (val0.HasValue && val1.HasValue && val2.HasValue) {
-						Log($"-- Color: ({val0.Value}, {val1.Value}, {val2.Value}) at {i}");
+						string key = $"{val0.Value}, {val1.Value}, {val2.Value}";
+						if (!RawColors.TryGetValue(key, out var list)) {
+							list = new();
+							RawColors[key] = list;
+						}
+						list.Add(i);
 						found = true;
 					}
 				}
@@ -709,7 +772,24 @@ public class ModEntry : ModSubscriber {
 		}
 
 		if (!found)
-			Log($"-- Did not find any colors.");
+			Log($"- Did not find any colors.", LogLevel.Info);
+		if (Colors.Count > 0) {
+			Log($"- Colors:", LogLevel.Info);
+			foreach (var entry in Colors)
+				Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+		}
+		if (RawColors.Count > 0) {
+			Log($"- Raw Colors:", LogLevel.Info);
+			foreach (var entry in RawColors)
+				Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+		}
+		if (Fields.Count > 0) {
+			Log($"- Fields:", LogLevel.Info);
+			foreach (var entry in Fields)
+				Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+		}
+		if (RedToGreenLerps.Count > 0)
+			Log($"- RedToGreenLerp (Offsets: {string.Join(", ", RedToGreenLerps)})", LogLevel.Info);
 
 		/*Log($"Instructions:");
 		for (int i = 0; i < Instructions.Length; i++) {
@@ -728,24 +808,230 @@ public class ModEntry : ModSubscriber {
 
 	[ConsoleCommand("theme", "View available themes, reload themes, and change the current themes.")]
 	private void Command_Theme(string name, string[] args) {
-		for (int i = 0; i < args.Length; i++) {
-			Log($"Arg {i}: {args[i]}");
+		// List Mods
+		if (args.Length == 0 || string.Equals("list", args[0], StringComparison.OrdinalIgnoreCase)) {
+			List<string[]> ents = new() {
+				new string[] {
+					"stardew",
+					BaseThemeManager!.ActiveThemeId,
+					BaseThemeManager!.SelectedThemeId,
+					BaseThemeManager!.GetThemeChoices().Count.ToString()
+				}
+			};
+
+			foreach (var entry in Managers)
+				ents.Add(new string[] {
+					entry.Key.UniqueID,
+					entry.Value.Item2.ActiveThemeId,
+					entry.Value.Item2.SelectedThemeId,
+					entry.Value.Item2.GetThemeChoices().Count.ToString()
+				});
+
+			LogTable(new string[] {
+				"Manager ID",
+				"Active Theme",
+				"Selected Theme",
+				"Total Themes"
+			}, ents, LogLevel.Info, " | ");
+			return;
 		}
 
-		Log($"Not yet implemented.");
+		if (string.Equals(args[0], "help", StringComparison.OrdinalIgnoreCase)) {
+			LogTable(null, new string[][] {
+				new string[] {
+					"list", "List all the mods currently using theme managers, as well as their active themes."
+				},
+				new string[] {
+					"help", "View this information."
+				},
+				new string[] {
+					"reload", "Reload all theme managers' themes."
+				},
+				new string[] {
+					"[manager] list", "List all the themes available for a given theme manager."
+				},
+				new string[] {
+					"[manager] paths", "List a manager's asset paths, for use with Content Patcher."
+				},
+				new string[] {
+					"[manager] reload", "Reload a given theme manager's themes."
+				},
+				new string[] {
+					"[manager] [theme]", "Select a theme for a given theme manager."
+				}
+			}, LogLevel.Info);
+			return;
+		}
+
+		if (string.Equals(args[0], "reload", StringComparison.OrdinalIgnoreCase)) {
+			Command_ReTheme(name, args);
+			return;
+		}
+
+		// It's a manager command. Look one up.
+		IThemeManager? manager = null;
+		string? target = null;
+
+		// Strict matching
+		if (string.Equals(args[0], "stardew", StringComparison.OrdinalIgnoreCase)) {
+			target = "stardew";
+			manager = BaseThemeManager;
+		} else {
+			foreach (var entry in Managers) {
+				if (string.Equals(args[0], entry.Key.UniqueID, StringComparison.OrdinalIgnoreCase)) {
+					manager = entry.Value.Item2;
+					target = entry.Key.UniqueID;
+					break;
+				}
+			}
+		}
+
+		// Sloppy matching.
+		if (manager is null) {
+			if ("stardew".Contains(args[0], StringComparison.OrdinalIgnoreCase)) {
+				manager = BaseThemeManager;
+				target = "stardew";
+			} else {
+				foreach (var entry in Managers) {
+					if (entry.Key.UniqueID.Contains(args[0], StringComparison.OrdinalIgnoreCase)) {
+						manager = entry.Value.Item2;
+						target = entry.Key.UniqueID;
+						break;
+					}
+				}
+			}
+		}
+
+		// No matches?
+		if (manager is null) {
+			Log($"Unable to match manager: {args[0]}", LogLevel.Warn);
+			return;
+		}
+
+		Log($"Manager: {target}", LogLevel.Info);
+
+		if (args.Length > 1 && string.Equals(args[1], "reload", StringComparison.OrdinalIgnoreCase)) {
+			manager.Discover();
+			manager.Invalidate();
+			Log($"Reloaded all themes across 1 manager.", LogLevel.Info);
+			return;
+		}
+
+		if (args.Length > 1 && string.Equals(args[1], "paths", StringComparison.OrdinalIgnoreCase)) {
+			if (manager.UsingThemeRedirection)
+				Log($"Theme Data: {manager.ThemeLoaderPath}", LogLevel.Info);
+			else
+				Log($"Theme Data Redirection is disabled for this manager.", LogLevel.Info);
+
+			if (manager.UsingAssetRedirection) {
+				Log($"Asset Prefix: {manager.AssetLoaderPrefix}", LogLevel.Info);
+
+				Dictionary<string, string> cached = new();
+
+				// Pretend like we're going to invalidate the cache so we can get
+				// the names of all cached assets.
+				Helper.GameContent.InvalidateCache(asset => {
+					if (asset.Name.StartsWith(manager.AssetLoaderPrefix))
+						cached[asset.Name.Name] = asset.DataType.Name;
+					return false;
+				});
+
+				if (cached.Count > 0) {
+					List<string[]> ents = new();
+					foreach (var entry in cached)
+						ents.Add(new string[] { entry.Key, entry.Value });
+
+					Log($"Cached Assets:", LogLevel.Info);
+					LogTable(new string[] { "Key", "Type" }, ents, LogLevel.Info);
+				} else
+					Log($"There are no cached assets.", LogLevel.Info);
+
+			} else
+				Log($"Asset Redirection is disabled for this manager.", LogLevel.Info);
+
+			return;
+		}
+
+		if (args.Length > 1 && !string.Equals(args[1], "list", StringComparison.OrdinalIgnoreCase)) {
+			string needle = string.Join(" ", args, 1, args.Length - 1);
+			string? selected = null;
+			var themes = manager.GetThemeChoices();
+
+			// Check for unique ID matches first.
+			foreach (var pair in themes) {
+				if (pair.Key.Equals(needle, StringComparison.OrdinalIgnoreCase)) {
+					selected = pair.Key;
+					target = pair.Value;
+					break;
+				}
+			}
+
+			// Now check for unique ID partial matches.
+			if (selected is null)
+				foreach (var pair in themes) {
+					if (pair.Key.Contains(needle, StringComparison.OrdinalIgnoreCase)) {
+						selected = pair.Key;
+						target = pair.Value;
+						break;
+					}
+				}
+
+			// Lastly select for partial display name matches
+			if (selected is null)
+				foreach (var pair in themes) {
+					if (pair.Value.Contains(needle, StringComparison.OrdinalIgnoreCase)) {
+						selected = pair.Key;
+						target = pair.Value;
+						break;
+					}
+				}
+
+			if (selected != null) {
+				manager.SelectTheme(selected);
+				Log($"Selected Theme: {selected} ({target})", LogLevel.Info);
+
+			} else
+				Log($"Unable to match theme: {needle}", LogLevel.Warn);
+		}
+
+		List<string[]> entries = new();
+
+		foreach(var pair in manager.GetThemeChoices()) {
+			bool sel = pair.Key == manager.SelectedThemeId;
+			bool active = pair.Key == manager.ActiveThemeId;
+
+			entries.Add(new string[] {
+				sel ? "***" : "",
+				active ? "***" : "",
+				pair.Key,
+				pair.Value
+			});
+		}
+
+		LogTable(new string[] {
+				"Selected", "Active", "ID", "Name"
+			}, entries, LogLevel.Info);
+	}
+
+	[ConsoleCommand("tm_repatch", "Reload all patch data and reapply patches.")]
+	private void Command_Repatch(string name, string[] args) {
+		PatchGroups = null;
+		LoadPatchGroups();
+
+		SelectPatches(BaseTheme);
+
+		Log($"Reloaded {PatchGroups.Count} patch groups and applied patches to {DynamicPatchers.Count} methods.", LogLevel.Info);
 	}
 
 	[ConsoleCommand("retheme", "Reload all themes.")]
 	private void Command_ReTheme(string name, string[] args) {
-		PatchGroups = null;
-		LoadPatchGroups();
 
-		BaseThemeManager!.Invalidate();
 		BaseThemeManager!.Discover();
+		BaseThemeManager!.Invalidate();
 
 		foreach (var entry in Managers) {
-			entry.Value.Item2.Invalidate();
 			entry.Value.Item2.Discover();
+			entry.Value.Item2.Invalidate();
 		}
 
 		Log($"Reloaded all themes across {Managers.Count + 1} managers.", LogLevel.Info);
@@ -754,135 +1040,6 @@ public class ModEntry : ModSubscriber {
 	#endregion
 
 	#region Events
-
-	private void OnStardewThemesDiscovered(object? sender, IThemesDiscoveredEvent<BaseTheme> e) {
-		Log($"Discovered {e.Manifests.Count} themes.", LogLevel.Debug);
-
-		HashSet<string> processed = new();
-
-		void InitialProcess(string key, HashSet<string> tree) {
-			// Make sure we have the thing.
-			if (!e.Data.TryGetValue(key, out var data))
-				return;
-
-			// If we've already hit this node in this loop, log a warning
-			// and don't continue processing.
-			if (tree.Contains(key)) {
-				Log($"Inheritance loop processing game themes: {string.Join(" -> ", tree)}", LogLevel.Warn);
-				return;
-			}
-
-			// If we've already processed this node, don't do so again.
-			if (!processed.Add(key))
-				return;
-
-			CaseInsensitiveDictionary<string>? Variables;
-			Dictionary<int, string>? SpriteTextColors;
-			List<string>? Patches;
-
-			// Do we have values to inherit?
-			if (e.Manifests.TryGetValue(key, out var manifest) && !string.IsNullOrEmpty(manifest.FallbackTheme) && e.Data.TryGetValue(manifest.FallbackTheme, out var pdata)) {
-				// First, process *that* manifest.
-				InitialProcess(manifest.FallbackTheme, tree);
-
-				// Now, import all its data.
-				Variables = pdata.InheritedVariables;
-				SpriteTextColors = pdata.InheritedSpriteTextColors;
-				Patches = pdata.InheritedPatches;
-
-			} else {
-				Variables = null;
-				SpriteTextColors = null;
-				Patches = null;
-			}
-
-			// Create or inherit our data structures.
-			if (SpriteTextColors is not null) {
-				data.InheritedSpriteTextColors = new(SpriteTextColors);
-				if (data.RawSpriteTextColors is not null)
-					foreach(var entry in data.RawSpriteTextColors)
-						data.InheritedSpriteTextColors[entry.Key] = entry.Value;
-			} else
-				data.InheritedSpriteTextColors = data.RawSpriteTextColors ?? new();
-
-			if (Patches is not null) {
-				data.InheritedPatches = new(Patches);
-				if (data.RawPatches is not null)
-					foreach (string entry in data.RawPatches)
-						data.InheritedPatches.Add(entry);
-			} else
-				data.InheritedPatches = data.RawPatches ?? new();
-
-			// InheritedVariables is different than the others because we need
-			// to optionally strip the "$" from the beginning of the names.
-			data.InheritedVariables = Variables is null ? new() : new(Variables);
-			if (data.RawVariables is not null)
-				foreach (var entry in data.RawVariables)
-					data.InheritedVariables[entry.Key.StartsWith('$') ? entry.Key[1..] : entry.Key] = entry.Value;
-		}
-
-		// Do the initial processing along with inheritance.
-		foreach(var entry in e.Data) {
-			if (!processed.Contains(entry.Key))
-				InitialProcess(entry.Key,new());
-		}
-
-		// Now for each theme handle patches.
-		LoadPatchGroups();
-
-		foreach(var entry in e.Data) {
-			var data = entry.Value;
-			data.Patches.Clear();
-			// Hydrate the final patch list.
-			if (data.InheritedPatches is not null)
-				foreach(string patch in data.InheritedPatches) {
-					if (patch.StartsWith('-'))
-						data.Patches.Remove(patch[1..]);
-					else
-						data.Patches.Add(patch);
-				}
-
-			// Load variables from the patches.
-			foreach(string patch in data.Patches) {
-				if (PatchGroups.TryGetValue(patch, out var group)) {
-					if (group.CanUse && group.Variables is not null) {
-						data.InheritedVariables ??= new();
-						foreach (var ve in group.Variables) {
-							// InheritedVariables is different than the others because we need
-							// to optionally strip the "$" from the beginning of the names.
-							data.InheritedVariables.TryAdd(
-								ve.Key.StartsWith('$') ? ve.Key[1..] : ve.Key,
-								ve.Value
-							);
-						}
-					}
-				} else
-					Log($"Unknown patch \"{patch}\" when processing theme {entry.Key}.", LogLevel.Warn);
-			}
-
-			// Finally, resolve every valid color.
-			data.Variables.Clear();
-			data.SpriteTextColors.Clear();
-
-			if (data.InheritedVariables is not null) {
-				foreach(var ent in data.InheritedVariables) {
-					Color? result = RasterizeColor(ent.Value, data.InheritedVariables, data.Variables);
-					if (result.HasValue)
-						data.Variables[ent.Key] = result.Value;
-				}
-			}
-
-			if (data.InheritedSpriteTextColors is not null) {
-				foreach(var ent in data.InheritedSpriteTextColors) {
-					if (ent.Value.StartsWith('$')) {
-						if (data.Variables.TryGetValue(ent.Value[1..], out var result))
-							data.SpriteTextColors[ent.Key] = result;
-					} else if (CommonHelper.TryParseColor(ent.Value, out var result))
-						data.SpriteTextColors[ent.Key] = result.Value;
-				}
-			}
-		}
-	}
 
 	private Color? RasterizeColor(string input, Dictionary<string, string> values, Dictionary<string, Color> parsed) {
 		CaseInsensitiveHashSet visited = new();
@@ -914,52 +1071,62 @@ public class ModEntry : ModSubscriber {
 		return null;
 	}
 
+	private void SelectPatches(BaseTheme? theme) {
+		LoadPatchGroups();
+
+		// Reset our existing patches.
+		foreach (var entry in DynamicPatchers.Values)
+			entry.ClearPatches();
+
+		// Update our patches.
+		if (theme is not null)
+			foreach (string key in theme.Patches) {
+				if (!PatchGroups.TryGetValue(key, out var patch) || !patch.CanUse || patch.Patches is null)
+					continue;
+
+				patch.Methods ??= new();
+
+				foreach (var entry in patch.Patches) {
+					if (!patch.Methods.TryGetValue(entry.Key, out var methods)) {
+						methods = ResolveMethods(entry.Key, null).Select(x => x.Item2).ToArray();
+						patch.Methods[entry.Key] = methods;
+					}
+
+					foreach (var method in methods) {
+						if (!DynamicPatchers.TryGetValue(method, out var patcher)) {
+							patcher = new DynamicPatcher(this, method, entry.Key);
+							DynamicPatchers.Add(method, patcher);
+						}
+
+						patcher.AddPatch(entry.Value);
+					}
+
+					if (methods.Length == 0)
+						Log($"Unable to apply method patch for patch {key}. Cannot find matching method: {entry.Key}", LogLevel.Warn);
+				}
+			}
+
+		// Update all the patches, and remove ones that are no longer active.
+		var patchers = DynamicPatchers.Values.ToArray();
+		foreach (var patcher in patchers) {
+			if (!patcher.Update())
+				DynamicPatchers.Remove(patcher.Method);
+		}
+	}
 
 	private void OnStardewThemeChanged(object? sender, IThemeChangedEvent<BaseTheme> e) {
 		BaseTheme = e.NewData;
+
+		// Access SpriteTextColors to force all the theme's data to build.
+		int _ = BaseTheme.SpriteTextColors.Count;
 
 		// Apply the text color / text shadow color to the fields in Game1.
 		Game1.textColor = BaseTheme.Variables.GetValueOrDefault("Text", BaseThemeManager!.DefaultTheme.Variables["Text"]);
 		Game1.textShadowColor = BaseTheme.Variables.GetValueOrDefault("TextShadow", BaseThemeManager!.DefaultTheme.Variables["TextShadow"]);
 		Game1.unselectedOptionColor = BaseTheme.Variables.GetValueOrDefault("UnselectedOption", BaseThemeManager!.DefaultTheme.Variables["UnselectedOption"]);
 
-		LoadPatchGroups();
-
-		// Reset our existing patchers.
-		foreach (var entry in DynamicPatchers.Values)
-			entry.ClearPatches();
-
-		// Update our patchers.
-		foreach(string key in BaseTheme.Patches) {
-			if (!PatchGroups.TryGetValue(key, out var patch) || ! patch.CanUse || patch.Patches is null)
-				continue;
-
-			foreach(var entry in patch.Patches) {
-				bool matched = false;
-				foreach(var pair in ResolveMethods(entry.Key, null)) {
-					MethodInfo? method = pair.Item2;
-					if (method is not null) {
-						if (! DynamicPatchers.TryGetValue(method, out var patcher)) { 
-							patcher = new DynamicPatcher(this, method, entry.Key);
-							DynamicPatchers.Add(method, patcher);
-						}
-
-						patcher.AddPatch(entry.Value);
-						matched = true;
-					}
-				}
-
-				if (!matched)
-					Log($"Unable to apply method patch for patch {key}. Cannot find matching method: {entry.Key}", LogLevel.Warn);
-			}
-		}
-
-		// Update all the patchers, and remove ones that are no longer active.
-		var patchers = DynamicPatchers.Values.ToArray();
-		foreach(var patcher in patchers) {
-			if (!patcher.Update(BaseTheme.Variables))
-				DynamicPatchers.Remove(patcher.Method);
-		}
+		SelectPatches(BaseTheme);
+		DynamicPatcher.UpdateColors(BaseTheme.Variables);
 	}
 
 	[Subscriber]
@@ -998,6 +1165,14 @@ public class ModEntry : ModSubscriber {
 		if (name is not null && name.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
 			if (ConfigStale)
 				RegisterSettings();
+		}
+	}
+
+	[Subscriber]
+	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
+		foreach(var entry in e.Names) {
+			if (ManagersByThemeAsset.TryGetValue(entry.Name, out var manager) && manager is IThemeSelection tselect)
+				tselect.InvalidateThemeData();
 		}
 	}
 

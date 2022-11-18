@@ -95,7 +95,6 @@ public class FlowBuilder {
 		Func<IFlowNodeSlice, int, int, bool>? onHover = null,
 		Func<IFlowNodeSlice, int, int, bool>? onRightClick = null,
 		bool noComponent = false,
-		int frame = -1,
 		object? extra = null,
 		string? id = null
 	) {

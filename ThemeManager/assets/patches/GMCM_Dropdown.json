@@ -18,11 +18,11 @@
 	"Patches": {
 		"GenericModConfigMenu!SpaceShared.UI.Dropdown:Draw": {
 			"Colors": {
-				"Wheat": "$DropDownHover"
+				"Wheat": { "*": "$DropDownHover" }
 			},
 
 			"Fields": {
-				"textColor": "$DropDownText"
+				"textColor": { "*": "$DropDownText" }
 			}
 		}
 	}

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -10,38 +8,47 @@ using HarmonyLib;
 
 using Leclair.Stardew.ThemeManager.Models;
 using Microsoft.Xna.Framework;
-using System.Runtime.CompilerServices;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Types;
 
 using StardewModdingAPI;
 using StardewValley;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Leclair.Stardew.ThemeManager.Patches;
 
 internal class DynamicPatcher : IDisposable {
 
+	#region Static Fields
+
 	internal static bool DidPatch = false;
 	internal static Dictionary<MethodBase, DynamicPatcher> LivePatchers = new();
-
 	private static Dictionary<string, Color>? Colors;
 
-	private static Color GetColorPacked(string key, uint @default) {
+	#endregion
+
+	#region Color Access
+
+	public static void UpdateColors(Dictionary<string, Color> colors) {
+		Colors = colors;
+	}
+
+	internal static Color GetColorPacked(string key, uint @default) {
 		return Colors != null && Colors.TryGetValue(key, out Color val) ? val: new Color(@default);
 	}
 
-	private static Color GetColor(string key, Color @default) {
+	internal static Color GetColor(string key, Color @default) {
 		return Colors != null && Colors.TryGetValue(key, out Color val) ? val : @default;
 	}
 
-	private static Color GetLerpColorPacked(float power, uint left, uint middle, uint right) {
+	internal static Color GetLerpColorPacked(float power, uint left, uint middle, uint right) {
 		if (power <= 0.5f)
 			return Color.Lerp(new Color(left), new Color(middle), power * 2f);
 		else
 			return Color.Lerp(new Color(middle), new Color(right), (power - 0.5f) * 2f);
 	}
 
-	private static Color GetLerpColor(float power, string keyLeft, string keyMiddle, string keyRight) {
+	internal static Color GetLerpColor(float power, string keyLeft, string keyMiddle, string keyRight) {
 		if (Colors == null)
 			return Utility.getRedToGreenLerpColor(power);
 
@@ -94,6 +101,10 @@ internal class DynamicPatcher : IDisposable {
 		return dict;
 	});
 
+	#endregion
+
+	#region Fields
+
 	private readonly ModEntry Mod;
 
 	public readonly MethodInfo Method;
@@ -102,14 +113,18 @@ internal class DynamicPatcher : IDisposable {
 	private readonly MethodInfo HMethod;
 
 	private PatchData? AppliedChanges;
-	private CaseInsensitiveHashSet? UsedColors;
 
 	private readonly List<PatchData> Patches = new();
-	//private Dictionary<string, Color>? Colors;
+	private readonly List<PatchData> AddedPatches = new();
+	private readonly List<PatchData> RemovedPatches = new();
 
 	private bool IsDisposed;
 	private bool IsPatched;
 	private bool IsDirty;
+
+	#endregion
+
+	#region Lifecycle
 
 	public DynamicPatcher(ModEntry mod, MethodInfo method, string key) {
 		Mod = mod;
@@ -119,53 +134,147 @@ internal class DynamicPatcher : IDisposable {
 		HMethod = AccessTools.Method(typeof(DynamicPatcher), nameof(Transpiler));
 	}
 
+	protected virtual void Dispose(bool disposing) {
+		if (!IsDisposed) {
+			if (disposing) {
+				Unpatch();
+
+				AppliedChanges = null;
+				Colors = null;
+				AddedPatches.Clear();
+				RemovedPatches.Clear();
+				Patches.Clear();
+			}
+
+			IsDisposed = true;
+		}
+	}
+
+	public void Dispose() {
+		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
+
+	#endregion
+
+	#region Updating
+
+	/// <summary>
+	/// Remove every current <see cref="PatchData"/> from this patcher. This
+	/// will not update the target method until <see cref="Update"/>
+	/// is called.
+	/// </summary>
 	public void ClearPatches() {
-		Patches.Clear();
-		IsDirty = true;
+		RemovedPatches.Clear();
+		RemovedPatches.AddRange(Patches);
 	}
 
+	/// <summary>
+	/// Add a new <see cref="PatchData"/> instance to this patcher. This will
+	/// not update the target method until <see cref="Update()"/>
+	/// is called.
+	/// </summary>
+	/// <param name="data">The <see cref="PatchData"/> to add.</param>
 	public void AddPatch(PatchData data) {
-		Patches.Add(data);
-		IsDirty = true;
+		AddedPatches.Add(data);
+		RemovedPatches.Remove(data);
 	}
 
+	/// <summary>
+	/// Remove an old <see cref="PatchData"/> instance from this patcher. This will
+	/// not update the target method until <see cref="Update()"/>
+	/// is called.
+	/// </summary>
+	/// <param name="data">The <see cref="PatchData"/> to remove.</param>
 	public void RemovePatch(PatchData data) {
-		Patches.Remove(data);
-		IsDirty = true;
+		RemovedPatches.Add(data);
+		AddedPatches.Remove(data);
 	}
 
-	public bool Update(Dictionary<string, Color> colors) {
-		// Do we need to change our patches?
+	/// <summary>
+	/// Update this patcher by processing the changes made using <see cref="AddPatch(PatchData)"/>
+	/// and <see cref="RemovePatch(PatchData)"/>, and if necessary cause
+	/// Harmony to reapply patches to the target method.
+	///
+	/// If the patch is not currently applied, this will not re-patch.
+	/// </summary>
+	/// <param name="colors"></param>
+	/// <returns></returns>
+	public bool Update() {
+		// Update our patches lists as necessary.
+		foreach(var entry in AddedPatches) {
+			if (!Patches.Contains(entry)) {
+				Patches.Add(entry);
+				IsDirty = true;
+			}
+		}
+
+		foreach(var entry in RemovedPatches) {
+			if (Patches.Remove(entry))
+				IsDirty = true;
+		}
+
+		AddedPatches.Clear();
+		RemovedPatches.Clear();
+
+		// If the patches list changed, we probably need to reapply our
+		// transpiler but just to be safe, first we need to aggregate our
+		// patches into a single PatchData.
 		if (IsDirty) {
 			// Build a new aggregate patch data.
 			var applied = new PatchData() {
 				Colors = new(),
 				RawColors = new(),
-				Fields = new()
+				Fields = new(),
+				RedToGreenLerp = new()
 			};
 
 			foreach (var patch in Patches) {
 				if (patch.Colors is not null) {
-					foreach (var entry in patch.Colors)
-						applied.Colors[entry.Key] = entry.Value;
+					foreach (var entry in patch.Colors) {
+						if (!applied.Colors.TryGetValue(entry.Key, out var existing)) {
+							existing = new();
+							applied.Colors[entry.Key] = existing;
+						}
+
+						foreach (var ent in entry.Value)
+							existing[ent.Key] = ent.Value;
+					}
 				}
 
 				if (patch.RawColors is not null) {
-					foreach (var entry in patch.RawColors)
-						applied.RawColors[entry.Key] = entry.Value;
+					foreach (var entry in patch.RawColors) {
+						if (!applied.RawColors.TryGetValue(entry.Key, out var existing)) {
+							existing = new();
+							applied.RawColors[entry.Key] = existing;
+						}
+
+						foreach (var ent in entry.Value)
+							existing[ent.Key] = ent.Value;
+					}
 				}
 
 				if (patch.Fields is not null) {
-					foreach (var entry in patch.Fields)
-						applied.Fields[entry.Key] = entry.Value;
+					foreach (var entry in patch.Fields) {
+						if (!applied.Fields.TryGetValue(entry.Key, out var existing)) {
+							existing = new();
+							applied.Fields[entry.Key] = entry.Value;
+						}
+
+						foreach (var ent in entry.Value)
+							existing[ent.Key] = ent.Value;
+					}
 				}
 
-				if (patch.RedToGreenLerp is not null)
-					applied.RedToGreenLerp = patch.RedToGreenLerp;
+				if (patch.RedToGreenLerp is not null) {
+					foreach (var entry in patch.RedToGreenLerp)
+						applied.RedToGreenLerp[entry.Key] = entry.Value;
+				}
 			}
 
 			// Now, compare it to our existing applied changes.
-			if (applied.Colors.Count == 0 && applied.RawColors.Count == 0 && applied.Fields.Count == 0 && applied.RedToGreenLerp == null)
+			if (applied.Colors.Count == 0 && applied.RawColors.Count == 0 && applied.Fields.Count == 0 && applied.RedToGreenLerp.Count == 0)
 				applied = null;
 
 			if (applied is null) {
@@ -174,71 +283,67 @@ internal class DynamicPatcher : IDisposable {
 				IsDirty = false;
 				if (!applied.Colors!.ShallowEquals(AppliedChanges.Colors!))
 					IsDirty = true;
-				if (!applied.RawColors!.ShallowEquals(AppliedChanges.RawColors!))
-					IsDirty = true;
-				if (!applied.Fields!.ShallowEquals(AppliedChanges.Fields!))
-					IsDirty = true;
-				if (!applied.RedToGreenLerp.ShallowEquals(AppliedChanges.RedToGreenLerp))
-					IsDirty = true;
-			}
-
-			// If there are changed, recalculate the applied colors and
-			// save these new objects.
-			if (IsDirty) {
-				CaseInsensitiveHashSet used = new();
-				if (applied is not null) {
-					foreach (string value in applied.Colors!.Values)
-						if (value.StartsWith('$'))
-							used.Add(value[1..]);
-
-					foreach (string value in applied.RawColors!.Values)
-						if (value.StartsWith('$'))
-							used.Add(value[1..]);
-
-					foreach (string value in applied.Fields!.Values)
-						if (value.StartsWith('$'))
-							used.Add(value[1..]);
-
-					if (applied.RedToGreenLerp != null)
-						foreach (string value in applied.RedToGreenLerp)
-							if (value.StartsWith('$'))
-								used.Add(value[1..]);
-				}
-
-				AppliedChanges = applied;
-				UsedColors = used;
-			}
-		}
-
-		// If we aren't considered dirty, check the incoming colors and see
-		// if any colors we're using have changed.
-		/*if (!IsDirty && UsedColors is not null) {
-			if (Colors is null)
-				IsDirty = true;
-			else
-				foreach (string color in UsedColors) {
-					Colors.TryGetValue(color, out var existing);
-					colors.TryGetValue(color, out var incoming);
-					if (existing != incoming) {
-						IsDirty = true;
-						break;
+				else if (!IsDirty) {
+					foreach(var entry in applied.Colors!) {
+						if (AppliedChanges.Colors!.TryGetValue(entry.Key, out var existing))
+							IsDirty |= entry.Value.ShallowEquals(existing);
+						else
+							IsDirty = true;
 					}
 				}
-		}*/
+				if (! IsDirty && !applied.RawColors!.ShallowEquals(AppliedChanges.RawColors!))
+					IsDirty = true;
+				else if (!IsDirty) {
+					foreach(var entry in applied.RawColors!) {
+						if (AppliedChanges.RawColors!.TryGetValue(entry.Key, out var existing))
+							IsDirty |= entry.Value.ShallowEquals(existing);
+						else
+							IsDirty = true;
+					}
+				}
+				if (!IsDirty && !applied.Fields!.ShallowEquals(AppliedChanges.Fields!))
+					IsDirty = true;
+				else if (!IsDirty) {
+					foreach(var entry in applied.Fields!) {
+						if (AppliedChanges.Fields!.TryGetValue(entry.Key, out var existing))
+							IsDirty |= entry.Value.ShallowEquals(existing);
+						else
+							IsDirty = true;
+					}
+				}
+				if (!IsDirty && !applied.RedToGreenLerp!.ShallowEquals(AppliedChanges.RedToGreenLerp!))
+					IsDirty = true;
+				else if (!IsDirty) {
+					foreach(var entry in applied.RedToGreenLerp!) {
+						if (AppliedChanges.RedToGreenLerp!.TryGetValue(entry.Key, out string[]? existing))
+							IsDirty |= entry.Value.ShallowEquals(existing);
+						else
+							IsDirty = true;
+					}
+				}
+			}
 
-		// Always update Colors just to avoid having stuff stick in memory.
-		Colors = colors;
+			if (IsDirty)
+				AppliedChanges = applied;
+		}
 
 		// Re-patch if we're dirty.
 		if (IsDirty) {
-			Repatch();
-			/*if (IsPatched)
+			if (AppliedChanges is null)
 				Unpatch();
-			Patch();*/
-		}
+			else
+				Repatch();
+		} else
+			IsDirty = false;
 
+		// If we don't have any applied changes, this patcher can be
+		// garbage collected.
 		return AppliedChanges != null;
 	}
+
+	#endregion
+
+	#region Patching
 
 	public void Repatch() {
 		if (IsDisposed || Mod.Harmony is null)
@@ -249,8 +354,18 @@ internal class DynamicPatcher : IDisposable {
 			return;
 		}
 
+		// We're relying on an implementation detail that will cause harmony to
+		// update patches on a method when we call Patch, even if we don't supply
+		// a new patch to be applied to the method. In case this ever changes,
+		// use a static boolean to make sure our transpiler runs and, if it doesn't
+		// then unpatch and repatch entirely to make sure the method gets updated.
 		DidPatch = false;
-		Mod.Harmony.Patch(Method);
+
+		try {
+			Mod.Harmony.Patch(Method);
+		} catch(Exception ex) {
+			Mod.Log($"There was an error applying harmony patches to {Key}: {ex}", LogLevel.Error);
+		}
 
 		if (!DidPatch) {
 			Unpatch();
@@ -273,7 +388,12 @@ internal class DynamicPatcher : IDisposable {
 
 		LivePatchers.Add(Method, this);
 
-		Mod.Harmony.Patch(Method, transpiler: new HarmonyMethod(HMethod, priority: Priority.Last));
+		try {
+			Mod.Harmony.Patch(Method, transpiler: new HarmonyMethod(HMethod, priority: Priority.Last));
+		} catch(Exception ex) {
+			Mod.Log($"There was an error applying harmony patches to {Key}: {ex}", LogLevel.Error);
+		}
+
 		IsPatched = true;
 		IsDirty = false;
 	}
@@ -291,28 +411,20 @@ internal class DynamicPatcher : IDisposable {
 		IsPatched = false;
 	}
 
-	protected virtual void Dispose(bool disposing) {
-		if (!IsDisposed) {
-			if (disposing) {
-				Unpatch();
-
-				AppliedChanges = null;
-				UsedColors = null;
-				Colors = null;
-				Patches.Clear();
-			}
-
-			IsDisposed = true;
-		}
-	}
-
-	public void Dispose() {
-		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-		Dispose(disposing: true);
-		GC.SuppressFinalize(this);
-	}
+	#endregion
 
 	#region The Actual Patch
+
+	internal static bool TryGetMatch<T>(Dictionary<RuleRange, T> rules, int offset, int hit, [NotNullWhen(true)] out T match) {
+		foreach(var entry in rules)
+			if (entry.Key.Test(offset, hit)) {
+				match = entry.Value;
+				return match is not null;
+			}
+
+		match = default!;
+		return false;
+	}
 
 	internal static IEnumerable<CodeInstruction> Transpiler(MethodBase method, IEnumerable<CodeInstruction> instructions) {
 		DidPatch = true;
@@ -325,16 +437,25 @@ internal class DynamicPatcher : IDisposable {
 
 		int count = 0;
 
-		Dictionary<MethodInfo, (string, Color)> Colors = new();
-		Dictionary<Color, string> RawColors = new();
-		Dictionary<FieldInfo, string> Fields = new();
+		// We need to keep track of how many times we've encountered any
+		// given color, raw color, field, or lerp call.
+		Dictionary<MethodInfo, int> HitColors = new();
+		Dictionary<Color, int> HitRawColors = new();
+		Dictionary<FieldInfo, int> HitFields = new();
+		int HitLerps = 0;
 
-		Dictionary<MethodInfo, Color> DirectColors = new();
-		Dictionary<Color, Color> DirectRawColors = new();
-		Dictionary<FieldInfo, Color> DirectFields = new();
+		// Now, data structures for 
 
-		(string, string, string)? Lerp = null;
-		(Color, Color, Color)? DirectLerp = null;
+		Dictionary<MethodInfo, (Dictionary<RuleRange, string>, Color)> Colors = new();
+		Dictionary<Color, Dictionary<RuleRange, string>> RawColors = new();
+		Dictionary<FieldInfo, Dictionary<RuleRange, string>> Fields = new();
+
+		Dictionary<MethodInfo, Dictionary<RuleRange, Color>> DirectColors = new();
+		Dictionary<Color, Dictionary<RuleRange, Color>> DirectRawColors = new();
+		Dictionary<FieldInfo, Dictionary<RuleRange, Color>> DirectFields = new();
+
+		Dictionary<RuleRange, (string, string, string)>? Lerp = null;
+		Dictionary<RuleRange, (Color, Color, Color)>? DirectLerp = null;
 
 		if (patcher.AppliedChanges.Colors is not null)
 			foreach(var entry in patcher.AppliedChanges.Colors) {
@@ -343,16 +464,40 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (entry.Value.StartsWith('$')) {
-					Colors[getter.Item1] = (entry.Value[1..], getter.Item2);
-				} else if (CommonHelper.TryParseColor(entry.Value, out var c))
-					DirectColors[getter.Item1] = c.Value;
-				else {
-					patcher.Mod.Log($"Unable to parse color \"{entry.Value}\" processing {patcher.Key}", LogLevel.Warn);
-					continue;
+				Dictionary<RuleRange, string> entries;
+				if (Colors.TryGetValue(getter.Item1, out var ents))
+					entries = ents.Item1;
+				else
+					entries = new();
+
+				if (!DirectColors.TryGetValue(getter.Item1, out var directs))
+					directs = new();
+
+				foreach (var ent in entry.Value) {
+					if (!RuleRange.TryParse(ent.Key, out var range)) {
+						patcher.Mod.Log($"Unable to parse rule \"{ent.Key}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					if (ent.Value.StartsWith('$'))
+						entries[range] = ent.Value[1..];
+					else if (CommonHelper.TryParseColor(ent.Value, out var c))
+						directs[range] = c.Value;
+					else {
+						patcher.Mod.Log($"Unable to parse color \"{ent.Value}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
 				}
 
-				count++;
+				if (entries.Count > 0) {
+					Colors[getter.Item1] = (entries, getter.Item2);
+					count++;
+				}
+
+				if (directs.Count > 0) {
+					DirectColors[getter.Item1] = directs;
+					count++;
+				}
 			}
 
 		if (patcher.AppliedChanges.RawColors is not null)
@@ -362,16 +507,37 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (entry.Value.StartsWith('$')) {
-					RawColors[keycolor.Value] = entry.Value[1..];
-				} else if (CommonHelper.TryParseColor(entry.Value, out var c))
-					DirectRawColors[keycolor.Value] = c.Value;
-				else {
-					patcher.Mod.Log($"Unable to parse color \"{entry.Value}\" processing {patcher.Key}", LogLevel.Warn);
-					continue;
+				if (!RawColors.TryGetValue(keycolor.Value, out var entries))
+					entries = new();
+
+				if (!DirectRawColors.TryGetValue(keycolor.Value, out var directs))
+					directs = new();
+
+				foreach (var ent in entry.Value) {
+					if (!RuleRange.TryParse(ent.Key, out var range)) {
+						patcher.Mod.Log($"Unable to parse rule \"{ent.Key}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					if (ent.Value.StartsWith('$'))
+						entries[range] = ent.Value[1..];
+					else if (CommonHelper.TryParseColor(ent.Value, out var c))
+						directs[range] = c.Value;
+					else {
+						patcher.Mod.Log($"Unable to parse color \"{ent.Value}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
 				}
 
-				count++;
+				if (entries.Count > 0) {
+					RawColors[keycolor.Value] = entries;
+					count++;
+				}
+
+				if (directs.Count > 0) {
+					DirectRawColors[keycolor.Value] = directs;
+					count++;
+				}
 			}
 
 		if (patcher.AppliedChanges.Fields is not null)
@@ -384,34 +550,71 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (entry.Value.StartsWith('$')) {
-					Fields[field] = entry.Value[1..];
-				} else if (CommonHelper.TryParseColor(entry.Value, out var c))
-					DirectFields[field] = c.Value;
-				else {
-					patcher.Mod.Log($"Unable to parse color \"{entry.Value}\" processing {patcher.Key}", LogLevel.Warn);
+				if (!Fields.TryGetValue(field, out var entries))
+					entries = new();
+
+				if (!DirectFields.TryGetValue(field, out var directs))
+					directs = new();
+
+				foreach (var ent in entry.Value) {
+					if (!RuleRange.TryParse(ent.Key, out var range)) {
+						patcher.Mod.Log($"Unable to parse rule \"{ent.Key}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					if (ent.Value.StartsWith('$'))
+						entries[range] = ent.Value[1..];
+					else if (CommonHelper.TryParseColor(ent.Value, out var c))
+						directs[range] = c.Value;
+					else {
+						patcher.Mod.Log($"Unable to parse color \"{ent.Value}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
 				}
 
-				count++;
+				if (entries.Count > 0) {
+					Fields[field] = entries;
+					count++;
+				}
+
+				if (directs.Count > 0) {
+					DirectFields[field] = directs;
+					count++;
+				}
 			}
 
 		if (patcher.AppliedChanges.RedToGreenLerp is not null) {
-			string[] pair = patcher.AppliedChanges.RedToGreenLerp;
-			if (pair.Length == 3 && !string.IsNullOrEmpty(pair[0]) && !string.IsNullOrEmpty(pair[1]) && !string.IsNullOrEmpty(pair[2])) {
-				bool is_variable = pair[0].StartsWith('$');
-				if (is_variable != pair[1].StartsWith('$') || is_variable != pair[2].StartsWith('$'))
-					patcher.Mod.Log($"Unable to combine variable and non-variable colors for lerp processing {patcher.Key}", LogLevel.Warn);
-				else if (is_variable) {
-					Lerp = (pair[0][1..], pair[1][1..], pair[2][1..]);
-					count++;
+			foreach (var entry in patcher.AppliedChanges.RedToGreenLerp) {
+				if (!RuleRange.TryParse(entry.Key, out var range)) {
+					patcher.Mod.Log($"Unable to parse rule \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
+					continue;
+				}
 
-				} else if (CommonHelper.TryParseColor(pair[0], out var left) && CommonHelper.TryParseColor(pair[1], out var middle) && CommonHelper.TryParseColor(pair[2], out var right)) {
-					DirectLerp = (left.Value, middle.Value, right.Value);
-					count++;
+				if (entry.Value.Length != 3 || string.IsNullOrWhiteSpace(entry.Value[0]) || string.IsNullOrWhiteSpace(entry.Value[1]) || string.IsNullOrWhiteSpace(entry.Value[2])) {
+					patcher.Mod.Log($"Invalid RedToGreenLerp value processing {patcher.Key}. Entries must have three entries and cannot have empty strings.", LogLevel.Warn);
+					continue;
+				}
 
+				bool is_variable = entry.Value[0].StartsWith('$');
+				if (is_variable != entry.Value[1].StartsWith('$') || is_variable != entry.Value[2].StartsWith('$')) {
+					patcher.Mod.Log($"Unable to combine variable and non-variable colors for RedToGreenLerp.", LogLevel.Warn);
+					continue;
+				}
+
+				if (is_variable) {
+					Lerp ??= new();
+					Lerp[range] = (entry.Value[0][1..], entry.Value[1][1..], entry.Value[2][1..]);
+				} else if (CommonHelper.TryParseColor(entry.Value[0], out var left) && CommonHelper.TryParseColor(entry.Value[1], out var middle) && CommonHelper.TryParseColor(entry.Value[2], out var right)) {
+					DirectLerp ??= new();
+					DirectLerp[range] = (left.Value, middle.Value, right.Value);
 				} else
-					patcher.Mod.Log($"Unable to parse color \"{pair}\" processing {patcher.Key}", LogLevel.Warn);
+					patcher.Mod.Log($"Unable to parse color \"{entry.Value}\" processing {patcher.Key}", LogLevel.Warn);
 			}
+
+			if (Lerp != null)
+				count++;
+			if (DirectLerp != null)
+				count++;
 		}
 
 		if (count == 0)
@@ -468,7 +671,13 @@ internal class DynamicPatcher : IDisposable {
 
 					if (val0.HasValue && val1.HasValue && val2.HasValue) {
 						Color c = new(val0.Value, val1.Value, val2.Value);
-						if (RawColors.TryGetValue(c, out string? key)) {
+
+						// Increment hits
+						HitRawColors.TryGetValue(c, out int hits);
+						hits++;
+						HitRawColors[c] = hits;
+
+						if (RawColors.TryGetValue(c, out var entries) && TryGetMatch(entries, i, hits, out string? key)) {
 							AddAndLog(
 								$"Replacing raw color {c} with: {key}",
 								new CodeInstruction[] {
@@ -494,13 +703,13 @@ internal class DynamicPatcher : IDisposable {
 							i += 3;
 							continue;
 
-						} else if (DirectRawColors.TryGetValue(c, out color)) {
+						} else if (DirectRawColors.TryGetValue(c, out var cent) && TryGetMatch(cent, i, hits, out Color clr)) {
 							AddAndLog(
-								$"Replacing raw color {c} with static: {color}",
+								$"Replacing raw color {c} with static: {clr}",
 								new CodeInstruction[] {
 									new CodeInstruction(in0) {
 										opcode = OpCodes.Ldc_I4,
-										operand = unchecked((int) color.PackedValue)
+										operand = unchecked((int) clr.PackedValue)
 									},
 									new CodeInstruction(
 										opcode: OpCodes.Newobj,
@@ -522,17 +731,22 @@ internal class DynamicPatcher : IDisposable {
 
 			// Color Properties (Color.Red)
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo meth) {
-				if (Colors.TryGetValue(meth, out (string, Color) key)) {
+				// Increment Hits
+				HitColors.TryGetValue(meth, out int hits);
+				hits++;
+				HitColors[meth] = hits;
+
+				if (Colors.TryGetValue(meth, out var entries) && TryGetMatch(entries.Item1, i, hits, out string? key)) {
 					AddAndLog(
-						$"Replacing color property {meth.Name} with: {key.Item1}",
+						$"Replacing color property {meth.Name} with: {key}",
 						new CodeInstruction[] {
 							new CodeInstruction(in0) {
 								opcode = OpCodes.Ldstr,
-								operand = key.Item1
+								operand = key
 							},
 							new CodeInstruction(
 								opcode: OpCodes.Ldc_I4,
-								operand: unchecked((int) key.Item2.PackedValue)
+								operand: unchecked((int) entries.Item2.PackedValue)
 							),
 							new CodeInstruction(
 								opcode: OpCodes.Call,
@@ -548,7 +762,7 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (DirectColors.TryGetValue(meth, out color)) {
+				if (DirectColors.TryGetValue(meth, out var cent) && TryGetMatch(cent, i, hits, out color)) {
 					AddAndLog(
 						$"Replacing color property {meth.Name} with static: {color}",
 						new CodeInstruction[] {
@@ -573,7 +787,11 @@ internal class DynamicPatcher : IDisposable {
 
 			// Static Field Access (Game1.textColor)
 			if (in0.opcode == OpCodes.Ldsfld && in0.operand is FieldInfo field) {
-				if (Fields.TryGetValue(field, out string? key)) {
+				HitFields.TryGetValue(field, out int hits);
+				hits++;
+				HitFields[field] = hits;
+
+				if (Fields.TryGetValue(field, out var entries) && TryGetMatch(entries, i, hits, out string? key)) {
 					AddAndLog(
 						$"Replacing static field {field.Name} with: {key}",
 						new CodeInstruction[] {
@@ -602,7 +820,7 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (DirectFields.TryGetValue(field, out color)) {
+				if (DirectFields.TryGetValue(field, out var cent) && TryGetMatch(cent, i, hits, out color)) {
 					AddAndLog(
 						$"Replacing static field {field.Name} with static: {color}",
 						new CodeInstruction[] {
@@ -627,21 +845,23 @@ internal class DynamicPatcher : IDisposable {
 
 			// Red To Green Lerp
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo minfo && minfo == RedGreenLerpInfo) {
-				if (Lerp is not null) {
+				HitLerps++;
+
+				if (Lerp is not null && TryGetMatch(Lerp, i, HitLerps, out var values)) {
 					AddAndLog(
-						$"Replacing {minfo.Name} call with: {Lerp.Value}",
+						$"Replacing {minfo.Name} call with: {values}",
 						new CodeInstruction[] {
 							new CodeInstruction(in0) {
 								opcode = OpCodes.Ldstr,
-								operand = Lerp.Value.Item1
+								operand = values.Item1
 							},
 							new CodeInstruction(
 								opcode: OpCodes.Ldstr,
-								operand: Lerp.Value.Item2
+								operand: values.Item2
 							),
 							new CodeInstruction(
 								opcode: OpCodes.Ldstr,
-								operand: Lerp.Value.Item3
+								operand: values.Item3
 							),
 							new CodeInstruction(
 								opcode: OpCodes.Call,
@@ -657,21 +877,21 @@ internal class DynamicPatcher : IDisposable {
 					continue;
 				}
 
-				if (DirectLerp is not null) {
+				if (DirectLerp is not null && TryGetMatch(DirectLerp, i, HitLerps, out var cvalues)) {
 					AddAndLog(
-						$"Replacing {minfo.Name} call with static: {DirectLerp.Value}",
+						$"Replacing {minfo.Name} call with static: {cvalues}",
 						new CodeInstruction[] {
 							new CodeInstruction(in0) {
 								opcode = OpCodes.Ldc_I4,
-								operand = unchecked((int) DirectLerp.Value.Item1.PackedValue)
+								operand = unchecked((int) cvalues.Item1.PackedValue)
 							},
 							new CodeInstruction(
 								opcode: OpCodes.Ldc_I4,
-								operand: unchecked((int) DirectLerp.Value.Item2.PackedValue)
+								operand: unchecked((int) cvalues.Item2.PackedValue)
 							),
 							new CodeInstruction(
 								opcode: OpCodes.Ldc_I4,
-								operand: unchecked((int) DirectLerp.Value.Item3.PackedValue)
+								operand: unchecked((int) cvalues.Item3.PackedValue)
 							),
 							new CodeInstruction(
 								opcode: OpCodes.Call,

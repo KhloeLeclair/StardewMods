@@ -4,7 +4,7 @@
 	"Patches": {
 		"#TutorialMenu:draw(SpriteBatch)": {
 			"Colors": {
-				"Blue": "$TutorialHover"
+				"Blue": { "*": "$TutorialHover" }
 			}
 		}
 	}

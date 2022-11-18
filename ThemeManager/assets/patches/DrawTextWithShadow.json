@@ -4,7 +4,7 @@
 	"Patches": {
 		"StardewValley.Utility:drawTextWithShadow": {
 			"RawColors": {
-				"221, 148, 84": "$TextShadowAlt"
+				"221, 148, 84": { "*": "$TextShadowAlt" }
 			}
 		}
 	}

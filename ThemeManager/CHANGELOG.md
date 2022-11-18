@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1
-Released on ???.
+## 0.5.0
+Released on November 18th, 2022.
 
-* Initial release.
+* This is the initial public release.

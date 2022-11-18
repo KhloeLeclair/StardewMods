@@ -4,8 +4,8 @@
 	"Patches": {
 		"#MineElevatorMenu:draw(SpriteBatch)": {
 			"Colors": {
-				"Gray": "$ElevatorCurrentFloorText",
-				"Gold": "$ElevatorFloorText"
+				"Gray": { "*": "$ElevatorCurrentFloorText" },
+				"Gold": { "*": "$ElevatorFloorText" }
 			}
 		}
 	}

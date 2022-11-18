@@ -8,11 +8,11 @@
 	"Patches": {
 		"#DayTimeMoneyBox:draw(SpriteBatch)": {
 			"Colors": {
-				"Red": "$DayTimeAfterMidnight"
+				"Red": { "*": "$DayTimeAfterMidnight" }
 			},
 
 			"Fields": {
-				"textColor": "$DayTimeText"
+				"textColor": { "*": "$DayTimeText" }
 			}
 		}
 	}

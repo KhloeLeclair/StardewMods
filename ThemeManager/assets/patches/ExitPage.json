@@ -8,7 +8,7 @@
 	"Patches": {
 		"#ExitPage:draw(SpriteBatch)": {
 			"Colors": {
-				"Wheat": "$ExitPageHover"
+				"Wheat": { "*": "$ExitPageHover" }
 			}
 		}
 	}

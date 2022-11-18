@@ -8,7 +8,7 @@
 	"Patches": {
 		"#LetterViewerMenu:draw(SpriteBatch)": {
 			"Colors": {
-				"LightPink": "$LetterViewerHover"
+				"LightPink": { "*": "$LetterViewerHover" }
 			}
 		}
 	}

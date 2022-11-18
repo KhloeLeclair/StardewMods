@@ -9,6 +9,7 @@ using StardewValley.BellsAndWhistles;
 using StardewModdingAPI;
 
 using Leclair.Stardew.Common;
+using Leclair.Stardew.ThemeManager.Models;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -24,9 +25,11 @@ public class ModAPI : IThemeManagerApi {
 		Mod.BaseThemeManager!.ThemeChanged += BaseThemeManager_ThemeChanged;
 	}
 
-	private void BaseThemeManager_ThemeChanged(object? sender, IThemeChangedEvent<Models.BaseTheme> e) {
-		if (e is IThemeChangedEvent<IBaseTheme> bt)
-			BaseThemeChanged?.Invoke(sender, bt);
+	private void BaseThemeManager_ThemeChanged(object? sender, IThemeChangedEvent<BaseTheme> e) {
+		BaseThemeChanged?.Invoke(sender, new ThemeChangedEventArgs<IBaseTheme>(
+			e.OldId, e.OldManifest, e.OldData,
+			e.NewId, e.NewManifest, e.NewData
+		));
 	}
 
 	#region Base Theme
@@ -39,7 +42,7 @@ public class ModAPI : IThemeManagerApi {
 
 	#region Custom Themes
 
-	public ITypedThemeManager<DataT> GetOrCreateManager<DataT>(DataT? defaultTheme = null, string? embeddedThemesPath = "assets/themes", string? assetPrefix = "assets", string? assetLoaderPrefix = null, bool? forceAssetRedirection = null) where DataT : class, new() {
+	public ITypedThemeManager<DataT> GetOrCreateManager<DataT>(DataT? defaultTheme = null, string? embeddedThemesPath = "assets/themes", string? assetPrefix = "assets", string? assetLoaderPrefix = null, string? themeLoaderPath = null, bool? forceAssetRedirection = null, bool? forceThemeRedirection = null) where DataT : class, new() {
 		ITypedThemeManager<DataT>? manager;
 		lock ((Mod.Managers as ICollection).SyncRoot) {
 			if (Mod.Managers.TryGetValue(Other, out var mdata)) {
@@ -62,12 +65,19 @@ public class ModAPI : IThemeManagerApi {
 			embeddedThemesPath: embeddedThemesPath,
 			assetPrefix: assetPrefix,
 			assetLoaderPrefix: assetLoaderPrefix,
-			forceAssetRedirection: forceAssetRedirection
+			themeLoaderPath: themeLoaderPath,
+			forceAssetRedirection: forceAssetRedirection,
+			forceThemeRedirection: forceThemeRedirection
 		);
 
 		lock ((Mod.Managers as ICollection).SyncRoot) {
 			Mod.Managers[Other] = (typeof(DataT), manager);
 		}
+
+		if (manager.UsingThemeRedirection)
+			lock ((Mod.ManagersByThemeAsset as ICollection).SyncRoot) {
+				Mod.ManagersByThemeAsset[manager.ThemeLoaderPath] = manager;
+			}
 
 		manager.Discover();
 		return manager;
@@ -102,8 +112,22 @@ public class ModAPI : IThemeManagerApi {
 	#region Color Parsing
 
 	public bool TryParseColor(string value, [NotNullWhen(true)] out Color? color) {
-		color = CommonHelper.ParseColor(value);
-		return color.HasValue;
+		if (string.IsNullOrWhiteSpace(value)) {
+			color = default;
+			return false;
+		}
+
+		if (value.StartsWith('$')) {
+			if (BaseTheme is not null && BaseTheme.Variables.TryGetValue(value[1..], out var c)) {
+				color = c;
+				return true;
+			}
+
+			color = default;
+			return false;
+		}
+
+		return CommonHelper.TryParseColor(value, out color);
 	}
 
 	#endregion

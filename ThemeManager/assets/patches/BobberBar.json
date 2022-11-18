@@ -3,29 +3,33 @@
 
 	"Patches": {
 		"StardewValley.Tools.FishingRod:draw(SpriteBatch)": {
-			"RedToGreenLerp": [
-				"$FishingCastPowerRed",
-				"$FishingCastPowerYellow",
-				"$FishingCastPowerGreen"
-			]
+			"RedToGreenLerp": {
+				"*": [
+					"$FishingCastPowerRed",
+					"$FishingCastPowerYellow",
+					"$FishingCastPowerGreen"
+				]
+			}
 		},
 
 		"#BobberBar:draw(SpriteBatch)": {
 			"Colors": {
-				"Orange": "$FishingTreasureBar"
+				"Orange": { "*": "$FishingTreasureBar" }
 			},
 
-			"RedToGreenLerp": [
-				"$FishingProgressRed",
-				"$FishingProgressYellow",
-				"$FishingProgressGreen"
-			]
+			"RedToGreenLerp": {
+				"*": [
+					"$FishingProgressRed",
+					"$FishingProgressYellow",
+					"$FishingProgressGreen"
+				]
+			}
 		},
 
 		"#BobberBar:update(GameTime)": {
 			"Colors": {
-				"Yellow": "$FishingPerfectText",
-				"White": "$FishingPerfectSparkle"
+				"Yellow": { "*": "$FishingPerfectText" },
+				"White": { "*": "$FishingPerfectSparkle" }
 			}
 		}
 	}

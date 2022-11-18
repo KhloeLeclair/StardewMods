@@ -4,8 +4,8 @@
 	"Patches": {
 		"#ShopMenu:draw(SpriteBatch)": {
 			"Colors": {
-				"Wheat": "$ShopSelected",
-				"Blue": "$ShopQiSelected"
+				"Wheat": { "*": "$ShopSelected" },
+				"Blue": { "*": "$ShopQiSelected" }
 			}
 		}
 	}

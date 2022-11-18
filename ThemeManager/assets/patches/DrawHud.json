@@ -3,11 +3,24 @@
 
 	"Patches": {
 		"StardewValley.Game1:drawHUD": {
-			"RedToGreenLerp": [
-				"$HUDHealthRed",
-				"$HUDHealthYellow",
-				"$HUDHealthGreen"
-			]
+			"Colors": {
+				"Pink": { "*": "$HUDHealthLow" },
+				"Red": { "*": "$HUDHealthText" }
+			},
+
+			"RedToGreenLerp": {
+				"1": [
+					"$HUDStaminaRed",
+					"$HUDStaminaYellow",
+					"$HUDStaminaGreen"
+				],
+
+				"2": [
+					"$HUDHealthRed",
+					"$HUDHealthYellow",
+					"$HUDHealthGreen"
+				]
+			}
 		}
 	}
 }

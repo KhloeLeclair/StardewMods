@@ -9,11 +9,16 @@ using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
 using Leclair.Stardew.ThemeManager.Models;
+using HarmonyLib;
+using System.Diagnostics;
 
 namespace Leclair.Stardew.ThemeManager;
 
 public interface IThemeSelection {
 	void _SelectTheme(string? themeId, bool postReload = false);
+
+	void InvalidateThemeData();
+
 }
 
 public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection where DataT : class, new() {
@@ -40,7 +45,20 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	/// <summary>
 	/// A dictionary mapping all known themes to their own UniqueIDs.
 	/// </summary>
-	private readonly Dictionary<string, Theme<DataT>> Themes = new();
+	private Dictionary<string, Theme<DataT>> Themes = new();
+
+	/// <summary>
+	/// A dictionary mapping all known themes to their own UniqueIDs.
+	/// This object represents the objects as read from disk, while
+	/// <see cref="Themes"/> represents the objects after processing.
+	/// </summary>
+	private Dictionary<string, Theme<DataT>> DiskThemes = new();
+
+	/// <summary>
+	/// When this is set to true, we ignore invalidation events because
+	/// we expect one to be coming. Probably from our own invalidation.
+	/// </summary>
+	private bool ExpectInvalidate;
 
 	/// <summary>
 	/// Storage of the <see cref="DefaultTheme"/>. This should not be accessed directly,
@@ -57,6 +75,13 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	#endregion
 
 	#region Public Fields
+
+	/// <summary>
+	/// A string that represents the path used when redirecting theme
+	/// data through game content to allow Content Patcher access to your
+	/// mod's theme data.
+	/// </summary>
+	public string ThemeLoaderPath { get; }
 
 	/// <summary>
 	/// A string that is prepended to asset names when redirecting
@@ -78,6 +103,13 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	/// no embedded themes will be loaded.
 	/// </summary>
 	public string? EmbeddedThemesPath { get; }
+
+	/// <summary>
+	/// Whether or not <see cref="ThemeManager{DataT}"/> is redirecting
+	/// theme data loading through <see cref="IGameContentHelper"/> to
+	/// allow other mods, such as Content Patcher, to modify theme data.
+	/// </summary>
+	public bool UsingThemeRedirection { get; }
 
 	/// <summary>
 	/// Whether or not <see cref="ThemeManager{DataT}"/> is redirecting
@@ -118,9 +150,16 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 	/// paths when redirecting asset loading through IAssetLoader. By
 	/// default, this value is <c>Mods/{yourMod.UniqueId}/Themes</c>.
 	/// <seealso cref="AssetLoaderPrefix"/></param>
+	/// <param name="themeLoaderPath">A path to use when redirecting
+	/// theme data loading through the game's content pipeline. By
+	/// default, this value is <c>Mods/{yourMod.UniqueId}/ThemeData</c>.
+	/// <seealso cref="ThemeLoaderPath"/></param>
 	/// <param name="forceAssetRedirection">If set to a value, override
 	/// the default asset redirection behavior.
 	/// <seealso cref="UsingAssetRedirection"/></param>
+	/// <param name="forceThemeRedirection">If set to a value, override
+	/// the default theme data redirection behavior.
+	/// <seealso cref="UsingThemeRedirection"/></param>
 	public ThemeManager(
 		ModEntry mod,
 		IManifest other,
@@ -130,7 +169,9 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		string? embeddedThemesPath = "assets/themes",
 		string? assetPrefix = "assets",
 		string? assetLoaderPrefix = null,
-		bool? forceAssetRedirection = null
+		string? themeLoaderPath = null,
+		bool? forceAssetRedirection = null,
+		bool? forceThemeRedirection = null
 	) {
 		// Store the basic initial values.
 		Mod = mod;
@@ -146,8 +187,9 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		// Detect Content Patcher
 		bool hasCP = Mod.Helper.ModRegistry.IsLoaded(ContentPatcher_UniqueID);
 		UsingAssetRedirection = forceAssetRedirection ?? hasCP;
+		UsingThemeRedirection = forceThemeRedirection ?? hasCP;
 
-		Log($"New ThemeManager. CP: {hasCP}, Force: {forceAssetRedirection}, Redirection: {UsingAssetRedirection}");
+		Log($"New ThemeManager. CP: {hasCP}, ForceAsset: {forceAssetRedirection}, RedirectAsset: {UsingAssetRedirection}, ForceTheme: {forceThemeRedirection}, RedirectTheme: {UsingThemeRedirection}", LogLevel.Trace);
 
 		// Always run the AssetLoaderPrefix through NormalizeAssetName,
 		// otherwise we'll run into issues actually using our custom
@@ -156,6 +198,12 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 			string.IsNullOrEmpty(assetLoaderPrefix) ?
 				Path.Join("Mods", ModManifest.UniqueID, "Themes") :
 				assetLoaderPrefix
+			);
+
+		ThemeLoaderPath = PathUtilities.NormalizeAssetName(
+			string.IsNullOrEmpty(themeLoaderPath) ?
+				Path.Join("Mods", ModManifest.UniqueID, "ThemeData") :
+				themeLoaderPath
 			);
 	}
 
@@ -202,9 +250,9 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		bool checkEmbedded = true,
 		bool checkExternal = true
 	) {
-		lock ((Themes as ICollection).SyncRoot) {
+		lock ((DiskThemes as ICollection).SyncRoot) {
 			// Start by wiping the existing theme data.
-			Themes.Clear();
+			DiskThemes.Clear();
 
 			// We want to keep track of packs with custom IDs so that we
 			// can use better IDs for embedded packs.
@@ -226,7 +274,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 				var owned = Mod.Helper.ModRegistry.GetAll()
 					.Where(x => x.IsContentPack && x.Manifest.ContentPackFor.UniqueID.Equals(Other.UniqueID, StringComparison.OrdinalIgnoreCase))
 					.Select(x => Mod.GetContentPackFor(x));
-				foreach (var cp in owned) { 
+				foreach (var cp in owned) {
 					if (cp is not null && cp.HasFile("theme.json"))
 						packsWithIds[cp.Manifest.UniqueID] = new(cp.Manifest, null, cp, null, "theme.json");
 				}
@@ -269,7 +317,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 					if (cp.Value.Pack.Manifest.UniqueID != Other.UniqueID)
 						loadable.Name = cp.Value.Pack.Manifest.Name;
 				}
-					
+
 				ThemeManifest manifest = new(
 					uniqueID: uid,
 					name: loadable.Name ?? uid,
@@ -280,10 +328,54 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 					unsupportedMods: loadable.UnsupportedMods,
 					fallbackTheme: loadable.FallbackTheme,
 					assetPrefix: loadable.AssetPrefix,
-					overrideRedirection: loadable.OverrideRedirection
+					overrideRedirection: loadable.OverrideRedirection,
+					nonSelectable: loadable.NonSelectable
 				);
 
-				Themes[cp.Key] = new(data, manifest, cp.Value.Pack, cp.Value.RelativePath);
+				var prop = AccessTools.Property(typeof(DataT), "Manifest");
+				if (prop is not null && prop.CanWrite && prop.PropertyType == typeof(IThemeManifest)) {
+					try {
+						prop.SetValue(data, manifest);
+					} catch (Exception ex) {
+						Log($"Unable to store manifest in theme: {ex}", LogLevel.Warn);
+					}
+				}
+
+				DiskThemes[cp.Key] = new(data, manifest, cp.Value.Pack, cp.Value.RelativePath);
+			}
+		}
+
+		// Use a separate method to finish discovery. One that can be called when
+		// theme data is invalidated.
+		FinishDiscover();
+	}
+
+	private void FinishDiscover() {
+		Themes = DiskThemes;
+
+		if (UsingThemeRedirection) {
+			Dictionary<string, DataT>? data;
+
+			Mod.LoadingAssets[ThemeLoaderPath] = () => Themes.ToDictionary(x => x.Key, x => Mod.Clone(x.Value.Data));
+			ExpectInvalidate = true;
+			Mod.Helper.GameContent.InvalidateCache(ThemeLoaderPath);
+			ExpectInvalidate = false;
+
+			try {
+				data = Mod.Helper.GameContent.Load<Dictionary<string, DataT>>(ThemeLoaderPath);
+			} catch (Exception ex) {
+				Log($"An error occurred while running theme data through game content: {ex}", LogLevel.Error);
+				data = null;
+			}
+
+			Mod.LoadingAssets.Remove(ThemeLoaderPath);
+
+			if (data is not null) {
+				Themes = new(DiskThemes);
+				foreach (var entry in data) {
+					if (Themes.TryGetValue(entry.Key, out var edata) && entry.Value is not null && edata.Data != entry.Value)
+						Themes[entry.Key] = new(entry.Value, edata.Manifest, edata.Content, edata.RelativePath);
+				}
 			}
 		}
 
@@ -300,6 +392,13 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		// And select the new theme.
 		_SelectTheme(oldKey, true);
 		Mod.ConfigStale = true;
+	}
+
+	public void InvalidateThemeData() {
+		if (!ExpectInvalidate) {
+			Log($"Reloading theme data after another mod invalidated it.");
+			FinishDiscover();
+		}
 	}
 
 	/// <summary>
@@ -505,8 +604,10 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		result.Add("automatic", I18n.Theme_Automatic());
 		result.Add("default", I18n.Theme_Default());
 
-		foreach (string theme in Themes.Keys)
-			result.Add(theme, GetThemeName(theme, locale));
+		foreach(var entry in Themes) {
+			if (!entry.Value.Manifest.NonSelectable)
+				result.Add(entry.Key, GetThemeName(entry.Key, locale));
+		}
 
 		return result;
 	}
@@ -518,8 +619,10 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		result.Add("automatic", I18n.Theme_Automatic);
 		result.Add("default", I18n.Theme_Default);
 
-		foreach (string theme in Themes.Keys)
-			result.Add(theme, () => GetThemeName(theme));
+		foreach (var entry in Themes) {
+			if (!entry.Value.Manifest.NonSelectable)
+				result.Add(entry.Key, () => GetThemeName(entry.Key));
+		}
 
 		return result;
 	}
@@ -586,7 +689,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 		}
 
 		// Does this string match something?
-		else if (!themeId.Equals("automatic", StringComparison.OrdinalIgnoreCase) && Themes.TryGetValue(themeId, out var theme)) {
+		else if (!themeId.Equals("automatic", StringComparison.OrdinalIgnoreCase) && Themes.TryGetValue(themeId, out var theme) && ! theme.Manifest.NonSelectable) {
 			BaseThemeData = theme;
 			SelectedThemeId = themeId;
 			ActiveThemeId = themeId;
@@ -599,7 +702,7 @@ public class ThemeManager<DataT> : ITypedThemeManager<DataT>, IThemeSelection wh
 
 			string[] ids = Themes.Keys.ToArray();
 			for (int i = ids.Length - 1; i >= 0; i--) {
-				if (!Themes.TryGetValue(ids[i], out var themeData))
+				if (!Themes.TryGetValue(ids[i], out var themeData) || themeData.Manifest.NonSelectable)
 					continue;
 
 				if (themeData.Manifest.MatchesForAutomatic(Mod.Helper.ModRegistry)) {

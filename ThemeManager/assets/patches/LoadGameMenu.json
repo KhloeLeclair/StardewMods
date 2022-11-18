@@ -9,13 +9,13 @@
 	"Patches": {
 		"#LoadGameMenu+SaveFileSlot:drawVersionMismatchSlot": {
 			"Colors": {
-				"Red": "$LoadGameErrorText"
+				"Red": { "*": "$LoadGameErrorText" }
 			}
 		},
 
 		"#LoadGameMenu:drawSlotBackground": {
 			"Colors": {
-				"Wheat": "$LoadGameHover"
+				"Wheat": { "*": "$LoadGameHover" }
 			}
 		}
 	}

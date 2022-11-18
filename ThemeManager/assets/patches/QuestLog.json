@@ -9,16 +9,16 @@
 	"Patches": {
 		"#QuestLog:draw(SpriteBatch)": {
 			"Colors": {
-				"Wheat": "$QuestLogHover",
-				"DarkBlue": "$QuestObjectiveText",
-				"Red": "$QuestBarIncomplete",
-				"DarkRed": "$QuestBarIncompleteDark",
-				"LimeGreen": "$QuestBarComplete",
-				"Green": "$QuestBarCompleteDark"
+				"Wheat": { "*": "$QuestLogHover" },
+				"DarkBlue": { "*": "$QuestObjectiveText" },
+				"Red": { "*": "$QuestBarIncomplete" },
+				"DarkRed": { "*": "$QuestBarIncompleteDark" },
+				"LimeGreen": { "*": "$QuestBarComplete" },
+				"Green": { "*": "$QuestBarCompleteDark" }
 			},
 
 			"Fields": {
-				"textColor": "$QuestLogText"
+				"textColor": { "*": "$QuestLogText" }
 			}
 		}
 	}

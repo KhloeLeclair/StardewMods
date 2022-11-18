@@ -8,11 +8,11 @@
 	"Patches": {
 		"#SkillsPage:draw(SpriteBatch)": {
 			"Colors": {
-				"LightGreen": "$SkillsPageModifiedNumber",
-				"SandyBrown": "$SkillsPageNumber"
+				"LightGreen": { "*": "$SkillsPageModifiedNumber" },
+				"SandyBrown": { "*": "$SkillsPageNumber" }
 			},
 			"Fields": {
-				"textColor": "$SkillsPageText"
+				"textColor": { "*": "$SkillsPageText" }
 			}
 		}
 	}

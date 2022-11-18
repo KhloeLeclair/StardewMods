@@ -9,6 +9,7 @@ using StardewValley.Menus;
 using StardewModdingAPI;
 
 using Leclair.Stardew.ThemeManager;
+using System.Collections.Generic;
 
 namespace ThemeManagerExample;
 
@@ -26,6 +27,8 @@ public class ModEntry : Mod {
 	internal ThemeData Theme = new();
 	internal Texture2D? Background;
 
+	internal IBaseTheme? BaseTheme;
+
 	public override void Entry(IModHelper helper) {
 
 		Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
@@ -35,7 +38,7 @@ public class ModEntry : Mod {
 	private void Display_RenderedHud(object? sender, StardewModdingAPI.Events.RenderedHudEventArgs e) {
 		// Read values from our theme!
 		float scale = Theme.TextScale;
-		Color color = Theme.TextColor ?? Game1.textColor;
+		Color color = Theme.TextColor ?? BaseTheme?.GetVariable("Text") ?? Game1.textColor;
 
 		// Set up the text!
 		string text = $"Hello!\n\nSelected Theme: {ThemeManager?.SelectedThemeId}\nActive Theme: {ThemeManager?.ActiveThemeId}";
@@ -89,10 +92,17 @@ public class ModEntry : Mod {
 		if (api is null)
 			return;
 
-		ThemeManager = api.GetOrCreateManager<ThemeData>(ModManifest);
+		ThemeManager = api.GetOrCreateManager<ThemeData>();
+
+		BaseTheme = api.BaseTheme;
+		api.BaseThemeChanged += OnBaseThemeChanged;
 
 		Theme = ThemeManager.Theme;
 		ThemeManager.ThemeChanged += OnThemeChanged;
+	}
+
+	private void OnBaseThemeChanged(object? sender, IThemeChangedEvent<IBaseTheme> e) {
+		BaseTheme =  e.NewData;
 	}
 
 	private void OnThemeChanged(object? sender, IThemeChangedEvent<ThemeData> e) {
