@@ -53,3 +53,6 @@ Until then, please check out:
   for the base game.
 * The [assets/patches/](https://github.com/KhloeLeclair/StardewMods/tree/main/ThemeManager/assets/patches)
   folder with all the currently available patches to use in themes for the base game.
+* The [standalone Theme Manager's README](https://github.com/KhloeLeclair/Stardew-ThemeManager/blob/main-4/README.md)
+  as the theme discovery information within and description of how it works is still
+  relevant to this mod.
