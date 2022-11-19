@@ -2,7 +2,7 @@
 
 This document is intended to help mod authors create content packs using Theme Manager.
 
-## Contents
+# Contents
 
 * [Getting Started](#getting-started)
   * [What is a Theme?](#what-is-a-theme)
@@ -17,6 +17,7 @@ This document is intended to help mod authors create content packs using Theme M
   * [What are Sprite Text Colors?](#what-are-sprite-text-colors)
   * [What is a Patch?](#what-is-a-patch)
   * [Built-in Patches](#built-in-patches)
+  * [Writing a Patch](#writing-a-patch)
 * [Other Mod Themes](#other-mod-themes)
   * [Asset Loading](#asset-loading)
   * [Code Example](#code-example)
@@ -29,9 +30,9 @@ This document is intended to help mod authors create content packs using Theme M
   * [Helpful Commands](#helpful-commands)
 
 
-## Getting Started
+# Getting Started
 
-### What is a Theme?
+## What is a Theme?
 
 A theme has two parts. First, there is a custom data model loaded from
 the theme's `theme.json` file. This data model will change depending on
@@ -43,7 +44,7 @@ mod implementing Theme Manager's API. For general asset replacement,
 Content Patcher is still recommended.
 
 
-### What About Game Themes?
+## What About Game Themes?
 
 In addition to providing a theme system for other mods to use, Theme Manager
 also adds themes to the base game. Themes for the base game don't allow you
@@ -52,9 +53,9 @@ allow you to replace colors. Almost every hard-coded color in the game can be
 replaced with any other colors you want.
 
 
-## Creating a Theme
+# Creating a Theme
 
-### `theme.json` Basics
+## `theme.json` Basics
 
 Every theme has a `theme.json` file (though it can, in some situations, have
 a different filename). This file acts as a combination of a manifest for the
@@ -119,7 +120,7 @@ what patches should be applied. Check out the section on [Game Themes](#game-the
 for more details about how it all works.
 
 
-### Theme Discovery
+## Theme Discovery
 
 There are three separate ways to include a theme:
 
@@ -197,7 +198,7 @@ There are three separate ways to include a theme:
                   🗎 example.png
    ```
 
-### Create a Content Pack
+## Create a Content Pack
 
 The easiest way to create a new theme is to create a content pack for it.
 
@@ -244,9 +245,9 @@ The easiest way to create a new theme is to create a content pack for it.
    you're making a theme for needs.
 
 
-## Game Themes
+# Game Themes
 
-### Basic Data
+## Basic Data
 
 When creating a theme for the game, you're dealing with three main concepts:
 
@@ -260,16 +261,20 @@ When creating a theme for the game, you're dealing with three main concepts:
 A theme file for the game could be as simple as:
 ```json
 {
-    "Name": "Unnecessarily Pink",
+    "Name": "Blue Drop",
 
     "Variables": {
-        "Text": "hotpink"
-    }
+        "DropDownText": "navy"
+    },
+
+    "Patches": [
+        "OptionsDropDown"
+    ]
 }
 ```
 
 
-### What are Color Variables?
+## What are Color Variables?
 
 Variables are an easy way to specify certain colors to fulfill certain roles.
 Variables have names that start with a `$`, and they have a value that's
@@ -294,7 +299,7 @@ For a list of built-in color variables, please read the section on
 supported variables, as well as example screenshots.
 
 
-### What are Sprite Text Colors?
+## What are Sprite Text Colors?
 
 Sprite Text is one of the game's primary ways of rendering text. It's a larger
 font, and by default it is a dark reddish brown. Here's an example of the text
@@ -336,31 +341,79 @@ Here's the same `Journal` text but with the color `-1` set to `hotpink`:
 ![](docs/SpriteText-Pink.png)
 
 
-### What is a Patch?
+## What is a Patch?
 
-### Built-in Patches
+Patches are the heart of how game themes work. In order to replace the
+hard-coded colors the game's user interfaces use, Theme Manager needs to use
+Harmony to modify the game's code.
 
-## Other Mod Themes
+Patches tell Theme Manager what specifically it should be modifying. Take
+the following example:
 
-### Asset Loading
+```json
+{
+    "ID": "OptionsDropDown",
 
-### Code Example
+    "Variables": {
+        "$DropDownHover": "$Hover",
+        "$DropDownText": "$Text"
+    },
 
-## Content Patcher Integration
+    "Patches": {
+        "#OptionsDropDown:draw(SpriteBatch,,,)": {
+            "Colors": {
+                "Wheat": { "*": "$DropDownHover" }
+            },
 
-### Current Theme Token
+            "Fields": {
+                "textColor": { "*": "$DropDownText" }
+            }
+        }
+    }
+}
+```
 
-### Modifying Theme Data
+This patch is changing the draw method of the `StardewValley.Menus.OptionsDropDown`
+class, and it's doing so by replacing every reference to the color `Wheat`
+with the variable `$DropDownHover` and by replacing every reference to the
+field `Game1.textColor` with the variable `$DropDownText`.
 
-### Modifying Assets
+As you can see above, there's also a `Variables` section in this patch. This
+lets a patch set up sensible defaults. In this case, the default value for
+`$DropDownText` is `$Text` and the default value for `$DropDownHover` is
+`$Hover`. These are only used if the current theme doesn't have them defined.
 
-## Miscellaneous
 
-### Color Parsing
+## Built-in Patches
 
-### Helpful Commands
+Please see [this document](builtin-patches.md) for a list of all built-in
+patches, along with details on what variables they use with screenshots
+demonstrating their effects.
 
-## Oops, I haven't written this yet!
+
+## Writing a Patch
+
+# Other Mod Themes
+
+## Asset Loading
+
+## Code Example
+
+# Content Patcher Integration
+
+## Current Theme Token
+
+## Modifying Theme Data
+
+## Modifying Assets
+
+# Miscellaneous
+
+## Color Parsing
+
+## Helpful Commands
+
+# Oops, I haven't written this yet!
 
 Sorry. I'm still working on this. It should be finished within a few days.
 Until then, please check out:
