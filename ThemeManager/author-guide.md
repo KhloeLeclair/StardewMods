@@ -214,7 +214,9 @@ The easiest way to create a new theme is to create a content pack for it.
        "Description": "Something short about your mod.",
        "UniqueId": "YourName.YourModName",
        "ContentPackFor": {
-           // Do not change this when changing UniqueID
+           // This should be the UniqueID of the mod your theme is for.
+           // If you're making a theme for the base game, you should
+           // leave this as "leclair.thememanager"
            "UniqueID": "leclair.thememanager"
        },
        "UpdateKeys": [
