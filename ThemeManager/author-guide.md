@@ -13,8 +13,9 @@ This document is intended to help mod authors create content packs using Theme M
   * [Create a Content Pack](#create-a-content-pack)
 * [Game Themes](#game-themes)
   * [Basic Data](#basic-data)
+  * [What are Color Variables?](#what-are-color-variables)
+  * [What are Sprite Text Colors?](#what-are-sprite-text-colors)
   * [What is a Patch?](#what-is-a-patch)
-  * [Built-in Variables](built-in-variables)
   * [Built-in Patches](#built-in-patches)
 * [Other Mod Themes](#other-mod-themes)
   * [Asset Loading](#asset-loading)
@@ -247,9 +248,95 @@ The easiest way to create a new theme is to create a content pack for it.
 
 ### Basic Data
 
-### What is a Patch?
+When creating a theme for the game, you're dealing with three main concepts:
 
-### Built-in Variables
+1. Color Variables.
+2. Sprite Text Colors.
+3. Patches.
+
+> Note: Theme Manager's game theming system does not allow you to replace
+> assets. You should still use Content Patcher for that.
+
+A theme file for the game could be as simple as:
+```json
+{
+    "Name": "Unnecessarily Pink",
+
+    "Variables": {
+        "Text": "hotpink"
+    }
+}
+```
+
+
+### What are Color Variables?
+
+Variables are an easy way to specify certain colors to fulfill certain roles.
+Variables have names that start with a `$`, and they have a value that's
+either a color or the name of another variable. Because of this, patches can
+define specific variables that fall back to more generic variables if the
+specific color hasn't been overwritten.
+
+As an example, consider the `OptionsDropDown` patch. We'll get into the basics
+of patches in a bit, but for now you should know that `OptionsDropDown` uses
+the variable `$DropDownText`. But the variable `$DropDownText` has the default
+value `$Text`.
+
+In effect, this means that if your theme defines a value for `$DropDownText`,
+then it will use that color. If your theme *doesn't* have a value for that
+variable, it'll use `$Text` instead.
+
+Variables can inherit from each other like this as much as you want, as long
+as they don't loop. (And don't worry, there's loop detection.)
+
+For a list of built-in color variables, please read the section on
+[Built-in Patches](#built-in-patches). Every patch is described with a list of
+supported variables, as well as example screenshots.
+
+
+### What are Sprite Text Colors?
+
+Sprite Text is one of the game's primary ways of rendering text. It's a larger
+font, and by default it is a dark reddish brown. Here's an example of the text
+`Journal`:
+
+![](docs/SpriteText.png)
+
+In Stardew Valley 1.5 and earlier, Sprite Text uses an index-based system for
+colors. Specifically, the following are the default colors:
+```json
+{
+    "SpriteTextColors": {
+        "-1": "86, 22, 12", // #56160C
+        "1": "SkyBlue",
+        "2": "Red",
+        "3": "110, 43, 255", // #6E2BFF
+        "4": "White",
+        "5": "OrangeRed",
+        "6": "LimeGreen",
+        "7": "Cyan",
+        "8": "60, 60, 60" // #3C3C3C
+    }
+}
+```
+
+All other colors are black by default.
+
+The color `-1` has special handling from the game. If the color is `-1` and you
+are using a language that uses latin characters (English, Spanish, French,
+German, etc.), then the game will use the texture `LooseSprites\font_colored`
+for rendering. This texture has the default reddish brown color baked in. 
+
+If you reassign the color `-1` to a color in your theme, Theme Manager will
+automatically force the game to treat it as colored text and it will use the
+texture `LooseSprites\font_bold` instead.
+
+Here's the same `Journal` text but with the color `-1` set to `hotpink`:
+
+![](docs/SpriteText-Pink.png)
+
+
+### What is a Patch?
 
 ### Built-in Patches
 
