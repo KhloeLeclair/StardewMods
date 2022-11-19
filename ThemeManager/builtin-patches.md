@@ -372,8 +372,8 @@ the game.
 <td>
 <table>
 <tr><th>Name</th><th>Default Value</th></tr>
-<tr><td>DayTimeAfterMidnight</td><td>$ErrorText</td></tr>
-<tr><td>DayTimeText</td><td></td></tr>
+<tr><td>$DayTimeAfterMidnight</td><td>$ErrorText</td></tr>
+<tr><td>$DayTimeText</td><td></td></tr>
 </table>
 </td>
 </tr>
@@ -741,7 +741,7 @@ the game.
 <tr><td>$QuestBarIncomplete</td><td><i>Red (#FF0000)</i></td></tr>
 <tr><td>$QuestBarIncompleteDark</td><td><i>DarkRed (#8B0000)</i></td></tr>
 <tr><td>$QuestBarComplete</td><td><i>LimeGreen (#32CD32)</i></td></tr>
-<tr><rd>$QuestBarCompleteDark</td><td><i>Green (#008000)</i></td></tr>
+<tr><td>$QuestBarCompleteDark</td><td><i>Green (#008000)</i></td></tr>
 </table>
 </td>
 </tr>
