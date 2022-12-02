@@ -43,6 +43,8 @@ public class ThingOneImpl<TValue> : IThingOne<TValue> {
 		_values.Add(key, value);
 	}
 
+	public IReadOnlyDictionary<string, TValue> CalculatedValues => _values;
+
 	public TValue this[string key] => _values[key];
 
 	public IEnumerable<string> Keys => _values.Keys;

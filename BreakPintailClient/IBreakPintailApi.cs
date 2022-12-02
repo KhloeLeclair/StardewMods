@@ -14,6 +14,8 @@ public interface IThingTwo<TValue> {
 
 public interface IThingOne<TValue> : IReadOnlyDictionary<string, TValue> {
 
+	IReadOnlyDictionary<string, TValue> CalculatedValues { get; }
+
 }
 
 public interface IBreakPintailApi {

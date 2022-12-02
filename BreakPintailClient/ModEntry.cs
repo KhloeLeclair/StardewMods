@@ -22,7 +22,48 @@ public class ModEntry : Mod {
 
 		var thing = api.GetThingGetter();
 
-		foreach (var entry in thing)
-			Monitor.Log($"Thing: {entry.Key}: {entry.Value}", LogLevel.Info);
+		Monitor.Log($"Starting", LogLevel.Warn);
+
+		// This fails
+		Monitor.Log($"Enumerate directly:", LogLevel.Info);
+		try {
+			foreach (var entry in thing)
+				Monitor.Log($"Thing: {entry.Key}: {entry.Value.Value}", LogLevel.Info);
+		} catch (Exception ex) {
+			Monitor.Log($"Error: {ex}", LogLevel.Error);
+		}
+
+		// This fails
+		Monitor.Log($"Enumerate sub-readonlydict:", LogLevel.Info);
+		try {
+			foreach (var entry in thing.CalculatedValues)
+				Monitor.Log($"Thing: {entry.Key}: {entry.Value.Value}", LogLevel.Info);
+		} catch (Exception ex) {
+			Monitor.Log($"Error: {ex}", LogLevel.Error);
+		}
+
+		// This fails
+		Monitor.Log($"Manual Enumerator:", LogLevel.Info);
+		try {
+			var enumerator = thing.GetEnumerator();
+			while (enumerator.MoveNext()) {
+				var current = enumerator.Current;
+				Monitor.Log($"Thing: {current.Key}: {current.Value.Value}", LogLevel.Info);
+			}
+		} catch(Exception ex) {
+			Monitor.Log($"Error: {ex}", LogLevel.Error);
+		}
+
+		// This is ok
+		Monitor.Log($"Enumerate Keys, access values directly:", LogLevel.Info);
+		try {
+			foreach (string entry in thing.Keys)
+				Monitor.Log($"Thing: {entry}: {thing[entry].Value}", LogLevel.Info);
+		} catch(Exception ex) {
+			Monitor.Log($"Error: {ex}", LogLevel.Error);
+		}
+
+		Monitor.Log($"Done", LogLevel.Info);
+
 	}
 }
