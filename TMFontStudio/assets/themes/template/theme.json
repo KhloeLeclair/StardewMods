@@ -1,0 +1,13 @@
+{
+	"Name": "Theme Template",
+
+	"ColorVariables": {
+		"red": "#f00",
+		"test": "$red"
+	},
+
+	"TextureVariables": {
+		"test": "Chela.png"
+	}
+
+}

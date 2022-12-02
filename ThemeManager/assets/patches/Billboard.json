@@ -1,7 +1,7 @@
 {
 	"ID": "Billboard",
 
-	"Variables": {
+	"ColorVariables": {
 		"$BillboardHover": "$ButtonHover"
 	},
 
@@ -12,8 +12,8 @@
 				"Blue": { "*": "$CalendarToday" },
 				"LightPink": { "*": "$BillboardHover" }
 			},
-			"Fields": {
-				"textColor": { "*": "$BillboardText" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$BillboardText" }
 			}
 		}
 	}

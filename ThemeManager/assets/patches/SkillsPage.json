@@ -1,7 +1,7 @@
 {
 	"ID": "SkillsPage",
 
-	"Variables": {
+	"ColorVariables": {
 		"$SkillsPageText": "$Text"
 	},
 
@@ -11,8 +11,8 @@
 				"LightGreen": { "*": "$SkillsPageModifiedNumber" },
 				"SandyBrown": { "*": "$SkillsPageNumber" }
 			},
-			"Fields": {
-				"textColor": { "*": "$SkillsPageText" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$SkillsPageText" }
 			}
 		}
 	}

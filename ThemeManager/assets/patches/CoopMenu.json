@@ -1,7 +1,7 @@
 {
 	"ID": "CoopMenu",
 
-	"Variables": {
+	"ColorVariables": {
 		"$CoopHover": "$Hover"
 	},
 

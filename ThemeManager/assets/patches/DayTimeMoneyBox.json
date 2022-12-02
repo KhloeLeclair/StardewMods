@@ -1,7 +1,7 @@
 {
 	"ID": "DayTimeMoneyBox",
 
-	"Variables": {
+	"ColorVariables": {
 		"$DayTimeAfterMidnight": "$ErrorText"
 	},
 
@@ -12,7 +12,7 @@
 			},
 
 			"Fields": {
-				"textColor": { "*": "$DayTimeText" }
+				"Game1:textColor": { "*": "$DayTimeText" }
 			}
 		}
 	}

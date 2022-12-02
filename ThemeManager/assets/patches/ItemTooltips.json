@@ -1,7 +1,7 @@
 {
 	"ID": "ItemTooltips",
 
-	"Variables": {
+	"ColorVariables": {
 		"$TooltipInsufficientText": "$ErrorText",
 		"$TooltipText": "$Text",
 		"$TooltipTextShadow": "$TextShadow"
@@ -13,9 +13,9 @@
 				"DimGray": { "*": "$ForgeCountText" },
 				"DarkRed": { "*": "$ForgedText" }
 			},
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" },
+				"Game1:textShadowColor": { "*": "$TooltipTextShadow" }
 			}
 		},
 
@@ -30,26 +30,15 @@
 		},
 
 		"StardewValley.Item:drawTooltip": {
-			"RawColors": {
-				"0, 120, 120": { "*": "$TooltipModifiedStatText" },
-				"120, 0, 210": { "*": "$TooltipEnchantmentText" }
-			},
-
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" },
+				"Game1:textShadowColor": { "*": "$TooltipTextShadow" }
 			}
 		},
 
 		"StardewValley.Objects.Boots:drawTooltip": {
-			"RawColors": {
-				"0, 120, 120": { "*": "$TooltipModifiedStatText" },
-				"120, 0, 210": { "*": "$TooltipEnchantmentText" }
-			},
-
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" }
 			}
 		},
 
@@ -59,21 +48,15 @@
 				"120, 0, 210": { "*": "$TooltipEnchantmentText" }
 			},
 
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" },
+				"Game1:textShadowColor": { "*": "$TooltipTextShadow" }
 			}
 		},
 
 		"StardewValley.Objects.Ring:drawTooltip": {
-			"RawColors": {
-				"0, 120, 120": { "*": "$TooltipModifiedStatText" },
-				"120, 0, 210": { "*": "$TooltipEnchantmentText" }
-			},
-
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" }
 			}
 		},
 
@@ -82,9 +65,9 @@
 				"Red": { "*": "$TooltipInsufficientText" }
 			},
 
-			"Fields": {
-				"textColor": { "*": "$TooltipText" },
-				"textShadowColor": { "*": "$TooltipTextShadow" }
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TooltipText" },
+				"Game1:textShadowColor": { "*": "$TooltipTextShadow" }
 			}
 		}
 	}

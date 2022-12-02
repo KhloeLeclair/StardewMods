@@ -1,7 +1,7 @@
 {
 	"ID": "LoadGameMenu",
 
-	"Variables": {
+	"ColorVariables": {
 		"$LoadGameErrorText": "$ErrorText",
 		"$LoadGameHover": "$Hover"
 	},
