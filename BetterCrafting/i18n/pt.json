@@ -1,7 +1,7 @@
 {
 	// Settings
 	"setting.show-adv": "Mostrar Informação Avançada de Criação",
-	"setting.show-adv.tip": "Show advanced crafting information, such as how many ingredients you have and how many times you've crafted a recipe before. This is the same as the vanilla setting, duplicated here for convenience.",
+	"setting.show-adv.tip": "Mostrar informações como quantos ingredientes você tem e quantos vezes você criou uma receita antes. Isto é o mesmo que a configuração padrão do jogo, duplicada aqui por conveniência.",
 
 	"setting.general": "Opções Gerais",
 
