@@ -1,0 +1,415 @@
+{
+    "mod-name": "얼머낵",
+
+    "almanac.open": "얼머낵 열기",
+
+    "almanac.cover": "펀길\n농부\n얼머낵",
+    "almanac.cover-island": "펀길\n페른 섬\n농부\n얼머낵",
+
+    "calendar.when": "{{year}}년차 {{season}}",
+
+    "calendar.day.1": "월",
+    "calendar.day.2": "화",
+    "calendar.day.3": "수",
+    "calendar.day.4": "목",
+    "calendar.day.5": "금",
+    "calendar.day.6": "토",
+    "calendar.day.7": "일",
+
+    "page.crops": "작물 계획표",
+
+    "crop.last-day": "마지막 재배 가능 일:",
+
+    "crop.toggle": "{{mode}} 토글",
+    "crop.paddy": "관개지 효과",
+
+    "page.crop.none": "현재 필터와 일치하는 작물이 없습니다.",
+
+    "page.crop.seed-filter": "씨앗 필터",
+    "page.crop.seed-filter.disabled": "비활성화됨",
+    "page.crop.seed-filter.inventory": "인벤토리에 있음",
+    "page.crop.seed-filter.owned": "보유하고 있음",
+
+    "crop.seed-filter": "보유중인 씨앗만 표시",
+
+    "crop.using-none": "다음 성장 시간과 날짜는 비료 및 스킬 효과가 적용되지 않았습니다.",
+    "crop.using-agri": "다음 성장 시간과 날짜는 {{agriculturist}} 효과가 적용되었습니다.",
+    "crop.using-speed": "다음 성장 시간과 날짜는 {{fertilizer}} 효과가 적용되었습니다.",
+    "crop.using-both": "다음 성장 시간과 날짜는 {{agriculturist}} 효과와 {{fertilizer}} 효과가 적용되었습니다.",
+    "crop.using-paddy": "또한 관개지 효과가 적용 가능한 작물은 @B물 근처에서 자라는 효과@b가 적용되었습니다.",
+
+    "crop.grow-time": "성장 시간 {{count}}일 소요.",
+    "crop.harvests": "올해 {{count}}번 수확 예상.",
+    "crop.harvests-date": "{{date}}일날 심을 시 올해 {{count}}번 수확 예상.",
+    "crop.last-date": "{{date}}일을 넘겨 심지 마시오.",
+    "crop.regrow-time": "매 {{count}}일마다 재수확 가능.",
+    "crop.paddy-note": "물 근처에서 더 빨리 자람.",
+    "crop.giant-note": "{{link}}로 성장 가능.",
+    "crop.giant-hover": "@B대형 작물@b",
+    "crop.trellis-note": "격자 구조물 필요.",
+
+    "page.weather": "일기 예보",
+    "page.weather-island": "진저 섬 일기 예보",
+
+    "page.weather.pirates": "모험가 길드는 다음 날짜에 진저 섬 부근에서 활발한 해적 활동이 예상된다 경고했습니다:",
+
+    "festival.about": "다음 스타듀 밸리 축제는 {{season}}에 열립니다:",
+
+    "festival.when": "시간:",
+    "festival.when-times": "{{start}} ~ {{end}}",
+    "festival.where": "장소:",
+    "festival.date": "날짜:",
+
+    "weather.sunny": "맑음",
+    "weather.rain": "비",
+    "weather.debris": "바람",
+    "weather.lightning": "폭풍",
+    "weather.festival": "맑음",
+    "weather.snow": "눈",
+
+    "page.train": "열차 시간표",
+    "page.train.about": "@B경고:@b 열차가 스타듀 밸리 역을 다음 시간에 지나갑니다. 안전을 위해 열차가 지나갈 때는 철도에서 물러나세요.",
+
+    "page.train.notice": "스타듀 밸리 역 열차 서비스는 예정된 철도 보수 작업으로 인해 봄 동안 중단됩니다.",
+
+    "page.fortune": "마법",
+
+    "page.fortune.luck-awful": "정령들이 화가 나있습니다. 당신의 삶을 어렵게 만들기 위해 최선을 다할 것입니다.",
+    "page.fortune.luck-bad": "정령들이 어느 정도 불쾌해하고 있습니다. 행운을 바라긴 어려울 것입니다.",
+    "page.fortune.luck-neutral": "정령들의 기분이 중립적입니다. 스스로 하기에 달려있습니다.",
+    "page.fortune.luck-good": "정령들의 기분이 좋습니다. 약간의 행운이 따를 것입니다.",
+    "page.fortune.luck-great": "정령들이 기뻐하고 있습니다! 모두에게 행운을 주기 위해 최선을 다할 것입니다.",
+
+    "page.fortune.event.none": "평안한 계절이 예상됩니다. 매일 하루 살아가는 삶에서 즐거움과 재미를 찾을 수 있습니다.",
+
+    "page.fortune.about": "{{Season}}에 일어날 수 있는 일입니다. 아닐수도 있습니다.",
+
+    "page.fortune.garbage-hat": "누군가의 흉물은 누군가의 보물.",
+
+    "page.fortune.event.fairy": "마음이 예쁜 요정이 밤중에 지나갑니다. 운이 좋은 사람은 큰 수확을 기대할 수 있습니다.",
+    "page.fortune.event.witch": "이 날 밤 마녀가 나타날 수 있습니다.",
+    "page.fortune.event.meteorite": "펀길 전역에 걸쳐 유성우가 예상됩니다.",
+    "page.fortune.event.owl": "베일에 쌓인 수호자 석상이 골짜기로 내려옵니다.",
+    "page.fortune.event.ufo": "하늘 보다 높이 있는 생명체가 펀길을 지나갑니다.",
+
+    "page.mines": "던전",
+    "page.mines.about": "다음은 {{Season}}동안 예측되는 몬스터 활동 요약본입니다:",
+
+    "page.mines.type.Mushroom": "버섯 층",
+    "page.mines.type.InfestedMonster": "몬스터 감염 층",
+    "page.mines.type.InfestedSlime": "슬라임 오염 층",
+    "page.mines.type.Quarry": "던전 층",
+    "page.mines.type.InfestedQuarry": "던전 감염 층",
+    "page.mines.type.Dino": "선사시대 층",
+
+    "page.error": "오류",
+    "page.error.desc": "현재 메뉴 페이지에 오류가 발생했습니다. 더 자세한 내용은 게임 로그를 확인하세요.",
+
+    "page.notices": "지역 소식",
+
+    "page.notices.birthday-error": "NPC 로딩 중 오류가 발생했습니다. 생일이 표시되지 않습니다. 더 자세한 내용은 로그를 확인하세요.",
+
+    "page.notices.season": "{{item}} 기간은 {{start}}일부터 {{end}}일까지 입니다.",
+    "page.notices.summer": "여름 바다 해류로 인해 12일부터 14일까지 펠리컨 해변에서 더 많은 채집품이 발견됩니다.",
+    "page.notices.market": "야시장은 15일부터 17일까지 늦은 시간에 열립니다.",
+
+    "page.notices.anniversary.no-s": "{{name}}(과)와 {{spouse}}의 기념일입니다!",
+    "page.notices.anniversary.s": "{{name}}(과)와 {{spouse}}의 기념일입니다!",
+
+    "page.notices.wedding.no-s": "{{name}}(과)와 {{spouse}}의 결혼식 날입니다!",
+    "page.notices.wedding.s": "{{name}}(과)와 {{spouse}}의 결혼식 날입니다!",
+
+    "page.notices.festival": "{{name}} 시간입니다! {{where}}에서 {{start}}부터 {{end}}까지.",
+
+    "page.notices.birthday.no-s": "{{name}}의 생일입니다!",
+    "page.notices.birthday.s": "{{name}}의 생일입니다!",
+
+    "page.notices.merchant": "여행 카트가 마을을 방문합니다.",
+    "page.notices.merchant.stock": "행상인이 다음 품목을 판매합니다:",
+
+    "page.notices.train": "열차가 {{time}}에 역을 지나갑니다.",
+
+    // Fishing Page
+
+    "page.fish": "낚시",
+    "page.fish.aquarium.none": "아쿠아리움에 넣을 수 없는 수산물입니다.",
+    "page.fish.caught": "@B{{count}}@b번 잡았습니다.",
+    "page.fish.caught.not": "아직 잡은적이 없습니다.",
+
+    // TL Note: You can use {{big_cm}}, {{min_cm}}, and {{max_cm}} instead of _inch.
+    "page.fish.size": "최고 길이 기록은 @B{{big_cm}}cm@b 입니다.",
+    "page.fish.size.range": "길이는 @B{{min_cm}}cm@b 부터 @B{{max_cm}}cm@b 까지 자랍니다.",
+
+    "page.fish.weather.Sunny": "{{fish}}(은)는 @B맑은 날@b에만 발견할 수 있습니다.",
+    "page.fish.weather.Rainy": "{{fish}}(은)는 @B비 오는 날@b에만 발견할 수 있습니다.",
+    "page.fish.weather.Any": "{{fish}}(은)는 날씨와 상관없이 발견할 수 있습니다.",
+    "page.fish.level": "{{skill}} 스킬 @B{{level}}@b레벨에 도달해야 잡을 수 있습니다.",
+    "page.fish.legendary": "{{fish}}(은)는 전설 물고기입니다.",
+    "page.fish.time.all": "하루 종일 발견할 수 있습니다.",
+    "page.fish.time": "@B{{start}}@b부터 @B{{end}}@b까지 발견할 수 있습니다.",
+    "page.fish.time.many": "다음 시간동안 발견할 수 있습니다: {{spans}}.",
+    "page.fish.time.range": "@B{{start}}@b부터 B{{end}}@b까지",
+    "page.fish.locations": "장소",
+    "page.fish.seasons.all": "모든 계절",
+    "page.fish.locations.none": "물고기의 장소 데이터가 없습니다.",
+    "page.fish.pond": "물고기 연못",
+    "page.fish.pond.none": "{{fish}}(은)는 물고기 연못에 넣을 수 없습니다.",
+    "page.fish.pond.start": "",
+    "page.fish.filter.weather": "날씨 필터",
+    "page.fish.filter.none": "필터 없음",
+    "page.fish.none": "현재 필터와 일치하는 물고기가 없습니다.",
+    "page.fish.nothing": "내용 없음...",
+    "fish.weather.Any": "모든 날씨",
+    "fish.weather.Rainy": "비",
+    "fish.weather.Sunny": "맑음",
+    "page.fish.filter.type": "낚시 유형 필터",
+    "page.fish.filter.type.trap": "게잡이 통발",
+    "page.fish.filter.type.caught": "낚싯대",
+    "page.fish.filter.caught": "포획 필터",
+    "page.fish.filter.true": "포획",
+    "page.fish.filter.false": "미포획",
+    "page.fish.filter.location": "현재 장소 필터",
+    "page.fish.filter.now": "이번 계절",
+    "page.fish.location.fresh": "{{fish}}(은)는 민물 어패류입니다.",
+    "page.fish.location.ocean": "{{fish}}(은)는 바다 어패류입니다.",
+
+    "page.fish.filter.aquarium": "아쿠아리움 기부 필터",
+    "page.fish.aquarium.true": "기부된 물고기",
+    "page.fish.aquarium.false": "기부되지 않은 물고기",
+
+    "page.fish.aquarium.donated": "스타듀 아쿠아리움에 기부된 물고기입니다.",
+    "page.fish.aquarium.not-donated": "스타듀 아쿠아리움에 기부하지 않은 물고기입니다.",
+
+    // Settings
+
+    "settings.theme": "UI 테마",
+    "settings.theme-desc": "얼머낵 메뉴에 쓰일 UI 테마입니다.",
+
+    "theme.automatic": "자동",
+    "theme.default": "기본값",
+
+    "settings.button": "얼머낵 버튼 위치",
+    "settings.button-desc": "비활성화 되지 않았다면 얼머낵을 여는 버튼이 인벤토리 창 설정 위치에 추가됩니다.",
+
+    "settings.button.Disabled": "비활성화",
+    "settings.button.LeftTop": "메뉴 왼쪽 상단",
+    "settings.button.LeftBottom": "메뉴 왼쪽 하단",
+    "settings.button.OrganizeRight": "정렬 버튼 오른쪽",
+    "settings.button.TrashRight": "쓰레기통 오른쪽",
+    "settings.button.TrashDown": "쓰레기통 하단",
+
+    "settings.unlimited": "무제한",
+    "settings.days": "{{count}} 일",
+
+    "settings.available": "얼머낵 항상 표시",
+    "settings.available-desc": "체크 시 얼머낵을 받는 이벤트와 무관하게 항상 얼머낵을 사용할 수 있습니다.",
+
+    "settings.island": "섬 정보 항상 표시",
+    "settings.island-desc": "체크 시 이벤트와 무관하게 얼머낵이 확장되어 진저 섬 컨텐츠를 항상 표시합니다.",
+
+    "settings.magic": "마법 정보 항상 표시",
+    "settings.magic-desc": "체크 시 이벤트와 무관하게 얼머낵이 확장되어 마법 컨텐츠를 항상 표시합니다.",
+
+    "settings.forecast-length": "예보 범위",
+    "settings.forecast-length.desc": "설정 값(일수)만큼 예보 정보를 표시합니다.",
+
+    "settings.weather.deterministic": "확정 날씨 사용",
+    "settings.weather.deterministic-desc": "얼머낵의 일기 예보가 제대로 작동하기 위해서는 하루 하루 정해지는 날씨 알고리즘을 장기간 무작위성 날씨로 대체합니다. 만일 문제가 될 시 해당 변경 사항을 여기서 해제할 수 있습니다. 해제 시 장기 일기 예보 기능은 비활성화 됩니다.",
+
+    "settings.weather.rules": "날씨 규칙 적용",
+    "settings.weather.rules-desc": "날씨 규칙은 무작위 날씨에 추가 제약을 겁니다. 원래 기본적으로 봄 마지막 3일은 물뿌리개 업그레이드를 용이하게 하기 위해 비가 내리도록 설정되어 있고, 각 주마다 비 오는 날과 맑은 날을 최소 하루 보장합니다.",
+
+    "settings.controls": "제어",
+
+    "settings.controls.almanac": "얼머낵 열기",
+    "settings.controls.almanac-desc": "버튼을 누르면 얼머낵 인터페이스가 열립니다.",
+
+    "settings.enable": "페이지 활성화",
+    "settings.enable-desc": "얼머낵 페이지를 활성화 합니다.",
+
+    "settings.crops": "페이지: 작물 계획표",
+
+    "settings.crops.preview": "작물 미리보기",
+    "settings.crops.preview-desc": "체크 시 작물 계획표 내 작물에 마우스를 올릴 시 오늘 심는것을 기준으로 달력에 작물 성장 과정 미리보기를 표시합니다.",
+
+    "settings.crops.preview.enable": "미리보기 활성화",
+
+    "settings.crops.preview.plantonfirst": "항상 첫날 심기",
+    "settings.crops.preview.plantonfirst-desc": "체크 시 작물 미리보기를 통해 달력에 표시된 작물을 오늘 심는것이 아닌 계절 첫날에 심도록 고정합니다.",
+
+    "settings.crops.preview.sprite": "수확 스프라이트 사용",
+    "settings.crops.preview.sprite-desc": "체크 시 작물 성장 마지막 단계 이미지 대신 수확품 이미지를 표시하여 더 쉽게 구분할 수 있도록 설정합니다.",
+
+    "settings.fortune": "페이지: 마법",
+
+    "settings.fortune.deterministic": "확정 운세 사용",
+    "settings.fortune.deterministic-desc": "얼머낵의 운세 예보가 제대로 작동하기 위해서는 하루 하루 정해지는 운세 알고리즘을 장기간 무작위성 운세로 대체합니다. 만일 문제가 될 시 해당 변경 사항을 여기서 해제할 수 있습니다. 해제 시 장기 운세 예보 기능은 비활성화 됩니다.",
+
+    "settings.fortune.exact": "행운 퍼센트 표시",
+    "settings.fortune.exact-desc": "체크 시 운세로 인한 정확한 행운 수치가 달력에 퍼센트로 표시됩니다.",
+
+    "settings.train": "페이지: 열차 시간표",
+
+    "settings.weather": "페이지: 일기 예보",
+
+    "settings.mines": "페이지: 던전",
+
+    "settings.fish": "페이지: 낚시",
+    "settings.fish.show-tank": "수조 미리보기 표시",
+    "settings.fish.show-tank-desc": "체크 시 낚시 페이지에 각 수산물 수조 미리보기를 표시합니다.",
+
+    "settings.fish.decorate-tank": "수조 장식",
+    "settings.fish.decorate-tank-desc": "체크 시 수조 미리보기에 부가 장식이 추가됩니다.",
+
+    "settings.fish.legendary": "전설 물고기 포함",
+    "settings.fish.legendary-desc": "체크 시 전설 물고기가 얼머낵에 표시됩니다.",
+
+    "settings.notices": "페이지: 지역 소식",
+
+    "settings.notices.trains": "열차 표시",
+    "settings.notices.trains-desc": "체크시 지역 소식 페이지에 열차 시간표가 표시됩니다. 열차 시간표 페이지를 대체할 수는 없습니다.",
+
+    "settings.notices.anniversaries": "기념일 표시",
+    "settings.notices.anniversaries-desc": "체크 시 모든 농부의 결혼 날짜와 기념일이 표시됩니다.",
+
+    "settings.notices.festivals": "축제 표시",
+    "settings.notices.festivals-desc": "체크 시 지역 소식 페이지에 축제가 표시됩니다.",
+    "settings.notices.gathering": "채집 표시",
+    "settings.notices.gathering-desc": "체크 시 지역 소식 페이지에 채집 기회가 표시됩니다.",
+
+    "settings.notices.merchant": "여행 카트 표시",
+    "settings.notices.merchant-desc": "선택 시 지역 소식 페이지에 여행 카트 마을 방문이 표시됩니다. 행상인 판매 목록도 표시할 수 있습니다.",
+    "settings.notices.merchant.Disabled": "비활성화됨",
+    "settings.notices.merchant.Visit": "방문만 표시",
+    "settings.notices.merchant.Stock": "방문과 판매 목록 표시",
+
+    "settings.restore-state": "상태 저장",
+    "settings.restore-state.desc": "체크 시 얼머낵이 닫힐 때 상태를 저장하여 다시 열 때 상태를 복원합니다.",
+
+    "settings.cycle-time": "이미지 회전 시간",
+    "settings.cycle-time.desc": "다수의 이미지가 같은 날 표시되어야 할 때 설정값만큼 표시 후 다음 이미지를 표시합니다.",
+
+    "settings.debug": "디버그 모드",
+    "settings.debug.desc": "체크 시 디버깅 시 유용할 수 있는 추가 정보가 얼머낵에 표시됩니다. 디버그모드에서 F5를 누르면 데이터가 새로고침됩니다.",
+
+    // Events
+
+    // Pierre at Farm
+    "event.11022000.0": "안녕, @. 잘 적응하고 있는것 같네!",
+    "event.11022000.1": "올해 농부 얼머낵이 막 도착했어. 새로 온 친구다보니 필요하지 싶어서 하나 가져왔어.",
+    "event.11022000.2": "'농부 얼머낵'을 받았습니다.",
+    "event.11022000.3": "일기 예보, 작물 주기, 열차 시간 등 유용한 정보들로 가득 차 있지.",
+    "event.11022000.4": "무엇을 심을 수 있는지 읽어봐. 준비되면 우리 가게에서 씨앗을 사면 돼.#$b#피에르 상점은 *최고급* 씨앗만 취급하니까",
+
+    // Wizard at Farm
+    "event.11022002.0": "또 만나게 됬네... @. 기다리고 있었어.#$b#여기, 줄게 있어.",
+    "event.11022002.1": "'마법 얼머낵'을 받았습니다.",
+    "event.11022002.2": "농부니까 일기 예보는 익숙하겠지?#$b#이 얼머낵은 점쟁이 웰윅이 직접 쓴 영적 예측을 담고 있어.#$b#너가 안전하게 성장할 수 있도록 도움이 될꺼야.",
+    "event.11022002.3": "자, 바빠서... 그럼 이만.",
+
+    // Willy at FishShop
+    "event.11022001.0": "어어이!",
+    "event.11022001.1": "섬으로 출발할껀가?",
+    "event.11022001.2": "이게 도움 될것 같아서 가져와봤어. 여기.",
+    "event.11022001.3": "'페른 섬 얼머낵'을 받았습니다.",
+    "event.11022001.4": "별거는 아닌데 날씨를 파악할 수 있으면 도움이 될꺼야. 어떤 물고기는 비 오늘 날만 발견할 수 있는거 알지?",
+    "event.11022001.5": "바쁘겠군, 그럼 이만 가볼께. 좋은 하루, @.",
+
+    // Times
+    // If this is set, we'll use a custom format for times displayed by Almanac
+    // rather than using the game's built-in getTimeOfDayString method.
+    // See https://stardewvalleywiki.com/Modding:Custom_languages#Data_format for
+    // details. (Specifically, TimeFormat in the data format table.)
+    "time-format": "",
+
+    // Locations
+
+    "location.WitchSwamp": "마녀의 늪",
+    "location.BugLand": "돌연변이 곤충 둥지",
+
+    "location.Caldera": "진저 섬 (칼데라 화산)",
+    "location.IslandWest": "진저 섬 서쪽",
+    "location.IslandNorth": "진저 섬 북쪽",
+    "location.IslandSouth": "진저 섬 남쪽",
+    "location.IslandSouthEast": "진저 섬 남동쪽",
+    "location.IslandSouthEastCave": "진저 섬 남동쪽 (동굴)",
+    "location.IslandEast": "진저 섬 동쪽",
+
+    "location.Submarine": "낚시 잠수함",
+
+    "location.sub-any": "전지역",
+    "location.sub-floor": "{{floor}} 층",
+
+    "location.Forest.River": "강",
+    "location.Forest.Pond": "연못",
+
+    "location.Island.Ocean": "바다",
+    "location.Island.Freshwater": "민물",
+
+    // Maps: Stardew Aquarium
+    "location.Custom_ExteriorMuseum": "스타듀 아쿠아리움",
+
+    // Maps: Stardew Valley Expanded
+    "location.Custom_AdventurerSummit": "모험가 산꼭대기",
+    "location.Custom_BlueMoonVineyard": "블루문 포도밭",
+    "location.Custom_BlueMoonVineyard.0": "바다",
+    "location.Custom_BlueMoonVineyard.1": "강",
+    "location.Custom_CrimsonBadlands": "핏빛 불모지",
+    "location.Custom_FableReef": "산호섬",
+    "location.Custom_ForestWest": "서쪽 잉걸불 수액 숲",
+    "location.Custom_Highlands": "고산 지대",
+    "location.Custom_Highlands.0": "유적",
+    "location.Custom_Highlands.1": "강",
+    "location.Custom_HighlandsCavern": "고산 지대 (동굴)",
+    "location.Custom_JunimoWoods": "주니모 숲",
+    //"location.Custom_MorrisProperty": "모리스의 집",
+    "location.Custom_ShearwaterBridge": "슴새 다리",
+    "location.Custom_SpriteSpring2": "숲 정령의 샘",
+    "location.Custom_GrampletonSuburbs": "그램플턴 외곽",
+    "location.Custom_GrampletonSuburbsTrainStation": "그램플턴 외곽 기차역",
+
+    // Maps: East Scarpe
+    "location.Custom_EastScarpe": "이스트 스카프",
+    "location.Custom_EastScarpe.0": "연못",
+    "location.Custom_EastScarpe.1": "조수 웅덩이",
+    "location.Custom_EastScarpe.2": "바다",
+    "location.Custom_ESDeepDark": "이스트 스카프 (깊은 어둠)",
+    "location.Custom_ESDeepMountains": "깊은 산",
+    "location.Custom_ESClearingHouse": "포도밭",
+    "location.Custom_ESMeadowFarm": "목초지 농장",
+    "location.Custom_ESVineyard": "포도밭",
+    "location.Custom_ESMineEntrance": "이스트 스카프 (광산 입구)",
+    "location.Custom_ESSeaCave": "이스트 스카프 (바다 동굴)",
+    "location.Custom_ESSmugglerDen": "밀수꾼의 소굴",
+    "location.Custom_ESOrchard": "체리 과수원",
+
+    // Maps: Ridgeside Village
+    "location.Custom_Ridgeside_RidgesideVillage": "릿지사이드 마을",
+    "location.Custom_Ridgeside_RSVSewers": "릿지사이드 마을 (하수구)",
+    "location.Custom_Ridgeside_Ridge": "산마루",
+    "location.Custom_Ridgeside_RidgeFalls": "산마루 폭포",
+    "location.Custom_Ridgeside_RidgeForest": "산마루 숲",
+    "location.Custom_Ridgeside_RidgePond": "산마루 연못",
+    "location.Custom_Ridgeside_SummitFarm": "산꼭대기 농장",
+
+    // Maps: Downtown Zuzu
+    "location.Custom_DTZ_Forest1": "주주 숲",
+    "location.Custom_DTZ_Forest2": "주주 숲",
+    //"location.Custom_DTZ_Forest1.1": "",
+    "location.Custom_DTZ_ResortSouth": "카후나 리조트",
+    "location.Custom_DTZ_ZuzuCityOasis1": "주주 사막",
+    "location.Custom_DTZ_Waterway": "주주 도시",
+
+    // Maps: Dam
+    "location.Custom_Dam": "댐",
+    //"location.Custom_Dam_AfforestationArea": "Dam Afforestation Area",
+    //"location.Custom_Dam_Cliff": "Cliff Near the Dam",
+    //"location.Custom_Dam_Road": "Road to the Dam",
+
+    // Maps: Flooded Cave
+    "location.Custom_Flooded_Cave": "물에 잠긴 동굴",
+
+    // Maps: Tristan
+    "location.Custom_LK_SecretCave": "비밀의 숲 (동굴)",
+    "location.Custom_LK_FairyPool": "비밀의 술 (요정 연못)"
+}
