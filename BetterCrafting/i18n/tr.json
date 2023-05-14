@@ -24,79 +24,79 @@
 	"setting.gift-taste-style.tip": "\"Kafalar\" seçili ise, hediye zevkleri her karakterin kafası kullanılarak belirtilir. \"İsimler\" seçili ise, bunun yerine isimler gösterilir.",
 
 	"setting.gift-taste": "Hediye Zevklerini Göster",
-	"setting.gift-taste.tip": "Etkinleştirildiğinde, known gift tastes will be displayed in item tool-tips for convenience. Matching gift tastes are always displayed when searching.",
+	"setting.gift-taste.tip": "Etkinleştirildiğinde, bilinen hediye zevkleri kolaylık sağlamak için eşya açıklamalarında gösterilir. Eşleşen hediye zevkleri arama yaparken her zaman gösterilir.",
 	"setting.gift-taste.never": "Asla",
 	"setting.gift-taste.shift": "Shift'e Basarken",
 	"setting.gift-taste.always": "Her Zaman",
 
-	"setting.gift-taste-all": "Show Undiscovered Gift Tastes",
-	"setting.gift-taste-all.tip": "When this is enabled, Better Crafting will display all gift tastes. Even those you haven't discovered in game yet. This can be considered a bit cheaty, so it's disabled by default.",
+	"setting.gift-taste-all": "Keşfedilmemiş Hediye Zevklerini Göster",
+	"setting.gift-taste-all.tip": "Etkinleştirildiğinde Better Crafting bütün hediye zevklerini gösterir. Oyunda keşfetmedikleriniz dahil. Bu özellik biraz hileli sayılabilir, bu yüzden varsayılan olarak devre dışıdır.",
 
-	"setting.alphabetic": "Sort Alphabetically",
-	"setting.alphabetic.tip": "When this is enabled, recipes will be sorted alphabetically rather than using the default order.",
+	"setting.alphabetic": "Alfabetik Sırala",
+	"setting.alphabetic.tip": "Etkinleştirildiğinde tarifler varsayılan sıra yerine alfabetik olarak sıralanır.",
 
-	"setting.replace-crafting": "Replace Crafting Menu",
-	"setting.replace-crafting.tip": "When enabled, the crafting menu is replaced with a reimplementation.",
+	"setting.replace-crafting": "Üretim Menüsünü Değiştir",
+	"setting.replace-crafting.tip": "Etkinleştirildiğinde üretim menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
 
-	"setting.replace-cooking": "Replace Cooking Menu",
-	"setting.replace-cooking.tip": "When enabled, the cooking menu is replaced with a reimplementation.",
+	"setting.replace-cooking": "Pişirme Menüsünü Değiştir",
+	"setting.replace-cooking.tip": "Etkinleştirildiğinde pişirme menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
 
-	"setting.enable-categories": "Enable Categories",
-	"setting.enable-categories.tip": "Display category tabs in crafting menus, rather than one big list of everything.",
+	"setting.enable-categories": "Kategorileri Etkinleştir",
+	"setting.enable-categories.tip": "Üretim menülerinde her şeyi içeren büyük bir liste yerine kategori sekmeleri gösterir.",
 
-	"setting.settings": "Show Settings Button",
-	"setting.settings.tip": "When enabled, a button to open Better Crafting's settings will be added to the Better Crafting menu.",
+	"setting.settings": "Ayar Butonunu Göster",
+	"setting.settings.tip": "Etkinleştirildiğinde Better Crafting menüsüne, modun ayarlarını açmak için bir düğme ekler.",
 
-	"setting.bindings": "Hotkeys and Actions",
-	"setting.bindings.tip": "Settings related to input and keybindings.",
+	"setting.bindings": "Kısayol Tuşları ve Eylemler",
+	"setting.bindings.tip": "Veri girişleri ve tuşlar ile ilgili ayarlar.",
 
-	"setting.suppress": "Disable Key",
-	"setting.suppress.tip": "When this key is held and you open a crafting menu, Better Crafting will not replace it.",
+	"setting.suppress": "Devre Dışı Bırakma Tuşu",
+	"setting.suppress.tip": "Bu tuş basılı tutulurken bir üretim menüsü açılırsa, Better Crafting bu menüyü değiştirmez.",
 
-	"setting.key.modifier": "Modifier Key",
-	"setting.key.modifier.tip": "Hold this key to modify the action performed by another key when available.",
+	"setting.key.modifier": "Değiştirme Tuşu",
+	"setting.key.modifier.tip": "Kullanılabilir olduğunda başka bir tuş tarafından gerçekleştirilen eylemi değiştirmek için bu tuşu basılı tutun.",
 
-	"setting.key.search": "Search Key",
-	"setting.key.search.tip": "Press this key to open a search for filtering the displayed recipes.",
+	"setting.key.search": "Arama Tuşu",
+	"setting.key.search.tip": "Görüntülenen tarifleri filtrelemek için bir arama açmak için bu tuşa basın.",
 
-	"setting.key.favorite": "Favorite Key",
-	"setting.key.favorite.tip": "Press this key on a recipe to favorite or unfavorite that recipe.",
+	"setting.key.favorite": "Favori Tuşu",
+	"setting.key.favorite.tip": "Bir tarifi favorilere eklemek veya favorilerden çıkarmak için tarifin üstünde bu tuşa basın.",
 
-	"setting.key.bulk": "Bulk Crafting Key",
-	"setting.key.bulk.tip": "Press this key on a recipe to open Bulk Crafting for that recipe.",
+	"setting.key.bulk": "Toptan Üretim Tuşu",
+	"setting.key.bulk.tip": "Bir tarifte Toplu Üretimi açmak için bu tuşa basın.",
 
-	"setting.key.behavior.left": "Left-Click / A Behavior",
-	"setting.key.behavior.left.tip": "When left clicking (or pressing A on controller) on a recipe, this action will be performed.",
-	"setting.key.behavior.right": "Right-Click / X Behavior",
-	"setting.key.behavior.right.tip": "When right clicking (or pressing X on controller) on a recipe, this action will be performed.",
+	"setting.key.behavior.left": "Sol Tık / A Tuşu Eylemi",
+	"setting.key.behavior.left.tip": "Bir tarifin üstünde sol tık yaparken (veya oyun kumandasında A'ya basarken) bu eylem gerçekleştirilir.",
+	"setting.key.behavior.right": "Sağ Tık / X Tuşu Eylemi",
+	"setting.key.behavior.right.tip": "Bir tarifin üstünde sağ tık yaparken (veya oyun kumandasında X'e basarken) bu eylem gerçekleştirilir.",
 
-	"setting.key.tooltip": "Show Hotkeys in Tool-tips",
-	"setting.key.tooltip.tip": "When enabled, hotkeys will be displayed at the bottom of Better Crafting's tool-tips.",
+	"setting.key.tooltip": "Kısayol Tuşlarını Eşya İpuçlarında Göster",
+	"setting.key.tooltip.tip": "Etkinleştirildiğinde kısayol tuşları Better Crafting'in eşya ipuçlarının en altında gösterilir.",
 
-	"setting.ttwhen.Never": "Never",
-	"setting.ttwhen.ForController": "When Using Controller",
-	"setting.ttwhen.Always": "Always",
+	"setting.ttwhen.Never": "Asla",
+	"setting.ttwhen.ForController": "Oyun Kumandası Kullanırken",
+	"setting.ttwhen.Always": "Her Zaman",
 
-	"setting.action.None": "Nothing",
-	"setting.action.Craft": "Craft",
-	"setting.action.Favorite": "Toggle Favorite",
-	"setting.action.BulkCraft": "Bulk Craft",
+	"setting.action.None": "Hiçbir Şey",
+	"setting.action.Craft": "Üret",
+	"setting.action.Favorite": "Favorile",
+	"setting.action.BulkCraft": "Toptan Üret",
 
-	"setting.nearby": "Extended Workbench",
+	"setting.nearby": "Uzatılmış Çalışma Tezgahı",
 	"setting.nearby.tip": "This feature allows Workbenches and your kitchen to connect to more chests at once, improving on the game's default range of one block. You can create chains of connected chests, or use allowed connectors to bridge gaps.",
 
-	"setting.nearby.enable": "Enable Extended Workbench",
+	"setting.nearby.enable": "Uzatılmış Çalışma Tezgahını Etkinleştir",
 
-	"setting.nearby.diagonal": "Allow Diagonal Connections",
+	"setting.nearby.diagonal": "Çapraz Bağlantıları Etkinleştir",
 	"setting.nearby.diagonal.tip": "When enabled, chests and connectors can be placed diagonally and still connect.",
 
-	"setting.nearby.performance": "Performance",
+	"setting.nearby.performance": "Performans",
 	"setting.nearby.performance.tip": "Settings that limit the extent of Extended Workbench to improve performance.",
 
-	"setting.nearby.max-chests": "Max Inventories",
+	"setting.nearby.max-chests": "Maks. Envanter Sayısı",
 	"setting.nearby.max-chests.tip": "The maximum number of inventories a workbench will use.",
 
-	"setting.nearby.max-distance": "Max Distance",
+	"setting.nearby.max-distance": "Maks. Mesafe",
 	"setting.nearby.max-distance.tip": "The maximum distance an inventory can be from the workbench.",
 
 	"setting.nearby.max-check": "Max Checks",
