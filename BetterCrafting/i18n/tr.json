@@ -1,7 +1,7 @@
 {
 	// Settings
 	"setting.show-adv": "Gelişmiş Üretim Ayarlarını Göster",
-	"setting.show-adv.tip": "Ne kadar malzemeye sahip olduğun ve bir tarifi daha önce kaç kere ürettiğin gibi gelişmiş üretim ayarlarını gösterir. Vanilla oyundaki ayarın aynısıdır, kolaylık için buraya da eklenmiştir.",
+	"setting.show-adv.tip": "Ne kadar malzemeye sahip olduğunuz ve bir tarifi daha önce kaç kere ürettiğiniz gibi gelişmiş üretim ayarlarını gösterir. Vanilla oyundaki ayarın aynısıdır, kolaylık için buraya da eklenmiştir.",
 
 	"setting.general": "Genel Ayarlar",
 
@@ -35,8 +35,8 @@
 	"setting.alphabetic": "Alfabetik Sırala",
 	"setting.alphabetic.tip": "Etkinleştirildiğinde tarifler varsayılan sıra yerine alfabetik olarak sıralanır.",
 
-	"setting.replace-crafting": "Üretim Menüsünü Değiştir",
-	"setting.replace-crafting.tip": "Etkinleştirildiğinde üretim menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
+	"setting.replace-crafting": "Oluşturulmuş Nesne Menüsünü Değiştir",
+	"setting.replace-crafting.tip": "Etkinleştirildiğinde oluşturulmuş nesne menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
 
 	"setting.replace-cooking": "Pişirme Menüsünü Değiştir",
 	"setting.replace-cooking.tip": "Etkinleştirildiğinde pişirme menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
@@ -83,52 +83,52 @@
 	"setting.action.BulkCraft": "Toptan Üret",
 
 	"setting.nearby": "Uzatılmış Çalışma Tezgahı",
-	"setting.nearby.tip": "This feature allows Workbenches and your kitchen to connect to more chests at once, improving on the game's default range of one block. You can create chains of connected chests, or use allowed connectors to bridge gaps.",
+	"setting.nearby.tip": "Bu özellik Çalışma Tezgahlarının ve mutfağınızın aynı anda daha fazla sandığa bağlanmasını sağlayarak oyunun varsayılan menzili olan 1 karoyu iyileştirir. Bağlantılı sandık zincirleri oluşturabilir veya boşlukları kapatmak için izin verilen bağlayıcıları kullanabilirsiniz.",
 
 	"setting.nearby.enable": "Uzatılmış Çalışma Tezgahını Etkinleştir",
 
 	"setting.nearby.diagonal": "Çapraz Bağlantıları Etkinleştir",
-	"setting.nearby.diagonal.tip": "When enabled, chests and connectors can be placed diagonally and still connect.",
+	"setting.nearby.diagonal.tip": "Etkinleştirildiğinde, sandıklar ve bağlayıcılar çapraz olarak yerleştirilse bile bağlanır.",
 
 	"setting.nearby.performance": "Performans",
-	"setting.nearby.performance.tip": "Settings that limit the extent of Extended Workbench to improve performance.",
+	"setting.nearby.performance.tip": "Performansı artırmak için Uzatılmış Çalışma Tezgahı'nın kapsamını sınırlayan ayarlar.",
 
 	"setting.nearby.max-chests": "Maks. Envanter Sayısı",
-	"setting.nearby.max-chests.tip": "The maximum number of inventories a workbench will use.",
+	"setting.nearby.max-chests.tip": "Bir Çalışma Tezgahının kullanacağı maks. envanter sayısı.",
 
 	"setting.nearby.max-distance": "Maks. Mesafe",
-	"setting.nearby.max-distance.tip": "The maximum distance an inventory can be from the workbench.",
+	"setting.nearby.max-distance.tip": "Bir envanterin bir Çalışma Tezgahından olabileceği maks. mesafe.",
 
-	"setting.nearby.max-check": "Max Checks",
-	"setting.nearby.max-check.tip": "The maximum number of tiles to check when discovering nearby inventories.",
+	"setting.nearby.max-check": "Maks. Kontrol Mesafesi",
+	"setting.nearby.max-check.tip": "Yakındaki envanterleri keşfederken kontrol edilecek maksimum karo sayısı.",
 
-	"setting.nearby.connectors": "Allowed Connectors",
-	"setting.nearby.connectors.tip": "Placeable objects that can be used as connectors. You should avoid adding unnecessary connector types to keep performance up. Please note that these entries are examples, and you can manually edit your config file to add other objects and terrain features.",
+	"setting.nearby.connectors": "İzin Verilen Bağlayıcılar",
+	"setting.nearby.connectors.tip": "Bağlayıcı olarak kullanılabilen yerleştirilebilir nesneler. Performansı yüksek tutmak için gereksiz bağlayıcı türleri eklemekten kaçınmalısınız. Lütfen bu girdilerin örnek olduğunu ve diğer nesneleri ve arazi özelliklerini eklemek için config dosyanızı manuel olarak düzenleyebileceğinizi unutmayın.",
 
-	"setting.nearby.floors": "Flooring",
-	"setting.nearby.other": "Other Examples",
+	"setting.nearby.floors": "Kaplamalar",
+	"setting.nearby.other": "Diğer Örnekler",
 
-	"setting.recycle": "Recycling",
-	"setting.recycle.about": "When this is enabled, you can use the crafting menu to recycle items and get back the items that were used to craft it.",
+	"setting.recycle": "Geri Dönüştürme",
+	"setting.recycle.about": "Etkinleştirildiğinde, nesneleri geri dönüştürüp onları işlemek için kullanılan öğeleri geri alma amacıyla üretim menüsünü kullanabilirsiniz.",
 
-	"setting.recycle.fuzzy": "Fuzzy Item Matching",
-	"setting.recycle.fuzzy.tip": "Some crafting recipes don't require specific items, instead matching things like \"Egg (Any)\". By default, these aren't returned. Enabling this will return the cheapest matching item in such cases.",
+	"setting.recycle.fuzzy": "Belirsiz Nesne Eşleştirme ",
+	"setting.recycle.fuzzy.tip": "Bazı üretim tarifleri belirli nesneler istemez, onun yerine \"Yumurta (Herhangi)\" gibi ögeler eşleştirir. Varsayılan olarak, bunların döndürme sırası yoktur. Bunu etkinleştirmek, bu gibi durumlarda en ucuz eşleşen öğeyi döndürür.",
 
-	"setting.recycle.unknown": "Allow Unknown Recipes",
-	"setting.recycle.unknown.tip": "When this is enabled, you can recycle items even if you don't have their crafting recipe unlocked.",
+	"setting.recycle.unknown": "Bilinmeyen Tariflere İzin Ver",
+	"setting.recycle.unknown.tip": "Etkinleştirildiğinde, üretim tariflerini bilmeseniz bile nesneleri geri dönüştürebilirsiniz.",
 
-	"setting.recycle.crafting": "Crafting Recycling",
-	"setting.recycle.crafting.tip": "Whether or not recycling should be allowed when crafting.",
+	"setting.recycle.crafting": "Nesne Oluşturma Geri Dönüşümü",
+	"setting.recycle.crafting.tip": "Nesne oluşturma sırasında geri dönüşüme izin verilip verilmeyeceği.",
 
-	"setting.recycle.cooking": "Cooking Recycling",
+	"setting.recycle.cooking": "Pişirme Geri Dönüşümü",
 	"setting.recycle.cooking.tip": "Whether or not recycling should be allowed when cooking.",
 
-	"setting.recycle-mode.enabled": "Always",
-	"setting.recycle-mode.disabled": "Never",
-	"setting.recycle-mode.automatic": "Automatic (When Holding Recyclable Item)",
+	"setting.recycle-mode.enabled": "Her Zaman",
+	"setting.recycle-mode.disabled": "Asla",
+	"setting.recycle-mode.automatic": "Otomatik (Geri Dönüştürülebilir Nesne Tutulurken)",
 
-	"setting.recycle.click-toggle": "Click to Toggle",
-	"setting.recycle.click-toggle.tip": "When this is enabled, clicking the trash bin in the crafting menu will toggle recycling on or off. This only works when not holding an item.",
+	"setting.recycle.click-toggle": "Tıklayarak Aç/Kapa",
+	"setting.recycle.click-toggle.tip": "Etkinleştirildiğinde, clicking the trash bin in the crafting menu will toggle recycling on or off. This only works when not holding an item.",
 
 	"setting.transfer": "Transfer to Storage",
 	"setting.transfer.about": "This feature allows you to quickly store items from your inventory into chests connected to a Workbench or your kitchen. Matching items get placed in appropriate chests, similar to Add to Existing Stacks.",
@@ -155,13 +155,13 @@
 	"setting.cookout.about": "These settings tweak the behavior of Cookout Kits, making them behave more like Workbenches.",
 
 	"setting.cookout.workbench": "Workbench-like Connectivity",
-	"setting.cookout.workbench.tip": "When enabled, Cookout Kits will draw materials from nearby containers just like Workbenches can.",
+	"setting.cookout.workbench.tip": "Etkinleştirildiğinde, Cookout Kits will draw materials from nearby containers just like Workbenches can.",
 
 	"setting.cookout.durable": "Long Lasting Kits",
-	"setting.cookout.durable.tip": "When enabled, Cookout Kits will not vanish overnight and they won't disappear when you break them.",
+	"setting.cookout.durable.tip": "Etkinleştirildiğinde, Cookout Kits will not vanish overnight and they won't disappear when you break them.",
 
 	"setting.cookout.expensive": "More Expensive Kits",
-	"setting.cookout.expensive.tip": "When enabled, the crafting recipe for Cookout Kits will be tweaked to make them a bit more expensive to help balance the increased longevity.",
+	"setting.cookout.expensive.tip": "Etkinleştirildiğinde, the crafting recipe for Cookout Kits will be tweaked to make them a bit more expensive to help balance the increased longevity.",
 
 	// Quality
 
@@ -169,20 +169,20 @@
 	"setting.quality.tip": "Please note that some recipes added by other sources, such as SpaceCore, may not respect these settings due to API limitations.",
 
 	"setting.enable-quality": "Enable Quality Limit",
-	"setting.enable-quality.tip": "When enabled, a button will be displayed allowing you to choose a maximum quality of items to use when crafting.",
+	"setting.enable-quality.tip": "Etkinleştirildiğinde, a button will be displayed allowing you to choose a maximum quality of items to use when crafting.",
 
 	"setting.sort-quality": "Use Low Quality First",
-	"setting.sort-quality.tip": "When enabled, recipes will be crafted using lower quality items first.",
+	"setting.sort-quality.tip": "Etkinleştirildiğinde, recipes will be crafted using lower quality items first.",
 
 	// Crafting
 	"setting.crafting": "Crafting",
 	"setting.crafting.tip": "These settings apply specifically to the reimplemented crafting menu.",
 
 	"setting.uniform-grid": "Force Uniform Sizes",
-	"setting.uniform-grid.tip": "When enabled, big craftables will be squished down to fit in a single row.",
+	"setting.uniform-grid.tip": "Etkinleştirildiğinde, big craftables will be squished down to fit in a single row.",
 
 	"setting.big-craftables-last": "Sort Big Craftables Last",
-	"setting.big-craftables-last.tip": "When enabled, big craftables will all be put at the end of the list.",
+	"setting.big-craftables-last.tip": "Etkinleştirildiğinde, big craftables will all be put at the end of the list.",
 
 	// Cooking
 	"setting.cooking": "Cooking",
@@ -196,7 +196,7 @@
 	"seasoning.inventory": "Inventory Only",
 
 	"setting.hide-unknown": "Hide Unknown Recipes",
-	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",
+	"setting.hide-unknown.tip": "Etkinleştirildiğinde, recipes you haven't learned yet won't be displayed in the menu.",
 
 	// Tool-tips
 	"tooltip.loves": "Loves: {{npcs}}",
