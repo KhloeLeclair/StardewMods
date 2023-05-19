@@ -176,95 +176,95 @@
 
 	// Crafting
 	"setting.crafting": "Nesne Oluşturma",
-	"setting.crafting.tip": "These settings apply specifically to the reimplemented crafting menu.",
+	"setting.crafting.tip": "Bu ayarlar özel olarak yeniden yapılandırılmış nesne oluşturma menüsüne uygulanır.",
 
 	"setting.uniform-grid": "Eş Boyutları Zorla",
-	"setting.uniform-grid.tip": "Etkinleştirildiğinde, big craftables will be squished down to fit in a single row.",
+	"setting.uniform-grid.tip": "Etkinleştirildiğinde büyük nesneler, tek satıra sığmaları için küçültülür.",
 
-	"setting.big-craftables-last": "Sort Big Craftables Last",
-	"setting.big-craftables-last.tip": "Etkinleştirildiğinde, big craftables will all be put at the end of the list.",
+	"setting.big-craftables-last": "Büyük Nesneleri Sona Koy",
+	"setting.big-craftables-last.tip": "Etkinleştirildiğinde büyük nesneler, listenin en sonuna konur.",
 
 	// Cooking
-	"setting.cooking": "Cooking",
-	"setting.cooking.tip": "These settings apply specifically to the reimplemented cooking menu.",
+	"setting.cooking": "Yemek Pişirme",
+	"setting.cooking.tip": "Bu ayarlar özel olarak yeniden yapılandırılmış yemek pişirme menüsüne uygulanır.",
 
-	"setting.seasoning": "Use Seasoning",
-	"setting.seasoning.tip": "Whether or not seasoning should be used to enhance cooked items. When set to \"Inventory Only\", seasoning will only be used from your inventory and not from the fridge or any other source.",
+	"setting.seasoning": "Çeşni Kullan",
+	"setting.seasoning.tip": "Pişirilen nesneleri geliştirmek için baharat kullanılıp kullanılmayacağı. \"Sadece Envanterden\" seçiliyse, sadece envanterdeki çeşniler kullanılır ve buzdolabı veya başka bir kaynaktakiler kullanılmaz.",
 
-	"seasoning.disabled": "Never",
-	"seasoning.enabled": "Always",
-	"seasoning.inventory": "Inventory Only",
+	"seasoning.disabled": "Asla",
+	"seasoning.enabled": "Her Zaman",
+	"seasoning.inventory": "Sadece Envanterden",
 
-	"setting.hide-unknown": "Hide Unknown Recipes",
-	"setting.hide-unknown.tip": "Etkinleştirildiğinde, recipes you haven't learned yet won't be displayed in the menu.",
+	"setting.hide-unknown": "Bilinmeyen Tarifleri Sakla",
+	"setting.hide-unknown.tip": "Etkinleştirildiğinde, bilmediğiniz tarifler menüde gösterilmez.",
 
 	// Tool-tips
-	"tooltip.loves": "Loves: {{npcs}}",
-	"tooltip.likes": "Likes: {{npcs}}",
+	"tooltip.loves": "Sever: {{npcs}}",
+	"tooltip.likes": "Hoşlanır: {{npcs}}",
 
-	"tooltip.crafted": "Crafted {{count}} Times",
+	"tooltip.crafted": "{{count}} kere üretildi.",
 
-	"tooltip.toggle-recipe": "Toggle in Category",
-	"tooltip.use-as-icon": "Use as Icon",
+	"tooltip.toggle-recipe": "Kategoriye Ekle/Çıkar",
+	"tooltip.use-as-icon": "İkon Olarak Kullan",
 
-	"tooltip.transfer.to": "Add Items to Storage",
-	"tooltip.transfer.to-item": "Add Held Item to Storage",
+	"tooltip.transfer.to": "Nesneleri Depolamaya Ekle",
+	"tooltip.transfer.to-item": "Tutulan Nesneyi Depolamaya Ekle",
 
-	"tooltip.transfer.from": "Fill Items from Storage",
-	"tooltip.transfer.from-item": "Fill Held Item from Storage",
+	"tooltip.transfer.from": "Depolamadan Nesne Doldur",
+	"tooltip.transfer.from-item": "Depolamadan Tutulan Nesneyi Doldur",
 
-	"tooltip.transfer.all": "Transfer All",
-	"tooltip.transfer.but-quantity": "Transfer All But {{count}}",
-	"tooltip.transfer.half": "Transfer Half",
-	"tooltip.transfer.quantity": "Transfer {{count}}",
+	"tooltip.transfer.all": "Hepsini Aktar",
+	"tooltip.transfer.but-quantity": "{{count}} Tanesi Hariç Hepsini Aktar",
+	"tooltip.transfer.half": "Yarısını Aktar",
+	"tooltip.transfer.quantity": "{{count}} Tanesini Aktar",
 
-	"tooltip.edit-filter-locked": "Individual recipes cannot be enabled or disabled when using Dynamic Rules for a category. Please adjust your rules, or disable Dynamic Rules.",
+	"tooltip.edit-filter-locked": "Bireysel tarifler, bir kategori için Dinamik Kurallar kullanılırken etkinleştirilemez veya devre dışı bırakılamaz. Lütfen kurallarınızı düzenleyin veya Dinamik Kurallar'ı devre dışı bırakın.",
 
 	// Recycling
-	"tooltip.recycle": "Recycle {{item}}",
-	"tooltip.recycle.invalid": "You cannot recycle this item.",
-	"tooltip.recycle.insufficient": "You need at least {{count}} of this item to recycle it.",
-	"tooltip.recycle.returns": "Returns:",
-	"tooltip.recycle.not-returned": "Not Returned:",
-	"tooltip.recycle.all": "Recycle All ({{amount}})",
-	"tooltip.recycle.once": "Recycle Some ({{amount}})",
+	"tooltip.recycle": "{{item}} Nesnesini Geri Dönüştür",
+	"tooltip.recycle.invalid": "Bu nesneyi geri dönüştüremezsin.",
+	"tooltip.recycle.insufficient": "Bu nesneyi geri dönüştürmek için en az {{count}} tanesine sahip olmalısınız.",
+	"tooltip.recycle.returns": "Geri Verir:",
+	"tooltip.recycle.not-returned": "Geri Verilmedi:",
+	"tooltip.recycle.all": "Hepsini Geri Dönüştür ({{amount}})",
+	"tooltip.recycle.once": "Birazını Geri Dönüştür ({{amount}})",
 
 	// Buttons
-	"tooltip.edit-mode": "Edit Categories",
-	"tooltip.favorites": "Only Show Favorites",
-	"tooltip.seasoning": "Use Seasoning",
-	"tooltip.uniform": "Use Uniform Grid",
-	"tooltip.settings": "Open Settings",
+	"tooltip.edit-mode": "Kategorileri Düzenle",
+	"tooltip.favorites": "Sadece Favorileri Göster",
+	"tooltip.seasoning": "Çeşni Kullan",
+	"tooltip.uniform": "Eş Boyutlu Izgarayı Kullan",
+	"tooltip.settings": "Ayarları Aç",
 
-	"tooltip.filter.enabled": "Dynamic Rules: Enabled",
-	"tooltip.filter.disabled": "Dynamic Rules: Disabled",
-	"tooltip.filter.about": "This lets you create categories based on rules, rather than by manually selecting individual recipes.",
+	"tooltip.filter.enabled": "Dinamik Kurallar: Etkin",
+	"tooltip.filter.disabled": "Dinamik Kurallar: Devre Dışı",
+	"tooltip.filter.about": "Bu ayar, tarifleri tek tek manuel olarak seçmek yerine kurallara göre kategoriler oluşturmanıza olanak tanır.",
 
-	"tooltip.include-in-misc": "Include in Miscellaneous: Enabled",
-	"tooltip.include-in-misc.disabled": "Include in Miscellaneous: Disabled",
-	"tooltip.include-in-misc.about": "Normally, if a recipe is in another category it will not be displayed in the Miscellaneous category. Enable this to allow recipes in this category to also appear in the Miscellaneous category.",
+	"tooltip.include-in-misc": "'Çeşitli'ye Dahil Et: Etkin",
+	"tooltip.include-in-misc.disabled": "'Çeşitli'ye Dahil Et: Devre Dışı",
+	"tooltip.include-in-misc.about": "Normalde, bir tarif başka bir kategorideyse \"Çeşitli\" kategorisinde görüntülenmez. Bu kategorideki tariflerin \"Çeşitli\" kategorisinde de görünmesine izin vermek için bunu etkinleştirin.",
 
-	"tooltip.search": "Search Recipes",
-	"tooltip.search.old-tip": "Tip: Start your search with \"@B{{prefix}}@b\" to also search by ingredients. Start your search with \"@B{{likes}}@b\" to also search by characters that like an item, or \"@B{{loves}}@b\" to also search by characters that love an item.",
-	"tooltip.search.tip": "Modifiers: Start your search with the following characters to also search by:\n\n \"@B{{prefix}}@b\": Ingredients\n \"@B{{likes}}@b\": Characters that Like\n \"@B{{loves}}@b\": Characters that Love",
+	"tooltip.search": "Tarif Ara",
+	"tooltip.search.old-tip": "İpucu: Aramanıza \"@B{{prefix}}@b\" ile başlayarak ayrıca malzemelere göre de arama yapabilirsiniz. Aramanıza \"@B{{likes}}@b\" ile başlayarak bir nesneyden hoşlanan karakterlere göre veya \"@B{{loves}}@b\" ile başlayarak bir nesneyi seven karakterlere göre arama yapabilirsiniz.",
+	"tooltip.search.tip": "Niteleyiciler: Start your search with the following characters to also search by:\n\n \"@B{{prefix}}@b\": Ingredients\n \"@B{{likes}}@b\": Characters that Like\n \"@B{{loves}}@b\": Characters that Love",
 
 	"search.ingredient-prefix": "!",
 	"search.like-prefix": "#",
 	"search.love-prefix": "^",
 
-	"search.none": "There are no matching recipes.",
-	"search.none.category": "There are no matching recipes in this category.",
+	"search.none": "Eşleşen tarif yok.",
+	"search.none.category": "Bu kategoride eşleşen tarif yok.",
 
-	"tooltip.select-icon": "Select Icon",
+	"tooltip.select-icon": "İkon seç",
 
-	"tooltip.quality.none": "Only use low-quality items.",
-	"tooltip.quality.silver": "Only use low and silver quality items.",
-	"tooltip.quality.gold": "Only use low, silver, and gold quality items.",
-	"tooltip.quality.iridium": "Use any quality items.",
+	"tooltip.quality.none": "Sadece düşük kaliteli nesne kullan.",
+	"tooltip.quality.silver": "Sadece düşük ve gümüş kaliteli nesne kullan.",
+	"tooltip.quality.gold": "Sadece düşük, gümüş ve altın kaliteli nesne kullan.",
+	"tooltip.quality.iridium": "Her kaliteden nesne kullan.",
 
-	"tooltip.quality-unsupported": "This recipe does not support quality settings.",
+	"tooltip.quality-unsupported": "Bu tarif, kalite ayarlarını desteklemiyor.",
 
-	"ingredient.error": "Invalid Ingredient",
+	"ingredient.error": "Geçersiz Malzeme",
 
 	// Bulk Crafting
 	"bulk.crafting": "Bulk Crafting",
@@ -272,64 +272,64 @@
 	"bulk.craft": "Craft {{count}} of {{name}}",
 
 	// Categories
-	"category.new": "New Category",
-	"category.favorites": "Favorites",
-	"category.combat_rings": "Combat and Rings",
-	"category.consumables": "Consumables",
-	"category.decoration": "Decoration",
-	"category.fertilizer_seeds": "Fertilizer and Seeds",
-	"category.fishing": "Fishing",
-	"category.machinery": "Machinery",
-	"category.misc": "Miscellaneous",
+	"category.new": "Yeni Kategori",
+	"category.favorites": "Favoriler",
+	"category.combat_rings": "Savaşma ve Yüzükler",
+	"category.consumables": "Tüketilebilirler",
+	"category.decoration": "Dekorasyon",
+	"category.fertilizer_seeds": "Gübreler ve Tohumlar",
+	"category.fishing": "Balıkçılık",
+	"category.machinery": "Makineler",
+	"category.misc": "Çeşitli",
 
-	"category.food.farming": "Farming and Foraging",
-	"category.food.mining": "Mining and Magnetism",
-	"category.food.fishing": "Fishing",
-	"category.food.combat": "Combat",
-	"category.food.other": "Luck, Speed, and Others",
+	"category.food.farming": "Çiftçilik ve Toplayıcılık",
+	"category.food.mining": "Madencilik ve Çekim",
+	"category.food.fishing": "Balıkçılık",
+	"category.food.combat": "Savaşma",
+	"category.food.other": "Şans, Hız ve Diğerleri",
 
 	// Currencies
-	"currency.gold": "Gold",
-	"currency.festival-points": "Points",
+	"currency.gold": "Altın",
+	"currency.festival-points": "Puanlar",
 	"currency.club-coins": "Club Coins",
 	"currency.qi-gems": "Qi Gems",
 
 	// Ingredient Categories
-	"item.category.cooking": "Cooking (Any)",
-	"item.category.crafting": "Crafting (Any)",
-	"item.category.mineral": "Mineral (Any)",
-	"item.category.meat": "Meat (Any)",
-	"item.category.fertilizer": "Fertilizer (Any)",
-	"item.category.junk": "Junk (Any)",
-	"item.category.seeds": "Seeds (Any)",
-	"item.category.fruit": "Fruit (Any)",
-	"item.category.flower": "Flower (Any)",
+	"item.category.cooking": "Yemek (Herhangi)",
+	"item.category.crafting": "Oluşturulmuş Nesne (Herhangi)",
+	"item.category.mineral": "Mineral (Herhangi)",
+	"item.category.meat": "Et (Herhangi)",
+	"item.category.fertilizer": "Gübre (Herhangi)",
+	"item.category.junk": "Çöp (Herhangi)",
+	"item.category.seeds": "Tohum (Herhangi)",
+	"item.category.fruit": "Meyve (Herhangi)",
+	"item.category.flower": "Çiçek (Herhangi)",
 
 	// Dynamic Filters
-	"filter.add-new": "Add New Rule",
+	"filter.add-new": "Yeni Kural Ekle",
 
-	"filter.everything": "Everything",
-	"filter.everything.about": "This rule matches every recipe.",
+	"filter.everything": "Her Şey",
+	"filter.everything.about": "Bu kural bütün nesneleri içerir.",
 
-	"filter.buff": "Buff: {{type}}",
-	"filter.buff.about": "This rule matches items that give the {{type}} buff when consumed.",
+	"filter.buff": "Etki: {{type}}",
+	"filter.buff.about": "Bu kural, tüketilince {{type}} etkisini veren nesneleri içerir.",
 
-	"filter.uncrafted": "Not Yet Crafted",
-	"filter.uncrafted.about": "This rule matches items that you haven't crafted yet.",
+	"filter.uncrafted": "Henüz Üretilmedi",
+	"filter.uncrafted.about": "Bu kural, henüz üretmediğiniz nesneleri içerir.",
 
-	"filter.search": "Search",
-	"filter.search.about": "This rule matches items against a search, using the same rules as the crafting menu.",
+	"filter.search": "Ara",
+	"filter.search.about": "Bu kural, üretim menüsüyle aynı kuralları kullanarak nesneleri bir aramayla eşleştirir.",
 
-	"filter.machine": "Machines",
-	"filter.machine.about": "This rule matches items that act as machines, processing items or performing some other function.",
+	"filter.machine": "Makineler",
+	"filter.machine.about": "Bu kural, makine görevi gören, nesneleri işleyen veya başka bir işlevi yerine getiren nesneleri içerir.",
 
-	"filter.sprinkler": "Sprinklers",
-	"filter.sprinkler.about": "This rule matches sprinklers.",
+	"filter.sprinkler": "Fıskiyeler",
+	"filter.sprinkler.about": "Bu kural, fıskiyeleri içerir.",
 
-	"filter.light": "Light",
-	"filter.light.about": "This rule matches placeable lights.",
+	"filter.light": "Işık",
+	"filter.light.about": "Bu kural, yerleştirilebilir ışıklandırmayı içerir.",
 
-	"filter.error": "Invalid Rule",
+	"filter.error": "Geçersiz Kural",
 	"filter.error.about": "This rule ID is invalid or not registered, and may be from a mod that was removed."
 
 }
