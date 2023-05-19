@@ -45,7 +45,7 @@
 	"setting.enable-categories.tip": "Üretim menülerinde her şeyi içeren büyük bir liste yerine kategori sekmeleri gösterir.",
 
 	"setting.settings": "Ayar Butonunu Göster",
-	"setting.settings.tip": "Etkinleştirildiğinde Better Crafting menüsüne, modun ayarlarını açmak için bir düğme ekler.",
+	"setting.settings.tip": "Etkinleştirildiğinde Better Crafting menüsüne, modun ayarlarını açmak için bir buton ekler.",
 
 	"setting.bindings": "Kısayol Tuşları ve Eylemler",
 	"setting.bindings.tip": "Veri girişleri ve tuşlar ile ilgili ayarlar.",
@@ -53,7 +53,7 @@
 	"setting.suppress": "Devre Dışı Bırakma Tuşu",
 	"setting.suppress.tip": "Bu tuş basılı tutulurken bir üretim menüsü açılırsa, Better Crafting bu menüyü değiştirmez.",
 
-	"setting.key.modifier": "Değiştirme Tuşu",
+	"setting.key.modifier": "Değiştirici Tuşu",
 	"setting.key.modifier.tip": "Kullanılabilir olduğunda başka bir tuş tarafından gerçekleştirilen eylemi değiştirmek için bu tuşu basılı tutun.",
 
 	"setting.key.search": "Arama Tuşu",
@@ -112,7 +112,7 @@
 	"setting.recycle.about": "Etkinleştirildiğinde, nesneleri geri dönüştürüp onları işlemek için kullanılan öğeleri geri alma amacıyla üretim menüsünü kullanabilirsiniz.",
 
 	"setting.recycle.fuzzy": "Belirsiz Nesne Eşleştirme ",
-	"setting.recycle.fuzzy.tip": "Bazı üretim tarifleri belirli nesneler istemez, onun yerine \"Yumurta (Herhangi)\" gibi ögeler eşleştirir. Varsayılan olarak, bunların döndürme sırası yoktur. Bunu etkinleştirmek, bu gibi durumlarda en ucuz eşleşen öğeyi döndürür.",
+	"setting.recycle.fuzzy.tip": "Bazı üretim tarifleri belirli nesneler istemez, onun yerine \"Yumurta (Herhangi)\" gibi nesneler eşleştirir. Varsayılan olarak, bu nesneler geri verilmez. Bunu etkinleştirmek, bu gibi durumlarda en ucuz eşleşen nesneyi geri verir.",
 
 	"setting.recycle.unknown": "Bilinmeyen Tariflere İzin Ver",
 	"setting.recycle.unknown.tip": "Etkinleştirildiğinde, üretim tariflerini bilmeseniz bile nesneleri geri dönüştürebilirsiniz.",
@@ -121,64 +121,64 @@
 	"setting.recycle.crafting.tip": "Nesne oluşturma sırasında geri dönüşüme izin verilip verilmeyeceği.",
 
 	"setting.recycle.cooking": "Pişirme Geri Dönüşümü",
-	"setting.recycle.cooking.tip": "Whether or not recycling should be allowed when cooking.",
+	"setting.recycle.cooking.tip": "Yemek pişirme sırasında geri dönüşüme izin verilip verilmeyeceği.",
 
 	"setting.recycle-mode.enabled": "Her Zaman",
 	"setting.recycle-mode.disabled": "Asla",
 	"setting.recycle-mode.automatic": "Otomatik (Geri Dönüştürülebilir Nesne Tutulurken)",
 
 	"setting.recycle.click-toggle": "Tıklayarak Aç/Kapa",
-	"setting.recycle.click-toggle.tip": "Etkinleştirildiğinde, clicking the trash bin in the crafting menu will toggle recycling on or off. This only works when not holding an item.",
+	"setting.recycle.click-toggle.tip": "Etkinleştirildiğinde üretim menüsünde çöp kutusuna tıklamak, geri dönüşümü açar veya kapar. Bu, sadece bir nesne tutulmazken çalışır.",
 
-	"setting.transfer": "Transfer to Storage",
-	"setting.transfer.about": "This feature allows you to quickly store items from your inventory into chests connected to a Workbench or your kitchen. Matching items get placed in appropriate chests, similar to Add to Existing Stacks.",
+	"setting.transfer": "Depolamaya Aktar",
+	"setting.transfer.about": "Bu özellik, envanterinizdeki öğeleri bir Çalışma Tezgahına veya mutfağınıza bağlı sandıklara hızlı bir şekilde depolamanıza olanak tanır. Eşleşen öğeler, Mevcut Yığınlara Ekle'ye benzer şekilde uygun sandıklara yerleştirilir.",
 
-	"setting.transfer.enable": "Enable Transfer to Storage",
+	"setting.transfer.enable": "Depolamaya Aktarmayı Etkinleştir",
 
-	"setting.transfer.action": "Action ({{binding}})",
-	"setting.transfer.action-modifier": "Action with Modifier",
-	"setting.transfer.use-tool": "Use Tool ({{binding}})",
-	"setting.transfer.use-tool-modifier": "Use Tool with Modifier",
+	"setting.transfer.action": "Eylem Tuşu ({{binding}})",
+	"setting.transfer.action-modifier": "Değiştiricili Eylem Tuşu",
+	"setting.transfer.use-tool": "Alet Kullanma Tuşu ({{binding}})",
+	"setting.transfer.use-tool-modifier": "Değiştiricili Alet Kullanma Tuşu",
 
-	"setting.transfer.behavior": "Mode",
+	"setting.transfer.behavior": "Yöntem",
 
-	"setting.transfer.behavior.none": "Do Nothing",
-	"setting.transfer.behavior.all": "Transfer All",
-	"setting.transfer.behavior.all-quantity": "Transfer All But Quantity",
-	"setting.transfer.behavior.quantity": "Transfer Quantity",
-	"setting.transfer.behavior.half": "Transfer Half",
+	"setting.transfer.behavior.none": "Hiçbir Şey Yapma",
+	"setting.transfer.behavior.all": "Hepsini Aktar",
+	"setting.transfer.behavior.all-quantity": "Bu Miktar Dışındaki Hepsini Aktar",
+	"setting.transfer.behavior.quantity": "Bu Miktar Kadarını Aktar",
+	"setting.transfer.behavior.half": "Yarısını Aktar",
 
-	"setting.transfer.quantity": "Quantity",
-	"setting.transfer.quantity.tip": "The quantity to transfer if using \"Transfer Quantity\" or the amount to leave behind if using \"Transfer All But Quantity\".",
+	"setting.transfer.quantity": "Miktar",
+	"setting.transfer.quantity.tip": "\"Bu Miktar Kadarını Aktar\" kullanılırken aktarılacak miktar veya \"Bu Miktar Dışındaki Hepsini Aktar\" kullanılırken geride bırakılacak miktar.",
 
-	"setting.cookout": "Cookout Kit Tweaks",
-	"setting.cookout.about": "These settings tweak the behavior of Cookout Kits, making them behave more like Workbenches.",
+	"setting.cookout": "Kamp Ocağı Ayarları",
+	"setting.cookout.about": "Bu ayarlar, Kamp Ocaklarının davranışını değiştirerek Çalışma Tezgahı gibi işlemelerini sağlar.",
 
-	"setting.cookout.workbench": "Workbench-like Connectivity",
-	"setting.cookout.workbench.tip": "Etkinleştirildiğinde, Cookout Kits will draw materials from nearby containers just like Workbenches can.",
+	"setting.cookout.workbench": "Çalışma Tezgahı Benzeri Bağlantı",
+	"setting.cookout.workbench.tip": "Etkinleştirildiğinde Kamp Ocakları, Çalışma Tezgahlarında olduğu gibi yakındaki konteynerlerden nesne çekebilir.",
 
-	"setting.cookout.durable": "Long Lasting Kits",
-	"setting.cookout.durable.tip": "Etkinleştirildiğinde, Cookout Kits will not vanish overnight and they won't disappear when you break them.",
+	"setting.cookout.durable": "Uzun Ömürlü Ocaklar",
+	"setting.cookout.durable.tip": "Etkinleştirildiğinde, Kamp Ocakları sonraki güne geçince kaybolmayacak ve onları kırdığınızda yok olmayacaklar.",
 
-	"setting.cookout.expensive": "More Expensive Kits",
-	"setting.cookout.expensive.tip": "Etkinleştirildiğinde, the crafting recipe for Cookout Kits will be tweaked to make them a bit more expensive to help balance the increased longevity.",
+	"setting.cookout.expensive": "Daha Pahalı Ocaklar",
+	"setting.cookout.expensive.tip": "Etkinleştirildiğinde Kamp Ocaklarının üretim tarifi, artan uzun ömürlülüğü dengelemeye yardımcı olmak için onları biraz daha pahalı hale getirecek şekilde ayarlanacak.",
 
 	// Quality
 
-	"setting.quality": "Quality",
-	"setting.quality.tip": "Please note that some recipes added by other sources, such as SpaceCore, may not respect these settings due to API limitations.",
+	"setting.quality": "Kalite",
+	"setting.quality.tip": "SpaceCore gibi diğer kaynaklar tarafından eklenen bazı tariflerin API sınırlamaları nedeniyle bu ayarlara uymayabileceğini lütfen unutmayın.",
 
-	"setting.enable-quality": "Enable Quality Limit",
-	"setting.enable-quality.tip": "Etkinleştirildiğinde, a button will be displayed allowing you to choose a maximum quality of items to use when crafting.",
+	"setting.enable-quality": "Kalite Sınırını Etkinleştir",
+	"setting.enable-quality.tip": "Etkinleştirildiğinde, üretim sırasında kullanılacak maksimum nesne kalitesini seçmenize izin veren bir buton görüntülenecektir.",
 
-	"setting.sort-quality": "Use Low Quality First",
-	"setting.sort-quality.tip": "Etkinleştirildiğinde, recipes will be crafted using lower quality items first.",
+	"setting.sort-quality": "Önce Düşük Kalite Kullan",
+	"setting.sort-quality.tip": "Etkinleştirildiğinde, tarifler önce düşük kaliteli nesne kullanarak üretilir.",
 
 	// Crafting
-	"setting.crafting": "Crafting",
+	"setting.crafting": "Nesne Oluşturma",
 	"setting.crafting.tip": "These settings apply specifically to the reimplemented crafting menu.",
 
-	"setting.uniform-grid": "Force Uniform Sizes",
+	"setting.uniform-grid": "Eş Boyutları Zorla",
 	"setting.uniform-grid.tip": "Etkinleştirildiğinde, big craftables will be squished down to fit in a single row.",
 
 	"setting.big-craftables-last": "Sort Big Craftables Last",
