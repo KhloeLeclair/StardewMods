@@ -24,7 +24,7 @@
 	"setting.gift-taste-style.tip": "\"Kafalar\" seçili ise, hediye zevkleri her karakterin kafası kullanılarak belirtilir. \"İsimler\" seçili ise, bunun yerine isimler gösterilir.",
 
 	"setting.gift-taste": "Hediye Zevklerini Göster",
-	"setting.gift-taste.tip": "Etkinleştirildiğinde, bilinen hediye zevkleri kolaylık sağlamak için eşya açıklamalarında gösterilir. Eşleşen hediye zevkleri arama yaparken her zaman gösterilir.",
+	"setting.gift-taste.tip": "Etkinleştirildiğinde, bilinen hediye zevkleri kolaylık sağlamak için nesne açıklamalarında gösterilir. Eşleşen hediye zevkleri arama yaparken her zaman gösterilir.",
 	"setting.gift-taste.never": "Asla",
 	"setting.gift-taste.shift": "Shift'e Basarken",
 	"setting.gift-taste.always": "Her Zaman",
@@ -38,8 +38,8 @@
 	"setting.replace-crafting": "Oluşturulmuş Nesne Menüsünü Değiştir",
 	"setting.replace-crafting.tip": "Etkinleştirildiğinde oluşturulmuş nesne menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
 
-	"setting.replace-cooking": "Pişirme Menüsünü Değiştir",
-	"setting.replace-cooking.tip": "Etkinleştirildiğinde pişirme menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
+	"setting.replace-cooking": "Yemek Pişirme Menüsünü Değiştir",
+	"setting.replace-cooking.tip": "Etkinleştirildiğinde yemek pişirme menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
 
 	"setting.enable-categories": "Kategorileri Etkinleştir",
 	"setting.enable-categories.tip": "Üretim menülerinde her şeyi içeren büyük bir liste yerine kategori sekmeleri gösterir.",
@@ -70,8 +70,8 @@
 	"setting.key.behavior.right": "Sağ Tık / X Tuşu Eylemi",
 	"setting.key.behavior.right.tip": "Bir tarifin üstünde sağ tık yaparken (veya oyun kumandasında X'e basarken) bu eylem gerçekleştirilir.",
 
-	"setting.key.tooltip": "Kısayol Tuşlarını Eşya İpuçlarında Göster",
-	"setting.key.tooltip.tip": "Etkinleştirildiğinde kısayol tuşları Better Crafting'in eşya ipuçlarının en altında gösterilir.",
+	"setting.key.tooltip": "Kısayol Tuşlarını Nesne Açıklamalarında Göster",
+	"setting.key.tooltip.tip": "Etkinleştirildiğinde kısayol tuşları Better Crafting'in nesne açıklamalarının en altında gösterilir.",
 
 	"setting.ttwhen.Never": "Asla",
 	"setting.ttwhen.ForController": "Oyun Kumandası Kullanırken",
@@ -120,7 +120,7 @@
 	"setting.recycle.crafting": "Nesne Oluşturma Geri Dönüşümü",
 	"setting.recycle.crafting.tip": "Nesne oluşturma sırasında geri dönüşüme izin verilip verilmeyeceği.",
 
-	"setting.recycle.cooking": "Pişirme Geri Dönüşümü",
+	"setting.recycle.cooking": "Yemek Pişirme Geri Dönüşümü",
 	"setting.recycle.cooking.tip": "Yemek pişirme sırasında geri dönüşüme izin verilip verilmeyeceği.",
 
 	"setting.recycle-mode.enabled": "Her Zaman",
@@ -131,7 +131,7 @@
 	"setting.recycle.click-toggle.tip": "Etkinleştirildiğinde üretim menüsünde çöp kutusuna tıklamak, geri dönüşümü açar veya kapar. Bu, sadece bir nesne tutulmazken çalışır.",
 
 	"setting.transfer": "Depolamaya Aktar",
-	"setting.transfer.about": "Bu özellik, envanterinizdeki öğeleri bir Çalışma Tezgahına veya mutfağınıza bağlı sandıklara hızlı bir şekilde depolamanıza olanak tanır. Eşleşen öğeler, Mevcut Yığınlara Ekle'ye benzer şekilde uygun sandıklara yerleştirilir.",
+	"setting.transfer.about": "Bu özellik, envanterinizdeki nesneleri bir Çalışma Tezgahına veya mutfağınıza bağlı sandıklara hızlı bir şekilde depolamanıza olanak tanır. Eşleşen nesneler, Mevcut Yığınlara Ekle'ye benzer şekilde uygun sandıklara yerleştirilir.",
 
 	"setting.transfer.enable": "Depolamaya Aktarmayı Etkinleştir",
 
@@ -176,9 +176,9 @@
 
 	// Crafting
 	"setting.crafting": "Nesne Oluşturma",
-	"setting.crafting.tip": "Bu ayarlar özel olarak yeniden yapılandırılmış nesne oluşturma menüsüne uygulanır.",
+	"setting.crafting.tip": "Bu ayarlar, özel olarak yeniden yapılandırılmış nesne oluşturma menüsüne uygulanır.",
 
-	"setting.uniform-grid": "Eş Boyutları Zorla",
+	"setting.uniform-grid": "Eş Boyutluluğu Zorla",
 	"setting.uniform-grid.tip": "Etkinleştirildiğinde büyük nesneler, tek satıra sığmaları için küçültülür.",
 
 	"setting.big-craftables-last": "Büyük Nesneleri Sona Koy",
@@ -186,7 +186,7 @@
 
 	// Cooking
 	"setting.cooking": "Yemek Pişirme",
-	"setting.cooking.tip": "Bu ayarlar özel olarak yeniden yapılandırılmış yemek pişirme menüsüne uygulanır.",
+	"setting.cooking.tip": "Bu ayarlar, özel olarak yeniden yapılandırılmış yemek pişirme menüsüne uygulanır.",
 
 	"setting.seasoning": "Çeşni Kullan",
 	"setting.seasoning.tip": "Pişirilen nesneleri geliştirmek için baharat kullanılıp kullanılmayacağı. \"Sadece Envanterden\" seçiliyse, sadece envanterdeki çeşniler kullanılır ve buzdolabı veya başka bir kaynaktakiler kullanılmaz.",
@@ -202,7 +202,7 @@
 	"tooltip.loves": "Sever: {{npcs}}",
 	"tooltip.likes": "Hoşlanır: {{npcs}}",
 
-	"tooltip.crafted": "{{count}} kere üretildi.",
+	"tooltip.crafted": "Toplam Üretme: {{count}}.",
 
 	"tooltip.toggle-recipe": "Kategoriye Ekle/Çıkar",
 	"tooltip.use-as-icon": "İkon Olarak Kullan",
@@ -246,7 +246,7 @@
 
 	"tooltip.search": "Tarif Ara",
 	"tooltip.search.old-tip": "İpucu: Aramanıza \"@B{{prefix}}@b\" ile başlayarak ayrıca malzemelere göre de arama yapabilirsiniz. Aramanıza \"@B{{likes}}@b\" ile başlayarak bir nesneyden hoşlanan karakterlere göre veya \"@B{{loves}}@b\" ile başlayarak bir nesneyi seven karakterlere göre arama yapabilirsiniz.",
-	"tooltip.search.tip": "Niteleyiciler: Start your search with the following characters to also search by:\n\n \"@B{{prefix}}@b\": Ingredients\n \"@B{{likes}}@b\": Characters that Like\n \"@B{{loves}}@b\": Characters that Love",
+	"tooltip.search.tip": "Niteleyiciler: Şuna göre de aramak için aramanızı aşağıdaki karakterlerle başlatın:\n\n \"@B{{prefix}}@b\": Malzemeler\n \"@B{{likes}}@b\": Hoşlanan kişiler\n \"@B{{loves}}@b\": Seven kişiler",
 
 	"search.ingredient-prefix": "!",
 	"search.like-prefix": "#",
@@ -267,9 +267,9 @@
 	"ingredient.error": "Geçersiz Malzeme",
 
 	// Bulk Crafting
-	"bulk.crafting": "Bulk Crafting",
-	"bulk.craftable": "{{count}} Craftable",
-	"bulk.craft": "Craft {{count}} of {{name}}",
+	"bulk.crafting": "Toptan Üretme",
+	"bulk.craftable": "{{count}} tane üretilebilir",
+	"bulk.craft": "{{count}} tane {{name}} üret",
 
 	// Categories
 	"category.new": "Yeni Kategori",
@@ -290,9 +290,9 @@
 
 	// Currencies
 	"currency.gold": "Altın",
-	"currency.festival-points": "Puanlar",
-	"currency.club-coins": "Club Coins",
-	"currency.qi-gems": "Qi Gems",
+	"currency.festival-points": "Puan",
+	"currency.club-coins": "Kulüp Sikkesi",
+	"currency.qi-gems": "Qi Taşı",
 
 	// Ingredient Categories
 	"item.category.cooking": "Yemek (Herhangi)",
@@ -330,6 +330,6 @@
 	"filter.light.about": "Bu kural, yerleştirilebilir ışıklandırmayı içerir.",
 
 	"filter.error": "Geçersiz Kural",
-	"filter.error.about": "This rule ID is invalid or not registered, and may be from a mod that was removed."
+	"filter.error.about": "Bu kuralın ID'si geçersiz veya kayıtlı değil, ve kaldırılmış bir moda ait olabilir."
 
 }
