@@ -6,7 +6,7 @@
 	"setting.general": "Genel Ayarlar",
 
 	"setting.priority": "Menü İşleme Önceliği",
-	"setting.priority.tip": "Menü işleme önceliğini değiştirmek, Better Crafting'in diğer modlarla uyumluluğunu artırabilir. \"Düşük\" seçili ise , Better Crafting menü mantığı diğer modlardan sonra uygulanır. \"Yüksek\" seçili ise, Better Crafting Better Crafting menü mantığı diğer modlardan önce uygulanır.",
+	"setting.priority.tip": "Menü işleme önceliğini değiştirmek, Better Crafting'in diğer modlarla uyumluluğunu artırabilir. \"Düşük\" seçili ise , Better Crafting menü mantığı diğer modlardan sonra uygulanır. \"Yüksek\" seçili ise, Better Crafting menü mantığı diğer modlardan önce uygulanır.",
 
 	"setting.priority.low": "Düşük",
 	"setting.priority.normal": "Normal",
@@ -48,7 +48,7 @@
 	"setting.settings.tip": "Etkinleştirildiğinde Better Crafting menüsüne, modun ayarlarını açmak için bir buton ekler.",
 
 	"setting.bindings": "Kısayol Tuşları ve Eylemler",
-	"setting.bindings.tip": "Veri girişleri ve tuşlar ile ilgili ayarlar.",
+	"setting.bindings.tip": "Veri girdileri ve tuşlar ile ilgili ayarlar.",
 
 	"setting.suppress": "Devre Dışı Bırakma Tuşu",
 	"setting.suppress.tip": "Bu tuş basılı tutulurken bir üretim menüsü açılırsa, Better Crafting bu menüyü değiştirmez.",
@@ -57,13 +57,13 @@
 	"setting.key.modifier.tip": "Kullanılabilir olduğunda başka bir tuş tarafından gerçekleştirilen eylemi değiştirmek için bu tuşu basılı tutun.",
 
 	"setting.key.search": "Arama Tuşu",
-	"setting.key.search.tip": "Görüntülenen tarifleri filtrelemek için bir arama açmak için bu tuşa basın.",
+	"setting.key.search.tip": "Görüntülenen tarifleri filtreleyen bir arama açmak için bu tuşa basın.",
 
 	"setting.key.favorite": "Favori Tuşu",
 	"setting.key.favorite.tip": "Bir tarifi favorilere eklemek veya favorilerden çıkarmak için tarifin üstünde bu tuşa basın.",
 
 	"setting.key.bulk": "Toptan Üretim Tuşu",
-	"setting.key.bulk.tip": "Bir tarifte Toplu Üretimi açmak için bu tuşa basın.",
+	"setting.key.bulk.tip": "Bir tarifte Toptan Üretimi açmak için bu tuşa basın.",
 
 	"setting.key.behavior.left": "Sol Tık / A Tuşu Eylemi",
 	"setting.key.behavior.left.tip": "Bir tarifin üstünde sol tık yaparken (veya oyun kumandasında A'ya basarken) bu eylem gerçekleştirilir.",
@@ -109,7 +109,7 @@
 	"setting.nearby.other": "Diğer Örnekler",
 
 	"setting.recycle": "Geri Dönüştürme",
-	"setting.recycle.about": "Etkinleştirildiğinde, nesneleri geri dönüştürüp onları işlemek için kullanılan öğeleri geri alma amacıyla üretim menüsünü kullanabilirsiniz.",
+	"setting.recycle.about": "Etkinleştirildiğinde, nesneleri geri dönüştürüp onları işlemek için kullanılan nesneleri geri alma amacıyla üretim menüsünü kullanabilirsiniz.",
 
 	"setting.recycle.fuzzy": "Belirsiz Nesne Eşleştirme ",
 	"setting.recycle.fuzzy.tip": "Bazı üretim tarifleri belirli nesneler istemez, onun yerine \"Yumurta (Herhangi)\" gibi nesneler eşleştirir. Varsayılan olarak, bu nesneler geri verilmez. Bunu etkinleştirmek, bu gibi durumlarda en ucuz eşleşen nesneyi geri verir.",
@@ -267,7 +267,7 @@
 	"ingredient.error": "Geçersiz Malzeme",
 
 	// Bulk Crafting
-	"bulk.crafting": "Toptan Üretme",
+	"bulk.crafting": "Toptan Üretim",
 	"bulk.craftable": "{{count}} tane üretilebilir",
 	"bulk.craft": "{{count}} tane {{name}} üret",
 
@@ -318,7 +318,7 @@
 	"filter.uncrafted.about": "Bu kural, henüz üretmediğiniz nesneleri içerir.",
 
 	"filter.search": "Ara",
-	"filter.search.about": "Bu kural, üretim menüsüyle aynı kuralları kullanarak nesneleri bir aramayla eşleştirir.",
+	"filter.search.about": "Bu kural, nesneleri bir aramaya göre kategorize eder, üretim menüsüyle aynı mantığa sahiptir.",
 
 	"filter.machine": "Makineler",
 	"filter.machine.about": "Bu kural, makine görevi gören, nesneleri işleyen veya başka bir işlevi yerine getiren nesneleri içerir.",
