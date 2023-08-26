@@ -25,6 +25,10 @@ Released January 14th, 2022.
 * Pressing the menu close button (`E`) may cause the menu to close when it
   should not.
 
+### Translation
+
+* Added Portuguese language support.
+
 ### API Changes
 
 * Fix typos in documentation.

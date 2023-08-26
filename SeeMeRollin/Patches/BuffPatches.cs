@@ -12,7 +12,7 @@ using StardewValley.Menus;
 namespace Leclair.Stardew.SeeMeRollin.Patches {
 	public class BuffPatches {
 
-		public static IMonitor Monitor => ModEntry.instance.Monitor;
+		public static IMonitor Monitor => ModEntry.Instance.Monitor;
 
 		[HarmonyPatch(typeof(Buff), nameof(Buff.update))]
 		public static class Buff_Update {
@@ -41,7 +41,7 @@ namespace Leclair.Stardew.SeeMeRollin.Patches {
 		[HarmonyPatch(typeof(Buff), nameof(Buff.getClickableComponents))]
 		public static class Buff_Components {
 			static bool Prefix(Buff __instance, ref List<ClickableTextureComponent> __result) {
-				if (__instance is RollinBuff && !ModEntry.instance.Config.ShowBuff) {
+				if (__instance is RollinBuff && !ModEntry.Instance.Config.ShowBuff) {
 					__result = new();
 					return false;
 				}

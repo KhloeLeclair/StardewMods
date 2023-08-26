@@ -1,7 +1,7 @@
 {
   "Name": "Better Crafting: Buildings",
   "Author": "Khloe Leclair",
-  "Version": "1.3.0",
+  "Version": "1.3.1-Debug",
   "Description": "Adds support for crafting farm buildings to Better Crafting.",
   "UniqueID": "leclair.bcbuildings",
   "EntryDll": "BCBuildings.dll",

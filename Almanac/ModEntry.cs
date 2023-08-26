@@ -101,7 +101,7 @@ public class ModEntry : ModSubscriber {
 
 		// Patches
 		// Patches.GameMenu_Patches.Patch(this);
-		SpriteText_Patches.Patch(Harmony, Monitor);
+		Common_SpriteText_Patches.Patch(Harmony, Monitor);
 
 		Assets = new(this);
 

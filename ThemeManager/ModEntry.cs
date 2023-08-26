@@ -294,24 +294,24 @@ public partial class ModEntry : ModSubscriber {
 
 				Alignment align = c.ClockAlignment ?? Alignment.None;
 
-				if (align.HasFlag(Alignment.Middle)) {
+				if (align.HasFlag(Alignment.VCenter)) {
 					if (align.HasFlag(Alignment.Left))
 						return "mid-left";
-					if (align.HasFlag(Alignment.Center))
+					if (align.HasFlag(Alignment.HCenter))
 						return "mid-center";
 					return "mid-right";
 
 				} else if (align.HasFlag(Alignment.Bottom)) {
 					if (align.HasFlag(Alignment.Left))
 						return "bottom-left";
-					if (align.HasFlag(Alignment.Center))
+					if (align.HasFlag(Alignment.HCenter))
 						return "bottom-center";
 					return "bottom-right";
 				}
 
 				if (align.HasFlag(Alignment.Left))
 					return "top-left";
-				if (align.HasFlag(Alignment.Center))
+				if (align.HasFlag(Alignment.HCenter))
 					return "top-center";
 				return "top-right";
 			},
@@ -336,7 +336,7 @@ public partial class ModEntry : ModSubscriber {
 					case "mid-left":
 					case "mid-center":
 					case "mid-right":
-						align |= Alignment.Middle;
+						align |= Alignment.VCenter;
 						break;
 					default:
 						align |= Alignment.Top;
@@ -352,7 +352,7 @@ public partial class ModEntry : ModSubscriber {
 					case "top-center":
 					case "mid-center":
 					case "bottom-center":
-						align |= Alignment.Center;
+						align |= Alignment.HCenter;
 						break;
 					default:
 						align |= Alignment.Right;

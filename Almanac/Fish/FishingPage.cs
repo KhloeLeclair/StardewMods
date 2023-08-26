@@ -321,7 +321,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 			builder.Text("\n\n");
 			builder.FormatText(
 				I18n.Page_Fish_Nothing(),
-				align: Alignment.Center
+				align: Alignment.HCenter
 			);
 
 			return builder.Build();
@@ -335,12 +335,12 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 		}
 
 		builder
-			.Sprite(info.Sprite, 4f, Alignment.Center, onHover: OnHover, noComponent: true)
+			.Sprite(info.Sprite, 4f, Alignment.HCenter, onHover: OnHover, noComponent: true)
 			.Text(
 				$" {info.Name}\n",
 				fancy: info.Legendary,
 				font: Game1.dialogueFont,
-				align: Alignment.Middle,
+				align: Alignment.VCenter,
 				onHover: OnHover,
 				noComponent: true
 			);
@@ -533,7 +533,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 						),
 						2f,
 						size: 10,
-						align: Alignment.Middle
+						align: Alignment.VCenter
 					)
 					.Text(" ")
 					.Text(
@@ -747,11 +747,11 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 				to_select = fish;
 
 			var sb = FlowHelper.Builder()
-				.Sprite(fish.Sprite, 4f, Alignment.Middle)
-				.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Middle);
+				.Sprite(fish.Sprite, 4f, Alignment.VCenter)
+				.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.VCenter);
 
 			if (Mod.Config.DebugMode)
-				sb.Text($" (#{fish.Id})", align: Alignment.Middle | Alignment.Right);
+				sb.Text($" (#{fish.Id})", align: Alignment.VCenter | Alignment.Right);
 
 			var node = new SelectableNode(
 				sb.Build(),
@@ -784,7 +784,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 		if (builder.Count == 0)
 			builder
 				.Text("\n\n\n")
-				.FormatText(I18n.Page_Fish_None(), align: Alignment.Center);
+				.FormatText(I18n.Page_Fish_None(), align: Alignment.HCenter);
 
 		SetLeftFlow(builder, scroll: -1);
 		SelectFish(to_select);

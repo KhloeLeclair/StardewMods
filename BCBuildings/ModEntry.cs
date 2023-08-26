@@ -79,7 +79,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			return;
 
 		BCAPI.AddRecipeProvider(this);
-		BCAPI.RegisterRuleHandler(ModManifest, "Building", new BuildingRuleHandler(this));
+		BCAPI.RegisterRuleHandler("Building", new BuildingRuleHandler(this));
 		BCAPI.CreateDefaultCategory(
 			cooking: false,
 			categoryId: CategoryID,
@@ -87,7 +87,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			iconRecipe: "blueprint:Shed",
 			useRules: true,
 			rules: new IDynamicRuleData[] {
-				new RuleData("leclair.bcbuildings/Building")
+				new RuleData(BCAPI.GetAbsoluteRuleId("Building"))
 			}
 		);
 
