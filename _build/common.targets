@@ -20,7 +20,7 @@
 
 		<!-- game version -->
 		<GameVersion>1.6</GameVersion>
-		<SmapiVersion>4.0</SmapiVersion>
+		<SmapiVersion>4.0.2</SmapiVersion>
 		<ModSet>DevMods</ModSet>
 
 		<MinimumApiVersion>$(SmapiVersion)</MinimumApiVersion>
@@ -29,9 +29,8 @@
 
 	<!-- paths -->
 	<PropertyGroup>
-		<!--GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - $(GameVersion) with $(SmapiVersion)</GamePath-->
-		<GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley</GamePath>
-		<GamePath Condition="!Exists('$(GamePath)')">C:\</GamePath>
+    <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - $(GameVersion) with $(SmapiVersion)</GamePath>
+    <GamePath Condition="!Exists('$(GamePath)')">C:\</GamePath>
 		<GameModsPath>$(GamePath)\$(ModSet)</GameModsPath>
 		<ModZipPath>$(SolutionDir)\_releases</ModZipPath>
 	</PropertyGroup>
@@ -51,8 +50,8 @@
 	<!-- mod build package -->
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
-		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.2" />
 		<PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.2.0" />
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(GamePath)\smapi-internal\Newtonsoft.Json.dll</HintPath>
 			<Private>false</Private>
