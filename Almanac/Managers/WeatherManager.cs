@@ -16,6 +16,7 @@ using StardewValley;
 using StardewValley.GameData;
 
 using Leclair.Stardew.Almanac.Models;
+using StardewValley.GameData.LocationContexts;
 
 namespace Leclair.Stardew.Almanac.Managers;
 
@@ -29,27 +30,24 @@ public class WeatherManager : BaseManager {
 	private readonly object RuleLock = new();
 
 	// Cache
-
 	private ulong CachedSeed;
 	private int CachedYear;
 
-		private readonly Dictionary<string, string[]> CachedWeather = new();
+	private readonly Dictionary<string, string[]> CachedWeather = new();
 
-		public WeatherManager(ModEntry mod) : base(mod) { }
+	public WeatherManager(ModEntry mod) : base(mod) { }
 
-		public void Invalidate() {
-			WithCache(() => {
-				CachedSeed = 0;
-				CachedYear = -1;
-				CachedWeather.Clear();
-			});
-
-			WithRules(() => {
-				Rules = null;
-				SortedRules = null;
-				RulesLoaded = false;
-			});
-		}
+	public void Invalidate() {
+		WithCache(() => {
+			CachedSeed = 0;
+			CachedYear = -1;
+			CachedWeather.Clear();
+		});
+		WithRules(() => {
+			Rules = null;
+			SortedRules = null;
+			RulesLoaded = false;
+		});
 	}
 
 	#region Events
@@ -79,31 +77,30 @@ public class WeatherManager : BaseManager {
 			}
 		}
 
-		#endregion
+	#endregion
 
 	#region Data Access
 
-	public IEnumerable<WeatherRule> GetRules() {
-		if (!RulesLoaded)
-			LoadRules();
-
-		return SortedRules!;
-	}
+		public IEnumerable<WeatherRule> GetRules() {
+			if (!RulesLoaded)
+				LoadRules();
+			return SortedRules!;
+		}
 
 		public string GetWeatherForDate(ulong seed, int day) {
-			return GetWeatherForDate(seed, day, GameLocation.LocationContext.Default);
+			return GetWeatherForDate(seed, day, Game1.currentLocation);
 		}
 
-		public string GetWeatherForDate(ulong seed, int day, LocationContextData context) {
+		public string GetWeatherForDate(ulong seed, int day, GameLocation location) {
 			WorldDate date = new();
 			date.TotalDays = day;
-			return GetWeatherForDate(seed, date, context);
+			return GetWeatherForDate(seed, date, location.GetLocationContext(), location.GetLocationContextId());
 		}
 
-		public string GetWeatherForDate(ulong seed, WorldDate date, LocationContextData context) {
-			UpdateCache(seed, date.Year, context);
+		public string GetWeatherForDate(ulong seed, WorldDate date, LocationContextData context, string contextID) {
+			UpdateCache(seed, date.Year, context, contextID);
 
-			string[] Forecast = CachedWeather[context.Name];
+			string[] Forecast = CachedWeather[contextID];
 			return Forecast[date.SeasonIndex * ModEntry.DaysPerMonth + date.DayOfMonth - 1];
 		}
 
@@ -111,13 +108,13 @@ public class WeatherManager : BaseManager {
 
 	#region Calculation
 
-		private void UpdateCache(ulong seed, int year, LocationContextData context) {
+		private void UpdateCache(ulong seed, int year, LocationContextData context, string contextID ) {
 			lock((CachedWeather as ICollection).SyncRoot) {
 
 				if (CachedSeed != seed || CachedYear != year)
 					CachedWeather.Clear();
 
-				if (CachedWeather.ContainsKey(context.Name))
+				if (CachedWeather.ContainsKey(contextID))
 					return;
 
 				CachedSeed = seed;
@@ -129,14 +126,13 @@ public class WeatherManager : BaseManager {
 				WorldDate date = new(year, "spring", 1);
 
 				// First, we calculate the raw weather on any given date.
-				for(int i = 1; i <= forecast.Length; i++) {
-					forecast[i - 1] = WeatherHelper.GetRawWeatherForDate(seed, date, context);
-
+				for(int i = 0; i < forecast.Length; i++) {
+					forecast[i] = WeatherHelper.GetRawWeatherForDate(seed, date, context, contextID);
 					// Standard weather is overwritten on some dates. Don't
 					// let us modify the weather on those days with rules.
 					// TODO: See how this changes for different contexts.
-					if (context == GameLocation.LocationContext.Default && Game1.getWeatherModificationsForDate(date, "didnotchange") != "didnotchange")
-						RuledDates[i - 1] = true;
+					if (context == Game1.currentLocation.GetLocationContext() && Game1.getWeatherModificationsForDate(date, "didnotchange") != "didnotchange")
+						RuledDates[i] = true;
 
 					date.TotalDays++;
 				}
@@ -158,7 +154,7 @@ public class WeatherManager : BaseManager {
 						if (rule.Contexts != null) {
 							bool matched = false;
 							foreach (string ctx in rule.Contexts) {
-								if (context.Name.Equals(ctx, StringComparison.OrdinalIgnoreCase)) {
+								if (contextID.Equals(ctx, StringComparison.OrdinalIgnoreCase)) {
 									matched = true;
 									break;
 								}
@@ -166,12 +162,11 @@ public class WeatherManager : BaseManager {
 							if (!matched)
 								continue;
 						}
-
 						ExecuteRule(rule, seed, year, forecast, RuledDates);
 					}
 				}
 			
-				CachedWeather[context.Name] = forecast;
+				CachedWeather[contextID] = forecast;
 			}
 		}
 
@@ -179,119 +174,101 @@ public class WeatherManager : BaseManager {
 			var pattern = rule.CalculatedPattern;
 			if (pattern == null)
 				return;
-
-		int[] seasons = rule.ValidSeasonIndices;
-
-		int daysPerYear = WorldDate.MonthsPerYear * ModEntry.DaysPerMonth;
-		int weeksPerYear = daysPerYear / 7;
-
-		if (rule.Period == TimeScale.Total) {
-			Log($"Weather rule has period \"Total\" which is unsupported for weather rules. Treating as \"Year\".", LogLevel.Warn);
-			ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
-
-		} else if (rule.Period == TimeScale.Year) {
-			ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
-
-		} else if (rule.Period == TimeScale.Season) {
-			for(int i = 0; i < 4; i++) {
-				int first = (i * ModEntry.DaysPerMonth);
-
-				if (!seasons.Contains(i) && !seasons.Contains(-1))
+			int[] seasons = rule.ValidSeasonIndices;
+			int daysPerYear = WorldDate.MonthsPerYear * ModEntry.DaysPerMonth;
+			int weeksPerYear = daysPerYear / 7;
+			if (rule.Period == TimeScale.Total) {
+				Log($"Weather rule has period \"Total\" which is unsupported for weather rules. Treating as \"Year\".", LogLevel.Warn);
+				ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
+			} else if (rule.Period == TimeScale.Year) {
+				ExecuteRuleInner(rule, pattern, seed, year, 0, Weather, RuledDates);
+			} else if (rule.Period == TimeScale.Season) {
+				for(int i = 0; i < 4; i++) {
+					int first = (i * ModEntry.DaysPerMonth);
+					if (!seasons.Contains(i) && !seasons.Contains(-1))
 					continue;
 
 					ArraySegment<string> weatherSeg = new(Weather, first, ModEntry.DaysPerMonth);
 					ArraySegment<bool> ruledSeg = new(RuledDates, first, ModEntry.DaysPerMonth);
 
-				ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
-			}
+					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
+				}
+			} else if (rule.Period == TimeScale.Week) {
+				for (int i = 0; i < weeksPerYear; i++) {
+					int first = (i * 7);
 
-		} else if (rule.Period == TimeScale.Week) {
-			for (int i = 0; i < weeksPerYear; i++) {
-				int first = (i * 7);
-
-				if (!seasons.Contains(i / 4) && !seasons.Contains(-1))
-					continue;
+					if (!seasons.Contains(i / 4) && !seasons.Contains(-1))
+						continue;
 
 					ArraySegment<string> weatherSeg = new(Weather, first, 7);
 					ArraySegment<bool> ruledSeg = new(RuledDates, first, 7);
 
-				ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
+					ExecuteRuleInner(rule, pattern, seed, year, first, weatherSeg, ruledSeg);
+				}
 			}
 		}
-	}
 
 		private static void ExecuteRuleInner(WeatherRule rule, RulePatternEntry[][] pattern, ulong seed, int year, int offset, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
+			Dictionary<int, PossibleMatch> possibleMatches = new();
+			RuleDateRange[] dates;
+			if (rule.Dates != null && rule.Dates.Length > 0)
+				dates = rule.Dates;
+			else
+				dates = new RuleDateRange[] {
+					new(1, Weather.Count)
+				};
+			int min_cost = int.MaxValue;
+			foreach(RuleDateRange range in dates) {
+				int start = range.Start;
+				int end = range.End;
+				if (start < 1) start = 1;				
+				if (end > Weather.Count) end = Weather.Count;
 
-		Dictionary<int, PossibleMatch> possibleMatches = new();
-
-		RuleDateRange[] dates;
-		if (rule.Dates != null && rule.Dates.Length > 0)
-			dates = rule.Dates;
-		else
-			dates = new RuleDateRange[] {
-				new(1, Weather.Count)
-			};
-
-
-		int min_cost = int.MaxValue;
-
-		foreach(RuleDateRange range in dates) {
-			int start = range.Start;
-			int end = range.End;
-
-			if (start < 1) start = 1;				
-			if (end > Weather.Count) end = Weather.Count;
-
-			end -= (pattern.Length - 1);
-			if (end < start)
-				continue;
-
-			for(int i = start; i <= end; i++) {
-				if (possibleMatches.ContainsKey(i))
+				end -= (pattern.Length - 1);
+				if (end < start)
 					continue;
 
-				int cost = GetPatternCost(i, pattern, Weather, RuledDates);
-				if (cost < 0)
-					continue;
+				for(int i = start; i <= end; i++) {
+					if (possibleMatches.ContainsKey(i))
+						continue;
 
-				if (cost < min_cost)
-					min_cost = cost;
+					int cost = GetPatternCost(i, pattern, Weather, RuledDates);
+					if (cost < 0)
+						continue;
 
-				possibleMatches[i] = new(i, cost);
+					if (cost < min_cost)
+						min_cost = cost;
+
+					possibleMatches[i] = new(i, cost);
+				}
 			}
-		}
+			// We don't return if we have a min_cost 0 because we want to flag
+			// the matching days as rule'd so other rules don't override the
+			// valid weather.
+			if (possibleMatches.Count == 0)
+				return;
 
-		// We don't return if we have a min_cost 0 because we want to flag
-		// the matching days as rule'd so other rules don't override the
-		// valid weather.
-		if (possibleMatches.Count == 0)
-			return;
-
-		// Sort the matches
-
-		List<PossibleMatch> matches = possibleMatches.Values.Where(match => match.Cost <= min_cost).ToList();
-		matches.Sort((a, b) => a.Cost - b.Cost);
+			// Sort the matches
+			List<PossibleMatch> matches = possibleMatches.Values.Where(match => match.Cost <= min_cost).ToList();
+			matches.Sort((a, b) => a.Cost - b.Cost);
 
 			Random rnd = new((int)seed + (year * 112) + offset);
 
-		// TODO: Apply weights when picking a random match.
-		int idx = rnd.Next(0, matches.Count);
-		if (idx == matches.Count)
-			idx--;
+			// TODO: Apply weights when picking a random match.
+			int idx = rnd.Next(0, matches.Count);
+			if (idx == matches.Count)
+				idx--;
 
-		ApplyPattern(rnd, matches[idx].Offset, pattern, Weather, RuledDates);
-	}
+			ApplyPattern(rnd, matches[idx].Offset, pattern, Weather, RuledDates);
+		}
 
 		private static void ApplyPattern(Random rnd, int offset, RulePatternEntry[][] pattern, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
+			for (int i = 0; i < pattern.Length; i++) {
+				int idx = offset + i - 1;
+				if (idx < 0 || idx > Weather.Count)
+					continue;
 
-		for (int i = 0; i < pattern.Length; i++) {
-			int idx = offset + i - 1;
-
-			if (idx < 0 || idx > Weather.Count)
-				continue;
-
-			RuledDates[idx] = true;
-
+				RuledDates[idx] = true;
 				string current = Weather[idx];
 				bool matched = false;
 				float total = 0f;
@@ -302,38 +279,32 @@ public class WeatherManager : BaseManager {
 						break;
 					}
 				}
-
-			if (matched)
-				continue;
-
-			float val = (float) rnd.NextDouble() * total;
-
-			foreach (var item in pattern[i]) {
-				if (item.Weight <= 0)
+				if (matched)
 					continue;
+				float val = (float) rnd.NextDouble() * total;
+				foreach (var item in pattern[i]) {
+					if (item.Weight <= 0)
+						continue;
 
 					if (val <= item.Weight) {
 						Weather[idx] = item.Weather;
 						break;
 					}
 
-				val -= item.Weight;
+					val -= item.Weight;
+				}
 			}
 		}
-	}
 
 		private static int GetPatternCost(int offset, RulePatternEntry[][] pattern, ArraySegment<string> Weather, ArraySegment<bool> RuledDates) {
+			int cost = 0;
+			for (int i = 0; i < pattern.Length; i++) {
+				int idx = offset + i - 1;
 
-		int cost = 0;
-
-		for (int i = 0; i < pattern.Length; i++) {
-			int idx = offset + i - 1;
-
-			if (idx < 0 || idx > Weather.Count)
-				return -1;
+				if (idx < 0 || idx > Weather.Count)
+					return -1;
 
 				string current = Weather[idx];
-
 				bool matched = false;
 				foreach (var item in pattern[i]) {
 					if (current == item.Weather) { 
@@ -341,17 +312,15 @@ public class WeatherManager : BaseManager {
 						break;
 					}
 				}
-
-			if (!matched) {
-				if (RuledDates[idx])
-					return -1;
-				else
-					cost++;
+				if (!matched) {
+					if (RuledDates[idx])
+						return -1;
+					else
+						cost++;
+				}
 			}
+			return cost;
 		}
-
-		return cost;
-	}
 
 	#endregion
 
@@ -394,22 +363,17 @@ public class WeatherManager : BaseManager {
 				} catch (Exception ex) {
 					Log($"The weather_rules.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
 				}
-
 				if (newRules != null)
 					HydrateRules(Rules, newRules);
 			}
-
 			// Alright, now we need to sort the rules.
 			List<WeatherRule> sorted = new();
-
 			foreach(WeatherRule rule in Rules.Values) {
 				if (! rule.Enabled) continue;
 				sorted.Add(rule);
 			}
-
 			sorted.Sort((a,b) => b.Priority - a.Priority);
 			SortedRules = sorted.ToArray();
-
 			Log($"Loaded {Rules.Count} total and {SortedRules.Length} enabled weather rules.", LogLevel.Debug);
 			RulesLoaded = true;
 		}
@@ -430,7 +394,7 @@ public class WeatherManager : BaseManager {
 			WorldDate date = new(Game1.year, Game1.currentSeason, Game1.dayOfMonth + 1);
 			foreach(var entry in contexts) {
 				var weather = Game1.netWorldState.Value.GetWeatherForLocation(entry.Key);
-				weather.weatherForTomorrow.Value = GetWeatherForDate(Mod.GetBaseWorldSeed(), date, entry.Value);
+				weather.weatherForTomorrow.Value = GetWeatherForDate(Mod.GetBaseWorldSeed(), date, entry.Value, entry.Key);
 			}
 
 			// Since we've changed weather, we need to re-copy.
