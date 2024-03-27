@@ -39,7 +39,7 @@ public class AssetManager {
 
 	public void Invalidate() {
 		Loaded = false;
-		Mod.Helper.Content.InvalidateCache(asset => asset.AssetName.StartsWith(EventPath));
+		Mod.Helper.GameContent.InvalidateCache(asset => asset.Name.StartsWith(EventPath));
 	}
 
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
@@ -70,48 +70,40 @@ public class AssetManager {
 				priority: AssetLoadPriority.Low
 			);
 	}
-    #region IAssetLoader
-    public bool CanLoad<T>(IAssetInfo asset)
-    {
-        return
-            asset.Name.IsEquivalentTo(CropOverridesPath) ||
-            asset.Name.IsEquivalentTo(FishOverridesPath) ||
-            asset.Name.IsEquivalentTo(LocalNoticesPath) ||
-            asset.Name.IsEquivalentTo(NPCOverridesPath);
-    }
-	public T Load<T>(IAssetInfo asset)
-	{
-		if (asset.Name.IsEquivalentTo(CropOverridesPath))
-		{
+	#region IAssetLoader
+	public bool CanLoad<T>(IAssetInfo asset) {
+		return
+			asset.Name.IsEquivalentTo(CropOverridesPath) ||
+			asset.Name.IsEquivalentTo(FishOverridesPath) ||
+			asset.Name.IsEquivalentTo(LocalNoticesPath) ||
+			asset.Name.IsEquivalentTo(NPCOverridesPath);
+	}
+	public T Load<T>(IAssetInfo asset) {
+		if (asset.Name.IsEquivalentTo(CropOverridesPath)) {
 			var data = new Dictionary<string, Models.CropOverride>();
-			return (T)(object)data;
+			return (T) (object) data;
 		}
-        if (asset.Name.IsEquivalentTo(FishOverridesPath))
-        {
-            var data = new Dictionary<string, Models.FishOverride>();
-            return (T)(object)data;
-        }
-        if (asset.Name.IsEquivalentTo(LocalNoticesPath))
-        {
-            var data = new Dictionary<string, Models.LocalNotice>();
-            return (T)(object)data;
-        }
-        if (asset.Name.IsEquivalentTo(NPCOverridesPath))
-        {
-            var data = new Dictionary<string, Models.NPCOverride>();
-            return (T)(object)data;
-        }
-        return (T)(object)null;
-    }
+		if (asset.Name.IsEquivalentTo(FishOverridesPath)) {
+			var data = new Dictionary<string, Models.FishOverride>();
+			return (T) (object) data;
+		}
+		if (asset.Name.IsEquivalentTo(LocalNoticesPath)) {
+			var data = new Dictionary<string, Models.LocalNotice>();
+			return (T) (object) data;
+		}
+		if (asset.Name.IsEquivalentTo(NPCOverridesPath)) {
+			var data = new Dictionary<string, Models.NPCOverride>();
+			return (T) (object) data;
+		}
+		return (T) (object) null;
+	}
 
 	#endregion
 
 	#region IAssetEditor
 
-	public bool CanEdit<T>(IAssetInfo asset)
-	{
-		if (asset.Name.StartsWith(EventPath))
-		{
+	public bool CanEdit<T>(IAssetInfo asset) {
+		if (asset.Name.StartsWith(EventPath)) {
 			Load(asset.Locale);
 			if (ModEvents == null)
 				return false;
@@ -123,7 +115,7 @@ public class AssetManager {
 		}
 		return false;
 	}
-	
+
 	public void Edit<T>(IAssetData asset) {
 		if (!asset.Name.StartsWith(EventPath))
 			return;
@@ -134,17 +126,16 @@ public class AssetManager {
 		string end = bits[^1];
 		if (!ModEvents.TryGetValue(end, out var events) || events == null)
 			return;
-        var editor = asset.AsDictionary<string, string>();
-        foreach (var entry in events)
-            editor.Data[entry.Key] = entry.Localize(Mod.Helper.Translation);
-    }
+		var editor = asset.AsDictionary<string, string>();
+		foreach (var entry in events)
+			editor.Data[entry.Key] = entry.Localize(Mod.Helper.Translation);
+	}
 
-    #endregion
-private void Load(string? locale)
-{
-    if (Loaded && Locale == locale)
-        return;
-    try {
+	#endregion
+	private void Load(string? locale) {
+		if (Loaded && Locale == locale)
+			return;
+		try {
 			ModEvents = Mod.Helper.ModContent.LoadLocalized<Dictionary<string, List<EventData>>>("assets/events.json");
 		} catch (Exception ex) {
 			Mod.Log("Unable to load custom mod events.", ex: ex);
@@ -153,27 +144,27 @@ private void Load(string? locale)
 
 		Loaded = true;
 		Locale = locale;
-}
-
-public struct EventData {
-	public static readonly Regex I18N_SPLITTER = new(@"{{(.+?)}}", RegexOptions.Compiled);
-
-	public string Id { get; set; }
-	public string[] Conditions { get; set; }
-	public string[] Script { get; set; }
-
-	public string Key => $"{Id}/{string.Join("/", Conditions)}";
-	public string RealScript => string.Join("/", Script);
-
-	public string Localize(ITranslationHelper helper) {
-		string id = Id;
-
-		return I18N_SPLITTER.Replace(RealScript, match => {
-			string key = match.Groups[1].Value;
-			if (key.StartsWith('.'))
-				key = $"event.{id}{key}";
-			return helper.Get(key).ToString();
-		});
 	}
 
+	public struct EventData {
+		public static readonly Regex I18N_SPLITTER = new(@"{{(.+?)}}", RegexOptions.Compiled);
+
+		public string Id { get; set; }
+		public string[] Conditions { get; set; }
+		public string[] Script { get; set; }
+
+		public string Key => $"{Id}/{string.Join("/", Conditions)}";
+		public string RealScript => string.Join("/", Script);
+
+		public string Localize(ITranslationHelper helper) {
+			string id = Id;
+
+			return I18N_SPLITTER.Replace(RealScript, match => {
+				string key = match.Groups[1].Value;
+				if (key.StartsWith('.'))
+					key = $"event.{id}{key}";
+				return helper.Get(key).ToString();
+			});
+		}
+	}
 }
