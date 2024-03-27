@@ -22,6 +22,8 @@ using StardewValley.TerrainFeatures;
 
 using Leclair.Stardew.Almanac.Models;
 using StardewValley.GameData.Movies;
+using StardewValley.GameData.Shops;
+using StardewValley.Internal;
 
 namespace Leclair.Stardew.Almanac.Managers;
 
@@ -161,7 +163,7 @@ public class NoticesManager : BaseManager {
 
 	#region Events
 
-	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, GameStateQuery.GameState state, string? key = null) {
+	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, Common.GameStateQuery.GameState state, string? key = null) {
 		if (notice == null)
 			return null;
 
@@ -173,7 +175,7 @@ public class NoticesManager : BaseManager {
 			return null;
 
 		// Season Validation
-		if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains(Season.All) && !notice.ValidSeasons.Contains((Season) date.SeasonIndex))
+		if (notice.ValidSeasons != null && !notice.ValidSeasons.Contains(Common.Enums.Season.All) && !notice.ValidSeasons.Contains((Common.Enums.Season) date.SeasonIndex))
 			return null;
 
 		// Date Range Validation
@@ -212,7 +214,7 @@ public class NoticesManager : BaseManager {
 		}
 
 		// Condition Validation
-		if (!string.IsNullOrEmpty(notice.Condition) && !GameStateQuery.CheckConditions(notice.Condition, state))
+		if (!string.IsNullOrEmpty(notice.Condition) && !Common.GameStateQuery.CheckConditions(notice.Condition, state))
 			return null;
 
 		// Get icon
@@ -283,7 +285,7 @@ public class NoticesManager : BaseManager {
 
 		Load();
 
-		var state = new GameStateQuery.GameState(
+		var state = new Common.GameStateQuery.GameState(
 			Random: Game1.random,
 			Date: date,
 			TimeOfDay: 600,
@@ -359,23 +361,23 @@ public class NoticesManager : BaseManager {
 		if (gathering && bush == null)
 			bush = new();
 
-			if (gathering && bush.inBloom(date.Season, date.DayOfMonth)) {
+			if (gathering && IsBlooming(date.Season, date.DayOfMonth)) {
 				Item berry = null;
 				if (date.SeasonIndex == 0)
-					berry = Utility.CreateItemByID("(O)296", 1); // Salmonberry
+					berry = ItemRegistry.Create("(O)296", 1); // Salmonberry
 
 				else if (date.SeasonIndex == 2)
-					berry = Utility.CreateItemByID("(O)410", 1); // Blackberry
+					berry = ItemRegistry.Create("(O)410", 1); // Blackberry
 
 			if (berry != null) {
-				bool first_day = date.DayOfMonth == 1 || !bush.inBloom(date.Season, date.DayOfMonth - 1);
+				bool first_day = date.DayOfMonth == 1 || !IsBlooming(date.Season, date.DayOfMonth - 1);
 				int last = date.DayOfMonth;
 
 				// If it's the first day, then we also need the last day
 				// so we can display a nice string to the user.
 				if (first_day)
 					for (int d = date.DayOfMonth + 1; d <= ModEntry.DaysPerMonth; d++) {
-						if (bush.inBloom(date.Season, d))
+						if (IsBlooming(date.Season, d))
 							last = d;
 						else
 							break;
@@ -461,7 +463,7 @@ public class NoticesManager : BaseManager {
 			// TODO: This.
 
 			// NPC Weddings and Anniversaries
-			if ((who.isEngaged() || who.isMarried()) && who.friendshipData != null) {
+			if ((who.isEngaged() || who.isMarriedOrRoommates()) && who.friendshipData != null) {
 				foreach (var entry in who.friendshipData.Pairs) {
 					if (entry.Value == null || entry.Value.WeddingDate == null)
 						continue;
@@ -630,7 +632,7 @@ public class NoticesManager : BaseManager {
 				);
 
 			else {
-				var stock = Utility.getTravelingMerchantStock((int) (Game1.uniqueIDForThisGame + (uint)date.TotalDays + 1));
+				var stock = ShopBuilder.GetShopStock(Game1.shop_travelingCart);
 				if (stock.Count > 0) {
 					var builder = FlowHelper.Builder()
 						.FormatText(I18n.Page_Notices_Merchant_Stock(), align: Alignment.VCenter)
@@ -664,6 +666,35 @@ public class NoticesManager : BaseManager {
 					);
 				}
 			}
+		}
+	}
+	//Copied IsBloom from Bush.cs and switched calls for current season & day to passed values
+	public bool IsBlooming(StardewValley.Season season, int dayOfMonth) {
+		if (bush.size.Value == 4) {
+			return bush.tileSheetOffset.Value == 1;
+		}
+		if (bush.size.Value == 3) {
+			bool inBloom = bush.getAge() >= 20 && dayOfMonth >= 22 && (season != StardewValley.Season.Winter || bush.IsSheltered());
+			if (inBloom && bush.Location != null && bush.Location.IsFarm) {
+				foreach (Farmer allFarmer in Game1.getAllFarmers()) {
+					allFarmer.autoGenerateActiveDialogueEvent("cropMatured_815");
+				}
+			}
+			return inBloom;
+		}
+		switch (season) {
+			case StardewValley.Season.Spring:
+				if (dayOfMonth > 14) {
+					return dayOfMonth < 19;
+				}
+				return false;
+			case StardewValley.Season.Fall:
+				if (dayOfMonth > 7) {
+					return dayOfMonth < 12;
+				}
+				return false;
+			default:
+				return false;
 		}
 	}
 
