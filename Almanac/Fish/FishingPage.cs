@@ -299,7 +299,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 			if (Tank == null)
 				return null;
 
-				var urchin = Utility.CreateItemByID("(O)397", 1);
+				var urchin = ItemRegistry.Create("(O)397", 1);
 				FillTank(urchin, 4);
 
 			builder.Text("\n\n\n\n");
@@ -340,7 +340,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 				$" {info.Name}\n",
 				fancy: info.Legendary,
 				font: Game1.dialogueFont,
-				align: Alignment.Middle,
+				align: Alignment.Center,
 				onHover: OnHover,
 				noComponent: true
 			);
@@ -533,7 +533,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 						),
 						2f,
 						size: 10,
-						align: Alignment.Middle
+						align: Alignment.Center
 					)
 					.Text(" ")
 					.Text(
@@ -673,7 +673,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 		var selected = CurrentFish;
 
-		var sorted = Mod.Fish.GetSeasonFish(Menu.Date.Season);
+		var sorted = Mod.Fish.GetSeasonFish(((int)Menu.Date.Season));
 		sorted.Sort((a, b) => {
 			return a.Name.CompareTo(b.Name);
 		});
@@ -747,11 +747,11 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 				to_select = fish;
 
 			var sb = FlowHelper.Builder()
-				.Sprite(fish.Sprite, 4f, Alignment.Middle)
-				.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Middle);
+				.Sprite(fish.Sprite, 4f, Alignment.Center)
+				.Text($" {fish.Name}", font: Game1.dialogueFont, align: Alignment.Center);
 
 			if (Mod.Config.DebugMode)
-				sb.Text($" (#{fish.Id})", align: Alignment.Middle | Alignment.Right);
+				sb.Text($" (#{fish.Id})", align: Alignment.Center | Alignment.Right);
 
 			var node = new SelectableNode(
 				sb.Build(),
@@ -814,9 +814,9 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 			// Decor
 			if (Mod.Config.DecorateFishTank) {
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)152", 1));
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)390", 1));
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)393", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)152", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)390", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)393", 1));
 			}
 
 		// Add the Fish
@@ -843,7 +843,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 				for (int i = 0; i < 4; i++) {
 					string hat = dictionary.Keys.ElementAt(Game1.random.Next(0, dictionary.Count));
-					Tank.heldItems.Add(Utility.CreateItemByID($"(H){hat}", 1));
+					Tank.heldItems.Add(ItemRegistry.Create($"(H){hat}", 1));
 				}
 			}
 		}

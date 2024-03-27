@@ -243,7 +243,7 @@ public class FishManager : BaseManager {
 					continue;
 
 				int[] seasons;
-				if (ovr.Season == Season.All)
+				if (ovr.Season == Common.Enums.Season.All)
 					seasons = new int[] { 0, 1, 2, 3 };
 				else
 					seasons = new int[] { (int) ovr.Season };
