@@ -26,8 +26,6 @@
 
 	<!-- paths -->
 	<PropertyGroup>
-    <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - $(GameVersion) with $(SmapiVersion)</GamePath>
-    <GamePath Condition="!Exists('$(GamePath)')">C:\</GamePath>
 		<GameModsPath>$(GamePath)\$(ModSet)</GameModsPath>
 		<ModZipPath>$(SolutionDir)\_releases</ModZipPath>
 	</PropertyGroup>
