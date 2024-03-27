@@ -8,11 +8,12 @@ using System.Text.RegularExpressions;
 using Leclair.Stardew.Common;
 
 using StardewValley;
-using StardewValley.GameData.FishPond;
+using StardewValley.GameData.FishPonds;
 using StardewValley.Tools;
 using StardewModdingAPI;
 
 using Leclair.Stardew.Almanac.Models;
+using StardewValley.ItemTypeDefinitions;
 
 namespace Leclair.Stardew.Almanac.Fish;
 
@@ -60,7 +61,7 @@ public class VanillaProvider : IFishProvider {
 			return null;
 
 			string[] bits = data.Split('/');
-			SObject obj = Utility.CreateItemByID(id, 1) as SObject;
+			SObject obj = new SObject(id, 1);
 
 		if (bits.Length < 7 || obj is null)
 			return null;
@@ -181,17 +182,22 @@ public class VanillaProvider : IFishProvider {
 				pondInfo = new(
 					Initial: initial,
 					SpawnTime: pond.SpawnTime,
-					ProducedItems: pond.ProducedItems.Select(x => x.ItemID).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : Utility.CreateItemByID(x, 1))).ToList()
+					ProducedItems: pond.ProducedItems.Select(x => x.ItemId).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : ItemRegistry.Create(x, 1))).ToList()
 				);
-			}
+		}
+		//Hardcoded the ids of Legendary fish in since FishingRod.isFishBossFish no longer exists.
+		bool legend = false;
+
+		if(id == "(O)159"||id =="(O)160"||id=="(O)163"||id=="(O)775"||id=="(O)902"||id=="(O)900"||id=="(O)682"||id=="(O)899"||id=="(O)901"||id=="(O)898")
+			legend = true;
 
 		return new FishInfo(
-			Id: id.ToString(), // bits[0],
+			Id: id, // bits[0],
 			Item: obj,
 			Name: obj.DisplayName,
 			Description: desc,
 			Sprite: SpriteHelper.GetSprite(obj),
-			Legendary: FishingRod.isFishBossFish(id),
+			Legendary: legend,
 			MinSize: minSize,
 			MaxSize: maxSize,
 			NumberCaught: who => {

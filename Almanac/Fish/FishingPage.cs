@@ -299,7 +299,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 			if (Tank == null)
 				return null;
 
-				var urchin = Utility.CreateItemByID("(O)397", 1);
+				var urchin = ItemRegistry.Create("(O)397", 1);
 				FillTank(urchin, 4);
 
 			builder.Text("\n\n\n\n");
@@ -673,7 +673,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 		var selected = CurrentFish;
 
-		var sorted = Mod.Fish.GetSeasonFish(Menu.Date.Season);
+		var sorted = Mod.Fish.GetSeasonFish(((int)Menu.Date.Season));
 		sorted.Sort((a, b) => {
 			return a.Name.CompareTo(b.Name);
 		});
@@ -814,9 +814,9 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 			// Decor
 			if (Mod.Config.DecorateFishTank) {
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)152", 1));
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)390", 1));
-				Tank.heldItems.Add(Utility.CreateItemByID("(O)393", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)152", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)390", 1));
+				Tank.heldItems.Add(ItemRegistry.Create("(O)393", 1));
 			}
 
 		// Add the Fish
@@ -843,7 +843,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 				for (int i = 0; i < 4; i++) {
 					string hat = dictionary.Keys.ElementAt(Game1.random.Next(0, dictionary.Count));
-					Tank.heldItems.Add(Utility.CreateItemByID($"(H){hat}", 1));
+					Tank.heldItems.Add(ItemRegistry.Create($"(H){hat}", 1));
 				}
 			}
 		}
