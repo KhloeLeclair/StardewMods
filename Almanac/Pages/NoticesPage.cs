@@ -144,7 +144,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 			);
 
 		// Build a map of this month's birthdays.
-		DisposableList<NPC>? chars = null;
+		List<NPC>? chars = null;
 		try {
 			chars = Utility.getAllCharacters();
 		} catch(Exception ex) {
@@ -158,7 +158,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 
 		if (chars is not null)
 			foreach (NPC npc in chars)
-				if (npc.isVillager() && date.Season.Equals(npc.Birthday_Season)) {
+				if (npc.IsVillager && date.Season.Equals(npc.Birthday_Season)) {
 					// Don't show villagers we can't socialize with.
 					if (!npc.CanSocialize && !Game1.player.friendshipData.ContainsKey(npc.Name))
 						continue;

@@ -15,6 +15,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Utilities;
 
 using StardewValley;
+using StardewValley.GameData.LocationContexts;
 
 namespace Leclair.Stardew.Almanac.Pages;
 
@@ -29,6 +30,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		private bool[] Pirates;
 
 	readonly bool IsIsland;
+	readonly bool IsDesert;
 
 	private readonly SpriteInfo? FestivalFlag;
 
@@ -38,7 +40,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		if (!mod.Config.ShowWeather || !mod.Config.EnableDeterministicWeather)
 			return null;
 
-		return new(menu, mod, false);
+		return new(menu, mod, false, false);
 	}
 
 	public static WeatherPage? GetIslandPage(AlmanacMenu menu, ModEntry mod) {
@@ -48,12 +50,23 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		if (!mod.HasIsland(Game1.player))
 			return null;
 
-		return new(menu, mod, true);
+		return new(menu, mod, true, false);
 	}
 
-	public WeatherPage(AlmanacMenu menu, ModEntry mod, bool isIsland) : base(menu, mod) {
+	public static WeatherPage? GetDesertPage(AlmanacMenu menu, ModEntry mod) {
+		if (!mod.Config.ShowWeather || !mod.Config.EnableDeterministicWeather)
+			return null;
+
+		if (!mod.HasDesertAccess())
+			return null;
+
+		return new(menu, mod, false, true);
+	}
+
+	public WeatherPage(AlmanacMenu menu, ModEntry mod, bool isIsland, bool isDesert) : base(menu, mod) {
 		Seed = Mod.GetBaseWorldSeed();
 		IsIsland = isIsland;
+		IsDesert = isDesert;
 
 		if (!IsIsland)
 			FestivalFlag = new SpriteInfo(
@@ -75,11 +88,11 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 	public override void Update() {
 		base.Update();
 
-			Forecast = new string[ModEntry.DaysPerMonth];
-			Nodes = new IFlowNode[ModEntry.DaysPerMonth];
-			Festivals = IsIsland ? null : new bool[ModEntry.DaysPerMonth];
-			Pirates = IsIsland ? new bool[ModEntry.DaysPerMonth] : null;
-			WorldDate date = new(Menu.Date);
+		Forecast = new string[ModEntry.DaysPerMonth];
+		Nodes = new IFlowNode[ModEntry.DaysPerMonth];
+		Festivals = IsIsland ? null : new bool[ModEntry.DaysPerMonth];
+		Pirates = IsIsland ? new bool[ModEntry.DaysPerMonth] : null;
+		WorldDate date = new(Menu.Date);
 
 		FlowBuilder builder = new();
 		List<int>? pirateDays = IsIsland ? new() : null;
@@ -90,13 +103,16 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		if (!IsIsland)
 			builder.FormatText(I18n.Festival_About(Utility.getSeasonNameFromNumber(date.SeasonIndex)));
 
-			var context = IsIsland ? GameLocation.LocationContext.Island : GameLocation.LocationContext.Default;
+		string contextID;
+		if (IsIsland) contextID = "Island";
+		else if (IsDesert) contextID = "Desert";
+		else contextID = "Default";
+		LocationContextData context = Game1.locationContextData[contextID];
 
-
-			for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
-				date.DayOfMonth = day;
-				string weather = Forecast[day - 1] = Mod.Weather.GetWeatherForDate(Seed, date, context);
-
+		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
+			date.DayOfMonth = day;
+			bool shown = forecastLength == -1 || date.TotalDays - today <= forecastLength;
+			string weather = Forecast[day - 1] = shown ? Mod.Weather.GetWeatherForDate(Seed, date, context, contextID): "";
 			if (IsIsland) {
 				bool pirates = Pirates![day - 1] = shown && day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather);
 				if (pirates)
@@ -247,7 +263,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 
 		int day = date.DayOfMonth - 1;
 
-		if (Forecast[day] != -1)
+		if (Forecast[day] != "")
 			Utility.drawWithShadow(
 				b,
 				Menu.background,

@@ -856,6 +856,10 @@ public class ModEntry : ModSubscriber {
 		return Config.IslandAlwaysAvailable || who.mailReceived.Contains(Mail_Has_Island);
 	}
 
+	public bool HasDesertAccess() {
+		return Game1.locationContextData.ContainsKey("Desert");
+	}
+
 	public bool HasMagic(Farmer who) {
 		return Config.MagicAlwaysAvailable || who.mailReceived.Contains(Mail_Has_Magic);
 	}
