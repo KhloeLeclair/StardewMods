@@ -15,7 +15,7 @@ using StardewValley.Objects;
 using StardewValley.GameData;
 using StardewValley.Menus;
 
-using SObject = StardewValley.Object;
+using SDObject = StardewValley.Object;
 
 using Leclair.Stardew.Almanac.Menus;
 
@@ -61,7 +61,7 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 	public override DebugItemsState SaveState() {
 		var state = base.SaveState();
 
-		state.Item = CurrentItem?.QualifiedItemID;
+		state.Item = CurrentItem?.QualifiedItemId;
 
 		return state;
 	}
@@ -69,7 +69,7 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 	public override void LoadState(DebugItemsState state) {
 		base.LoadState(state);
 
-		var item = string.IsNullOrEmpty(state.Item) ? null : Utility.CreateItemByID(state.Item, 1, allow_null: true);
+		var item = string.IsNullOrEmpty(state.Item) ? null : ItemRegistry.Create(state.Item, 1, allowNull: true);
 		SelectItem(item);
 	}
 
@@ -78,12 +78,12 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 	#region Logic
 
 	public bool SelectItem(Item item) {
-		if (item == null || CurrentItem == null || item.QualifiedItemID != CurrentItem.QualifiedItemID) {
+		if (item == null || CurrentItem == null || item.QualifiedItemId != CurrentItem.QualifiedItemId) {
 			CurrentItem = item;
 			SetRightFlow(ItemInfo.Value);
 
 			foreach(var pair in ItemNodes) {
-				pair.Value.Selected = pair.Key == CurrentItem?.QualifiedItemID;
+				pair.Value.Selected = pair.Key == CurrentItem?.QualifiedItemId;
 			}
 
 			return true;
@@ -116,7 +116,7 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 
 		builder
 			.Text("ID: ", bold: true)
-			.Text(item.QualifiedItemID, shadow: false);
+			.Text(item.QualifiedItemId, shadow: false);
 
 		return builder.Build();
 	}
@@ -126,11 +126,10 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 
 		FlowBuilder builder = new();
 		ItemNodes.Clear();
-
-		foreach (var type in ItemDataDefinition.IdentifierLookup.Values) {
+		foreach (var type in ItemRegistry.ItemTypes) {
 			builder.Text("\n").Text(type.Identifier, font: Game1.dialogueFont).Text("\n");
-			foreach (string itemID in type.GetAllItemIDs()) {
-				var item = Utility.CreateItemByID($"{type.Identifier}{itemID}", 1, allow_null: true);
+			foreach (string itemID in type.GetAllIds()) {
+				var item = ItemRegistry.Create($"{type.Identifier}{itemID}", 1, allowNull: true);
 				if (item == null)
 					continue;
 
@@ -139,11 +138,9 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 
 				var node = new SelectableNode(
 					sb.Build(),
-					width: 72,
-
 					onHover: (_, _, _) => {
 						Menu.HoveredItem = item;
-						Menu.HoverText = $"{item.DisplayName}\n{item.QualifiedItemID}";
+						Menu.HoverText = $"{item.DisplayName}\n{item.QualifiedItemId}";
 						return true;
 					},
 
@@ -160,7 +157,7 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 					HoverColor = Color.White * 0.4f
 				};
 
-				ItemNodes.Add(item.QualifiedItemID, node);
+				ItemNodes.Add(item.QualifiedItemId, node);
 				builder.Add(node);
 			}
 		}
