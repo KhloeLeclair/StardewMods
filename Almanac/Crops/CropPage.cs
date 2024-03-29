@@ -516,10 +516,10 @@ public class CropPage : BasePage<CropState>, ICalendarPage, ITab {
 
 			builder
 				.Add(node)
-				.Text($" {crop.Name}", font: Game1.dialogueFont, align: Alignment.Middle, onHover: OnHover, noComponent: true);
+				.Text($" {crop.Name}", font: Game1.dialogueFont, align: Alignment.VCenter, onHover: OnHover, noComponent: true);
 
 			if (Mod.Config.DebugMode)
-				builder.Text($" (#{crop.Id})", align: Alignment.Middle);
+				builder.Text($" (#{crop.Id})", align: Alignment.VCenter);
 
 			builder
 				.Text("\n")

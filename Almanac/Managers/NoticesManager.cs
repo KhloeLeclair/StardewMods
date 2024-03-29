@@ -351,7 +351,7 @@ public class NoticesManager : BaseManager {
 			bush = new();
 
 			if (gathering && IsBlooming(date.Season, date.DayOfMonth)) {
-				Item berry = null;
+				Item? berry = null;
 				if (date.SeasonIndex == 0)
 					berry = ItemRegistry.Create("(O)296", 1); // Salmonberry
 
@@ -382,7 +382,7 @@ public class NoticesManager : BaseManager {
 								start = new SDate(date.DayOfMonth, date.Season).ToLocaleString(withYear: false),
 								end = new SDate(last, date.Season).ToLocaleString(withYear: false)
 							},
-							align: Alignment.Center
+							align: Alignment.VCenter
 						) : null,
 					SpriteHelper.GetSprite(berry),
 					berry
@@ -392,7 +392,7 @@ public class NoticesManager : BaseManager {
 
 		// Festivals
 		if (Mod.Config.NoticesShowFestivals && Utility.isFestivalDay(date.DayOfMonth, date.Season)) {
-			var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + date.DayOfMonth);
+			var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.SeasonKey + date.DayOfMonth);
 			if (data.ContainsKey("name") && data.ContainsKey("conditions")) {
 				string name = data["name"];
 				string[] conds = data["conditions"].Split('/');
@@ -426,7 +426,7 @@ public class NoticesManager : BaseManager {
 							start = Mod.FormatTime(start),
 							end = Mod.FormatTime(end)
 						},
-						align: Alignment.Center
+						align: Alignment.VCenter
 					),
 					new SpriteInfo(
 						Game1.temporaryContent.Load<Texture2D>("LooseSprites\\Billboard"),
@@ -492,7 +492,7 @@ public class NoticesManager : BaseManager {
 									name = who.displayName,
 									spouse = spouse.displayName
 								},
-								align: Alignment.Center
+								align: Alignment.VCenter
 							),
 							sprite
 						);
@@ -509,7 +509,7 @@ public class NoticesManager : BaseManager {
 									name = who.displayName,
 									spouse = spouse.displayName
 								},
-								align: Alignment.Center
+								align: Alignment.VCenter
 							),
 							sprite
 						);
@@ -529,7 +529,7 @@ public class NoticesManager : BaseManager {
 						new {
 							time = Mod.FormatTime(time)
 						},
-						align: Alignment.Center
+						align: Alignment.VCenter
 					),
 					new SpriteInfo(
 						Game1.mouseCursors,
@@ -577,7 +577,7 @@ public class NoticesManager : BaseManager {
 								start = new SDate(15, date.Season).ToLocaleString(withYear: false),
 								end = new SDate(28, date.Season).ToLocaleString(withYear: false),
 							},
-							align: Alignment.Center
+							align: Alignment.VCenter
 						) : null,
 						SpriteHelper.GetSprite(nut),
 						nut
@@ -615,7 +615,7 @@ public class NoticesManager : BaseManager {
 				yield return new RichEvent(
 					null,
 					FlowHelper.Builder()
-						.FormatText(I18n.Page_Notices_Merchant(), align: Alignment.Center)
+						.FormatText(I18n.Page_Notices_Merchant(), align: Alignment.VCenter)
 						.Build(),
 					sprite
 				);
@@ -624,7 +624,7 @@ public class NoticesManager : BaseManager {
 				var stock = ShopBuilder.GetShopStock(Game1.shop_travelingCart);
 				if (stock.Count > 0) {
 					var builder = FlowHelper.Builder()
-						.FormatText(I18n.Page_Notices_Merchant_Stock(), align: Alignment.Center)
+						.FormatText(I18n.Page_Notices_Merchant_Stock(), align: Alignment.VCenter)
 						.Text("\n  ");
 
 					bool first = true;
@@ -641,7 +641,7 @@ public class NoticesManager : BaseManager {
 
 						if (item is SObject sobj)
 							builder
-								.Sprite(SpriteHelper.GetSprite(sobj), scale: 2, align: Alignment.Center)
+								.Sprite(SpriteHelper.GetSprite(sobj), scale: 2, align: Alignment.VCenter)
 								.Text(" ");
 
 						builder.Text(item.DisplayName, shadow: false);
