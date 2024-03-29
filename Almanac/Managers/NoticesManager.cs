@@ -362,7 +362,7 @@ public class NoticesManager : BaseManager {
 			bush = new();
 
 			if (gathering && IsBlooming(date.Season, date.DayOfMonth)) {
-				Item berry = null;
+				Item? berry = null;
 				if (date.SeasonIndex == 0)
 					berry = ItemRegistry.Create("(O)296", 1); // Salmonberry
 
@@ -403,7 +403,7 @@ public class NoticesManager : BaseManager {
 
 		// Festivals
 		if (Mod.Config.NoticesShowFestivals && Utility.isFestivalDay(date.DayOfMonth, date.Season)) {
-			var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + date.DayOfMonth);
+			var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.SeasonKey + date.DayOfMonth);
 			if (data.ContainsKey("name") && data.ContainsKey("conditions")) {
 				string name = data["name"];
 				string[] conds = data["conditions"].Split('/');

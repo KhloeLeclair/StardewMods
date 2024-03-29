@@ -100,11 +100,11 @@ internal class DebugItemsPage : BasePage<DebugItemsState> {
 
 		var sprite = SpriteHelper.GetSprite(item);
 
-		builder.Text(item.DisplayName, fancy: true, align: Alignment.Center);
+		builder.Text(item.DisplayName, fancy: true, align: Alignment.HCenter);
 		builder.Text("\n\n");
 
 		builder
-			.Sprite(sprite, 1f, Alignment.Bottom | Alignment.Center)
+			.Sprite(sprite, 1f, Alignment.Bottom | Alignment.HCenter)
 			.Text(" ")
 			.Sprite(sprite, 2f, Alignment.Bottom)
 			.Text(" ")

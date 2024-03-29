@@ -650,7 +650,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 			foreach(var item in pond.ProducedItems)
 				builder
 					.Text("\n  ")
-					.Sprite(SpriteHelper.GetSprite(item), 2f, align: Alignment.Middle, extra: item)
+					.Sprite(SpriteHelper.GetSprite(item), 2f, align: Alignment.VCenter, extra: item)
 					.Text(" ")
 					.Text(item.DisplayName, extra: item);
 
