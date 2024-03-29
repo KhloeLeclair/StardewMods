@@ -20,7 +20,7 @@ internal static class GameStateQuery_Patches {
 
 		try {
 			mod.Harmony.Patch(
-				original: AccessTools.Method(typeof(GameStateQuery), nameof(GameStateQuery.query_IS_FESTIVAL_DAY)),
+				original: AccessTools.Method(typeof(GameStateQuery), nameof(GameStateQuery.DefaultResolvers.IS_FESTIVAL_DAY)),
 				transpiler: new HarmonyMethod(typeof(GameStateQuery_Patches), nameof(query_IS_FESTIVAL_DAY_Transpiler))
 			);
 		} catch (Exception ex) {
