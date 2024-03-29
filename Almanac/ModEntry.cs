@@ -100,8 +100,8 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		// Patches
-		// Patches.GameMenu_Patches.Patch(this);
-		SpriteText_Patches.Patch(Harmony, Monitor);
+		//Patches.GameMenu_Patches.Patch(this);
+		Common_SpriteText_Patches.Patch(Harmony, Monitor);
 
 		Assets = new(this);
 
@@ -276,17 +276,17 @@ public class ModEntry : ModSubscriber {
 			tomorrow.TotalDays++;
 
 			// Main Weather
-			Game1.weatherForTomorrow = Weather.GetWeatherForDate(seed, tomorrow, GameLocation.LocationContext.Default);
+			Game1.weatherForTomorrow = Weather.GetWeatherForDate(seed, tomorrow, Game1.locationContextData["Default"], "Default");
 			if (Game1.IsMasterGame)
-				Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).weatherForTomorrow.Value = Game1.weatherForTomorrow;
+				Game1.netWorldState.Value.GetWeatherForLocation("Default").weatherForTomorrow.Value = Game1.weatherForTomorrow;
 
 			// Island Weather
 			if (Game1.IsMasterGame && Utility.doesAnyFarmerHaveOrWillReceiveMail("Visited_Island")) {
-				var ctx = GameLocation.LocationContext.Island;
+				var ctx = Game1.locationContextData["Island"];
 
-				Game1.netWorldState.Value.GetWeatherForLocation(ctx)
+				Game1.netWorldState.Value.GetWeatherForLocation("Island")
 					.weatherForTomorrow.Value = Weather
-						.GetWeatherForDate(seed, tomorrow, ctx);
+						.GetWeatherForDate(seed, tomorrow, ctx, "Island");
 			}
 		}
 	}
@@ -343,7 +343,7 @@ public class ModEntry : ModSubscriber {
 			Log($" Query: {query}");
 			if (seed != -1)
 				Log($"  Seed: {seed}");
-			Log($"Result: {GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
+			Log($"Result: {Common.GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
 		});
 
 		Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
@@ -359,7 +359,7 @@ public class ModEntry : ModSubscriber {
 				Log($"  - Which: {Game1.whichFarm}", LogLevel.Info);
 				Log($"  - Fish Override: {farm.getMapProperty("FarmFishLocationOverride")}", LogLevel.Info);
 			}
-			Log($"  - Fish Sample: {Game1.currentLocation.getFish(0f, 0, 4, Game1.player, 0, Microsoft.Xna.Framework.Vector2.Zero).Name}", LogLevel.Info);
+			Log($"  - Fish Sample: {Game1.currentLocation.getFish(0f, "", 4, Game1.player, 0, Microsoft.Xna.Framework.Vector2.Zero).Name}", LogLevel.Info);
 		});
 
 		Helper.ConsoleCommands.Add("al_retheme", "Reload all themes.", ThemeManager.PerformReloadCommand);
@@ -384,7 +384,7 @@ public class ModEntry : ModSubscriber {
 				ulong seed = GetBaseWorldSeed();
 				WorldDate date = new(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
-					string weather = Weather.GetWeatherForDate(seed, date, GameLocation.LocationContext.Default);
+					string weather = Weather.GetWeatherForDate(seed, date, Game1.locationContextData["Default"], "Default");
 					Log($"Date: {date.Localize()} -- Weather: {weather}");
 					date.TotalDays++;
 				}
