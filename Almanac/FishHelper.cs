@@ -104,8 +104,8 @@ public static class FishHelper {
 			ColoredObject result = new ColoredObject("812", 1, color);
 			result.name = fish.Name + " Roe";
 			result.preserve.Value = SObject.PreserveType.Roe;
-			result.preservedParentSheetIndex.Value = fish.ItemID;
-			result.Price += fish.Price / 2;
+			result.preservedParentSheetIndex.Value = fish.QualifiedItemId;
+			result.Price += fish.sellToStorePrice() / 2;
 
 			return result;
 		}
