@@ -21,9 +21,9 @@ using Leclair.Stardew.Almanac.Pages;
 namespace Leclair.Stardew.Almanac.Menus;
 
 internal class BookState {
-	public string LastSection;
+	public string? LastSection;
 	public int TabScroll;
-	public Dictionary<string, object> SectionStates;
+	public Dictionary<string, object>? SectionStates;
 }
 
 internal class BookMenu : IClickableMenu {
