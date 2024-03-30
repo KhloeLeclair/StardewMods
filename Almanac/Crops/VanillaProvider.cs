@@ -13,6 +13,8 @@ using StardewValley;
 using StardewValley.GameData;
 
 using StardewModdingAPI;
+using StardewValley.GameData.Crops;
+using StardewValley.GameData.GiantCrops;
 
 namespace Leclair.Stardew.Almanac.Crops;
 
@@ -29,7 +31,7 @@ public class VanillaProvider : ICropProvider {
 	public int Priority => 0;
 
 	public IEnumerable<CropInfo> GetCrops() {
-		Dictionary<string, string> crops = Game1.content.Load<Dictionary<string, string>>(@"Data\Crops");
+		Dictionary<string, CropData> crops = Game1.content.Load<Dictionary<string, CropData>>(@"Data\Crops");
 		List<CropInfo> result = new();
 		foreach (var entry in crops) {
 			try {
@@ -43,31 +45,29 @@ public class VanillaProvider : ICropProvider {
 		return result;
 	}
 
-	private CropInfo? GetCropInfo(string id, string data) {
+	private CropInfo? GetCropInfo(string id, CropData data) {
 		// TODO: Create Crop instances so we can
 		// lean more on vanilla logic.
-		string[] bits = data.Split('/');
-		if (bits.Length < 5)
+		int sprite = data.SpriteIndex;
+		string harvestID = data.HarvestItemId;
+		int regrow = data.RegrowDays;
+		bool isTrellisCrop = data.IsRaised;
+		bool isPaddyCrop = data.IsPaddyCrop;
+		if (!Game1.objectData.ContainsKey(harvestID))
 			return null;
-		int sprite = Convert.ToInt32(bits[2]);
-		string harvestID = bits[3];
-		int regrow = Convert.ToInt32(bits[4]);
-		bool isTrellisCrop = bits.Length > 7 && bits[7].Equals("true");
-		if (!Game1.objectInformation.ContainsKey(harvestID))
-			return null;
-		string[] seasons = bits[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		List<Season> seasons = data.Seasons;
 		WorldDate? startDate = null;
 		WorldDate? endDate = null;
 		// TODO: Handle weird crops with a gap.
-		foreach (string season in seasons) {
+		foreach (Season season in seasons) {
 			WorldDate start;
 			WorldDate end;
 			try {
 				start = new(1, season, 1);
 				end = new(1, season, ModEntry.DaysPerMonth);
 				// Sanity check the seasons, just in case.
-				string test = start.Season;
-				test = end.Season;
+				string test = start.SeasonKey;
+				test = end.SeasonKey;
 			} catch (Exception) {
 				ModEntry.Instance.Log($"Invalid season for crop {id} (harvest:{harvestID}): {season}", LogLevel.Warn);
 				return null;
@@ -88,21 +88,18 @@ public class VanillaProvider : ICropProvider {
 		// so we want to show that rather than the seed.
 		Item item;
 		if (sprite == 23)
-			item = Utility.CreateItemByID(id, 1);
+			item = ItemRegistry.Create(id, 1);
 		else
-			item = Utility.CreateItemByID(harvestID, 1);
+			item = ItemRegistry.Create(harvestID, 1);
 		// Phases
-		int[] phases = bits[0].Split(' ').Select(val => Convert.ToInt32(val)).ToArray();
-		// Stupid hard coded bullshit.
-		// TODO: Wait for the new context tag / data bit and check that.
-		bool paddyCrop = harvestID == "271" || harvestID == "830";
+		int[] phases = [.. data.DaysInPhase];
 		// Phase Sprites
 		// We need an extra sprite for the finished crop,
 		// as well as one for regrow if that's enabled.
 		SpriteInfo[] sprites = new SpriteInfo[phases.Length + 1 + (regrow > 0 ? 1 : 0)];
 		// Are we dealing with colors?
 		Color? color = null;
-		string[]? colorbits = regrow <= 0 && bits.Length > 8 ? bits[8].Split(' ') : null;
+		string[]? colorbits = regrow <= 0 && data.TintColors.Count>0 ? data.TintColors.ToArray(): null;
 		if (colorbits != null && colorbits.Length >= 4 && colorbits[0].Equals("true")) {
 			// Technically there could be many colors, but we just use
 			// the first one.
@@ -132,33 +129,33 @@ public class VanillaProvider : ICropProvider {
 		bool isGiantCrop = false;
 		SpriteInfo? giantSprite = null;
 		// Giant Crops
-		var giantCrops = Game1.content.Load<Dictionary<string, GiantCrops>>(@"Data\GiantCrops");
+		var giantCrops = Game1.content.Load<Dictionary<string, GiantCropData>>(@"Data\GiantCrops");
 		if (giantCrops != null && giantCrops.TryGetValue(harvestID, out var gcdata) && gcdata != null) { 
 			isGiantCrop = true;
 			giantSprite = new(
 				Game1.content.Load<Texture2D>(gcdata.Texture),
 				new Rectangle(
-					gcdata.Corner.X, gcdata.Corner.Y,
+					gcdata.TexturePosition.X, gcdata.TexturePosition.Y,
 					gcdata.TileSize.X * 16,
 					(gcdata.TileSize.Y + 1) * 16
 				)
 			);
 		}
 		return new(
-			Convert.ToString(id),
+			id,
 			item,
 			item.DisplayName,
 			SpriteHelper.GetSprite(item),
+			isTrellisCrop,
 			isGiantCrop,
 			giantSprite,
 			new Item[] {
 				new SObject(id, 1)
 			},
-			isTrellisCrop,
 			phases,
-			regrow,
-			paddyCrop,
 			sprites,
+			regrow,
+			isPaddyCrop,
 			startDate,
 			endDate
 		);
