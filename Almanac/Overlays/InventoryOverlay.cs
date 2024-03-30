@@ -185,7 +185,7 @@ internal class InventoryOverlay : BaseOverlay<InventoryPage> {
 		AddButtonsToMenu();
 	}
 
-	protected override void ReceiveGameWindowResized(Rectangle NewViewport) {
+	protected override void ReceiveGameWindowResized(xTile.Dimensions.Rectangle NewViewport) {
 		base.ReceiveGameWindowResized(NewViewport);
 
 		MoveUIElements();
