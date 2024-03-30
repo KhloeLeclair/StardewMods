@@ -95,7 +95,7 @@ public static class RenderHelper {
 			alpha: alpha,
 			layerDepth: layerDepth,
 			junimoText: junimoText,
-			color: cint,
+			color: new Color(((uint)cint)),
 			maxWidth: maxWidth
 		);
 	}
@@ -129,7 +129,7 @@ public static class RenderHelper {
 			alpha: alpha,
 			layerDepth: layerDepth,
 			junimoText: junimoText,
-			color: cint
+			color: new Color(((uint)cint))
 		);
 	}
 

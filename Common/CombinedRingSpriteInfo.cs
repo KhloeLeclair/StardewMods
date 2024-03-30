@@ -11,11 +11,8 @@ namespace Leclair.Stardew.Common {
 
 		public CombinedRing Ring;
 
-		public CombinedRingSpriteInfo(CombinedRing ring) : base() {
+		public CombinedRingSpriteInfo(CombinedRing ring) : base(ItemRegistry.GetData(ring.QualifiedItemId).GetTexture(), ItemRegistry.GetData(ring.QualifiedItemId).GetSourceRect(0)) {
 			Ring = ring;
-			var data = Utility.GetItemDataForItemID(Ring.QualifiedItemID);
-			Texture = data.texture;
-			BaseSource = data.GetSourceRect(0);
 		}
 
 		public override void Draw(SpriteBatch batch, Vector2 location, float scale, Vector2 size, int frame = -1, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
@@ -23,8 +20,8 @@ namespace Leclair.Stardew.Common {
 		}
 
 		public override void Draw(SpriteBatch batch, Vector2 location, float scale, int frame = -1, float size = 16, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
-			var firstData = Utility.GetItemDataForItemID(Ring.combinedRings[0].QualifiedItemID);
-			var secondData = Utility.GetItemDataForItemID(Ring.combinedRings[1].QualifiedItemID);
+			var firstData = ItemRegistry.GetData(Ring.combinedRings[0].QualifiedItemId);
+			var secondData = ItemRegistry.GetData(Ring.combinedRings[1].QualifiedItemId);
 			
 			//location.Y -= 8 * scale;
 
@@ -38,7 +35,7 @@ namespace Leclair.Stardew.Common {
 			p1.Height = 6;
 
 			batch.Draw(
-				texture: firstData.texture,
+				texture: firstData.GetTexture(),
 				position: location + new Vector2(5f, 7f) * scale,
 				sourceRectangle: p1,
 				color: Color.White,
@@ -57,7 +54,7 @@ namespace Leclair.Stardew.Common {
 			p1.Height = 1;
 
 			batch.Draw(
-				texture: firstData.texture,
+				texture: firstData.GetTexture(),
 				position: location + new Vector2(6f, 6f) * scale,
 				sourceRectangle: p1,
 				color: Color.White,
@@ -77,7 +74,7 @@ namespace Leclair.Stardew.Common {
 			p2.Height = 6;
 
 			batch.Draw(
-				texture: secondData.texture,
+				texture: secondData.GetTexture(),
 				position: location + new Vector2(9f, 7f) * scale,
 				sourceRectangle: p2,
 				color: Color.White,
@@ -95,7 +92,7 @@ namespace Leclair.Stardew.Common {
 			p2.Height = 1;
 
 			batch.Draw(
-				texture: secondData.texture,
+				texture: secondData.GetTexture(),
 				position: location + new Vector2(9f, 6f) * scale,
 				sourceRectangle: p2,
 				color: Color.White,
