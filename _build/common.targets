@@ -25,10 +25,7 @@
 	</PropertyGroup>
 
 	<!-- paths -->
-	<PropertyGroup>
-		<GameModsPath>$(GamePath)\$(ModSet)</GameModsPath>
-		<ModZipPath>$(SolutionDir)\_releases</ModZipPath>
-	</PropertyGroup>
+	
 
 	<!-- game starting -->
 	<PropertyGroup>
