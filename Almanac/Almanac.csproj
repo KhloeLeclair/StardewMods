@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-    <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley</GamePath>
 		<AssemblyName>Almanac</AssemblyName>
 		<Version>0.18.1</Version>
 		<RootNamespace>Leclair.Stardew.Almanac</RootNamespace>
