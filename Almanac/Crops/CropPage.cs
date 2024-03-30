@@ -39,9 +39,9 @@ public class CropState : BaseState {
 public class CropPage : BasePage<CropState>, ICalendarPage, ITab {
 
 	private readonly static Tuple<string, double>[] FERTILIZERS = new Tuple<string, double>[] {
-		new("(O)465", 0.10),
-		new("(O)466", 0.25),
-		new("(O)918", 0.33)
+		new("465", 0.10),
+		new("466", 0.25),
+		new("918", 0.33)
 	};
 
 	private List<CropInfo>[]? LastDays;
