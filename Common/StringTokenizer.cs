@@ -183,7 +183,7 @@ public static class StringTokenizer {
 		}
 
 		public static bool Handle_Season(string input, IGameState state, out string result) {
-			result = state.Date.Season;
+			result = state.Date.SeasonKey;
 			return true;
 		}
 

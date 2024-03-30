@@ -12,6 +12,9 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.ItemTypeDefinitions;
+using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.Projectiles;
@@ -251,10 +254,10 @@ public static class SpriteHelper {
 			if (ts.Equals("CustomFurniture.CustomFurniture")) {
 				// TODO: More advanced furniture with layers.
 				if (Helper != null)
-					return Helper.Reflection.GetField<Texture2D>(item, "texture", required: false)?.GetValue() ?? Furniture.furnitureTexture;
+					return Helper.Reflection.GetField<Texture2D>(item, "texture", required: false)?.GetValue() ?? Game1.content.Load<Texture2D>(Furniture.furnitureTextureName);
 			}
 
-			return Furniture.furnitureTexture;
+			return Game1.content.Load<Texture2D>(Furniture.furnitureTextureName);
 		}
 
 		// Fence
@@ -263,7 +266,7 @@ public static class SpriteHelper {
 
 		// Wallpaper
 		if (item is Wallpaper wallpaper) {
-			var moddata = wallpaper.GetModData();
+			var moddata = wallpaper.GetSetData();
 			Texture2D? texture = null;
 			if (moddata != null) {
 				try {
@@ -378,9 +381,9 @@ public static class SpriteHelper {
 		if (item is Boots || item is Ring) {
 			int idx;
 			if (item is Boots boots)
-				idx = boots.indexInTileSheet.Value;
+				idx = boots.ParentSheetIndex;
 			else
-				idx = ((Ring) item).indexInTileSheet.Value;
+				idx = ((Ring) item).ParentSheetIndex;
 
 			return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx, tileSize, tileSize);
 		}
@@ -390,8 +393,8 @@ public static class SpriteHelper {
 			int idx;
 
 			switch (clothing.clothesType.Value) {
-				case (int) Clothing.ClothesType.SHIRT:
-					idx = clothing.indexInTileSheetMale.Value;
+				case Clothing.ClothesType.SHIRT:
+					idx = clothing.ParentSheetIndex;
 
 					return new Rectangle(
 						idx * 8 % 128,
@@ -399,9 +402,9 @@ public static class SpriteHelper {
 						8, 8
 					);
 
-				case (int) Clothing.ClothesType.PANTS:
+				case Clothing.ClothesType.PANTS:
 					int tiles = FarmerRenderer.pantsTexture.Width / 192;
-					idx = clothing.indexInTileSheetMale.Value;
+					idx = clothing.ParentSheetIndex;
 
 					return new Rectangle(
 						192 * (idx % tiles),
@@ -413,7 +416,7 @@ public static class SpriteHelper {
 
 		// Hat
 		if (item is Hat hat) {
-			int idx = hat.which.Value;
+			int idx = hat.ParentSheetIndex;
 			return new Rectangle(
 				idx * 20 % FarmerRenderer.hatsTexture.Width,
 				idx * 20 / FarmerRenderer.hatsTexture.Width * 20 * 4,
@@ -475,7 +478,7 @@ public static class SpriteHelper {
 
 		// Furniture
 		if (item is Furniture furniture) {
-			Texture2D texture = Furniture.furnitureTexture;
+			Texture2D texture = ItemRegistry.GetData(furniture.QualifiedItemId).GetTexture();
 
 			if (ts.Equals("CustomFurniture.CustomFurniture")) {
 				// TODO: More advanced furniture with layers.
@@ -517,8 +520,8 @@ public static class SpriteHelper {
 			Texture2D? texture = null;
 			if (moddata != null) {
 				try {
-					texture = Game1.content.Load<Texture2D>(moddata.);
-				} catch (Exception) { /* no-op * / }
+					texture = Game1.content.Load<Texture2D>(moddata.Name);
+				} catch (Exception) { /* no-op */ }
 			}
 
 			if (texture == null)
@@ -603,9 +606,9 @@ public static class SpriteHelper {
 		if (item is Boots || item is Ring) {
 			int idx;
 			if (item is Boots boots)
-				idx = boots.indexInTileSheet.Value;
+				idx = boots.ParentSheetIndex;
 			else
-				idx = ((Ring) item).indexInTileSheet.Value;
+				idx = ((Ring) item).ParentSheetIndex;
 
 			return new SpriteInfo(
 				Game1.objectSpriteSheet,
@@ -618,8 +621,8 @@ public static class SpriteHelper {
 			int idx;
 
 			switch (clothing.clothesType.Value) {
-				case (int) Clothing.ClothesType.SHIRT:
-					idx = clothing.indexInTileSheetMale.Value;
+				case Clothing.ClothesType.SHIRT:
+					idx = clothing.ParentSheetIndex;
 					Rectangle source = new(
 						idx * 8 % 128,
 						idx * 8 / 128 * 32,
@@ -637,9 +640,9 @@ public static class SpriteHelper {
 						isPrismatic: clothing.isPrismatic.Value
 					);
 
-				case (int) Clothing.ClothesType.PANTS:
+				case Clothing.ClothesType.PANTS:
 					int tiles = FarmerRenderer.pantsTexture.Width / 192;
-					idx = clothing.indexInTileSheetMale.Value;
+					idx = clothing.ParentSheetIndex;
 
 					return new SpriteInfo(
 						FarmerRenderer.pantsTexture,
@@ -656,7 +659,7 @@ public static class SpriteHelper {
 
 		// Hat
 		if (item is Hat hat) {
-			int idx = hat.which.Value;
+			int idx = hat.ParentSheetIndex;
 
 			return new SpriteInfo(
 				FarmerRenderer.hatsTexture,

@@ -17,16 +17,19 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 	public CombinedRingSpriteInfo(CombinedRing ring) : base(Game1.objectSpriteSheet, Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, ring.indexInTileSheet.Value, SObject.spriteSheetTileSize, SObject.spriteSheetTileSize)) {
 		Ring = ring;
 	}
+			Texture = data.texture;
+			BaseSource = data.GetSourceRect(0);
+		}
 
 	public override void Draw(SpriteBatch batch, Vector2 location, float scale, Vector2 size, int frame = -1, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
-		Draw(batch, location, scale, frame, size.X, baseColor, overlayColor, alpha);
-	}
-
 	public override void Draw(SpriteBatch batch, Vector2 location, float scale, int frame = -1, float size = 16, Color? baseColor = null, Color? overlayColor = null, float alpha = 1) {
 		int firstIdx = Ring.combinedRings[0].indexInTileSheet.Value;
 		int secondIdx = Ring.combinedRings[1].indexInTileSheet.Value;
 
 		//location.Y -= 8 * scale;
+			var secondData = Utility.GetItemDataForItemID(Ring.combinedRings[1].QualifiedItemID);
+			
+			//location.Y -= 8 * scale;
 
 		Vector2 Origin = new(2f, 1f);
 
@@ -34,9 +37,6 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 		Rectangle p1 = Game1.getSourceRectForStandardTileSheet(Texture, firstIdx, 16, 16);
 		p1.X += 5;
 		p1.Y += 7;
-		p1.Width = 4;
-		p1.Height = 6;
-
 		batch.Draw(
 			texture: Texture,
 			position: location + new Vector2(5f, 7f) * scale,
@@ -48,14 +48,14 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 			effects: SpriteEffects.None,
 			layerDepth: 1f
 		);
+				effects: SpriteEffects.None,
+				layerDepth: 1f
+			);
 
 
 		// Part Two - Left Ring Slice
 		p1.X++;
 		p1.Y += 4;
-		p1.Width = 3;
-		p1.Height = 1;
-
 		batch.Draw(
 			texture: Texture,
 			position: location + new Vector2(6f, 6f) * scale,
@@ -67,15 +67,15 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 			effects: SpriteEffects.None,
 			layerDepth: 1f
 		);
+				effects: SpriteEffects.None,
+				layerDepth: 1f
+			);
 
 
 		// Part Three - Right Ring Arc
 		Rectangle p2 = Game1.getSourceRectForStandardTileSheet(Texture, secondIdx, 16, 16);
 		p2.X += 9;
 		p2.Y += 7;
-		p2.Width = 4;
-		p2.Height = 6;
-
 		batch.Draw(
 			texture: Texture,
 			position: location + new Vector2(9f, 7f) * scale,
@@ -87,13 +87,13 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 			effects: SpriteEffects.None,
 			layerDepth: 1f
 		);
+				effects: SpriteEffects.None,
+				layerDepth: 1f
+			);
 
 
 		// Part Four - Right Ring Slice
 		p2.Y += 4;
-		p2.Width = 3;
-		p2.Height = 1;
-
 		batch.Draw(
 			texture: Texture,
 			position: location + new Vector2(9f, 6f) * scale,
@@ -105,6 +105,9 @@ public class CombinedRingSpriteInfo : SpriteInfo {
 			effects: SpriteEffects.None,
 			layerDepth: 1f
 		);
+				effects: SpriteEffects.None,
+				layerDepth: 1f
+			);
 
 
 		// Dye Colors
