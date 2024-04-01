@@ -5,7 +5,7 @@ namespace Leclair.Stardew.SeeMeRollin {
 
 		public KeybindList UseKey { get; set; } = KeybindList.Parse("Space, LeftStick");
 
-		public bool ShowBuff { get; set; } = true;
+		//public bool ShowBuff { get; set; } = true;
 
 		public int SpeedModifier { get; set; } = 6;
 

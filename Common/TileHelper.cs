@@ -104,7 +104,7 @@ public static class TileHelper {
 
 		// Next, scan a 3x3 region centered on the player, looking for a Workbench object
 		// that the player holds the mutex for.
-		foreach (Vector2 pos in who.getTileLocation().IterArea()) {
+		foreach (Vector2 pos in who.Tile.IterArea()) {
 			if (!GetObjectAtPosition(who.currentLocation, pos, out SObject? obj))
 				continue;
 

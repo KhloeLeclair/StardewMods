@@ -21,6 +21,7 @@ using StardewValley.TerrainFeatures;
 
 using StardewModdingAPI;
 using Leclair.Stardew.Common.Integrations.StackQuality;
+using StardewValley.GameData.Objects;
 
 namespace Leclair.Stardew.Common;
 
@@ -40,58 +41,15 @@ public static class InventoryHelper {
 	public static readonly Regex ITEM_REGEX = new(@"^\(([^)]+)\)(.+)$");
 
 	public static string GetItemQualifiedId(Item item) {
-		if (item is Boots boots)
-			return $"(B){boots.indexInTileSheet.Value}";
-
-		if (item is Ring ring)
-			return $"(R){ring.indexInTileSheet.Value}";
-
-		if (item is Furniture furniture)
-			return $"(F){furniture.ParentSheetIndex}";
-
-		if (item is Hat hat)
-			return $"(H){hat.which.Value}";
-
-		if (item is Clothing clothing) {
-			string type;
-			switch (clothing.clothesType.Value) {
-				case 0: // Shirt
-					type = "S";
-					break;
-				case 1: // Pants
-					type = "P";
-					break;
-				case 2: // Accessories
-					type = "A";
-					break;
-				default:
-					throw new ArgumentException($"unknown clothing type \"{clothing.clothesType.Value}\"", nameof(item));
-			}
-
-			return $"({type}){clothing.ParentSheetIndex}";
-		}
-
-		if (item is MeleeWeapon weapon)
-			return $"(W){weapon.InitialParentTileIndex}";
-
-		if (item is SObject sobj) {
-			string type = "O";
-			if (sobj.bigCraftable.Value)
-				type = "BC";
-
-			return $"({type}){sobj.ParentSheetIndex}";
-		}
-
-		throw new ArgumentException($"unknown item type", nameof(item));
+		return item.QualifiedItemId;
 	}
 
 	[return: MaybeNull]
-	public static Item CreateObjectOrRing(int id) {
-		if (!Game1.objectInformation.TryGetValue(id, out string? data) || string.IsNullOrWhiteSpace(data) || id < 0)
+	public static Item CreateObjectOrRing(string id) {
+		if (!Game1.objectData.TryGetValue(id, out ObjectData? data) || data!=null || ItemRegistry.IsQualifiedItemId(id))
 			return null;
 
-		string[] parts = data.Split('/');
-		if (parts.Length > 3 && parts[3] == "Ring")
+		if (data.Type == "Ring")
 			return new Ring(id);
 
 		return new SObject(id, 1);
@@ -99,64 +57,7 @@ public static class InventoryHelper {
 
 	[return: MaybeNull]
 	public static Item CreateItemById(string id, int amount, int quality = 0, bool allow_null = false) {
-		var match = ITEM_REGEX.Match(id);
-		string type;
-		int nid;
-
-		if (match.Success) {
-			type = match.Groups[1].Value;
-			if (!int.TryParse(match.Groups[2].Value, out nid))
-				throw new ArgumentException("invalid item id", nameof(id));
-
-		} else {
-			type = "O";
-			if (!int.TryParse(id, out nid))
-				throw new ArgumentException("invalid item id", nameof(id));
-		}
-
-		Item? result;
-
-		switch(type) {
-			case "BC":
-				result = new SObject(Vector2.Zero, nid);
-				break;
-			case "B":
-				result = new Boots(nid);
-				break;
-			case "F":
-				result = Furniture.GetFurnitureInstance(nid, Vector2.Zero);
-				break;
-			case "H":
-				result = new Hat(nid);
-				break;
-			case "O":
-				result = new SObject(nid, 1);
-				break;
-			case "P":
-			case "S":
-				result = new Clothing(nid);
-				break;
-			case "R":
-				result = new Ring(nid);
-				break;
-			case "W":
-				result = new MeleeWeapon(nid);
-				break;
-			default:
-				result = null;
-				break;
-		}
-
-		if (result is SObject sobj)
-			sobj.Quality = quality;
-
-		if (result is Item item)
-			item.Stack = amount;
-
-		if (result is null && !allow_null)
-			result = new SObject(0, 1);
-
-		return result;
+		return ItemRegistry.Create(id, amount, quality, allow_null);
 	}
 
 	#endregion
@@ -805,21 +706,14 @@ public static class InventoryHelper {
 	#region Recipes and Crafting
 
 	/// <summary>
-	/// Check if an item matches the provided ID, using the same logic
-	/// as the crafting system.
+	/// Check if an item matches the provided ID, using the Stardew
+	/// ItemRegistry.HasItemId
 	/// </summary>
 	/// <param name="id">the ID to check</param>
 	/// <param name="item">the Item to check</param>
 	/// <returns></returns>
-	public static bool DoesItemMatchID(int id, Item? item) {
-		if (item is SObject sobj) {
-			return
-				!sobj.bigCraftable.Value && sobj.ParentSheetIndex == id
-				|| item.Category == id
-				|| CraftingRecipe.isThereSpecialIngredientRule(sobj, id);
-		}
-
-		return false;
+	public static bool DoesItemMatchID(string id, Item? item) {
+		return ItemRegistry.HasItemId(item, id);
 	}
 
 	/// <summary>
@@ -953,12 +847,12 @@ public static class InventoryHelper {
 	/// <param name="max_quality">The maximum quality of item to consume.</param>
 	/// <param name="low_quality_first">Whether or not to consume low quality
 	/// items first.</param>
-	public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+	public static void ConsumeItems(IEnumerable<KeyValuePair<string, int>> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
 		if (items is null)
 			return;
 
 		ConsumeItems(
-			items.Select<KeyValuePair<int, int>, (Func<Item, bool>, int)>(x => (item => DoesItemMatchID(x.Key, item), x.Value)),
+			items.Select<KeyValuePair<string, int>, (Func<Item, bool>, int)>(x => (item => DoesItemMatchID(x.Key, item), x.Value)),
 			who,
 			inventories,
 			max_quality,

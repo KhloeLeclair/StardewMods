@@ -45,7 +45,7 @@ namespace Leclair.Stardew.Common.Inventory {
 
 		public override IList<Item?>? GetItems(Chest obj, GameLocation? location, Farmer? who) {
 			if (who == null)
-				return obj.items;
+				return obj.GetItemsForPlayer();
 
 			return obj.GetItemsForPlayer(who.UniqueMultiplayerID);
 		}
