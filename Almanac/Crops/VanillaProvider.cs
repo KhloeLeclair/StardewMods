@@ -48,7 +48,7 @@ public class VanillaProvider : ICropProvider {
 	private CropInfo? GetCropInfo(string id, CropData data) {
 		// TODO: Create Crop instances so we can
 		// lean more on vanilla logic.
-		int sprite = data.SpriteIndex;
+		int spriteRow = data.SpriteIndex;
 		string harvestID = data.HarvestItemId;
 		int regrow = data.RegrowDays;
 		bool isTrellisCrop = data.IsRaised;
@@ -87,7 +87,7 @@ public class VanillaProvider : ICropProvider {
 		// If the sprite is 23, it's a seasonal multi-seed
 		// so we want to show that rather than the seed.
 		Item item;
-		if (sprite == 23)
+		if (spriteRow == 23)
 			item = ItemRegistry.Create(id, 1);
 		else
 			item = ItemRegistry.Create(harvestID, 1);
@@ -114,13 +114,13 @@ public class VanillaProvider : ICropProvider {
 			sprites[i] = new(
 				Game1.cropSpriteSheet,
 				new Rectangle(
-					Math.Min(240, (i + 1) * 16 + (sprite % 2 != 0 ? 128 : 0)),
-					sprite / 2 * 16 * 2,
+					Math.Min(240, (i + 1) * 16 + (spriteRow % 2 != 0 ? 128 : 0)),
+					spriteRow / 2 * 16 * 2,
 					16, 32
 				),
 				overlaySource: final && color.HasValue ? new Rectangle(
-					Math.Min(240, (i + 2) * 16 + (sprite % 2 != 0 ? 128 : 0)),
-					sprite / 2 * 16 * 2,
+					Math.Min(240, (i + 2) * 16 + (spriteRow % 2 != 0 ? 128 : 0)),
+					spriteRow / 2 * 16 * 2,
 					16, 32
 				) : null,
 				overlayColor: final ? color : null
@@ -141,11 +141,38 @@ public class VanillaProvider : ICropProvider {
 				)
 			);
 		}
+		SpriteInfo sprite = null;
+		int offset;
+		switch (harvestID) {
+				case "Carrot": {
+						offset = 0;
+						break;
+					}
+				case "SummerSquash": {
+						offset = 1;
+						break;
+					}
+				case "Broccoli": {
+						offset = 2;
+						break;
+					}
+				case "Powdermelon": {
+						offset = 3;
+						break;
+					}
+				default: {
+						offset = -1;
+						break;
+					}
+			}
+		if (offset!=-1) {
+			sprite = new SpriteInfo(Game1.objectSpriteSheet_2, new Rectangle(offset * 16, 160, 16, 16));
+		}
 		return new(
 			id,
 			item,
 			item.DisplayName,
-			SpriteHelper.GetSprite(item),
+			sprite==null? SpriteHelper.GetSprite(item): sprite,
 			isTrellisCrop,
 			isGiantCrop,
 			giantSprite,
