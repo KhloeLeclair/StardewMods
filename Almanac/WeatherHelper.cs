@@ -29,24 +29,11 @@ public static class WeatherHelper {
 			"Rain" => I18n.Weather_Rain(),
 			"Wind" => I18n.Weather_Debris(),
 			"Storm" => I18n.Weather_Lightning(),
-			"Festival" => "Festival",
-			// 4 = Festival, Sunny
+			"Festival" => I18n.Weather_Festival(),
 			"Snow" => I18n.Weather_Snow(),
 			// 6 = Wedding, Sunny?
+			"GreenRain" => I18n.Weather_Green(),
 			_ => I18n.Weather_Sunny()
-		};
-	}
-
-	public static string GetWeatherName(int weather) {
-		return weather switch {
-			0 => "Sun",
-			1 => "Rain",
-			2 => "Wind",
-			3 => "Storm",
-			4 => "Festival",
-			5 => "Snow",
-			6 => "Wedding",
-			_ => "unknown"
 		};
 	}
 
@@ -54,6 +41,7 @@ public static class WeatherHelper {
 		switch (weatherID) {
 			case "Rain":
 			case "Storm":
+			case "GreenRain":
 				return true;
 		}
 		return false;
@@ -64,6 +52,7 @@ public static class WeatherHelper {
 			case "Rain":
 			case "Storm":
 			case "Snow":
+			case "GreenRain":
 				return true;
 		}
 		return false;
@@ -78,6 +67,7 @@ public static class WeatherHelper {
 			"Festival" => 0,
 			"Snow" => 4,
 			"Wedding" => 0,
+			"GreenRain" => 5,
 			_ => 0
 		};
 		return new Rectangle(448, 256 + offset * 16, 16, 16);
