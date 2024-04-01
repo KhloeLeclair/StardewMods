@@ -14,6 +14,7 @@ using StardewModdingAPI;
 
 using Leclair.Stardew.Almanac.Models;
 using StardewValley.ItemTypeDefinitions;
+using StardewValley.GameData.Locations;
 
 namespace Leclair.Stardew.Almanac.Fish;
 
@@ -30,38 +31,35 @@ public class VanillaProvider : IFishProvider {
 	public string Name => nameof(VanillaProvider);
 	public int Priority => 0;
 
-		public IEnumerable<FishInfo> GetFish() {
-			Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(@"Data\Fish");
-			List<FishInfo> result = new();
-
-			Dictionary<string, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
-
+	public IEnumerable<FishInfo> GetFish() {
+		Dictionary<string, string> data = Game1.content.Load<Dictionary<string, string>>(@"Data\Fish");
+		List<FishInfo> result = new();
+		Dictionary<string, Dictionary<SubLocation, List<int>>> locations = Mod.Fish.GetFishLocations();
 		List<FishPondData> pondData = Game1.content.Load<List<FishPondData>>(@"Data\FishPondData");
 
 		foreach (var entry in data) {
-			locations.TryGetValue(entry.Key, out Dictionary<SubLocation, List<int>>? locs);
+			locations.TryGetValue("(O)"+entry.Key, out Dictionary<SubLocation, List<int>>? locs);
 
 			try {
-				FishInfo? info = GetFishInfo(entry.Key, entry.Value, locs, pondData);
+				FishInfo? info = GetFishInfo("(O)"+entry.Key, entry.Value, locs, pondData);
 				if (info.HasValue)
 					result.Add(info.Value);
 			} catch(Exception ex) {
 				ModEntry.Instance.Log($"Unable to process fish: {entry.Key}", LogLevel.Warn, ex);
 			}
 		}
-
 		return result;
 	}
 
-		private static FishInfo? GetFishInfo(string id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
-			if (string.IsNullOrEmpty(data))
-				return null;
+	private static FishInfo? GetFishInfo(string id, string data, Dictionary<SubLocation, List<int>> locations, List<FishPondData> pondData) {
+		if (string.IsNullOrEmpty(data))
+			return null;
 
 		if (FishHelper.SkipFish(Game1.player, id))
 			return null;
 
-			string[] bits = data.Split('/');
-			SObject obj = new SObject(id, 1);
+		string[] bits = data.Split('/');
+		SObject obj = new SObject(id.Substring(3), 1);
 
 		if (bits.Length < 7 || obj is null)
 			return null;
@@ -133,10 +131,29 @@ public class VanillaProvider : IFishProvider {
 				Minlevel: minLevel
 			);
 
-			if (locations != null)
+			string[] seasonIds = bits[6].Split(' ');
+			seasons = new int[seasonIds.Length];
+			for(int i = 0;i < seasonIds.Length;i++) {
+				string seasonId = seasonIds[i];
+				switch (seasonId) {
+					case "spring":
+						seasons[i] = 0;
+						break;
+					case "summer":
+						seasons[i] = 1;
+						break;
+					case "fall":
+						seasons[i] = 2;
+						break;
+					case "winter":
+						seasons[i] = 3;
+						break;
+				}
+			}
+			/*if (locations != null)
 				seasons = locations.Values.SelectMany(x => x).Distinct().ToArray();
 			else
-				seasons = null;
+				seasons = null;*/
 		}
 
 		string desc = obj.getDescription();
@@ -155,7 +172,6 @@ public class VanillaProvider : IFishProvider {
 						break;
 					}
 				}
-
 				if (!matched)
 					continue;
 
@@ -170,33 +186,31 @@ public class VanillaProvider : IFishProvider {
 				int price = obj.Price;
 				pond.SpawnTime = price > 30 ? (price > 80 ? (price > 120 ? (price > 250 ? 5 : 4) : 3) : 2) : 1;
 			}
-
 			int initial = 10;
-
 			if (pond.PopulationGates != null) {
 				foreach (int key in pond.PopulationGates.Keys)
 					if (key >= initial)
 						initial = key - 1;
 			}
-
-				pondInfo = new(
-					Initial: initial,
-					SpawnTime: pond.SpawnTime,
-					ProducedItems: pond.ProducedItems.Select(x => x.ItemId).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : ItemRegistry.Create(x, 1))).ToList()
-				);
+			pondInfo = new(
+				Initial: initial,
+				SpawnTime: pond.SpawnTime,
+				ProducedItems: pond.ProducedItems.Select(x => x.ItemId).Distinct().Select(x => (x == "812" ? FishHelper.GetRoeForFish(obj) : ItemRegistry.Create(x, 1))).ToList()
+			);
 		}
-		//Hardcoded the ids of Legendary fish in since FishingRod.isFishBossFish no longer exists.
+
 		bool legend = false;
-
-		if(id == "(O)159"||id =="(O)160"||id=="(O)163"||id=="(O)775"||id=="(O)902"||id=="(O)900"||id=="(O)682"||id=="(O)899"||id=="(O)901"||id=="(O)898")
-			legend = true;
-
+		legend = obj.HasContextTag("fish_legendary");
+		SpriteInfo? sprite = null;
+		//Hardcode in Goby sprite
+		if(id=="(O)Goby")
+			sprite = new SpriteInfo(Game1.objectSpriteSheet_2, new Microsoft.Xna.Framework.Rectangle(112, 256, 16, 16));
 		return new FishInfo(
 			Id: id, // bits[0],
 			Item: obj,
 			Name: obj.DisplayName,
 			Description: desc,
-			Sprite: SpriteHelper.GetSprite(obj),
+			Sprite: sprite==null? SpriteHelper.GetSprite(obj): sprite,
 			Legendary: legend,
 			MinSize: minSize,
 			MaxSize: maxSize,

@@ -562,21 +562,21 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 				List<Tuple<string, bool, IFlowNode[]>> sorted = new();
 
 				foreach (var pair in caught.Locations) {
-					string? subloc = pair.Key.Area == -1 ? null
+					string? subloc = pair.Key.Area == "No zone" ? null
 						: Mod.GetSubLocationName(pair.Key);
 
 					string name = Mod.GetLocationName(pair.Key.Key, pair.Key.Location);
 					string key = subloc == null ? name : $"{name} ({subloc})";
 
 					bool matches = pair.Value.Contains(Menu.Season);
-					bool all_seasons = true;
+					bool all_seasons = pair.Value.Count==4? true:false;
 
-					for (int i = 0; i < WorldDate.MonthsPerYear; i++) {
+					/*for (int i = 0; i < WorldDate.MonthsPerYear; i++) {
 						if (!pair.Value.Contains(i)) {
 							all_seasons = false;
 							break;
 						}
-					}
+					}*/
 
 					Color? color = matches ? null : Game1.textColor * .5f;
 					Color? shadow = matches ? null : Game1.textShadowColor * .5f;
@@ -673,7 +673,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 
 		var selected = CurrentFish;
 
-		var sorted = Mod.Fish.GetSeasonFish(((int)Menu.Date.Season));
+		var sorted = Mod.Fish.GetSeasonFish((Menu.Date.SeasonIndex));
 		sorted.Sort((a, b) => {
 			return a.Name.CompareTo(b.Name);
 		});
@@ -688,12 +688,15 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 					continue;
 			}
 
-			if (FType == FishType.Trap && !fish.TrapInfo.HasValue)
+			if (FType == FishType.Trap && !fish.TrapInfo.HasValue) {
+				ModEntry.Instance.Log("Fish has trap info: " + fish.TrapInfo.HasValue);
 				continue;
+			}
 
-			if (FType == FishType.Catch && !fish.CatchInfo.HasValue)
+			if (FType == FishType.Catch && !fish.CatchInfo.HasValue) {
+				ModEntry.Instance.Log("Fish has catch info: "+fish.CatchInfo.HasValue);
 				continue;
-
+			}
 			if (CStatus != CaughtStatus.None) {
 				int caught = fish.NumberCaught(Game1.player);
 				if (CStatus == CaughtStatus.Caught && caught == 0)
