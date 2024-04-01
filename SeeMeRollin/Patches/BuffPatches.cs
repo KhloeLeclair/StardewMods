@@ -37,6 +37,17 @@ namespace Leclair.Stardew.SeeMeRollin.Patches {
 				return true;
 			}
 		}
+		[HarmonyPatch(typeof(Buff), nameof(Buff.getClickableComponents))]
+		public static class Buff_Components {
+			static bool Prefix(Buff __instance, ref List<ClickableTextureComponent> __result) {
+				if (__instance is RollinBuff&&!ModEntry.instance.Config.ShowBuff) {
+					__result = new();
+					return false;
+				}
+
+				return true;
+			}
+		}
 
 	}
 }
