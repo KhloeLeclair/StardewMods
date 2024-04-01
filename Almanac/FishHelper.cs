@@ -15,6 +15,10 @@ using StardewModdingAPI;
 using Leclair.Stardew.Almanac.Fish;
 using Leclair.Stardew.Almanac.Models;
 using StardewModdingAPI.Utilities;
+using StardewValley.GameData.LocationContexts;
+using StardewValley.GameData.Locations;
+using Leclair.Stardew.Common.Enums;
+using System.Security.Policy;
 
 namespace Leclair.Stardew.Almanac;
 
@@ -33,17 +37,17 @@ public static class FishHelper {
 		return false;
 	}
 
-		public static bool SkipFish(Farmer who, string id) {
-			who ??= Game1.player;
+	public static bool SkipFish(Farmer who, string id) {
+		who ??= Game1.player;
 
-			switch(id) {
-				case "898":
-				case "899":
-				case "900":
-				case "901":
-				case "902":
-					return ! who.team.SpecialOrderRuleActive("LEGENDARY_FAMILY");
-			}
+		switch(id) {
+			case "(O)898":
+			case "(O)899":
+			case "(O)900":
+			case "(O)901":
+			case "(O)902":
+				return ! who.team.SpecialOrderRuleActive("LEGENDARY_FAMILY");
+		}
 
 		return false;
 	}
@@ -101,19 +105,23 @@ public static class FishHelper {
 		if (fish.ParentSheetIndex == 698)
 			color = new Color(61, 55, 42);
 
-			ColoredObject result = new ColoredObject("812", 1, color);
-			result.name = fish.Name + " Roe";
-			result.preserve.Value = SObject.PreserveType.Roe;
-			result.preservedParentSheetIndex.Value = fish.QualifiedItemId;
-			result.Price += fish.sellToStorePrice() / 2;
+		ColoredObject result = new ColoredObject("812", 1, color);
+		result.name = fish.Name + " Roe";
+		result.preserve.Value = SObject.PreserveType.Roe;
+		result.preservedParentSheetIndex.Value = fish.QualifiedItemId;
+		result.Price += fish.sellToStorePrice() / 2;
 
-			return result;
-		}
+		return result;
+	}
 
-		public static Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
-			Dictionary<string, Dictionary<SubLocation, List<int>>> result = new();
+	/// <summary>
+	/// Returns locations a fish can be caught
+	/// </summary>
+	/// <returns> Dictionary<fishItemID, Dictionary<zone/Sublocation.Area, List<seasons>>></returns>
+	public static Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
+		Dictionary<string, Dictionary<SubLocation, List<int>>> result = new();
 
-		var locations = Game1.content.Load<Dictionary<string, string>>(@"Data\Locations");
+		var locations = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
 
 		foreach (var lp in locations) {
 			if (SkipLocation(lp.Key))
@@ -121,18 +129,22 @@ public static class FishHelper {
 
 			for (int season = 0; season < WorldDate.MonthsPerYear; season++) {
 				try {
-					var data = GetLocationFish(lp.Key, season, locations);
+					//Dictionary<zone/Sublocation.Area, List<fishItemId>>
+					Dictionary<string, List<string>> data = GetLocationFish(lp.Key, season, locations);
 					if (data == null)
 						continue;
 
 					foreach (var pair in data) {
-						int zone = pair.Key;
+						string zone = pair.Key;
+						//lp.Key = location name
 						SubLocation sl = new(lp.Key, zone);
 
-							foreach (string fish in pair.Value) {
-								if (!result.TryGetValue(fish, out var locs))
-									result[fish] = locs = new();
-
+						foreach (string fish in pair.Value) {
+							//If result doesn't have this fish ID, add a new Dictionary<Sublocation, List<seasons>
+							if (!result.TryGetValue(fish, out var locs))
+								result[fish] = locs = new();
+							//If locs has this Sublocation, add the current season to it's List<seasons>
+							//Else add a new List<seasons> for this Sublocation with current season
 							if (locs.TryGetValue(sl, out var seasons))
 								seasons.Add(season);
 							else
@@ -140,7 +152,25 @@ public static class FishHelper {
 						}
 					}
 				} catch {
-					ModEntry.Instance.Log($"Uh oh: {lp.Key}");
+					Dictionary<string, List<string>> data = GetLocationFish(lp.Key, season, locations);
+					if (data == null)
+						continue;
+
+					foreach (var pair in data) {
+						string zone = pair.Key;
+						SubLocation sl = new(lp.Key, zone);
+
+						foreach (string fish in pair.Value) {
+							if (!result.TryGetValue(fish, out var locs))
+								result[fish] = locs = new();
+
+							if (locs.TryGetValue(sl, out var seasons))
+								seasons.Add(season);
+							else
+								locs[sl] = new List<int>() { season };
+						}
+					}
+					ModEntry.Instance.Log($"Error at FishHelper line 169",LogLevel.Warn);
 				}
 			}
 		}
@@ -148,10 +178,10 @@ public static class FishHelper {
 		return result;
 	}
 
-		public static Dictionary<string, List<SubLocation>> GetFishLocations(int season) {
-			Dictionary<string, List<SubLocation>> result = new();
+	public static Dictionary<string, List<SubLocation>> GetFishLocations(int season) {
+		Dictionary<string, List<SubLocation>> result = new();
 
-		var locations = Game1.content.Load<Dictionary<string, string>>(@"Data\Locations");
+		var locations = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
 		foreach (var lp in locations) {
 			if (SkipLocation(lp.Key))
 				continue;
@@ -161,46 +191,57 @@ public static class FishHelper {
 				continue;
 
 			foreach (var pair in data) {
-				int zone = pair.Key;
+				string zone = pair.Key;
 				SubLocation sl = new(lp.Key, zone);
 
-					foreach(string fish in pair.Value) {
-						if (result.TryGetValue(fish, out var subs))
-							subs.Add(sl);
-						else
-							result.Add(fish, new List<SubLocation>() { sl });
-					}
+				foreach(string fish in pair.Value) {
+					if (result.TryGetValue(fish, out var subs))
+						subs.Add(sl);
+					else
+						result.Add(fish, new List<SubLocation>() { sl });
 				}
 			}
+		}
 
 		return result;
 	}
 
-		public static Dictionary<int, List<string>> GetLocationFish(GameLocation location, int season) {
-			return GetLocationFish(location.Name, season);
-		}
+	public static Dictionary<string, List<string>> GetLocationFish(GameLocation location, int season) {
+		return GetLocationFish(location.Name, season);
+	}
 
-		public static Dictionary<int, List<string>> GetLocationFish(string key, int season, Dictionary<string, string> locations = null) {
-			if (key == "BeachNightMarket")
-				key = "Beach";
+	public static Dictionary<string, List<string>> GetLocationFish(string key, int season, Dictionary<string, LocationData>? locations = null) {
+		if (key == "BeachNightMarket")
+			key = "Beach";
 
-			locations ??= Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
-			Dictionary<int, List<string>> result = null;
-
-		if (locations.ContainsKey(key))
-			result = GetLocationFish(season, locations[key]);
+		locations ??= Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
+		Dictionary<string, List<string>> result;
+		GameLocation loc;
+		if (locations.ContainsKey(key) && ContainsFish(locations[key]))
+			try {
+				result = GetLocationFish(season, locations[key]);
+			} catch {
+				result = GetLocationFish(season, locations[key]);
+				ModEntry.Instance.Log($"Error at FishHelper line 225", LogLevel.Warn);
+			}
 		else
 			result = new();
 
 		Farm farm;
 
 		try {
-			var loc = Game1.getLocationFromName(key);
-			if (loc is not Farm)
+			loc = Game1.getLocationFromName(key);
+			if (!loc.IsFarm)
 				return result;
 			farm = (Farm) loc;
 		} catch {
-			return result;
+			loc = Game1.getLocationFromName(key);
+			if (loc == null)
+				return result;
+			else if (loc is not Farm)
+				return result;
+			farm = (Farm) loc;
+			ModEntry.Instance.Log($"Error at {loc.DisplayName}, farm = loc section", LogLevel.Warn);
 		}
 
 		// This line will forever live in shame as a stupid mistake.
@@ -208,12 +249,12 @@ public static class FishHelper {
 
 		// If we've got whichFarm 1 then we want to reset the list, as it never
 		// falls back to the default getFish behavior.
-		switch(Game1.whichFarm) {
+		switch (Game1.whichFarm) {
 			case 1:
 				result.Clear();
 				break;
 		}
-
+		ModEntry.Instance.Log("Calling override...");
 		string ovr = farm.getMapProperty("FarmFishLocationOverride");
 		if (!string.IsNullOrEmpty(ovr)) {
 			string[] bits = ovr.Split(' ');
@@ -229,70 +270,103 @@ public static class FishHelper {
 				if (value >= 1)
 					result.Clear();
 
-				GetLocationFish(season, locations[bits[0]], result);
+				try {
+					GetLocationFish(season, locations[bits[0]], result);
+				} catch {
+					GetLocationFish(season, locations[bits[0]], result);
+					ModEntry.Instance.Log($"Error at {getLocName(locations[bits[0]])}, bits section.", LogLevel.Warn);
+				}
+
 			}
 		}
-
-			switch(Game1.whichFarm) {
-				case 1:
-					GetLocationFish(season, locations?["Forest"], result, true, 1);
-					GetLocationFish(season, locations?["Town"], result, true, 1);
-					break;
-				case 2:
-					AddFish("734", -1, result);
-					GetLocationFish(season, locations?["Forest"], result, true, 1);
-					break;
-				case 3:
-					GetLocationFish(season, locations?["Forest"], result, true, 0);
-					break;
-				case 4:
-					GetLocationFish(season, locations?["Mountain"], result, true);
-					break;
-				case 5:
-					GetLocationFish(season, locations?["Forest"], result, true, 1);
-					break;
-				case 6:
-					AddFish("152", -1, result);
-					AddFish("723", -1, result);
-					AddFish("393", -1, result);
-					AddFish("719", -1, result);
-					AddFish("718", -1, result);
-					GetLocationFish(season, locations?["Beach"], result, true);
-					break;
-			}
+		try{
+			GetLocationFish(season, locations[Game1.GetFarmTypeKey()], result);
+		} catch {
+			GetLocationFish(season, locations[Game1.GetFarmTypeKey()], result);
+			ModEntry.Instance.Log($"Error at {getLocName(locations[Game1.GetFarmTypeKey()])}, farm key section.", LogLevel.Warn);
+		}
 
 		return result;
 	}
 
-		private static void AddFish(string fish, int zone, Dictionary<int, List<string>> existing) {
-			if (existing.TryGetValue(zone, out List<string> result)) {
-				if (!result.Contains(fish))
-					result.Add(fish);
-			} else
-				existing.Add(zone, new() { fish });
+	private static void AddFish(string fishName, string fish, string zone, Dictionary<string, List<string>> existing) {
+		if (existing.TryGetValue(zone, out List<string>? result)) {
+			if (!result.Contains(fish)) {
+				result.Add(fish);
+				ModEntry.Instance.Log($"Added fish data entry for {fishName} (ID:{fish}, Zone:{zone})");
+			}
+		} else
+			existing.Add(zone, new() { fish });
+	}
+
+	public static Dictionary<string, List<string>> GetLocationFish(int season, LocationData data) {
+		return GetLocationFish(season, data, new());
+	}
+
+	public static Dictionary<string, List<string>> GetLocationFish(int season, LocationData data, Dictionary<string, List<string>> existing) {
+		if (data.Equals(null))
+			return existing;
+
+		string name = getLocName(data);
+		List<SpawnFishData> entries = data.Fish;
+		ModEntry.Instance.Log($"Fish in {name} list: {entries.Count}", LogLevel.Debug);
+
+		if (!data.Equals(Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"])) {
+			LocationData Default = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"];
+			foreach (SpawnFishData f in Default.Fish)
+				if (!entries.Contains(f))
+					entries.Add(f);
+			ModEntry.Instance.Log($"Fish in {name}+Default list: {entries.Count}");
+		} else ModEntry.Instance.Log("This is Default Location Data");
+
+		entries.Sort((a,b)=> { return a.Precedence.CompareTo(b.Precedence); });
+
+		for (int i = 0; i < entries.Count; i++) {
+			string fish = string.IsNullOrEmpty(entries[i].ItemId) ? "(O)213" : entries[i].ItemId;
+			string fName = string.IsNullOrEmpty(ItemRegistry.Create(fish).DisplayName)? "Fish" : ItemRegistry.Create(fish).DisplayName;
+			//if(fish=="(O)213") { fName = "Fish Taco"; }
+			string zone = string.IsNullOrEmpty(entries[i].FishAreaId) ? "No zone" : entries[i].FishAreaId;
+			if(fish.StartsWith("(O)"))
+				AddFish(fName, fish, zone, existing);
 		}
-
-		public static Dictionary<int, List<string>> GetLocationFish(int season, string data) {
-			return GetLocationFish(season, data, new());
-		}
-
-		public static Dictionary<int, List<string>> GetLocationFish(int season, string data, Dictionary<int, List<string>> existing, bool no_zones = false, int limit_zone = -1) {
-			if (string.IsNullOrEmpty(data))
-				return existing;
-
-		string[] entries = data.Split('/')[4 + season].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-			for (int i = 0; (i + 1) < entries.Length; i += 2) {
-				string fish = entries[i];
-				if (int.TryParse(entries[i + 1], out int zone)) {
-					if (limit_zone != -1 && zone != -1 && limit_zone != zone)
-						continue;
-
-				AddFish(fish, no_zones ? -1 : zone, existing);
-			} else
-				ModEntry.Instance.Log($"Invalid fish data entry for season {season} (Fish ID:{entries[i]}, Zone:{entries[i + 1]})", LogLevel.Warn);
-		}
-
+		ModEntry.Instance.Log($"Added fish data for {name}, season {season}");
 		return existing;
+	}
+	public static bool ContainsFish(LocationData loc) {
+		List<SpawnFishData> catchables = loc.Fish;
+		foreach (SpawnFishData f in catchables) if (f.ItemId.StartsWith("(O)")) return true;
+		return false;
+	}
+	private static string getLocName(LocationData data) {
+		string name = data.DisplayName == null ? "No DisplayName" : data.DisplayName;
+		string endCheck = name.Substring(name.Length - 7);
+		switch (endCheck) {
+			case "Name]]]":
+				name = "Farm";
+				break;
+			case ".11190]":
+				name = "Town";
+				break;
+			case ".11174]":
+				name = "Beach";
+				break;
+			case ".11176]":
+				name = "Mountain";
+				break;
+			case ".11186]":
+				name = "Forest";
+				break;
+			case ".11089]":
+				name = "Sewer";
+				break;
+			case ".11062]":
+				name = "Desert";
+				break;
+			case ".11114]":
+				name = "Woods";
+				break;
+		}
+		if (name.Length > 25) name = endCheck;
+		return name;
 	}
 }

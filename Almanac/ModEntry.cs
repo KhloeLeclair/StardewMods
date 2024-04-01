@@ -876,7 +876,7 @@ public class ModEntry : ModSubscriber {
 	}
 
 	public string GetSubLocationName(Models.SubLocation sub) {
-		if (sub.Area == -1)
+		if (sub.Area == "")
 			return I18n.Location_SubAny();
 
 		string name = sub.Key;
@@ -889,16 +889,16 @@ public class ModEntry : ModSubscriber {
 				return I18n.Location_SubFloor(sub.Area);
 
 			case "Forest":
-				if (sub.Area == 0)
+				if (sub.Area == "River")
 					return I18n.Location_Forest_River();
-				if (sub.Area == 1)
+				if (sub.Area == "Pond")
 					return I18n.Location_Forest_Pond();
 				break;
 
 			case "IslandWest":
-				if (sub.Area == 1)
+				if (sub.Area == "Ocean")
 					return I18n.Location_Island_Ocean();
-				if (sub.Area == 2)
+				if (sub.Area == "Freshwater")
 					return I18n.Location_Island_Freshwater();
 				break;
 		}
