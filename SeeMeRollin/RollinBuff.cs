@@ -7,7 +7,7 @@ namespace Leclair.Stardew.SeeMeRollin {
 		public int Speed;
 
 		public RollinBuff(int speed) : base(I18n.Buff_Name(), 1000, null, 9) {
-			which = ModEntry.BUFF;
+			which - ModEntry.BUFF;
 
 			Speed = speed;
 			buffAttributes[Buff.speed] = Speed;
