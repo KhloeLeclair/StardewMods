@@ -57,7 +57,8 @@ public class ModAPI : IBetterCrafting {
 		Rectangle? area = null,
 		bool discover_containers = true,
 		IList<Tuple<object, GameLocation?>>? containers = null,
-		IList<string>? listed_recipes = null
+		IList<string>? listed_recipes = null,
+		bool discover_buildings = false
 	) {
 		if (listed_recipes == null && Mod.intCCStation != null)
 			listed_recipes = cooking ?
@@ -83,6 +84,7 @@ public class ModAPI : IBetterCrafting {
 			material_containers: containers?.Select(val => new LocatedInventory(val.Item1, val.Item2)).ToList(),
 			silent_open: silent_open,
 			discover_containers: discover_containers,
+			discover_buildings: discover_buildings,
 			listed_recipes: listed_recipes
 		);
 

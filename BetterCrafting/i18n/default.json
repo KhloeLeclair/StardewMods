@@ -106,6 +106,7 @@
 	"setting.nearby.connectors.tip": "Placeable objects that can be used as connectors. You should avoid adding unnecessary connector types to keep performance up. Please note that these entries are examples, and you can manually edit your config file to add other objects and terrain features.",
 
 	"setting.nearby.floors": "Flooring",
+	"setting.nearby.fences": "Fences",
 	"setting.nearby.other": "Other Examples",
 
 	"setting.recycle": "Recycling",
@@ -315,7 +316,7 @@
 	"filter.everything.about": "This rule matches every recipe.",
 
 	"filter.buff": "Buff: {{type}}",
-	"filter.buff.about": "This rule matches items that give the {{type}} buff when consumed.",
+	"filter.buff.about": "This rule matches items that give a {{type}} buff when consumed.",
 
 	"filter.uncrafted": "Not Yet Crafted",
 	"filter.uncrafted.about": "This rule matches items that you haven't crafted yet.",

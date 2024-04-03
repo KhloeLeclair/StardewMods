@@ -58,17 +58,16 @@ public class SCIngredient : IIngredient {
 		// Unfortunately, we're always going to need chests for this
 		// due to how SpaceCore is implemented.
 		if (who == Game1.player)
-			Ingredient.Consume(GetChests(inventories));
+			Ingredient.Consume(GetInventories(inventories));
 	}
 
-	private static List<IInventory> GetChests(IList<IBCInventory>? inventories) {
+	private static List<IInventory> GetInventories(IList<IBCInventory>? inventories) {
 		if (inventories is null)
 			return new List<IInventory>();
 
 		return inventories
-			.Where(val => val.Object is Chest)
-			.Select(val => (Chest) val.Object)
-			.Select(val => (IInventory) val.Items)
+			.Where(val => val.Inventory is not null)
+			.Select(val => (IInventory) val.Inventory!)
 			.ToList();
 	}
 

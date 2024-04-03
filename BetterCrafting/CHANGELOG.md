@@ -9,6 +9,8 @@ Kept you waiting, huh?
 
 * Works on 1.6
 * Dynamic rules for foods that buff custom skills added through SpaceCore.
+* Separate mod that adds a Magic Workbench, which lets you craft using
+  items from within adjacent buildings.
 
 ### Changes
 
@@ -30,6 +32,12 @@ Kept you waiting, huh?
 * Dynamic Game Assets compatibility code. DGA is dead, long live 1.6.
 
 ### API Changes
+* Added the map action `leclair.bettercrafting_OpenMenu [cooking] [includeBuildings]`
+  map tile action.
+* Added the ability to run map tile actions from big craftables using the
+  `leclair.bettercrafting_PerformAction` custom field.
+* Added a `leclair.bettercrafting_HAS_WORKBENCH` game state query to check if a
+  Workbench has been placed at the farm.
 * Renamed IInventory to IBCInventory to avoid collision with vanilla.
 * IInventoryProviders have a method now to return a vanilla IInventory
   to allow for future optimizations.

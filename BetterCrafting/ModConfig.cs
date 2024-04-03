@@ -112,7 +112,7 @@ public class ModConfig {
 
 	// Better Workbench
 	public bool UseDiscovery { get; set; } = true;
-	public int MaxInventories { get; set; } = 32;
+	public int MaxInventories { get; set; } = 50;
 	public int MaxDistance { get; set; } = 20;
 	public int MaxCheckedTiles { get; set; } = 500;
 	public int MaxWorkbenchGap { get; set; } = 0;

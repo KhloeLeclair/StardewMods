@@ -72,6 +72,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	private IList<IBCInventory>? UnsafeInventories;
 	private readonly bool ChestsOnly;
 	public bool DiscoverContainers { get; private set; }
+	public bool DiscoverBuildings { get; private set; }
 
 	// Editing Mode
 	public bool Editing { get; protected set; } = false;
@@ -243,7 +244,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		int x = -1,
 		int y = -1,
 		bool silent_open = false,
-		IEnumerable<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null,
+		bool discover_buildings = false
 	) {
 		if (width <= 0)
 			width = 800 + borderWidth * 2;
@@ -283,6 +285,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			standalone_menu,
 			silent_open,
 			discover_containers,
+			discover_buildings,
 
 			material_containers,
 			listed_recipes,
@@ -304,7 +307,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		int x = -1,
 		int y = -1,
 		bool silent_open = false,
-		IEnumerable<string>? listed_recipes = null
+		IEnumerable<string>? listed_recipes = null,
+		bool discover_buildings = false
 	) {
 		var located = material_containers == null ? null : InventoryHelper.LocateInventories(
 			material_containers,
@@ -327,6 +331,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			standalone_menu: standalone_menu,
 			silent_open: silent_open,
 			discover_containers: discover_containers,
+			discover_buildings: discover_buildings,
 			material_containers: located,
 			listed_recipes: listed_recipes
 		);
@@ -345,6 +350,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool standalone_menu = false,
 		bool silent_open = false,
 		bool discover_containers = true,
+		bool discover_buildings = false,
 
 		IList<LocatedInventory>? material_containers = null,
 		IEnumerable<string>? listed_recipes = null,
@@ -358,6 +364,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		this.cooking = cooking;
 		Standalone = standalone_menu;
 		DiscoverContainers = discover_containers;
+		DiscoverBuildings = discover_buildings;
 
 		MAX_TABS = (height - 120) / 64;
 		VISIBLE_TABS = (height - 120) / 64;
@@ -1520,6 +1527,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							targetLimit: Mod.Config.MaxInventories,
 							includeSource: true,
 							includeDiagonal: Mod.Config.UseDiagonalConnections,
+							includeBuildings: DiscoverBuildings,
 							expandSource: Mod.Config.MaxWorkbenchGap
 						);
 					else
@@ -1533,7 +1541,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							scanLimit: 25,
 							targetLimit: 9,
 							includeSource: true,
-							includeDiagonal: true
+							includeDiagonal: true,
+							includeBuildings: DiscoverBuildings
 						);
 
 				} else if (BenchPosition.HasValue) {
@@ -1549,6 +1558,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							targetLimit: Mod.Config.MaxInventories,
 							includeSource: true,
 							includeDiagonal: Mod.Config.UseDiagonalConnections,
+							includeBuildings: DiscoverBuildings,
 							expandSource: Mod.Config.MaxWorkbenchGap
 						);
 					else
@@ -1561,7 +1571,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							scanLimit: 25,
 							targetLimit: 9,
 							includeSource: true,
-							includeDiagonal: true
+							includeDiagonal: true,
+							includeBuildings: DiscoverBuildings
 						);
 				}
 			}
@@ -1579,6 +1590,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					targetLimit: Mod.Config.MaxInventories,
 					includeSource: true,
 					includeDiagonal: Mod.Config.UseDiagonalConnections,
+					includeBuildings: DiscoverBuildings,
 					expandSource: Mod.Config.MaxWorkbenchGap
 				);
 			else
@@ -1592,6 +1604,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					targetLimit: Mod.Config.MaxInventories,
 					includeSource: true,
 					includeDiagonal: Mod.Config.UseDiagonalConnections,
+					includeBuildings: DiscoverBuildings,
 					extra: (BenchPosition.HasValue && BenchLocation != null)
 						? new AbsolutePosition[] { new(BenchLocation, BenchPosition.Value) } : null
 				);

@@ -21,6 +21,7 @@ using StardewValley.TerrainFeatures;
 
 using StardewModdingAPI;
 using Leclair.Stardew.Common.Integrations.StackQuality;
+using StardewValley.Buildings;
 
 namespace Leclair.Stardew.Common;
 
@@ -76,7 +77,8 @@ public static class InventoryHelper {
 		int scanLimit = 100,
 		int targetLimit = 20,
 		bool includeSource = true,
-		bool includeDiagonal = true
+		bool includeDiagonal = true,
+		bool includeBuildings = false
 	) {
 		return DiscoverInventories(
 			new AbsolutePosition(location, source),
@@ -87,7 +89,8 @@ public static class InventoryHelper {
 			scanLimit,
 			targetLimit,
 			includeSource,
-			includeDiagonal
+			includeDiagonal,
+			includeBuildings
 		);
 	}
 
@@ -102,6 +105,7 @@ public static class InventoryHelper {
 		int targetLimit = 20,
 		bool includeSource = true,
 		bool includeDiagonal = true,
+		bool includeBuildings = false,
 		int expandSource = 0
 	) {
 		List<AbsolutePosition> positions = new();
@@ -127,7 +131,8 @@ public static class InventoryHelper {
 			scanLimit,
 			targetLimit,
 			includeSource,
-			includeDiagonal
+			includeDiagonal,
+			includeBuildings
 		);
 	}
 
@@ -141,6 +146,7 @@ public static class InventoryHelper {
 		int targetLimit = 20,
 		bool includeSource = true,
 		bool includeDiagonal = true,
+		bool includeBuildings = false,
 		int expandSource = 0
 	) {
 		List<AbsolutePosition> potentials = new();
@@ -171,6 +177,7 @@ public static class InventoryHelper {
 			scanLimit,
 			targetLimit,
 			includeDiagonal,
+			includeBuildings,
 			null
 		);
 	}
@@ -199,6 +206,7 @@ public static class InventoryHelper {
 		int targetLimit = 20,
 		bool includeSource = true,
 		bool includeDiagonal = true,
+		bool includeBuildings = false,
 		int expandSource = 0
 	) {
 		List<AbsolutePosition> positions = new();
@@ -225,6 +233,7 @@ public static class InventoryHelper {
 			targetLimit: targetLimit,
 			includeDiagonal: includeDiagonal,
 			includeSource: includeSource,
+			includeBuildings: includeBuildings,
 			extra: positions
 		);
 	}
@@ -239,6 +248,7 @@ public static class InventoryHelper {
 		int targetLimit = 20,
 		bool includeSource = true,
 		bool includeDiagonal = true,
+		bool includeBuildings = false,
 		IEnumerable<AbsolutePosition>? extra = null
 	) {
 		List<AbsolutePosition> potentials = new();
@@ -312,6 +322,7 @@ public static class InventoryHelper {
 			scanLimit,
 			targetLimit,
 			includeDiagonal,
+			includeBuildings,
 			extra_located
 		);
 	}
@@ -325,7 +336,8 @@ public static class InventoryHelper {
 		int scanLimit = 100,
 		int targetLimit = 20,
 		bool includeSource = true,
-		bool includeDiagonal = true
+		bool includeDiagonal = true,
+		bool includeBuildings = false
 	) {
 		List<AbsolutePosition> potentials = new(sources);
 		Dictionary<AbsolutePosition, Vector2> origins = new();
@@ -359,6 +371,7 @@ public static class InventoryHelper {
 			scanLimit,
 			targetLimit,
 			includeDiagonal,
+			includeBuildings,
 			null
 		);
 	}
@@ -395,6 +408,67 @@ public static class InventoryHelper {
 		}
 	}
 
+	private static int WalkIntoMap(
+		List<LocatedInventory> result,
+		GameLocation indoors,
+		Farmer? who,
+		Func<object, IInventoryProvider?> getProvider,
+		int scanLimit,
+		int targetLimit
+	) {
+		// Inside maps only.
+		if (indoors.IsOutdoors)
+			return 0;
+
+		int i = 0;
+		IInventoryProvider? provider;
+
+		// Iterate over all our objects.
+		foreach (SObject obj in GetMapObjects(indoors)) {
+			provider = getProvider(obj);
+			if (provider != null && provider.IsValid(obj, indoors, who))
+				result.Add(new(obj, indoors));
+
+			if (result.Count >= targetLimit)
+				return i;
+
+			i++;
+			if (i >= scanLimit)
+				return i;
+		}
+
+		// Iterate over terrain features.
+		foreach(var obj in indoors.terrainFeatures.Values) {
+			if (obj is not null) {
+				provider = getProvider(obj);
+				if (provider != null && provider.IsValid(obj, indoors, who))
+					result.Add(new(obj, indoors));
+
+				if (result.Count >= targetLimit)
+					return i;
+			}
+
+			i++;
+			if (i >= scanLimit)
+				return i;
+		}
+
+		return i;
+	}
+
+	private static IEnumerable<SObject> GetMapObjects(GameLocation location) {
+		if (location.GetFridge() is SObject sobj)
+			yield return sobj;
+
+		foreach(var obj in location.Objects.Values)
+			if (obj is not null)
+				yield return obj;
+
+		foreach(var obj in location.furniture)
+			if (obj is not null)
+				yield return obj;
+	}
+
 	private static List<LocatedInventory> WalkPotentials(
 		List<AbsolutePosition> potentials,
 		Dictionary<AbsolutePosition, Vector2> origins,
@@ -406,6 +480,7 @@ public static class InventoryHelper {
 		int scanLimit,
 		int targetLimit,
 		bool includeDiagonal,
+		bool includeBuildings,
 		List<LocatedInventory>? extra
 	) {
 		List<LocatedInventory> result = new();
@@ -415,23 +490,51 @@ public static class InventoryHelper {
 
 		int i = start;
 
-		while(i < potentials.Count && i < scanLimit) {
+		if (includeBuildings) {
+			foreach(var location in origins.Keys.Select(key => key.Location).Distinct()) {
+				if (location is not null && !location.IsOutdoors)
+					scanLimit -= WalkIntoMap(result, location, who, getProvider, scanLimit - i, targetLimit);
+
+				if (result.Count >= targetLimit)
+					return result;
+			}
+		}
+
+		while (i < potentials.Count && i < scanLimit) {
 			AbsolutePosition abs = potentials[i++];
 			SObject? obj;
 			SObject? furn;
 			TerrainFeature? feature;
+			Building? building;
+
 			if (abs.Location != null) {
 				TileHelper.GetObjectAtPosition(abs.Location, abs.Position, out obj);
 				abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
 				furn = abs.Location.GetFurnitureAt(abs.Position);
+				building = includeBuildings ? abs.Location.getBuildingAt(abs.Position) : null;
 			} else {
 				feature = null;
 				obj = null;
 				furn = null;
+				building = null;
 			}
 
 			bool want_neighbors = false;
 			IInventoryProvider? provider;
+
+			if (building != null) {
+				// First off, we want to check if there are any providers to handle the
+				// building directly.
+				provider = getProvider(building);
+				if (provider != null && provider.IsValid(building, abs.Location, who)) {
+					result.Add(new(building, abs.Location));
+					// We don't do connections from buildings, so no setting want_neighbors.
+				}
+
+				// Next, walk into the building.
+				if (building.HasIndoors() && building.GetIndoors() is GameLocation indoors)
+					scanLimit -= WalkIntoMap(result, indoors, who, getProvider, scanLimit - i, targetLimit);
+			}
 
 			if (obj != null) {
 				provider = getProvider(obj);

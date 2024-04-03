@@ -1016,6 +1016,7 @@ public interface IBetterCrafting {
 	/// <param name="discover_containers">If true, attempt to discover additional material containers.</param>
 	/// <param name="containers">An optional list of containers to draw extra crafting materials from.</param>
 	/// <param name="listed_recipes">An optional list of recipes by name. If provided, only these recipes will be listed in the crafting menu.</param>
+	/// <param name="discover_buildings">If true, attempt to discover additional containers inside of adjacent buildings.</param>
 	/// <returns>Whether or not the menu was opened successfully</returns>
 	bool OpenCraftingMenu(
 		bool cooking,
@@ -1025,7 +1026,8 @@ public interface IBetterCrafting {
 		Rectangle? area = null,
 		bool discover_containers = true,
 		IList<Tuple<object, GameLocation?>>? containers = null,
-		IList<string>? listed_recipes = null
+		IList<string>? listed_recipes = null,
+		bool discover_buildings = false
 	);
 
 	/// <summary>

@@ -34,6 +34,8 @@ using Newtonsoft.Json.Linq;
 using StardewValley.Tools;
 using Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
 using StardewValley.BellsAndWhistles;
+using StardewValley.ItemTypeDefinitions;
+using StardewValley.GameData.BigCraftables;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -42,6 +44,10 @@ public class ModEntry : ModSubscriber {
 	public static readonly string NPCMapLocationPath = "Mods/Bouhm.NPCMapLocations/NPCs";
 
 	public static readonly string HeadsPath = "Mods/leclair.bettercrafting/Heads";
+
+	public static readonly string MagicWorkbenchTexture = @"Mods/leclair.bettercrafting/Texture/MagicWorkbench";
+	public static readonly string MagicWorkbenchId = "leclair.bettercrafting_MagicWorkbench";
+
 
 #nullable disable
 	public static ModEntry Instance { get; private set; }
@@ -68,6 +74,7 @@ public class ModEntry : ModSubscriber {
 	public RecipeManager Recipes;
 	public FavoriteManager Favorites;
 	public ItemCacheManager ItemCache;
+	public TriggerManager Triggers;
 
 	internal ThemeManager<Theme> ThemeManager;
 
@@ -81,12 +88,13 @@ public class ModEntry : ModSubscriber {
 	private readonly object providerLock = new();
 
 	private CaseInsensitiveHashSet? ConnectorExamples;
-	private Dictionary<string, string>? FloorMap;
+	private Dictionary<string, (string, string)>? FloorMap;
+	private Dictionary<string, (string, string)>? FenceMap;
 
 	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
 	internal Integrations.ProducerFrameworkMod.PFMIntegration? intPFM;
-	internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
+	//internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
 	internal Integrations.StackSplitRedux.SSRIntegration? intSSR;
 	internal Integrations.CookingSkill.CSIntegration? intCSkill;
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
@@ -104,6 +112,7 @@ public class ModEntry : ModSubscriber {
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
 
+		Patches.SObject_Patches.Patch(this);
 		Patches.Item_Patches.Patch(this);
 		Patches.GameLocation_Patches.Patch(this);
 		Patches.Torch_Patches.Patch(this);
@@ -120,6 +129,7 @@ public class ModEntry : ModSubscriber {
 		ItemCache = new ItemCacheManager(this);
 		Recipes = new RecipeManager(this);
 		Favorites = new FavoriteManager(this);
+		Triggers = new TriggerManager(this);
 
 		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
 		ThemeManager.ThemeChanged += OnThemeChanged;
@@ -401,6 +411,7 @@ public class ModEntry : ModSubscriber {
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		// Load Data
 		LoadFloorMap();
+		LoadFenceMap();
 		LoadConnectorExamples();
 
 		// More Init
@@ -411,7 +422,7 @@ public class ModEntry : ModSubscriber {
 		InventoryHelper.InitializeStackQuality(this);
 
 		intPFM = new(this);
-		intRGB = new(this);
+		//intRGB = new(this);
 		intSSR = new(this);
 		intCSkill = new(this);
 		intSCore = new(this);
@@ -452,10 +463,37 @@ public class ModEntry : ModSubscriber {
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
+		bool reload_settings = false;
+
+		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(HeadsPath))
 				HeadsCache = null;
+
+			bool is_objects = name.IsEquivalentTo(@"Data/Objects");
+
+			if (is_objects || name.IsEquivalentTo(@"Data/Fences")) {
+				var old_map = FenceMap;
+				FenceMap = null;
+				if (old_map is not null) {
+					LoadFenceMap();
+					if (!old_map.ShallowEquals(FenceMap))
+						reload_settings = true;
+				}
+			}
+
+			if (is_objects || name.IsEquivalentTo(@"Data/FloorsAndPaths")) {
+				var old_map = FloorMap;
+				FloorMap = null;
+				if (old_map is not null) {
+					LoadFloorMap();
+					if (!old_map.ShallowEquals(FloorMap))
+						reload_settings = true;
+				}
+			}
 		}
+
+		if (reload_settings)
+			RegisterSettings();
 	}
 
 	[Subscriber]
@@ -485,7 +523,7 @@ public class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		// Edit the cookout kit's recipe.
-		if (Config.EnableCookoutExpensive && e.Name.IsEquivalentTo(@"Data\CraftingRecipes"))
+		if (Config.EnableCookoutExpensive && e.Name.IsEquivalentTo(@"Data/CraftingRecipes"))
 			e.Edit(data => {
 				var recipes = data.AsDictionary<string, string>();
 				if (recipes.Data.TryGetValue("Cookout Kit", out string? value)) {
@@ -578,7 +616,7 @@ public class ModEntry : ModSubscriber {
 
 	public void SaveConfig() {
 		Helper.WriteConfig(Config);
-		Helper.GameContent.InvalidateCache(@"Data\CraftingRecipes");
+		Helper.GameContent.InvalidateCache(@"Data/CraftingRecipes");
 		InjectMenuHandler();
 	}
 
@@ -908,12 +946,15 @@ public class ModEntry : ModSubscriber {
 			GMCMIntegration.AddLabel(I18n.Setting_Nearby_Floors);
 
 			var floors = FloorMap.Values.ToList();
-			floors.Sort(StringComparer.InvariantCultureIgnoreCase);
+			floors.Sort((a, b) => a.Item2.CompareTo(b.Item2));
 
-			foreach (string connector in floors)
+			foreach (var pair in floors) {
+				string connector = pair.Item1;
+				string displayName = pair.Item2;
+
 				if (!string.IsNullOrEmpty(connector))
 					GMCMIntegration.Add(
-						connector,
+						displayName,
 						null,
 						c => c.ValidConnectors.Contains(connector),
 						(c, v) => {
@@ -923,6 +964,32 @@ public class ModEntry : ModSubscriber {
 								c.ValidConnectors.Remove(connector);
 						}
 					);
+			}
+		}
+
+		if (FenceMap != null) {
+			GMCMIntegration.AddLabel(I18n.Setting_Nearby_Fences);
+
+			var fences = FenceMap.Values.ToList();
+			fences.Sort((a,b) => a.Item2.CompareTo(b.Item2));
+
+			foreach (var pair in fences) {
+				string connector = pair.Item1;
+				string displayName = pair.Item2;
+
+				if (!string.IsNullOrEmpty(connector))
+					GMCMIntegration.Add(
+						displayName,
+						null,
+						c => c.ValidConnectors.Contains(connector),
+						(c, v) => {
+							if (v)
+								c.ValidConnectors.Add(connector);
+							else
+								c.ValidConnectors.Remove(connector);
+						}
+					);
+			}
 		}
 
 		if (ConnectorExamples != null) {
@@ -1138,40 +1205,35 @@ public class ModEntry : ModSubscriber {
 
 	[MemberNotNull(nameof(FloorMap))]
 	private void LoadFloorMap() {
-		const string path = "assets/floors.json";
-		Dictionary<string, string>? floors = null;
+		if (FloorMap is not null)
+			return;
 
-		try {
-			floors = Helper.Data.ReadJsonFile<Dictionary<string, string>>(path);
-			if (floors == null)
-				Log($"The {path} file is missing or invalid.", LogLevel.Error);
-		} catch(Exception ex) {
-			Log($"The {path} file is invalid.", LogLevel.Error, ex);
-		}
+		var data = DataLoader.FloorsAndPaths(Game1.content);
+		FloorMap = new();
 
-		floors ??= new();
-
-		// Read any extra data files
-		foreach(var cp in Helper.ContentPacks.GetOwned()) {
-			if (!cp.HasFile("floors.json"))
+		foreach(var pair in data) {
+			if (string.IsNullOrEmpty(pair.Value.ItemId) || ItemRegistry.GetData(pair.Value.ItemId) is not ParsedItemData itemData)
 				continue;
 
-			Dictionary<string, string>? extra = null;
-			try {
-				extra = cp.ReadJsonFile<Dictionary<string, string>>("floors.json");
-			} catch(Exception ex) {
-				Log($"The floors.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
-			}
-
-			if (extra != null)
-				foreach(var entry in extra)
-					if ( string.IsNullOrEmpty(entry.Value) )
-						floors.Remove(entry.Key);
-					else
-						floors[entry.Key] = entry.Value;
+			string id = pair.Value.Id ?? pair.Key;
+			FloorMap[id] = (itemData.InternalName, itemData.DisplayName);
 		}
+	}
 
-		FloorMap = floors;
+	[MemberNotNull(nameof(FenceMap))]
+	private void LoadFenceMap() {
+		if (FenceMap is not null)
+			return;
+
+		var data = DataLoader.Fences(Game1.content);
+		FenceMap = new();
+
+		foreach (var pair in data) {
+			if (string.IsNullOrEmpty(pair.Key) || ItemRegistry.GetData(pair.Key) is not ParsedItemData itemData)
+				continue;
+
+			FenceMap[pair.Key] = (itemData.InternalName, itemData.DisplayName);
+		}
 	}
 
 	[MemberNotNull(nameof(ConnectorExamples))]
@@ -1218,11 +1280,26 @@ public class ModEntry : ModSubscriber {
 	}
 
 	public bool IsValidConnector(object obj) {
-		// TODO: Check for MoveToConnected?
+		if (obj == null)
+			return false;
 
-		if (obj == null) return false;
+		(string, string) names;
 
 		switch(obj) {
+			case Fence fence:
+				// Just accept the raw value.
+				if (Config.ValidConnectors.Contains(fence.ItemId))
+					return true;
+
+				// But also look up a better name.
+				return FenceMap != null
+					&& FenceMap.TryGetValue(fence.ItemId, out names)
+					&& names.Item1 != null
+					&& (
+						Config.ValidConnectors.Contains(names.Item1) ||
+						Config.ValidConnectors.Contains(names.Item2)
+					);
+
 			case Item item:
 				return Config.ValidConnectors.Contains(item.Name);
 
@@ -1233,14 +1310,16 @@ public class ModEntry : ModSubscriber {
 
 				// But also look up a better name.
 				return FloorMap != null
-					&& FloorMap.TryGetValue(floor.whichFloor.Value, out string? name)
-					&& name != null
-					&& Config.ValidConnectors.Contains(name);
+					&& FloorMap.TryGetValue(floor.whichFloor.Value, out names)
+					&& names.Item1 != null
+					&& (
+						Config.ValidConnectors.Contains(names.Item1) ||
+						Config.ValidConnectors.Contains(names.Item2)
+					);
 
 			default:
 				return false;
 		}
-
 	}
 
 	#endregion

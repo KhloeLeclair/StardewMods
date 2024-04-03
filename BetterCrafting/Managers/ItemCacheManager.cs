@@ -12,22 +12,22 @@ namespace Leclair.Stardew.BetterCrafting.Managers;
 
 public class ItemCacheManager : BaseManager {
 
-	private static readonly string FLOORPAPER = @"Data\AdditionalWallpaperFlooring";
+	private static readonly string FLOORPAPER = @"Data/AdditionalWallpaperFlooring";
 
 	private static readonly Dictionary<string, string> TYPE_MAPS = new() {
-		{ ItemRegistry.type_bigCraftable, @"Data\BigCraftables" },
-		{ ItemRegistry.type_boots, @"Data\Boots" },
+		{ ItemRegistry.type_bigCraftable, @"Data/BigCraftables" },
+		{ ItemRegistry.type_boots, @"Data/Boots" },
 		{ ItemRegistry.type_floorpaper, FLOORPAPER },
-		{ ItemRegistry.type_furniture, @"Data\Furniture" },
-		{ ItemRegistry.type_hat, @"Data\hats" },
-		{ ItemRegistry.type_mannequin, @"Data\Mannequins" },
-		{ ItemRegistry.type_object, @"Data\Objects" },
-		{ ItemRegistry.type_pants, @"Data\Pants" },
-		{ ItemRegistry.type_shirt, @"Data\Shirts" },
-		{ ItemRegistry.type_tool, @"Data\Tools" },
-		{ ItemRegistry.type_trinket, @"Data\Trinkets" },
+		{ ItemRegistry.type_furniture, @"Data/Furniture" },
+		{ ItemRegistry.type_hat, @"Data/hats" },
+		{ ItemRegistry.type_mannequin, @"Data/Mannequins" },
+		{ ItemRegistry.type_object, @"Data/Objects" },
+		{ ItemRegistry.type_pants, @"Data/Pants" },
+		{ ItemRegistry.type_shirt, @"Data/Shirts" },
+		{ ItemRegistry.type_tool, @"Data/Tools" },
+		{ ItemRegistry.type_trinket, @"Data/Trinkets" },
 		{ ItemRegistry.type_wallpaper, FLOORPAPER },
-		{ ItemRegistry.type_weapon, @"Data\Weapons" }
+		{ ItemRegistry.type_weapon, @"Data/Weapons" }
 	};
 
 	private static readonly Dictionary<string, string> REVERSE_TYPE_MAPS = TYPE_MAPS
@@ -47,14 +47,16 @@ public class ItemCacheManager : BaseManager {
 		foreach(var name in e.Names) {
 			// This path covers two objects.
 			if (name.BaseName == FLOORPAPER) {
+				Log($"Clearing floors and wallpapers cache.", StardewModdingAPI.LogLevel.Trace);
 				ItemMaps.Remove(ItemRegistry.type_floorpaper);
 				ItemMaps.Remove(ItemRegistry.type_wallpaper);
 
-			// And the rest...
-			} else if (REVERSE_TYPE_MAPS.TryGetValue(name.BaseName, out string? typekey))
+				// And the rest...
+			} else if (REVERSE_TYPE_MAPS.TryGetValue(name.BaseName, out string? typekey)) {
+				Log($"Clearing {typekey} cache.", StardewModdingAPI.LogLevel.Trace);
 				ItemMaps.Remove(typekey);
+			}
 		}
-
 	}
 
 	#endregion
@@ -82,7 +84,7 @@ public class ItemCacheManager : BaseManager {
 	private IEnumerable<Item> GetAllUnknownItems() {
 		foreach(var typedef in ItemRegistry.ItemTypes) {
 			if (!TYPE_MAPS.ContainsKey(typedef.Identifier)) {
-				Log($"Unexpected item type: {typedef.Identifier}", StardewModdingAPI.LogLevel.Debug);
+				Log($"Unexpected item type: {typedef.Identifier}", StardewModdingAPI.LogLevel.Trace);
 
 				foreach (string id in typedef.GetAllIds()) {
 					Item? item = ItemRegistry.Create(id, allowNull: true);
