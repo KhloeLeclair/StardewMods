@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 
 using StardewValley;
+using StardewValley.Inventories;
 using StardewValley.Network;
 using StardewValley.Objects;
 
@@ -17,6 +18,7 @@ namespace Leclair.Stardew.Common.Inventory {
 
 		public ChestProvider() {
 			AllowedTypes = new[] {
+				Chest.SpecialChestTypes.BigChest,
 				Chest.SpecialChestTypes.AutoLoader,
 				Chest.SpecialChestTypes.None
 			};
@@ -39,13 +41,20 @@ namespace Leclair.Stardew.Common.Inventory {
 			obj.clearNulls();
 		}
 
+		public override IInventory? GetInventory(Chest obj, GameLocation? location, Farmer? who) {
+			if (who == null)
+				return obj.Items;
+
+			return obj.GetItemsForPlayer(who.UniqueMultiplayerID);
+		}
+
 		public override int GetActualCapacity(Chest obj, GameLocation? location, Farmer? who) {
 			return obj.GetActualCapacity();
 		}
 
 		public override IList<Item?>? GetItems(Chest obj, GameLocation? location, Farmer? who) {
 			if (who == null)
-				return obj.items;
+				return obj.Items;
 
 			return obj.GetItemsForPlayer(who.UniqueMultiplayerID);
 		}

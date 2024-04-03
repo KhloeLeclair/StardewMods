@@ -61,7 +61,7 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 		int price = 0;
 		int count = 0;
 
-		foreach(Item item in ModEntry.Instance.GetMatchingItems(ItemMatcher)) {
+		foreach(Item item in ModEntry.Instance.ItemCache.GetMatchingItems(ItemMatcher)) {
 			int ip = item.salePrice();
 			count++;
 			if (result is null || ip < price) { 
@@ -139,15 +139,15 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 
 	public int Quantity { get; }
 
-	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality) {
+	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality) {
 		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: maxQuality);
 	}
 
-	public bool HasAvailableQuantity(int quantity, Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality) {
+	public bool HasAvailableQuantity(int quantity, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality) {
 		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: maxQuality, limit: quantity) >= quantity;
 	}
 
-	public void Consume(Farmer who, IList<IInventory>? inventories, int maxQuality, bool lowQualityFirst) {
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst) {
 		InventoryHelper.ConsumeItems(IngList, who, inventories, maxQuality, lowQualityFirst);
 	}
 

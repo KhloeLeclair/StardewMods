@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.ItemTypeDefinitions;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -18,11 +19,19 @@ public class BaseRecipe : IRecipe {
 
 	public BaseRecipe(CraftingRecipe recipe) {
 		Recipe = recipe;
+
 		Ingredients = recipe.recipeList
 			.Select(val => new BaseIngredient(val.Key, val.Value))
 			.ToArray();
 
 		Stackable = (this.CreateItemSafe()?.maximumStackSize() ?? 0) > 1;
+	}
+
+	public virtual string QualifiedItemId {
+		get {
+			string idx = Recipe.getIndexOfMenuView();
+			return Recipe.bigCraftable ? $"(BC){idx}" : idx;
+		}
 	}
 
 	public virtual bool HasRecipe(Farmer who) {
@@ -34,7 +43,7 @@ public class BaseRecipe : IRecipe {
 
 	public virtual bool Stackable { get; }
 
-	public virtual int SortValue => Recipe.itemToProduce[0];
+	public virtual string SortValue => Recipe.itemToProduce[0];
 
 	public virtual string Name => Recipe.name;
 
@@ -44,23 +53,19 @@ public class BaseRecipe : IRecipe {
 
 	public virtual int GetTimesCrafted(Farmer who) {
 		if (Recipe.isCookingRecipe) {
-			int idx = Recipe.getIndexOfMenuView();
+			string idx = Recipe.getIndexOfMenuView();
 			if (who.recipesCooked.ContainsKey(idx))
 				return who.recipesCooked[idx];
 
 		} else if (who.craftingRecipes.ContainsKey(Name))
-				return who.craftingRecipes[Name];
+			return who.craftingRecipes[Name];
 
 		return 0;
 	}
 
-	public virtual Texture2D Texture => Recipe.bigCraftable ?
-		Game1.bigCraftableSpriteSheet :
-		Game1.objectSpriteSheet;
+	public virtual Texture2D Texture => ItemRegistry.GetDataOrErrorItem(QualifiedItemId).GetTexture();
 
-	public virtual Rectangle SourceRectangle => Recipe.bigCraftable ?
-		Game1.getArbitrarySourceRect(Texture, 16, 32, Recipe.getIndexOfMenuView()) :
-		Game1.getSourceRectForStandardTileSheet(Texture, Recipe.getIndexOfMenuView(), 16, 16);
+	public virtual Rectangle SourceRectangle => ItemRegistry.GetDataOrErrorItem(QualifiedItemId).GetSourceRect();
 
 	public virtual int GridHeight => Recipe.bigCraftable ? 2 : 1;
 
@@ -69,7 +74,6 @@ public class BaseRecipe : IRecipe {
 	public virtual int QuantityPerCraft => Recipe.numberProducedPerCraft;
 
 	public virtual IIngredient[] Ingredients { get; protected set; }
-
 
 	public virtual bool CanCraft(Farmer who) {
 		return true;
@@ -91,6 +95,5 @@ public class BaseRecipe : IRecipe {
 	}
 
 	public virtual CraftingRecipe CraftingRecipe => Recipe;
-
 
 }

@@ -33,6 +33,7 @@ using Leclair.Stardew.BetterCrafting.Models;
 using Newtonsoft.Json.Linq;
 using StardewValley.Tools;
 using Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
+using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -66,6 +67,7 @@ public class ModEntry : ModSubscriber {
 
 	public RecipeManager Recipes;
 	public FavoriteManager Favorites;
+	public ItemCacheManager ItemCache;
 
 	internal ThemeManager<Theme> ThemeManager;
 
@@ -79,7 +81,7 @@ public class ModEntry : ModSubscriber {
 	private readonly object providerLock = new();
 
 	private CaseInsensitiveHashSet? ConnectorExamples;
-	private Dictionary<int, string>? FloorMap;
+	private Dictionary<string, string>? FloorMap;
 
 	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
@@ -89,7 +91,6 @@ public class ModEntry : ModSubscriber {
 	internal Integrations.CookingSkill.CSIntegration? intCSkill;
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
 	internal Integrations.CustomCraftingStation.CCSIntegration? intCCStation;
-	internal Integrations.DynamicGameAssets.DGAIntegration? intDGA;
 
 	internal Models.Theme? Theme => ThemeManager.Theme;
 
@@ -104,10 +105,9 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		Patches.Item_Patches.Patch(this);
-		Patches.Workbench_Patches.Patch(this);
+		Patches.GameLocation_Patches.Patch(this);
 		Patches.Torch_Patches.Patch(this);
-
-		Common_SpriteText_Patches.Patch(Harmony, Monitor);
+		Patches.Workbench_Patches.Patch(this);
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
@@ -117,6 +117,7 @@ public class ModEntry : ModSubscriber {
 
 		RegisterProviders();
 
+		ItemCache = new ItemCacheManager(this);
 		Recipes = new RecipeManager(this);
 		Favorites = new FavoriteManager(this);
 
@@ -246,13 +247,13 @@ public class ModEntry : ModSubscriber {
 
 					var bcm = Menus.BetterCraftingPage.Open(
 						mod: this,
-						location: OldCraftingPage.Value.Location,
-						position: OldCraftingPage.Value.Position,
+						location: OldCraftingPage.Value.BenchLocation,
+						position: OldCraftingPage.Value.BenchPosition,
 						width: game?.width ?? -1,
 						height: game?.height ?? -1,
 						x: game?.xPositionOnScreen ?? -1,
 						y: game?.yPositionOnScreen ?? -1,
-						area: OldCraftingPage.Value.Area,
+						area: OldCraftingPage.Value.BenchArea,
 						cooking: OldCraftingPage.Value.cooking,
 						standalone_menu: !OldCraftingGameMenu.Value,
 						material_containers: OldCraftingPage.Value.MaterialContainers,
@@ -295,8 +296,7 @@ public class ModEntry : ModSubscriber {
 		}
 
 		if (menu is CraftingPage page) {
-			bool cooking = CraftingPageHelper.IsCooking(page);
-			if (cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
+			if (page.cooking ? Config.ReplaceCooking : Config.ReplaceCrafting) {
 
 				// Make a copy of the existing chests.
 				List<object>? chests = page._materialContainers is null ? null : new(page._materialContainers);
@@ -314,7 +314,7 @@ public class ModEntry : ModSubscriber {
 					location: Game1.player.currentLocation,
 					position: where,
 					area: area,
-					cooking: cooking,
+					cooking: page.cooking,
 					standalone_menu: true,
 					material_containers: chests
 				);
@@ -416,19 +416,11 @@ public class ModEntry : ModSubscriber {
 		intCSkill = new(this);
 		intSCore = new(this);
 		intCCStation = new(this);
-		intDGA = new(this);
 
 		// Commands
 		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
 			Recipes.Invalidate();
-
-			CachedObjects = null;
-			CachedBigCraftables = null;
-			CachedFurniture = null;
-			CachedBoots = null;
-			CachedClothing = null;
-			CachedHats = null;
-			CachedWeapons = null;
+			ItemCache.Invalidate();
 
 			Log($"Invalided caches.");
 		});
@@ -444,10 +436,6 @@ public class ModEntry : ModSubscriber {
 				SaveConfig();
 			}
 		});
-
-		// Load Data -- Actually, this is unnecessary. Do it on demand.
-		// Recipes.LoadRecipes();
-		// Recipes.LoadDefaults();
 	}
 
 	[Subscriber]
@@ -467,27 +455,6 @@ public class ModEntry : ModSubscriber {
 		foreach(var name in e.Names) {
 			if (name.IsEquivalentTo(HeadsPath))
 				HeadsCache = null;
-
-			if (name.IsEquivalentTo(@"Data\ObjectInformation"))
-				CachedObjects = null;
-
-			if (name.IsEquivalentTo(@"Data\BigCraftablesInformation"))
-				CachedBigCraftables = null;
-
-			if (name.IsEquivalentTo(@"Data\Furniture"))
-				CachedFurniture = null;
-
-			if (name.IsEquivalentTo(@"Data\Boots"))
-				CachedBoots = null;
-
-			if (name.IsEquivalentTo(@"Data\ClothingInformation"))
-				CachedClothing = null;
-
-			if (name.IsEquivalentTo(@"Data\hats"))
-				CachedHats = null;
-
-			if (name.IsEquivalentTo(@"Data\weapons"))
-				CachedWeapons = null;
 		}
 	}
 
@@ -510,7 +477,7 @@ public class ModEntry : ModSubscriber {
 			foreach(var pair in e.Removed) {
 				var obj = pair.Value;
 				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278 && torch.Fragility != 2) {
-					e.Location.debris.Add(new Debris(new StardewValley.Object(926, 1), new Vector2(pair.Key.X * 64 + 32, pair.Key.Y * 64 + 32)));
+					e.Location.debris.Add(new Debris(ItemRegistry.Create("(O)926", 1), new Vector2(pair.Key.X * 64 + 32, pair.Key.Y * 64 + 32)));
 				}
 			}
 	}
@@ -518,7 +485,7 @@ public class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		// Edit the cookout kit's recipe.
-		if (Config.EnableCookoutExpensive && e.NameWithoutLocale.IsEquivalentTo(@"Data\CraftingRecipes"))
+		if (Config.EnableCookoutExpensive && e.Name.IsEquivalentTo(@"Data\CraftingRecipes"))
 			e.Edit(data => {
 				var recipes = data.AsDictionary<string, string>();
 				if (recipes.Data.TryGetValue("Cookout Kit", out string? value)) {
@@ -541,8 +508,7 @@ public class ModEntry : ModSubscriber {
 					Log($"The {path} file is invalid.", LogLevel.Error, ex);
 				}
 
-				if (heads is null)
-					heads = new();
+				heads ??= new();
 
 				// Read any extra data files.
 				foreach (var cp in Helper.ContentPacks.GetOwned()) {
@@ -1139,145 +1105,6 @@ public class ModEntry : ModSubscriber {
 
 	#endregion
 
-	#region Item Enumeration
-
-	private List<Item>? CachedObjects;
-	private List<Item>? CachedBigCraftables;
-	private List<Item>? CachedFurniture;
-	private List<Item>? CachedWeapons;
-	private List<Item>? CachedBoots;
-	private List<Item>? CachedHats;
-	private List<Item>? CachedClothing;
-
-	[MemberNotNull(nameof(CachedObjects))]
-	private void LoadObjects() {
-		if (CachedObjects is null) {
-			CachedObjects = new();
-			foreach(int id in Game1.objectInformation.Keys) {
-				Item? item = InventoryHelper.CreateObjectOrRing(id);
-				if (item is not null)
-					CachedObjects.Add(item);
-			}
-		}
-	}
-
-	[MemberNotNull(nameof(CachedBigCraftables))]
-	private void LoadBigCraftables() {
-		if (CachedBigCraftables is null) {
-			CachedBigCraftables = new();
-			foreach(int id in Game1.bigCraftablesInformation.Keys)
-				CachedBigCraftables.Add(new SObject(Vector2.Zero, id, 1));
-		}
-	}
-
-	[MemberNotNull(nameof(CachedFurniture))]
-	private void LoadFurniture() {
-		if (CachedFurniture is null) {
-			CachedFurniture = new();
-			foreach(int id in Game1.content.Load<Dictionary<int, string>>(@"Data\Furniture").Keys)
-				CachedFurniture.Add(Furniture.GetFurnitureInstance(id, Vector2.Zero));
-		}
-	}
-
-	[MemberNotNull(nameof(CachedWeapons))]
-	private void LoadWeapons() {
-		if (CachedWeapons is null) {
-			CachedWeapons = new();
-			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\weapons").Keys)
-				CachedWeapons.Add(new MeleeWeapon(id));
-		}
-	}
-
-	[MemberNotNull(nameof(CachedBoots))]
-	private void LoadBoots() {
-		if (CachedBoots is null) {
-			CachedBoots = new();
-			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\Boots").Keys)
-				CachedBoots.Add(new Boots(id));
-		}
-	}
-
-	[MemberNotNull(nameof(CachedHats))]
-	private void LoadHats() {
-		if (CachedHats is null) {
-			CachedHats = new();
-			foreach (int id in Game1.content.Load<Dictionary<int, string>>(@"Data\hats").Keys)
-				CachedHats.Add(new Hat(id));
-		}
-	}
-
-	[MemberNotNull(nameof(CachedClothing))]
-	private void LoadClothes() {
-		if (CachedClothing is null) {
-			CachedClothing = new();
-			foreach (int id in Game1.clothingInformation.Keys)
-				CachedClothing.Add(new Clothing(id));
-		}
-	}
-
-	public IEnumerable<Item> GetMatchingItems(Func<Item, bool> predicate, bool normalObjects = true, bool bigCraftables = true, bool clothing = true, bool dga = true) {
-		if (normalObjects)
-			LoadObjects();
-			// Screw you VS this is not "may be null" why are you not seeing
-			// the MemberNotNull attribute on LoadObjects()?
-			foreach(Item item in CachedObjects!) {
-				if (predicate(item))
-					yield return item;
-			}
-
-		if (bigCraftables) {
-			LoadBigCraftables();
-			foreach(Item item in CachedBigCraftables) {
-				if (predicate(item))
-					yield return item;
-			}
-
-			LoadFurniture();
-			foreach(Item item in CachedFurniture) {
-				if (predicate(item))
-					yield return item;
-			}
-		}
-
-		// if tools
-		LoadWeapons();
-		foreach(Item item in CachedWeapons) {
-			if (predicate(item))
-				yield return item;
-		}
-
-		// if boots
-		LoadBoots();
-		foreach(Item item in CachedBoots) {
-			if (predicate(item))
-				yield return item;
-		}
-
-		// if hats
-		LoadHats();
-		foreach(Item item in CachedHats) {
-			if (predicate(item))
-				yield return item;
-		}
-
-		if (clothing) {
-			LoadClothes();
-			foreach(Item item in CachedClothing) {
-				if (predicate(item))
-					yield return item;
-			}
-		}
-
-		// Finally, DynamicGameAssets.
-		if (dga && intDGA != null)
-			foreach(Item item in intDGA.GetAllItems()) {
-				if (predicate(item))
-					yield return item;
-			}
-	}
-
-	#endregion
-
 	public bool HasLoveOfCooking() {
 		if (!hasLoveOfCooking.HasValue)
 			hasLoveOfCooking = Helper.ModRegistry.IsLoaded("blueberry.LoveOfCooking");
@@ -1312,27 +1139,26 @@ public class ModEntry : ModSubscriber {
 	[MemberNotNull(nameof(FloorMap))]
 	private void LoadFloorMap() {
 		const string path = "assets/floors.json";
-		Dictionary<int, string>? floors = null;
+		Dictionary<string, string>? floors = null;
 
 		try {
-			floors = Helper.Data.ReadJsonFile<Dictionary<int, string>>(path);
+			floors = Helper.Data.ReadJsonFile<Dictionary<string, string>>(path);
 			if (floors == null)
 				Log($"The {path} file is missing or invalid.", LogLevel.Error);
 		} catch(Exception ex) {
 			Log($"The {path} file is invalid.", LogLevel.Error, ex);
 		}
 
-		if (floors == null)
-			floors = new();
+		floors ??= new();
 
 		// Read any extra data files
 		foreach(var cp in Helper.ContentPacks.GetOwned()) {
 			if (!cp.HasFile("floors.json"))
 				continue;
 
-			Dictionary<int, string>? extra = null;
+			Dictionary<string, string>? extra = null;
 			try {
-				extra = cp.ReadJsonFile<Dictionary<int, string>>("floors.json");
+				extra = cp.ReadJsonFile<Dictionary<string, string>>("floors.json");
 			} catch(Exception ex) {
 				Log($"The floors.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
 			}
@@ -1361,8 +1187,7 @@ public class ModEntry : ModSubscriber {
 			Log($"The {path} file is invalid.", LogLevel.Error, ex);
 		}
 
-		if (examples == null)
-			examples = new();
+		examples ??= new();
 
 		// Read any extra data files
 		foreach(var cp in Helper.ContentPacks.GetOwned()) {
@@ -1402,6 +1227,11 @@ public class ModEntry : ModSubscriber {
 				return Config.ValidConnectors.Contains(item.Name);
 
 			case Flooring floor:
+				// Just accept the raw value.
+				if (Config.ValidConnectors.Contains(floor.whichFloor.Value))
+					return true;
+
+				// But also look up a better name.
 				return FloorMap != null
 					&& FloorMap.TryGetValue(floor.whichFloor.Value, out string? name)
 					&& name != null

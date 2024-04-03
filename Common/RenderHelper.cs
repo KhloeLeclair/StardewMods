@@ -16,36 +16,6 @@ using HarmonyLib;
 
 namespace Leclair.Stardew.Common;
 
-#if HARMONY
-internal static class Common_SpriteText_Patches {
-
-	private static IMonitor? Monitor;
-
-	internal static void Patch(Harmony harmony, IMonitor monitor) {
-		Monitor = monitor;
-
-		harmony.Patch(
-			original: AccessTools.Method(typeof(SpriteText), nameof(SpriteText.getColorFromIndex)),
-			prefix: new HarmonyMethod(typeof(Common_SpriteText_Patches), nameof(getColorFromIndex__Prefix))
-		);
-	}
-
-	static bool getColorFromIndex__Prefix(int index, ref Color __result) {
-		try {
-			if (index >= 100) {
-				__result = CommonHelper.UnpackColor(index - 100);
-				return false;
-			}
-
-		} catch (Exception ex) {
-			Monitor?.LogOnce($"An error occurred in {nameof(getColorFromIndex__Prefix)}. Details:\n{ex}", LogLevel.Warn);
-		}
-
-		return true;
-	}
-}
-#endif
-
 public static class RenderHelper {
 
 	private static IModHelper? Helper;
@@ -59,12 +29,17 @@ public static class RenderHelper {
 		return Rectangle.Intersect(self, other);
 	}
 
+	public static Rectangle ToXna(this xTile.Dimensions.Rectangle self) {
+		return new Rectangle(self.X, self.Y, self.Width, self.Height);
+	}
+
 	public static Rectangle Clone(this Rectangle self) {
 		return self;
 	}
 
 	#region SpriteText Nonsense
 
+	[Obsolete("Just use SpriteText directly it uses normal Color? now")]
 	public static void DrawCenteredSpriteText(
 		SpriteBatch b,
 		string text,
@@ -78,12 +53,6 @@ public static class RenderHelper {
 		Color? color = null,
 		int maxWidth = 99999
 	) {
-		int cint;
-		if (color.HasValue)
-			cint = color.Value.PackColor() + 100;
-		else
-			cint = -1;
-
 		SpriteText.drawStringHorizontallyCenteredAt(
 			b,
 			s: text,
@@ -95,11 +64,12 @@ public static class RenderHelper {
 			alpha: alpha,
 			layerDepth: layerDepth,
 			junimoText: junimoText,
-			color: cint,
+			color: color,
 			maxWidth: maxWidth
 		);
 	}
 
+	[Obsolete("Just use SpriteText directly it uses normal Color? now")]
 	public static void DrawSpriteText(
 		SpriteBatch b,
 		string text,
@@ -112,12 +82,6 @@ public static class RenderHelper {
 		bool junimoText = false,
 		Color? color = null
 	) {
-		int cint;
-		if (color.HasValue)
-			cint = color.Value.PackColor() + 100;
-		else
-			cint = -1;
-
 		SpriteText.drawString(
 			b: b,
 			s: text,
@@ -129,7 +93,7 @@ public static class RenderHelper {
 			alpha: alpha,
 			layerDepth: layerDepth,
 			junimoText: junimoText,
-			color: cint
+			color: color
 		);
 	}
 

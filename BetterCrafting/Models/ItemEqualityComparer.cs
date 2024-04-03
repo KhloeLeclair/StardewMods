@@ -29,41 +29,10 @@ public class ItemEqualityComparer : IEqualityComparer<Item> {
 			Item_Patches.OverrideStackSize = false;
 		}
 
-		bool justCompare = false;
+		// TODO: Figure out how colored items / flavored items work
+		// and if we need to do something special.
 
-		// Equality for other things.
-
-		if (first is CombinedRing || second is CombinedRing)
-			return false;
-
-		if (first is Ring && second is Ring)
-			justCompare = true;
-
-		if (first is Boots fboots && second is Boots sboots) {
-			justCompare = true;
-			if (fboots.indexInColorSheet.Value != sboots.indexInColorSheet.Value)
-				return false;
-		}
-
-		if (first is Clothing fclothes && second is Clothing sclothes) {
-			justCompare = true;
-			if (fclothes.clothesColor.Value != sclothes.clothesColor.Value)
-				return false;
-		}
-
-		if (first is Hat fhat && second is Hat shat) {
-			return fhat.which.Value == shat.which.Value
-				&& first.Name.Equals(second.Name);
-		}
-
-		// Technically we could compare tools, but we're never going to be
-		// recycling those really so...
-
-		if (justCompare)
-			return first.ParentSheetIndex == second.ParentSheetIndex
-				&& first.Name.Equals(second.Name);
-
-		return false;
+		return first.QualifiedItemId == second.QualifiedItemId;
 	}
 
 	public int GetHashCode(Item obj) {

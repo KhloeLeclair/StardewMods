@@ -95,7 +95,7 @@ public static class CommonHelper {
 	}
 
 	private static Dictionary<string, Color> LoadNamedColors() {
-		Dictionary<string, Color> result = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, Color> result = new(StringComparer.OrdinalIgnoreCase);
 
 		// Load every available color name from XNA Color.
 		foreach (PropertyInfo prop in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
@@ -478,7 +478,15 @@ public static class CommonHelper {
 
 	#region Enums
 
-	public static T Cycle<T>(T current, int direction = 1) {
+	/// <summary>
+	/// Return the next value in an enum, after the given value. Loop around
+	/// if we reach the end of the enum.
+	/// </summary>
+	/// <typeparam name="T">The enum type.</typeparam>
+	/// <param name="current">The current value</param>
+	/// <param name="direction">The number of steps to move. Can be negative.</param>
+	/// <returns>The next value.</returns>
+	public static T Cycle<T>(T current, int direction = 1, T[]? skip = null) {
 		var values = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
 
 		int idx = -1;
@@ -490,13 +498,19 @@ public static class CommonHelper {
 			}
 		}
 
+		T result;
+
 		if (idx < 0)
-			return values.Last();
+			result = values.Last();
+		else if (idx >= values.Length)
+			result = values[0];
+		else
+			result = values[idx];
 
-		if (idx >= values.Length)
-			return values[0];
+		if (skip is not null && skip.Contains(result))
+			return Cycle(result, direction, skip);
 
-		return values[idx];
+		return result;
 	}
 
 	public static IEnumerable<T> GetValues<T>() {

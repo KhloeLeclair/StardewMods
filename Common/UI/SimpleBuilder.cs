@@ -24,6 +24,12 @@ public class SimpleBuilder {
 		Layout = layout ?? new LayoutNode(LayoutDirection.Vertical, null);
 	}
 
+	public bool IsEmpty() {
+		if (Built != null) return Built.Length == 0;
+		if (Nodes != null) return Nodes.Count == 0;
+		return true;
+	}
+
 	[MemberNotNull(nameof(Nodes))]
 	private void AssertState() {
 		if (Built != null) throw new ArgumentException("cannot modify built layout");

@@ -28,6 +28,11 @@ using StardewValley.Objects;
 using Leclair.Stardew.BetterCrafting.DynamicRules;
 using System.Diagnostics.CodeAnalysis;
 using Leclair.Stardew.BetterCrafting.Patches;
+using StardewValley.ItemTypeDefinitions;
+using StardewValley.GameData.Objects;
+using StardewValley.Buffs;
+using static StardewValley.Menus.CharacterCustomization;
+using Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
@@ -57,14 +62,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public bool DrawBG = true;
 
 	// Workbench Tracking
-	public readonly GameLocation? Location;
-	public readonly Vector2? Position;
-	public readonly Rectangle? Area;
+	public readonly GameLocation? BenchLocation;
+	public readonly Vector2? BenchPosition;
+	public readonly Rectangle? BenchArea;
 	public NetMutex? Mutex;
 
 	public IList<LocatedInventory>? MaterialContainers;
 	protected IList<LocatedInventory>? CachedInventories;
-	private IList<IInventory>? UnsafeInventories;
+	private IList<IBCInventory>? UnsafeInventories;
 	private readonly bool ChestsOnly;
 	public bool DiscoverContainers { get; private set; }
 
@@ -156,6 +161,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	internal IRecipe? hoverRecipe = null;
 	internal readonly Cache<Item?, string?> lastRecipeHover;
+	internal readonly Cache<ISimpleNode[]?, string?> tipDescription;
+	internal readonly Cache<ISimpleNode[]?, string?> tipGiftTastes;
 	internal IRecipe? activeRecipe = null;
 
 	/// <inheritdoc />
@@ -188,46 +195,33 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public Rectangle SourceCatFilter => (CurrentTab?.Category?.UseRules ?? false) ? Sprites.Buttons.FILTER_ON : Sprites.Buttons.FILTER_OFF;
 	public Rectangle SourceSeasoning {
 		get {
-			switch (Mod.Config.UseSeasoning) {
-				case SeasoningMode.Enabled:
-					return Sprites.Buttons.SEASONING_ON;
-				case SeasoningMode.InventoryOnly:
-					return Sprites.Buttons.SEASONING_LOCAL;
-				case SeasoningMode.Disabled:
-				default:
-					return Sprites.Buttons.SEASONING_OFF;
-			}
+			return Mod.Config.UseSeasoning switch {
+				SeasoningMode.Enabled => Sprites.Buttons.SEASONING_ON,
+				SeasoningMode.InventoryOnly => Sprites.Buttons.SEASONING_LOCAL,
+				_ => Sprites.Buttons.SEASONING_OFF,
+			};
 		}
 	}
 	public Rectangle SourceQuality {
 		get {
-			switch (Mod.Config.MaxQuality) {
-				case MaxQuality.Iridium:
-					return Sprites.Buttons.QUALITY_3;
-				case MaxQuality.Gold:
-					return Sprites.Buttons.QUALITY_2;
-				case MaxQuality.Silver:
-					return Sprites.Buttons.QUALITY_1;
-				default:
-					return Sprites.Buttons.QUALITY_0;
+			return Mod.Config.MaxQuality switch {
+				MaxQuality.Iridium => Sprites.Buttons.QUALITY_3,
+				MaxQuality.Gold => Sprites.Buttons.QUALITY_2,
+				MaxQuality.Silver => Sprites.Buttons.QUALITY_1,
+				_ => Sprites.Buttons.QUALITY_0,
 			};
+			;
 		}
 	}
 
 	public int Quality {
 		get {
-			switch (Mod.Config.MaxQuality) {
-				case MaxQuality.None:
-					return 0;
-				case MaxQuality.Silver:
-					return 1;
-				case MaxQuality.Gold:
-					return 2;
-				case MaxQuality.Iridium:
-				case MaxQuality.Disabled:
-				default:
-					return int.MaxValue;
-			}
+			return Mod.Config.MaxQuality switch {
+				MaxQuality.None => 0,
+				MaxQuality.Silver => 1,
+				MaxQuality.Gold => 2,
+				_ => int.MaxValue,
+			};
 		}
 	}
 
@@ -358,9 +352,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	) : base(mod, x, y, width, height) {
 
-		Location = location ?? Game1.player.currentLocation;
-		Position = position;
-		Area = area;
+		BenchLocation = location ?? Game1.player.currentLocation;
+		BenchPosition = position;
+		BenchArea = area;
 		this.cooking = cooking;
 		Standalone = standalone_menu;
 		DiscoverContainers = discover_containers;
@@ -393,6 +387,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		ChestsOnly = this.cooking && Mod.intCSkill != null && Mod.intCSkill.IsLoaded;
 
 		lastRecipeHover = new(key => hoverRecipe?.CreateItemSafe(CreateLog), () => hoverRecipe?.Name);
+		tipDescription = new(key => GetRecipeTooltipDescription(), () => hoverRecipe?.Name);
+		tipGiftTastes = new(key => GetRecipeTooltipGiftTastes(), () => hoverRecipe?.Name);
 
 		HeldItemRecyclable = new(item => {
 			if (item is null || !item.canBeTrashed())
@@ -1228,7 +1224,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 					if (cat.CachedRules is not null) {
 						foreach (IRecipe recipe in Recipes) {
-							Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe(CreateLog));
+							Lazy<Item?> result = new(() => recipe.CreateItemSafe(CreateLog));
 
 							bool matched = false;
 							foreach (var handler in cat.CachedRules) {
@@ -1510,12 +1506,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		// We want to locate all our inventories.
 		if (count == 0) {
-			if (DiscoverContainers && Location != null) {
-				if (Area.HasValue) {
+			if (DiscoverContainers && BenchLocation != null) {
+				if (BenchArea.HasValue) {
 					if (Mod.Config.UseDiscovery)
 						CachedInventories = InventoryHelper.DiscoverInventories(
-							Area.Value,
-							Location,
+							BenchArea.Value,
+							BenchLocation,
 							Game1.player,
 							provider,
 							Mod.IsValidConnector,
@@ -1528,8 +1524,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 						);
 					else
 						CachedInventories = InventoryHelper.DiscoverInventories(
-							Area.Value,
-							Location,
+							BenchArea.Value,
+							BenchLocation,
 							Game1.player,
 							provider,
 							null,
@@ -1540,8 +1536,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							includeDiagonal: true
 						);
 
-				} else if (Position.HasValue) {
-					var pos = new AbsolutePosition(Location, Position.Value);
+				} else if (BenchPosition.HasValue) {
+					var pos = new AbsolutePosition(BenchLocation, BenchPosition.Value);
 					if (Mod.Config.UseDiscovery)
 						CachedInventories = InventoryHelper.DiscoverInventories(
 							pos,
@@ -1570,10 +1566,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				}
 			}
 		} else if (DiscoverContainers && Mod.Config.UseDiscovery) {
-			if (Location != null && Area.HasValue)
+			if (BenchLocation != null && BenchArea.HasValue)
 				CachedInventories = InventoryHelper.DiscoverInventories(
-					Area.Value,
-					Location,
+					BenchArea.Value,
+					BenchLocation,
 					MaterialContainers,
 					Game1.player,
 					provider,
@@ -1596,8 +1592,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					targetLimit: Mod.Config.MaxInventories,
 					includeSource: true,
 					includeDiagonal: Mod.Config.UseDiagonalConnections,
-					extra: (Position.HasValue && Location != null)
-						? new AbsolutePosition[] { new(Location, Position.Value) } : null
+					extra: (BenchPosition.HasValue && BenchLocation != null)
+						? new AbsolutePosition[] { new(BenchLocation, BenchPosition.Value) } : null
 				);
 		} else
 			CachedInventories = MaterialContainers;
@@ -1620,7 +1616,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 #endif
 	}
 
-	internal virtual IList<IInventory>? GetUnsafeInventories() {
+	internal virtual IList<IBCInventory>? GetUnsafeInventories() {
 		return UnsafeInventories;
 	}
 
@@ -1652,9 +1648,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		return items;
 	}
 
-	protected virtual List<Item?> GetActualContainerContents(IList<IInventory> locked) {
+	protected virtual List<Item?> GetActualContainerContents(IList<IBCInventory> locked) {
 		List<Item?> items = new();
-		foreach (WorkingInventory inv in locked) {
+		foreach (IBCInventory inv in locked) {
 			if (!inv.CanExtractItems())
 				continue;
 
@@ -1736,7 +1732,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	private void PerformCraftRecursive(
 		IRecipe recipe, int successes, int times, Action<int, bool> onDone,
-		IList<IInventory> locked, List<Item?> items, List<Chest>? chests,
+		IList<IBCInventory> locked, List<Item?> items, List<Chest>? chests,
 		bool used_additional = false
 	) {
 		if (!recipe.CanCraft(Game1.player) || !recipe.HasIngredients(Game1.player, items, locked, Quality)) {
@@ -1769,7 +1765,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	private void FinishCraftRecursive(
 		IRecipe recipe, int successes, int times, Action<int, bool> onDone,
-		IList<IInventory> locked, List<Item?> items, List<Chest>? chests,
+		IList<IBCInventory> locked, List<Item?> items, List<Chest>? chests,
 		bool used_additional, PerformCraftEvent pce
 	) {
 		if (!pce.Success) {
@@ -1863,7 +1859,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (cooking) {
 			if (obj != null)
-				Game1.player.cookedRecipe(obj.ParentSheetIndex);
+				Game1.player.cookedRecipe(obj.ItemId);
 
 			if (obj is SObject sobj && Mod.intCSkill != null)
 				Mod.intCSkill.AddCookingExperience(
@@ -2145,6 +2141,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				cmp.upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
 
 			// TODO: Start using GridHeight and GridWidth.
+			// ??? Aren't we using it already? TODO: Check this TODO
 			cmp.bounds = new Rectangle(
 				offsetX + x * (64 + marginX),
 				offsetY + y * 72,
@@ -2887,19 +2884,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			switch (Mod.Config.UseSeasoning) {
-				case SeasoningMode.Disabled:
-					Mod.Config.UseSeasoning = SeasoningMode.InventoryOnly;
-					break;
-				case SeasoningMode.InventoryOnly:
-					Mod.Config.UseSeasoning = SeasoningMode.Enabled;
-					break;
-				case SeasoningMode.Enabled:
-				default:
-					Mod.Config.UseSeasoning = SeasoningMode.Disabled;
-					break;
-			}
+
+			Mod.Config.UseSeasoning = CommonHelper.Cycle(Mod.Config.UseSeasoning, -1);
 			Mod.SaveConfig();
+
 			btnToggleSeasoning.sourceRect = SourceSeasoning;
 			btnToggleSeasoning.scale = btnToggleSeasoning.baseScale;
 		}
@@ -2908,23 +2896,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			switch (Mod.Config.MaxQuality) {
-				case MaxQuality.None:
-					Mod.Config.MaxQuality = MaxQuality.Silver;
-					break;
-				case MaxQuality.Silver:
-					Mod.Config.MaxQuality = MaxQuality.Gold;
-					break;
-				case MaxQuality.Gold:
-					Mod.Config.MaxQuality = MaxQuality.Iridium;
-					break;
-				case MaxQuality.Iridium:
-				default:
-					Mod.Config.MaxQuality = MaxQuality.None;
-					break;
-			}
 
+			Mod.Config.MaxQuality = CommonHelper.Cycle(Mod.Config.MaxQuality, 1, new MaxQuality[] { MaxQuality.Disabled });
 			Mod.SaveConfig();
+
 			btnToggleQuality.sourceRect = SourceQuality;
 			btnToggleQuality.scale = btnToggleQuality.baseScale;
 		}
@@ -2933,8 +2908,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (btnToggleUniform != null && btnToggleUniform.containsPoint(x, y)) {
 			if (playSound)
 				Game1.playSound("smallSelect");
+
 			Mod.Config.UseUniformGrid = !Mod.Config.UseUniformGrid;
 			Mod.SaveConfig();
+
 			LayoutRecipes();
 			btnToggleUniform.sourceRect = SourceUniform;
 			btnToggleUniform.scale = btnToggleUniform.baseScale;
@@ -3068,19 +3045,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing && btnToggleSeasoning != null && btnToggleSeasoning.containsPoint(x, y)) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			switch (Mod.Config.UseSeasoning) {
-				case SeasoningMode.Disabled:
-					Mod.Config.UseSeasoning = SeasoningMode.Enabled;
-					break;
-				case SeasoningMode.InventoryOnly:
-					Mod.Config.UseSeasoning = SeasoningMode.Disabled;
-					break;
-				case SeasoningMode.Enabled:
-				default:
-					Mod.Config.UseSeasoning = SeasoningMode.InventoryOnly;
-					break;
-			}
+
+			Mod.Config.UseSeasoning = CommonHelper.Cycle(Mod.Config.UseSeasoning, 1);
 			Mod.SaveConfig();
+
 			btnToggleSeasoning.sourceRect = SourceSeasoning;
 			btnToggleSeasoning.scale = btnToggleSeasoning.baseScale;
 		}
@@ -3089,23 +3057,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!Editing && btnToggleQuality != null && btnToggleQuality.containsPoint(x, y)) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			switch (Mod.Config.MaxQuality) {
-				case MaxQuality.None:
-					Mod.Config.MaxQuality = MaxQuality.Iridium;
-					break;
-				case MaxQuality.Silver:
-					Mod.Config.MaxQuality = MaxQuality.None;
-					break;
-				case MaxQuality.Gold:
-					Mod.Config.MaxQuality = MaxQuality.Silver;
-					break;
-				case MaxQuality.Iridium:
-				default:
-					Mod.Config.MaxQuality = MaxQuality.Gold;
-					break;
-			}
 
+			Mod.Config.MaxQuality = CommonHelper.Cycle(Mod.Config.MaxQuality, -1, new MaxQuality[] { MaxQuality.Disabled });
 			Mod.SaveConfig();
+
 			btnToggleQuality.sourceRect = SourceQuality;
 			btnToggleQuality.scale = btnToggleQuality.baseScale;
 		}
@@ -3177,7 +3132,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (category.CachedRules is not null) {
 			foreach (IRecipe recipe in Recipes) {
-				Lazy<Item?> result = new Lazy<Item?>(() => recipe.CreateItemSafe(CreateLog));
+				Lazy<Item?> result = new(() => recipe.CreateItemSafe(CreateLog));
 
 				bool matched = false;
 				foreach (var handler in category.CachedRules) {
@@ -3418,17 +3373,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 
 		// Navigation Buttons
-		if (btnTabsDown != null)
-			btnTabsDown.tryHover(x, (TabScroll + VISIBLE_TABS) >= Tabs.Count ? -1 : y);
+		btnTabsDown?.tryHover(x, (TabScroll + VISIBLE_TABS) >= Tabs.Count ? -1 : y);
+		btnTabsUp?.tryHover(x, TabScroll > 0 ? y : -1);
 
-		if (btnTabsUp != null)
-			btnTabsUp.tryHover(x, TabScroll > 0 ? y : -1);
-
-		if (btnPageUp != null)
-			btnPageUp.tryHover(x, pageIndex > 0 ? y : -1);
-
-		if (btnPageDown != null)
-			btnPageDown.tryHover(x, pageIndex < Pages.Count - 1 ? y : -1);
+		btnPageUp?.tryHover(x, pageIndex > 0 ? y : -1);
+		btnPageDown?.tryHover(x, pageIndex < Pages.Count - 1 ? y : -1);
 
 		// Transfer Buttons
 		if (btnTransferTo != null && CachedInventories!.Count > 0) {
@@ -3721,60 +3670,48 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				case 0:
 					hoverText = I18n.Tooltip_EditMode();
 					break;
+
 				case 1:
 					// Toggle Favorites
 					hoverText = I18n.Tooltip_Favorites();
 					break;
+
 				case 2:
 					// Toggle Seasoning
-
-					switch (Mod.Config.UseSeasoning) {
-						case SeasoningMode.Enabled:
-							smode = I18n.Seasoning_Enabled();
-							break;
-						case SeasoningMode.InventoryOnly:
-							smode = I18n.Seasoning_Inventory();
-							break;
-						case SeasoningMode.Disabled:
-						default:
-							smode = I18n.Seasoning_Disabled();
-							break;
-					}
+					smode = Mod.Config.UseSeasoning switch {
+						SeasoningMode.Enabled => I18n.Seasoning_Enabled(),
+						SeasoningMode.InventoryOnly => I18n.Seasoning_Inventory(),
+						_ => I18n.Seasoning_Disabled(),
+					};
 
 					hoverText = $"{I18n.Tooltip_Seasoning()}\n{smode}";
 					break;
+
 				case 3:
 					// Toggle Quality
-					switch (Mod.Config.MaxQuality) {
-						case MaxQuality.Silver:
-							hoverText = I18n.Tooltip_Quality_Silver();
-							break;
-						case MaxQuality.Gold:
-							hoverText = I18n.Tooltip_Quality_Gold();
-							break;
-						case MaxQuality.Iridium:
-							hoverText = I18n.Tooltip_Quality_Iridium();
-							break;
-						case MaxQuality.None:
-						default:
-							hoverText = I18n.Tooltip_Quality_None();
-							break;
-					}
-
+					hoverText = Mod.Config.MaxQuality switch {
+						MaxQuality.Silver => I18n.Tooltip_Quality_Silver(),
+						MaxQuality.Gold => I18n.Tooltip_Quality_Gold(),
+						MaxQuality.Iridium => I18n.Tooltip_Quality_Iridium(),
+						_ => I18n.Tooltip_Quality_None(),
+					};
 					break;
 
 				case 4:
 					// Toggle Uniform
 					hoverText = I18n.Tooltip_Uniform();
 					break;
+
 				case 5:
 					// Open Settings
 					hoverText = I18n.Tooltip_Settings();
 					break;
+
 				case 6:
 					// Open Icon Picker
 					hoverText = I18n.Tooltip_SelectIcon();
 					break;
+
 				case 7:
 					// Search
 					hoverText = I18n.Tooltip_Search();
@@ -4016,7 +3953,6 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 						);
 				}
 
-				// TODO: Constant for the star sprite location.
 				if (Favorites.Contains(recipe))
 					b.Draw(
 						Game1.mouseCursors,
@@ -4118,6 +4054,123 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		);
 	}
 
+	/// <summary>
+	/// Create the static part of an item's tool-tip. This includes the item's
+	/// description and icons for any buffs.
+	/// </summary>
+	/// <param name="item">The item</param>
+	/// <returns>A SimpleNode that can be added to the main tool-tip SimpleNode.</returns>
+	public ISimpleNode[]? GetRecipeTooltipDescription() {
+		if (hoverRecipe is null)
+			return null;
+
+		Item? recipeItem = lastRecipeHover.Value;
+
+		var builder = SimpleHelper.Builder();
+
+		// Description
+		if (!string.IsNullOrEmpty(hoverRecipe.Description)) {
+			if (Filter == null)
+				builder.Flow(FlowHelper.Builder()
+					.Text(hoverRecipe.Description)
+					.Build(),
+					wrapText: true
+				);
+			else
+				builder.FormatText(
+					HighlightSearchTerms(hoverRecipe.Description), wrapText: true);
+		}
+
+		// Extra
+		string? extra = hoverRecipe.GetTooltipExtra(Game1.player);
+		if (!string.IsNullOrEmpty(extra)) {
+			builder.Flow(
+				FlowHelper.Builder()
+					.FormatText(extra)
+					.Build(),
+				wrapText: true
+			);
+		}
+
+		// Buffs
+		AddBuffsToTooltip(builder, lastRecipeHover.Value, false, true);
+
+		// If we have nothing, return null
+		if (builder.IsEmpty())
+			return null;
+
+		return builder.Build();
+	}
+
+	public static float[] GetBuffEffects(BuffEffects effects) {
+		return new float[12] {
+			effects.FarmingLevel.Value,
+			effects.FishingLevel.Value,
+			effects.MiningLevel.Value,
+			0,
+			effects.LuckLevel.Value,
+			effects.ForagingLevel.Value,
+			0,
+			effects.MaxStamina.Value,
+			effects.MagneticRadius.Value,
+			effects.Speed.Value,
+			effects.Defense.Value,
+			effects.Attack.Value
+		};
+	}
+
+	public ISimpleNode[]? GetRecipeTooltipGiftTastes() {
+		if (hoverRecipe is null || Mod.Recipes.GetGiftTastes(hoverRecipe) is not (List<NPC>, List<NPC>) tastes)
+			return null;
+
+		var builder = SimpleHelper.Builder();
+
+		bool show_likes = tastes.Item2.Count > 0;
+		bool show_loves = tastes.Item1.Count > 0;
+
+		if (show_loves) {
+			if (Mod.Config.TasteStyle == GiftStyle.Names)
+				builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Item1.Select(x => x.displayName)), is_love: true)), wrapText: true);
+			else {
+				var b2 = FlowHelper.Builder();
+				b2.FormatText(I18n.Tooltip_Loves(""));
+				for (int i = 0; i < tastes.Item1.Count; i++) {
+					if (i > 0)
+						b2.Text(" ");
+
+					var sprite = GetHead(tastes.Item1[i]);
+					if (sprite is not null)
+						b2.Sprite(sprite, scale: 2f);
+				}
+				builder.Flow(b2.Build());
+			}
+		}
+
+		if (show_likes) {
+			if (Mod.Config.TasteStyle == GiftStyle.Names)
+				builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Item2.Select(x => x.displayName)), is_like: true)), wrapText: true);
+			else {
+				var b2 = FlowHelper.Builder();
+				b2.FormatText(I18n.Tooltip_Likes(""));
+				for (int i = 0; i < tastes.Item2.Count; i++) {
+					if (i > 0)
+						b2.Text(" ");
+
+					var sprite = GetHead(tastes.Item2[i]);
+					if (sprite is not null)
+						b2.Sprite(sprite, scale: 2f);
+				}
+				builder.Flow(b2.Build());
+			}
+		}
+
+		// If we have nothing, return null
+		if (builder.IsEmpty())
+			return null;
+
+		return builder.Build();
+	}
+
 	public ISimpleNode? GetRecipeTooltip(IList<Item?>? items) {
 		if (hoverRecipe == null)
 			return null;
@@ -4126,13 +4179,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift);
 		bool ctrling = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
 
-		string[]? buffIconsToDisplay = null;
 		Item? recipeItem = lastRecipeHover.Value;
-		if (cooking && recipeItem != null && Game1.objectInformation.TryGetValue(recipeItem.ParentSheetIndex, out string? oinfo)) {
-			string[] temp = oinfo.Split('/');
-			if (temp.Length > 7)
-				buffIconsToDisplay = temp[7].Split(' ');
-		}
 
 		if (Editing && ! shifting) {
 			var ebuild = SimpleHelper.Builder();
@@ -4141,7 +4188,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			else
 				ebuild.Text(hoverRecipe.DisplayName);
 
-			AddBuffsToTooltip(ebuild, recipeItem, buffIconsToDisplay, true, true);
+			// TODO: Fix buffs in small mode
+			AddBuffsToTooltip(ebuild, recipeItem, true, true);
 
 			if (when == TTWhen.Always || (when == TTWhen.ForController && Game1.options.gamepadControls))
 				ebuild
@@ -4294,38 +4342,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		bool divided = false;
-		if (!string.IsNullOrEmpty(hoverRecipe.Description)) {
+
+		// We get the description stuff from a cache to avoid recomputing it every frame.
+		ISimpleNode[]? description = tipDescription.Value;
+		if (description is not null) {
 			divided = true;
 			builder.Divider();
 
-			if (Filter == null)
-				builder.Flow(FlowHelper.Builder()
-					.Text(hoverRecipe.Description)
-					.Build(),
-					wrapText: true
-				);
-			else
-				builder.FormatText(
-					HighlightSearchTerms(hoverRecipe.Description), wrapText: true);
+			builder.AddRange(description);
 		}
 
-		string? extra = hoverRecipe.GetTooltipExtra(Game1.player);
-		if (!string.IsNullOrEmpty(extra)) {
-			if (!divided) {
-				divided = true;
-				builder.Divider();
-			}
-
-			builder.Flow(
-				FlowHelper.Builder()
-					.FormatText(extra)
-					.Build(),
-				wrapText: true
-			);
-		}
-
-		divided = AddBuffsToTooltip(builder, recipeItem, buffIconsToDisplay, false, divided);
-
+		// This could theoretically change, so we don't cache it (yet).
 		if (Game1.options.showAdvancedCraftingInformation) {
 			int count = hoverRecipe.GetTimesCrafted(Game1.player);
 			if (count > 0) {
@@ -4341,47 +4368,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
-		if (show && Mod.Recipes.GetGiftTastes(hoverRecipe) is (List<NPC>, List<NPC>) tastes) { 
-			bool show_likes = (FilterLikes || show) && tastes.Item2.Count > 0;
-			bool show_loves = (FilterLoves || show) && tastes.Item1.Count > 0;
-
-			if (show_likes || show_loves) {
+		if (show) {
+			ISimpleNode[]? tastes = tipGiftTastes.Value;
+			if (tastes is not null) {
 				builder.Divider();
-				if (show_loves) {
-					if (Mod.Config.TasteStyle == GiftStyle.Names)
-						builder.FormatText(I18n.Tooltip_Loves(HighlightSearchTerms(string.Join(", ", tastes.Item1.Select(x => x.displayName)), is_love: true)), wrapText: true);
-					else {
-						var b2 = FlowHelper.Builder();
-						b2.FormatText(I18n.Tooltip_Loves(""));
-						for(int i = 0; i < tastes.Item1.Count; i++) {
-							if (i > 0)
-								b2.Text(" ");
-
-							var sprite = GetHead(tastes.Item1[i]);
-							if (sprite is not null)
-								b2.Sprite(sprite, scale: 2f);
-						}
-						builder.Flow(b2.Build());
-					}
-				}
-
-				if (show_likes) {
-					if (Mod.Config.TasteStyle == GiftStyle.Names)
-						builder.FormatText(I18n.Tooltip_Likes(HighlightSearchTerms(string.Join(", ", tastes.Item2.Select(x => x.displayName)), is_like: true)), wrapText: true);
-					else {
-						var b2 = FlowHelper.Builder();
-						b2.FormatText(I18n.Tooltip_Likes(""));
-						for (int i = 0; i < tastes.Item2.Count; i++) {
-							if (i > 0)
-								b2.Text(" ");
-
-							var sprite = GetHead(tastes.Item2[i]);
-							if (sprite is not null)
-								b2.Sprite(sprite, scale: 2f);
-						}
-						builder.Flow(b2.Build());
-					}
-				}
+				builder.AddRange(tastes);
 			}
 		}
 
@@ -4437,7 +4428,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		return builder.GetLayout();
 	}
 
-	private static bool AddBuffsToTooltip(SimpleBuilder builder, Item? item, string[]? buffs, bool icons_only = false, bool divided = false) {
+	private bool AddBuffsToTooltip(SimpleBuilder builder, Item? item, bool icons_only = false, bool divided = false) {
+		if (item is null)
+			return divided;
+
 		bool grouped = false;
 
 		if (item is SObject sobj && sobj.Edibility != -300) {
@@ -4523,10 +4517,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			}
 		}
 
-		if (buffs != null) {
-			for (int idx = 0; idx < buffs.Length; idx++) {
-				string buff = buffs[idx];
-				if (buff.Equals("0"))
+		// Retrieve the item's buffs.
+		if (Game1.objectData.TryGetValue(item.ItemId, out var itemData)) {
+			BuffEffects effects = new();
+			foreach (Buff buff in SObject.TryCreateBuffsFromData(itemData, item.Name, item.DisplayName, 1f, item.ModifyItemBuffs))
+				effects.Add(buff.effects);
+
+			float[] values = GetBuffEffects(effects);
+
+			for(int idx = 0; idx < values.Length; idx++) {
+				float buff = values[idx];
+				if (buff == 0f)
 					continue;
 
 				Rectangle source = new(10 + idx * 10, 428, 10, 10);
@@ -4552,7 +4553,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					continue;
 				}
 
-				string label = (Convert.ToInt32(buff) > 0 ? "+" : "") + buff;
+				string label = (buff > 0 ? "+" : "") + buff;
 				if (idx <= 11)
 					label = Game1.content.LoadString("Strings\\UI:ItemHover_Buff" + idx, label);
 
@@ -4567,6 +4568,52 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					.Text(label, align: Alignment.VCenter)
 				.EndGroup();
 			}
+
+			var buffs = Mod.intSCore?.GetItemBuffs(itemData);
+			if (buffs is not null)
+				foreach(var buff in buffs) {
+					if (buff.Item2 == 0)
+						continue;
+
+					var skill = buff.Item1;
+					float amount = buff.Item2;
+
+					if (!divided) {
+						builder.Divider();
+						divided = true;
+					}
+
+					if (icons_only && !grouped) {
+						builder = builder.Group(margin: 8);
+						grouped = true;
+					}
+
+					if (icons_only) {
+						builder.Texture(
+							skill.SkillsPageIcon,
+							skill.SkillsPageIcon.Bounds,
+							scale: 2,
+							align: Alignment.VCenter
+						);
+
+						continue;
+					}
+
+					string positive = amount > 0 ? "+" : "";
+					string label = $"{positive}{amount} {skill.SafeGetName()}";
+
+					builder.Group()
+						.Texture(
+							skill.SkillsPageIcon,
+							skill.SkillsPageIcon.Bounds,
+							scale: 3,
+							align: Alignment.VCenter
+						)
+						.Space(false, 4)
+						.Text(label, align: Alignment.VCenter)
+					.EndGroup();
+
+				}
 		}
 
 		if (grouped)
@@ -4606,31 +4653,22 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	public static string? GetBehaviorTip(TransferBehavior behavior) {
-		switch(behavior.Mode) {
-			case TransferMode.All:
-				return I18n.Tooltip_Transfer_All();
-			case TransferMode.AllButQuantity:
-				return I18n.Tooltip_Transfer_ButQuantity(behavior.Quantity);
-			case TransferMode.Half:
-				return I18n.Tooltip_Transfer_Half();
-			case TransferMode.Quantity:
-				return I18n.Tooltip_Transfer_Quantity(behavior.Quantity);
-			default:
-				return null;
-		}
+		return behavior.Mode switch {
+			TransferMode.All => I18n.Tooltip_Transfer_All(),
+			TransferMode.AllButQuantity => I18n.Tooltip_Transfer_ButQuantity(behavior.Quantity),
+			TransferMode.Half => I18n.Tooltip_Transfer_Half(),
+			TransferMode.Quantity => I18n.Tooltip_Transfer_Quantity(behavior.Quantity),
+			_ => null,
+		};
 	}
 
 	public static string? GetActionTip(ButtonAction action) {
-		switch (action) {
-			case ButtonAction.Craft:
-				return I18n.Setting_Action_Craft();
-			case ButtonAction.Favorite:
-				return I18n.Setting_Action_Favorite();
-			case ButtonAction.BulkCraft:
-				return I18n.Setting_Action_BulkCraft();
-		}
-
-		return null;
+		return action switch {
+			ButtonAction.Craft => I18n.Setting_Action_Craft(),
+			ButtonAction.Favorite => I18n.Setting_Action_Favorite(),
+			ButtonAction.BulkCraft => I18n.Setting_Action_BulkCraft(),
+			_ => null,
+		};
 	}
 
 	public static ISimpleNode GetLeftClickNode() {

@@ -8,11 +8,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.GameData.Buffs;
+using StardewValley.GameData.Objects;
+using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
 public class BuffRuleHandler : IDynamicRuleHandler {
+
+	// TODO: Add support for custom skills, like via SpaceCore.
 
 	public const int FARMING = 0;
 	public const int FISHING = 1;
@@ -50,24 +55,42 @@ public class BuffRuleHandler : IDynamicRuleHandler {
 		return null;
 	}
 
+	public float GetBuffLevel(BuffAttributesData? data) {
+		if (data == null) return 0f;
+
+		return BuffIndex switch {
+			FARMING => data.FarmingLevel,
+			FISHING => data.FishingLevel,
+			MINING => data.MiningLevel,
+			LUCK => data.LuckLevel,
+			FORAGING => data.ForagingLevel,
+			MAX_ENERGY => data.MaxStamina,
+			MAGNETISM => data.MagneticRadius,
+			SPEED => data.Speed,
+			DEFENSE => data.Defense,
+			ATTACK => data.Attack,
+			_ => 0f,
+		};
+	}
+
 	public bool DoesRecipeMatch(IRecipe recipe, Lazy<Item?> item, object? state) {
-		if (BuffIndex < 0 || item.Value is not SObject sobj || sobj.bigCraftable.Value || sobj.Edibility <= -300)
+		if (BuffIndex < 0 || item.Value is not SObject sobj || sobj.bigCraftable.Value || sobj.Edibility <= -300 || !Game1.objectData.TryGetValue(sobj.ItemId, out var data))
 			return false;
 
-		if (!Game1.objectInformation.TryGetValue(sobj.ParentSheetIndex, out string? info))
+		// Make sure we have buffs.
+		if ( data.Buffs is null || data.Buffs.Count == 0 )
 			return false;
 
-		string[] parts = info.Split('/', StringSplitOptions.TrimEntries);
+		foreach(ObjectBuffData? buff in data.Buffs) {
+			if (buff is null)
+				continue;
 
-		if (parts.Length < 8 || !(parts[6].Equals("food") || parts[6].Equals("drink")))
-			return false;
+			if (GetBuffLevel(buff.CustomAttributes) > 0f)
+				return true;
+		}
 
-		string[] buffs = parts[7].Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		if (BuffIndex >= buffs.Length)
-			return false;
-
-		return int.TryParse(buffs[BuffIndex], out int buff) && buff > 0;
+		// We didn't find it.
+		return false;
 	}
 
 }

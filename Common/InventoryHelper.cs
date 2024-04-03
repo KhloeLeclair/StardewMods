@@ -37,56 +37,15 @@ public static class InventoryHelper {
 
 	#region Item Creation
 
-	public static readonly Regex ITEM_REGEX = new(@"^\(([^)]+)\)(.+)$");
-
+	[Obsolete("No longer needed in 1.6")]
 	public static string GetItemQualifiedId(Item item) {
-		if (item is Boots boots)
-			return $"(B){boots.indexInTileSheet.Value}";
-
-		if (item is Ring ring)
-			return $"(R){ring.indexInTileSheet.Value}";
-
-		if (item is Furniture furniture)
-			return $"(F){furniture.ParentSheetIndex}";
-
-		if (item is Hat hat)
-			return $"(H){hat.which.Value}";
-
-		if (item is Clothing clothing) {
-			string type;
-			switch (clothing.clothesType.Value) {
-				case 0: // Shirt
-					type = "S";
-					break;
-				case 1: // Pants
-					type = "P";
-					break;
-				case 2: // Accessories
-					type = "A";
-					break;
-				default:
-					throw new ArgumentException($"unknown clothing type \"{clothing.clothesType.Value}\"", nameof(item));
-			}
-
-			return $"({type}){clothing.ParentSheetIndex}";
-		}
-
-		if (item is MeleeWeapon weapon)
-			return $"(W){weapon.InitialParentTileIndex}";
-
-		if (item is SObject sobj) {
-			string type = "O";
-			if (sobj.bigCraftable.Value)
-				type = "BC";
-
-			return $"({type}){sobj.ParentSheetIndex}";
-		}
-
-		throw new ArgumentException($"unknown item type", nameof(item));
+		return item.QualifiedItemId;
 	}
 
 	[return: MaybeNull]
 	public static Item CreateObjectOrRing(int id) {
+		throw new NotImplementedException("Update for 1.6");
+		/*
 		if (!Game1.objectInformation.TryGetValue(id, out string? data) || string.IsNullOrWhiteSpace(data) || id < 0)
 			return null;
 
@@ -94,75 +53,14 @@ public static class InventoryHelper {
 		if (parts.Length > 3 && parts[3] == "Ring")
 			return new Ring(id);
 
-		return new SObject(id, 1);
+		return new SObject(id, 1);*/
 	}
 
 	[return: MaybeNull]
+	[Obsolete("Not needed in 1.6")]
 	public static Item CreateItemById(string id, int amount, int quality = 0, bool allow_null = false) {
-		var match = ITEM_REGEX.Match(id);
-		string type;
-		int nid;
-
-		if (match.Success) {
-			type = match.Groups[1].Value;
-			if (!int.TryParse(match.Groups[2].Value, out nid))
-				throw new ArgumentException("invalid item id", nameof(id));
-
-		} else {
-			type = "O";
-			if (!int.TryParse(id, out nid))
-				throw new ArgumentException("invalid item id", nameof(id));
-		}
-
-		Item? result;
-
-		switch(type) {
-			case "BC":
-				result = new SObject(Vector2.Zero, nid);
-				break;
-			case "B":
-				result = new Boots(nid);
-				break;
-			case "F":
-				result = Furniture.GetFurnitureInstance(nid, Vector2.Zero);
-				break;
-			case "H":
-				result = new Hat(nid);
-				break;
-			case "O":
-				result = new SObject(nid, 1);
-				break;
-			case "P":
-			case "S":
-				result = new Clothing(nid);
-				break;
-			case "R":
-				result = new Ring(nid);
-				break;
-			case "W":
-				result = new MeleeWeapon(nid);
-				break;
-			default:
-				result = null;
-				break;
-		}
-
-		if (result is SObject sobj)
-			sobj.Quality = quality;
-
-		if (result is Item item)
-			item.Stack = amount;
-
-		if (result is null && !allow_null)
-			result = new SObject(0, 1);
-
-		return result;
+		return ItemRegistry.Create(id, amount, quality, allow_null);
 	}
-
-	#endregion
-
-	#region Item Iteration
-
 
 	#endregion
 
@@ -573,12 +471,10 @@ public static class InventoryHelper {
 	}
 
 	public static bool DoesLocationContain(GameLocation? location, object? obj) {
-		if (location == null)
+		if (location == null || obj == null)
 			return false;
 
-		if (location is FarmHouse farmHouse && farmHouse.fridge.Value == obj)
-			return true;
-		if (location is IslandFarmHouse islandHouse && islandHouse.fridge.Value == obj)
+		if (location.GetFridge(false) == obj)
 			return true;
 
 		if (obj is Furniture furn && location.furniture.Contains(furn))
@@ -628,7 +524,7 @@ public static class InventoryHelper {
 
 	#region Unsafe Access
 
-	public static List<IInventory> GetUnsafeInventories(
+	public static List<IBCInventory> GetUnsafeInventories(
 		IEnumerable<object> inventories,
 		Func<object, IInventoryProvider?> getProvider,
 		GameLocation? location,
@@ -646,13 +542,13 @@ public static class InventoryHelper {
 		return GetUnsafeInventories(located, getProvider, who, nullLocationValid);
 	}
 
-	public static List<IInventory> GetUnsafeInventories(
+	public static List<IBCInventory> GetUnsafeInventories(
 		IEnumerable<LocatedInventory> inventories,
 		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
 		bool nullLocationValid = false
 	) {
-		List<IInventory> result = new();
+		List<IBCInventory> result = new();
 
 		foreach (LocatedInventory loc in inventories) {
 			if (loc.Location == null && !nullLocationValid)
@@ -687,7 +583,7 @@ public static class InventoryHelper {
 		IEnumerable<LocatedInventory>? inventories,
 		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
-		Action<IList<IInventory>> withLocks,
+		Action<IList<IBCInventory>> withLocks,
 		bool nullLocationValid = false
 	) {
 		WithInventories(inventories, getProvider, who, (locked, onDone) => {
@@ -707,7 +603,7 @@ public static class InventoryHelper {
 		Func<object, IInventoryProvider?> getProvider,
 		GameLocation location,
 		Farmer? who,
-		Action<IList<IInventory>> withLocks,
+		Action<IList<IBCInventory>> withLocks,
 		bool nullLocationValid = false
 	) {
 		List<LocatedInventory>? located;
@@ -739,12 +635,12 @@ public static class InventoryHelper {
 		IEnumerable<LocatedInventory>? inventories,
 		Func<object, IInventoryProvider?> getProvider,
 		Farmer? who,
-		Action<IList<IInventory>, Action> withLocks,
+		Action<IList<IBCInventory>, Action> withLocks,
 		bool nullLocationValid = false,
 		IModHelper? helper = null
 	) {
-		List<IInventory> locked = new();
-		List<IInventory> lockable = new();
+		List<IBCInventory> locked = new();
+		List<IBCInventory> lockable = new();
 
 		if (inventories != null)
 			foreach (LocatedInventory loc in inventories) {
@@ -805,24 +701,6 @@ public static class InventoryHelper {
 	#region Recipes and Crafting
 
 	/// <summary>
-	/// Check if an item matches the provided ID, using the same logic
-	/// as the crafting system.
-	/// </summary>
-	/// <param name="id">the ID to check</param>
-	/// <param name="item">the Item to check</param>
-	/// <returns></returns>
-	public static bool DoesItemMatchID(int id, Item? item) {
-		if (item is SObject sobj) {
-			return
-				!sobj.bigCraftable.Value && sobj.ParentSheetIndex == id
-				|| item.Category == id
-				|| CraftingRecipe.isThereSpecialIngredientRule(sobj, id);
-		}
-
-		return false;
-	}
-
-	/// <summary>
 	/// Consume an item from a list of items.
 	/// </summary>
 	/// <param name="matcher">A method matching the item to consume.</param>
@@ -835,6 +713,7 @@ public static class InventoryHelper {
 	/// <param name="max_quality">The maximum quality of item to consume.</param>
 	/// <returns>The number of items remaining to consume.</returns>
 	public static int ConsumeItem(Func<Item, bool> matcher, int amount, IList<Item?> items, out bool nullified, out bool passed_quality, int max_quality = int.MaxValue) {
+
 		nullified = false;
 		passed_quality = false;
 
@@ -942,23 +821,23 @@ public static class InventoryHelper {
 
 	/// <summary>
 	/// Consume matching items from a player, and also from a set of
-	/// <see cref="IInventory"/> instances.
+	/// <see cref="IBCInventory"/> instances.
 	/// </summary>
 	/// <param name="items">An enumeration of <see cref="KeyValuePair{int,int}"/>
 	/// instances where the first integer is the item ID to match and the
 	/// second integer is the quantity to consume.
 	/// <param name="who">The player to consume items from, if any.</param>
-	/// <param name="inventories">An enumeration of <see cref="IInventory"/>
+	/// <param name="inventories">An enumeration of <see cref="IBCInventory"/>
 	/// instances to consume items from.</param>
 	/// <param name="max_quality">The maximum quality of item to consume.</param>
 	/// <param name="low_quality_first">Whether or not to consume low quality
 	/// items first.</param>
-	public static void ConsumeItems(IEnumerable<KeyValuePair<int, int>> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+	public static void ConsumeItems(IEnumerable<KeyValuePair<string, int>> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
 		if (items is null)
 			return;
 
 		ConsumeItems(
-			items.Select<KeyValuePair<int, int>, (Func<Item, bool>, int)>(x => (item => DoesItemMatchID(x.Key, item), x.Value)),
+			items.Select<KeyValuePair<string, int>, (Func<Item, bool>, int)>(x => (item => CraftingRecipe.ItemMatchesForCrafting(item, x.Key), x.Value)),
 			who,
 			inventories,
 			max_quality,
@@ -968,18 +847,18 @@ public static class InventoryHelper {
 
 	/// <summary>
 	/// Consume matching items from a player, and also from a set of
-	/// <see cref="IInventory"/> instances.
+	/// <see cref="IBCInventory"/> instances.
 	/// </summary>
 	/// <param name="items">An enumeration of tuples where the function
 	/// matches items, and the integer is the quantity to consume.</param>
 	/// <param name="who">The player to consume items from, if any.</param>
-	/// <param name="inventories">An enumeration of <see cref="IInventory"/>
+	/// <param name="inventories">An enumeration of <see cref="IBCInventory"/>
 	/// instances to consume items from.</param>
 	/// <param name="max_quality">The maximum quality of item to consume.</param>
 	/// <param name="low_quality_first">Whether or not to consume low quality
 	/// items first.</param>
-	public static void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
-		IList<IInventory>? working = (inventories as IList<IInventory>) ?? inventories?.ToList();
+	public static void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int max_quality = int.MaxValue, bool low_quality_first = false) {
+		IList<IBCInventory>? working = (inventories as IList<IBCInventory>) ?? inventories?.ToList();
 		bool[]? modified = working == null ? null : new bool[working.Count];
 		IList<Item?>?[] invs = working?.Select(val => val.CanExtractItems() ? val.GetItems() : null).ToArray() ?? Array.Empty<IList<Item?>?>();
 
@@ -1034,13 +913,13 @@ public static class InventoryHelper {
 
 	#region Transfer Items
 
-	public static bool AddToInventories(IList<Item?> items, IEnumerable<IInventory> inventories, TransferBehavior behavior, Action<Item, int>? onTransfer = null) {
+	public static bool AddToInventories(IList<Item?> items, IEnumerable<IBCInventory> inventories, TransferBehavior behavior, Action<Item, int>? onTransfer = null) {
 		if (behavior.Mode == TransferMode.None)
 			return false;
 
 		int[] transfered = new int[items.Count];
 
-		foreach (IInventory inv in inventories) {
+		foreach (IBCInventory inv in inventories) {
 			if (!inv.CanInsertItems())
 				continue;
 
@@ -1051,7 +930,7 @@ public static class InventoryHelper {
 		return false;
 	}
 
-	private static bool FillInventory(IList<Item?> items, IInventory inventory, TransferBehavior behavior, int[] transfered, Action<Item, int>? onTransfer = null) {
+	private static bool FillInventory(IList<Item?> items, IBCInventory inventory, TransferBehavior behavior, int[] transfered, Action<Item, int>? onTransfer = null) {
 		bool empty = true;
 
 		for(int idx = 0; idx < items.Count; idx++) {
@@ -1105,7 +984,7 @@ public static class InventoryHelper {
 		return empty;
 	}
 
-	public static Item? AddItemToInventory(Item item, int quantity, IInventory inventory) {
+	public static Item? AddItemToInventory(Item item, int quantity, IBCInventory inventory) {
 		int initial = item.Stack;
 		if (quantity > initial)
 			quantity = initial;

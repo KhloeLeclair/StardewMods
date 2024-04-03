@@ -429,7 +429,7 @@ namespace Leclair.Stardew.Common.UI {
 
 		#endregion
 
-		#region Verison Checking
+		#region Version Checking
 
 #if DEBUG
 		/// <summary>
@@ -441,6 +441,7 @@ namespace Leclair.Stardew.Common.UI {
 		/// </summary>
 		private void PerformVersionCheck()
 		{
+			/*
 			if (!System.Diagnostics.Debugger.IsAttached)
 				return;
 
@@ -473,6 +474,7 @@ namespace Leclair.Stardew.Common.UI {
 					Log($"Could not check for updated version of ThemeManager.", LogLevel.Warn, ex);
 				}
 			}).Start();
+			*/
 	}
 #endif
 

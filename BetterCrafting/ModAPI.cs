@@ -12,8 +12,6 @@ using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Crafting;
 
 using StardewValley;
-using StardewValley.Network;
-using StardewValley.Objects;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.BetterCrafting.Menus;
@@ -49,40 +47,6 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	#region GUI
-
-	/// <inheritdoc />
-	[Obsolete("Please use the other call with additional parameters.")]
-	public bool OpenCraftingMenu(
-		bool cooking,
-		IList<Chest>? containers = null,
-		GameLocation? location = null,
-		Vector2? position = null,
-		bool silent_open = false,
-		IList<string>? listed_recipes = null
-	) {
-		var menu = Game1.activeClickableMenu;
-		if (menu != null) {
-			if (!menu.readyToClose())
-				return false;
-
-			CommonHelper.YeetMenu(menu);
-			Game1.exitActiveMenu();
-		}
-
-		Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
-			Mod,
-			location: location,
-			position: position,
-			cooking: cooking,
-			standalone_menu: true,
-			material_containers: containers?.ToList<object>(),
-			discover_containers: true,
-			silent_open: silent_open,
-			listed_recipes: listed_recipes
-		);
-
-		return true;
-	}
 
 	/// <inheritdoc />
 	public bool OpenCraftingMenu(
@@ -227,24 +191,12 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
-	[Obsolete("Use the method that takes an optional recycleTo parameter instead.")]
-	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null) {
-		return new MatcherIngredient(matcher, quantity, displayName, texture, source);
-	}
-
-	/// <inheritdoc />
-	[Obsolete("Use the method that takes functions instead.")]
-	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, string displayName, Texture2D texture, Rectangle? source = null) {
-		return new MatcherIngredient(matcher, quantity, () => displayName, () => texture, source);
-	}
-
-	/// <inheritdoc />
 	public IIngredient CreateErrorIngredient() {
 		return new ErrorIngredient();
 	}
 
 	/// <inheritdoc />
-	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false) {
+	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false) {
 		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst);
 	}
 
@@ -260,21 +212,6 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
 		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe, useRules, rules);
-	}
-
-	[Obsolete("For compatibility after changing the API to use a function for the display name")]
-	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null, bool useRules = false, IEnumerable<IDynamicRuleData>? rules = null) {
-		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe, useRules, rules);
-	}
-
-	[Obsolete("For compatibility after adding API parameters")]
-	public void CreateDefaultCategory(bool cooking, string categoryId, Func<string> Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
-		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe);
-	}
-
-	[Obsolete("For compatibility after adding API parameters")]
-	public void CreateDefaultCategory(bool cooking, string categoryId, string Name, IEnumerable<string>? recipeNames = null, string? iconRecipe = null) {
-		Mod.Recipes.CreateDefaultCategory(cooking, categoryId, Name, recipeNames, iconRecipe);
 	}
 
 	/// <inheritdoc />
@@ -314,24 +251,6 @@ public class ModAPI : IBetterCrafting {
 		return Mod.Recipes.UnregisterRuleHandler(fullId);
 	}
 
-	[Obsolete("Use the version that doesn't require a manifest.")]
-	public bool RegisterRuleHandler(IManifest manifest, string id, IDynamicRuleHandler handler) {
-		string fullId = $"{manifest.UniqueID}/{id}";
-		return Mod.Recipes.RegisterRuleHandler(fullId, handler);
-	}
-
-	[Obsolete("Use the version that doesn't require a manifest.")]
-	public bool RegisterRuleHandler(IManifest manifest, string id, ISimpleInputRuleHandler handler) {
-		string fullId = $"{manifest.UniqueID}/{id}";
-		return Mod.Recipes.RegisterRuleHandler(fullId, handler);
-	}
-
-	[Obsolete("Use the version that doesn't require a manifest.")]
-	public bool UnregisterRuleHandler(IManifest manifest, string id) {
-		string fullId = $"{manifest.UniqueID}/{id}";
-		return Mod.Recipes.UnregisterRuleHandler(fullId);
-	}
-
 	#endregion
 
 	#region Inventories
@@ -344,39 +263,6 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public void UnregisterInventoryProvider(Type type) {
 		Mod.UnregisterInventoryProvider(type);
-	}
-
-	[Obsolete("Included to avoid breaking API compatibility with older mods.")]
-	public void RegisterInventoryProvider(
-		Type type,
-		Func<object, GameLocation?, Farmer?, bool>? isValid,
-		Func<object, GameLocation?, Farmer?, bool>? canExtractItems,
-		Func<object, GameLocation?, Farmer?, bool>? canInsertItems,
-		Func<object, GameLocation?, Farmer?, NetMutex?>? getMutex,
-		Func<object, GameLocation?, Farmer?, bool>? isMutexRequired,
-		Func<object, GameLocation?, Farmer?, int>? getActualCapacity,
-		Func<object, GameLocation?, Farmer?, IList<Item?>?>? getItems,
-		Func<object, GameLocation?, Farmer?, Item, bool>? isItemValid,
-		Action<object, GameLocation?, Farmer?>? cleanInventory,
-		Func<object, GameLocation?, Farmer?, Rectangle?>? getMultiTileRegion,
-		Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition
-	) {
-		
-		var provider = new ModInventoryProvider(
-			canExtractItems: canExtractItems,
-			canInsertItems: canInsertItems,
-			cleanInventory: cleanInventory,
-			getActualCapacity: getActualCapacity,
-			getItems: getItems,
-			isItemValid: isItemValid,
-			getMultiTileRegion: getMultiTileRegion,
-			getTilePosition: getTilePosition,
-			getMutex: getMutex,
-			isMutexRequired: isMutexRequired,
-			isValid: isValid
-		);
-
-		Mod.RegisterInventoryProvider(type, provider);
 	}
 
 	#endregion

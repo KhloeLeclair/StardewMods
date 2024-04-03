@@ -2,12 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-using HarmonyLib;
-
-using Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 using Leclair.Stardew.Common.Crafting;
 
 using Microsoft.Xna.Framework;
@@ -22,7 +17,7 @@ public class RecipeBuilder : IRecipeBuilder {
 	public CraftingRecipe? Recipe { get; }
 	public string Name { get; }
 
-	private int? sortValue;
+	private string? sortValue;
 	private Func<string>? displayName;
 	private Func<string?>? description;
 	private Func<Farmer, bool>? hasRecipe;
@@ -57,7 +52,7 @@ public class RecipeBuilder : IRecipeBuilder {
 	#region Identity
 
 	/// <inheritdoc />
-	public IRecipeBuilder SortValue(int? value) {
+	public IRecipeBuilder SortValue(string? value) {
 		sortValue = value;
 		return this;
 	}
@@ -272,7 +267,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	private int _h;
 
 
-	public BuiltRecipe(CraftingRecipe? recipe, string name, int? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable) {
+	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable) {
 		CraftingRecipe = recipe;
 		Name = name;
 		Ingredients = ingredients;
@@ -292,7 +287,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 
 		Item? example = CreateItem();
 
-		SortValue = sortValue ?? example?.ParentSheetIndex ?? 0;
+		SortValue = sortValue ?? example?.ItemId ?? "0";
 		QuantityPerCraft = quantity ?? example?.Stack ?? 1;
 		Stackable = stackable ?? (example?.maximumStackSize() ?? 1) > 1;
 	}
@@ -307,7 +302,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	#region Identity
 
 	/// <inheritdoc />
-	public int SortValue { get; }
+	public string SortValue { get; }
 
 	/// <inheritdoc />
 	public string Name { get; }
@@ -335,7 +330,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 			return timesCrafted(who);
 
 		if (CraftingRecipe is not null && CraftingRecipe.isCookingRecipe) {
-			int idx = CraftingRecipe.getIndexOfMenuView();
+			string idx = CraftingRecipe.getIndexOfMenuView();
 			if (who.recipesCooked.TryGetValue(idx, out int val))
 				return val;
 
@@ -357,10 +352,11 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 		if (texture is not null)
 			_texture = texture();
 
-		else if (CraftingRecipe is not null)
-			_texture = CraftingRecipe.bigCraftable ?
-				Game1.bigCraftableSpriteSheet :
-				Game1.objectSpriteSheet;
+		else if (CraftingRecipe is not null) {
+			string idx = CraftingRecipe.getIndexOfMenuView();
+			var data = ItemRegistry.GetDataOrErrorItem(CraftingRecipe.bigCraftable ? $"(BC){idx}" : idx);
+			_texture = data.GetTexture();
+		}
 
 		if (_texture is null) {
 			InvalidTexture = true;
@@ -374,9 +370,9 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 			_source = source();
 
 		else if (CraftingRecipe is not null) {
-			_source = CraftingRecipe.bigCraftable ?
-				Game1.getArbitrarySourceRect(Texture, 16, 32, CraftingRecipe.getIndexOfMenuView()) :
-				Game1.getSourceRectForStandardTileSheet(Texture, CraftingRecipe.getIndexOfMenuView(), 16, 16);
+			string idx = CraftingRecipe.getIndexOfMenuView();
+			var data = ItemRegistry.GetDataOrErrorItem(CraftingRecipe.bigCraftable ? $"(BC){idx}" : idx);
+			_source = data.GetSourceRect();
 		}
 
 		if (!_source.HasValue)

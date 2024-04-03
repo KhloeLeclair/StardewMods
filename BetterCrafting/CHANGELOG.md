@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.0.0
+Released April 3rd, 2024.
+
+Kept you waiting, huh?
+
+### New Features
+
+* Works on 1.6
+* Dynamic rules for foods that buff custom skills added through SpaceCore.
+
+### Changes
+
+* Storage items are no longer included in the Machines dynamic rule. There
+  is now a specific Storage rule.
+
+### Fixes
+
+* Various typos, mostly in documentation.
+* Improve menu performance a bit by caching some of item tool-tips.
+* When displaying a recipe with more than 20 ingredients in the Bulk Crafting
+  menu, only show 20 ingredients at a time to support smaller displays. (Also
+  who is making recipes like this? Who hurt you?)
+* Certain currency ingredients not rendering correctly, if anyone was using
+  currency ingredients.
+
+### Removed
+
+* Dynamic Game Assets compatibility code. DGA is dead, long live 1.6.
+
+### API Changes
+* Renamed IInventory to IBCInventory to avoid collision with vanilla.
+* IInventoryProviders have a method now to return a vanilla IInventory
+  to allow for future optimizations.
+* Removed obsolete API methods.
+
+
 ## 1.5.0
 Released January 14th, 2022.
 

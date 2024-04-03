@@ -9,6 +9,8 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Objects;
 using StardewValley.Menus;
+using StardewValley.Inventories;
+
 
 #if IS_BETTER_CRAFTING
 
@@ -55,6 +57,7 @@ public enum CurrencyType {
 /// interact with various item storages in the game.
 /// </summary>
 public interface IInventoryProvider {
+
 	/// <summary>
 	/// Check to see if this object is valid for inventory operations.
 	///
@@ -135,6 +138,15 @@ public interface IInventoryProvider {
 	IList<Item?>? GetItems(object obj, GameLocation? location, Farmer? who);
 
 	/// <summary>
+	/// Get a vanilla <c>IInventory</c> for an object, if one exists.
+	/// </summary>
+	/// <param name="obj">the object</param>
+	/// <param name="location">the map where the object is</param>
+	/// <param name="who">the player accessing the object, or null if no player is involved</param>
+	/// <returns></returns>
+	IInventory? GetInventory(object obj, GameLocation? location, Farmer? who);
+
+	/// <summary>
 	/// Check to see if a specific item is allowed to be stored in the object's inventory.
 	/// </summary>
 	/// <param name="obj">the object</param>
@@ -159,44 +171,52 @@ public interface IInventoryProvider {
 	/// <param name="location">the map where the object is</param>
 	/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
 	int GetActualCapacity(object obj, GameLocation? location, Farmer? who);
+
 }
 
 
 /// <summary>
-/// An <c>IInventory</c> represents an item storage that
+/// An <c>IBCInventory</c> represents an item storage that
 /// Better Crafting is interacting with, whether by extracting
 /// items or inserting them.
 /// </summary>
-public interface IInventory {
+public interface IBCInventory {
+
 	/// <summary>
-	/// The object that has inventory.
+	/// Optional. If this inventory is associated with an object, that object.
 	/// </summary>
 	object Object { get; }
 
 	/// <summary>
-	/// Where this object is located, if a location is relevant.
+	/// If this inventory is associated with an object, where that object is located.
 	/// </summary>
 	GameLocation? Location { get; }
 
 	/// <summary>
-	/// The player accessing the inventory, if a player is involved.
+	/// If this inventory is associated with a player, the player.
 	/// </summary>
 	Farmer? Player { get; }
 
 	/// <summary>
-	/// The NetMutex for this object, which should be locked before
-	/// using it. If there is no mutex, then we apparently don't
-	/// need to worry about that.
+	/// If this inventory is managed by a NetMutex, or an object with one,
+	/// which should be locked before manipulating the inventory, then
+	/// provide it here.
 	/// </summary>
 	NetMutex? Mutex { get; }
 
 	/// <summary>
-	/// Whether or not the object is locked and ready for read/write usage.
+	/// Get this inventory as a vanilla IInventory, if possible. May
+	/// be null if the inventory is not a vanilla inventory.
+	/// </summary>
+	IInventory? Inventory { get; }
+
+	/// <summary>
+	/// Whether or not the inventory is locked and ready for read/write usage.
 	/// </summary>
 	bool IsLocked();
 
 	/// <summary>
-	/// Whether or not the object is a valid inventory.
+	/// Whether or not the inventory is a valid inventory.
 	/// </summary>
 	bool IsValid();
 
@@ -211,28 +231,31 @@ public interface IInventory {
 	bool CanExtractItems();
 
 	/// <summary>
-	/// For multi-tile inventories, the region that this inventory takes
-	/// up in the world. Only rectangular multi-tile inventories are
-	/// supported, and this is used primarily for discovering connections.
+	/// For inventories associated with multiple tile regions in a location,
+	/// such as a farm house kitchen, this is the region the inventory fills.
+	/// Only rectangular shapes are supported. This is used for discovering
+	/// connections to nearby inventories.
 	/// </summary>
 	Rectangle? GetMultiTileRegion();
 
 	/// <summary>
-	/// Get the tile position of this object in the world, if it has one.
+	/// For inventories associated with a tile position in a location, such
+	/// as a chest placed in the world.
+	/// 
 	/// For multi-tile inventories, this should be the primary tile if
 	/// one exists.
 	/// </summary>
 	Vector2? GetTilePosition();
 
 	/// <summary>
-	/// Get this object's inventory as a list of items. May be null if
+	/// Get this inventory as a list of items. May be null if
 	/// there is an issue accessing the object's inventory.
 	/// </summary>
 	IList<Item?>? GetItems();
 
 	/// <summary>
-	/// Check to see if a specific item is allowed to be stored in the
-	/// object's inventory.
+	/// Check to see if a specific item is allowed to be stored in
+	/// this inventory.
 	/// </summary>
 	/// <param name="item">The item we're checking</param>
 	bool IsItemValid(Item item);
@@ -283,7 +306,7 @@ public interface IIngredient {
 	/// </summary>
 	Rectangle SourceRectangle { get; }
 
-#region Quantity
+	#region Quantity
 
 	/// <summary>
 	/// The amount of this ingredient required to perform a craft.
@@ -296,19 +319,19 @@ public interface IIngredient {
 	/// </summary>
 	/// <param name="who">The farmer performing the craft</param>
 	/// <param name="items">A list of all available <see cref="Item"/>s across
-	/// all available <see cref="IInventory"/> instances. If you only support
-	/// consuming ingredients from certain <c>IInventory</c> types, you should
+	/// all available <see cref="IBCInventory"/> instances. If you only support
+	/// consuming ingredients from certain <c>IBCInventory</c> types, you should
 	/// not use this value and instead iterate over the inventories. Please
 	/// note that this does <b>not</b> include the player's inventory.</param>
 	/// <param name="inventories">All the available inventories.</param>
 	/// <param name="maxQuality">The maximum item quality we are allowed to
 	/// count. This cannot be ignored unless <see cref="SupportsQuality"/>
 	/// returns <c>false</c>.</param>
-	int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int maxQuality);
+	int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality);
 
-#endregion
+	#endregion
 
-#region Consumption
+	#region Consumption
 
 	/// <summary>
 	/// Consume this ingredient out of the player's inventory and the other
@@ -322,9 +345,9 @@ public interface IIngredient {
 	/// <param name="lowQualityFirst">Whether or not we should make an effort
 	/// to consume lower quality ingredients before consuming higher quality
 	/// ingredients.</param>
-	void Consume(Farmer who, IList<IInventory>? inventories, int maxQuality, bool lowQualityFirst);
+	void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst);
 
-#endregion
+	#endregion
 }
 
 
@@ -373,13 +396,13 @@ public interface IPerformCraftEvent {
 /// </summary>
 public interface IRecipe {
 
-#region Identity
+	#region Identity
 
 	/// <summary>
 	/// An additional sorting value to apply to recipes in the Better Crafting
 	/// menu. Applied before other forms of sorting.
 	/// </summary>
-	int SortValue { get; }
+	string SortValue { get; }
 
 	/// <summary>
 	/// The internal name of the recipe. For standard recipes, this matches the
@@ -421,9 +444,9 @@ public interface IRecipe {
 	/// </summary>
 	CraftingRecipe? CraftingRecipe { get; }
 
-#endregion
+	#endregion
 
-#region Display
+	#region Display
 
 	/// <summary>
 	/// The texture to use when drawing this recipe in the menu.
@@ -445,9 +468,9 @@ public interface IRecipe {
 	/// </summary>
 	int GridWidth { get; }
 
-#endregion
+	#endregion
 
-#region Cost and Quantity
+	#region Cost and Quantity
 
 	/// <summary>
 	/// The quantity of item produced every time this recipe is crafted.
@@ -459,9 +482,9 @@ public interface IRecipe {
 	/// </summary>
 	IIngredient[]? Ingredients { get; }
 
-#endregion
+	#endregion
 
-#region Creation
+	#region Creation
 
 	/// <summary>
 	/// Whether or not the item created by this recipe is stackable, and thus
@@ -507,7 +530,7 @@ public interface IRecipe {
 		evt.Complete();
 	}
 
-#endregion
+	#endregion
 }
 
 
@@ -517,7 +540,7 @@ public interface IRecipe {
 /// </summary>
 public interface IRecipeProvider {
 	/// <summary>
-	/// The priority of this recipe provider, for sorting purposes.
+	/// The priority of this recipe provider, sort sorting purposes.
 	/// When handling CraftingRecipe instances, the first provider
 	/// to return a result is used.
 	/// </summary>
@@ -540,13 +563,14 @@ public interface IRecipeProvider {
 
 	/// <summary>
 	/// Get any additional recipes in IRecipe form. Additional recipes
-	/// are those recipes not included in the `CraftingRecipe.cookingRecipes`
-	/// and `CraftingRecipe.craftingRecipes` objects.
+	/// are those recipes not included in the <see cref="CraftingRecipe.cookingRecipes"/>
+	/// and <see cref="CraftingRecipe.craftingRecipes"/> objects.
 	/// </summary>
 	/// <param name="cooking">Whether we want cooking recipes or crafting recipes.</param>
 	/// <returns>An enumeration of this provider's additional recipes, or null.</returns>
 	IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking);
 }
+
 
 /// <summary>
 /// IDynamicRuleData instances represent all the configuration data associated
@@ -686,9 +710,9 @@ public interface IRecipeBuilder {
 	/// menu. This is applied before other forms of sorting. Setting this to
 	/// <c>null</c> will restore the default behavior.
 	/// </summary>
-	/// <param name="value">The sorting value. 0 by default.</param>
+	/// <param name="value">The sorting value. "0" by default.</param>
 	/// <returns>The same <see cref="IRecipeBuilder"/> instance</returns>
-	IRecipeBuilder SortValue(int? value);
+	IRecipeBuilder SortValue(string? value);
 
 	/// <summary>
 	/// Set the recipe's display name. Setting this to <c>null</c> will
@@ -965,16 +989,6 @@ public interface IBetterCrafting {
 
 	#region GUI
 
-	[Obsolete("Please use the other call with additional parameters.")]
-	bool OpenCraftingMenu(
-		bool cooking,
-		IList<Chest>? containers = null,
-		GameLocation? location = null,
-		Vector2? position = null,
-		bool silent_open = false,
-		IList<string>? listed_recipes = null
-	);
-
 	/// <summary>
 	/// Try to open the Better Crafting menu. This may fail if there is another
 	/// menu open that cannot be replaced.
@@ -1070,20 +1084,6 @@ public interface IBetterCrafting {
 	IReadOnlyCollection<IRecipe> GetRecipes(bool cooking);
 
 	/// <summary>
-	/// Create a simple <see cref="IRecipe"/> that gets its properties from an
-	/// existing <see cref="CraftingRecipe"/> but that uses different
-	/// <see cref="IIngredient"/>s.
-	/// </summary>
-	/// <param name="recipe">The <see cref="CraftingRecipe"/> to use
-	/// as a base.</param>
-	/// <param name="ingredients">An enumeration of <see cref="IIngredient"/>s
-	/// the recipe should consume.</param>
-	/// <param name="onPerformCraft">An optional event handler to perform
-	/// additional logic when the item is crafted.</param>
-	[Obsolete("Use RecipeBuilder instead.")]
-	IRecipe CreateRecipeWithIngredients(CraftingRecipe recipe, IEnumerable<IIngredient> ingredients, Action<IPerformCraftEvent>? onPerformCraft = null);
-
-	/// <summary>
 	/// Get a new <see cref="IRecipeBuilder"/> for customizing a recipe.
 	/// </summary>
 	/// <param name="recipe">The recipe to customize.</param>
@@ -1125,9 +1125,6 @@ public interface IBetterCrafting {
 	/// this as null and an appropriate item will be discovered.</param>
 	IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null);
 
-	[Obsolete("Use the method that takes functions instead.")]
-	IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, string displayName, Texture2D texture, Rectangle? source = null);
-
 	/// <summary>
 	/// Create a simple <see cref="IIngredient"/> that matches a specific
 	/// currency and consumes an exact quantity.
@@ -1146,7 +1143,7 @@ public interface IBetterCrafting {
 
 	/// <summary>
 	/// Consume matching items from a player, and also from a set of
-	/// <see cref="IInventory"/> instances. This is a helper method for
+	/// <see cref="IBCInventory"/> instances. This is a helper method for
 	/// building custom <see cref="IIngredient"/>s.
 	///
 	/// This method is aware of the mod "Stack Quality" and handles merged
@@ -1156,13 +1153,13 @@ public interface IBetterCrafting {
 	/// matches items, and the integer is the quantity to consume.</param>
 	/// <param name="who">The player to consume items from, if any. Items
 	/// are consumed from the player's inventory first.</param>
-	/// <param name="inventories">An enumeration of <see cref="IInventory"/>
+	/// <param name="inventories">An enumeration of <see cref="IBCInventory"/>
 	/// instances to consume items from, such as the one passed to
-	/// <see cref="IIngredient.Consume(Farmer, IList{IInventory}?, int, bool)"/>.</param>
+	/// <see cref="IIngredient.Consume(Farmer, IList{IBCInventory}?, int, bool)"/>.</param>
 	/// <param name="maxQuality">The maximum quality to consume.</param>
 	/// <param name="lowQualityFirst">Whether or not to consume low quality
 	/// items first.</param>
-	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false);
+	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false);
 
 	/// <summary>
 	/// Count the number of <see cref="Item"/>s available that match the given

@@ -13,14 +13,35 @@ using StardewValley;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
+/// <summary>
+/// The various currency types supported by <see cref="CreateCurrencyIngredient(string, int)"/>
+/// </summary>
 public enum CurrencyType {
+	/// <summary>
+	/// The player's gold.
+	/// </summary>
 	Money,
+	/// <summary>
+	/// The player's earned points at the current festival. This should likely
+	/// never actually be used, since players can't craft while they're at a
+	/// festival in the first place.
+	/// </summary>
 	FestivalPoints,
+	/// <summary>
+	/// The player's casino points.
+	/// </summary>
 	ClubCoins,
+	/// <summary>
+	/// The player's Qi Gems.
+	/// </summary>
 	QiGems
 };
 
 public class CurrencyIngredient : IIngredient, IRecyclable {
+
+	public readonly static Rectangle ICON_MONEY = new(193, 373, 9, 10);
+	public readonly static Rectangle ICON_FESTIVAL_POINTS = new(202, 373, 9, 10);
+	public readonly static Rectangle ICON_CLUB_COINS = new(211, 373, 9, 10);
 
 	public readonly CurrencyType Type;
 
@@ -99,25 +120,31 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 		}
 	}
 
-	public Texture2D Texture => Game1.mouseCursors;
+	public Texture2D Texture => Type switch {
+		CurrencyType.QiGems => Game1.objectSpriteSheet,
+		_ => Game1.mouseCursors
+	};
+
 	public Rectangle SourceRectangle {
 		get {
-			switch(Type) {
+			switch (Type) {
 				case CurrencyType.Money:
-					return new Rectangle(193, 373, 9, 10);
+					return ICON_MONEY;
 				case CurrencyType.FestivalPoints:
-					return new Rectangle(202, 373, 9, 10);
+					return ICON_FESTIVAL_POINTS;
 				case CurrencyType.ClubCoins:
-					return new Rectangle(211, 373, 9, 10);
+					return ICON_CLUB_COINS;
+				case CurrencyType.QiGems:
+					return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, 858, 16, 16);
+				default:
+					return Rectangle.Empty;
 			}
-
-			return Rectangle.Empty;
 		}
 	}
 
 	public int Quantity { get; }
 
-	public void Consume(Farmer who, IList<IInventory>? inventories, int max_quality, bool low_quality_first) {
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int max_quality, bool low_quality_first) {
 		switch (Type) {
 			case CurrencyType.Money:
 				who.Money -= Quantity;
@@ -134,7 +161,7 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 		}
 	}
 
-	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IInventory>? inventories, int max_quality) {
+	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int max_quality) {
 		switch (Type) {
 			case CurrencyType.Money:
 				return who.Money;

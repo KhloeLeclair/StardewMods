@@ -13,6 +13,8 @@ using StardewModdingAPI;
 
 namespace Leclair.Stardew.Common;
 
+/*
+
 public interface IStringTokenizerApi {
 
 	delegate bool HandleTokenDelegate(string input, IGameState state, out string result);
@@ -346,3 +348,5 @@ public static class StringTokenizer {
 	#endregion
 
 }
+
+*/

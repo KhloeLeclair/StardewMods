@@ -39,7 +39,7 @@ public class GardenPotRecipe : IRecipe {
 
 	// Identity
 
-	public int SortValue => Recipe.itemToProduce[0];
+	public string SortValue => Recipe.itemToProduce[0];
 
 	// Display
 

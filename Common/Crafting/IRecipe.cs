@@ -26,10 +26,10 @@ public interface IRecipe {
 	#region Identity
 
 	/// <summary>
-	/// An addditional sorting value to apply to recipes in the Better Crafting
+	/// An additional sorting value to apply to recipes in the Better Crafting
 	/// menu. Applied before other forms of sorting.
 	/// </summary>
-	int SortValue { get; }
+	string SortValue { get; }
 
 	/// <summary>
 	/// The internal name of the recipe. For standard recipes, this matches the
@@ -46,7 +46,7 @@ public interface IRecipe {
 	string DisplayName { get; }
 
 	/// <summary>
-	/// An optional description of the recipe displayed on its tooltip.
+	/// An optional description of the recipe displayed on its tool-tip.
 	/// </summary>
 	string? Description { get; }
 
@@ -59,7 +59,7 @@ public interface IRecipe {
 	/// <summary>
 	/// How many times the player has crafted this recipe. If advanced crafting
 	/// information is enabled, and this value is non-zero, it will be
-	/// displayed on recipe tooltips.
+	/// displayed on recipe tool-tips.
 	/// </summary>
 	/// <param name="who">The player we're asking about.</param>
 	int GetTimesCrafted(Farmer who);
@@ -129,7 +129,7 @@ public interface IRecipe {
 	bool CanCraft(Farmer who);
 
 	/// <summary>
-	/// An optional, extra string to appear on item tooltips. This can be used
+	/// An optional, extra string to appear on item tool-tips. This can be used
 	/// for displaying error messages to the user, or anything else that would
 	/// be relevant. For example, the add-on for crafting buildings uses this
 	/// to display error messages telling users why they are unable to craft

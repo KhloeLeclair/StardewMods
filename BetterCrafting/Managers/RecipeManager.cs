@@ -204,7 +204,7 @@ public class RecipeManager : BaseManager {
 			return null;
 		}
 
-		DisposableList<NPC> chars;
+		List<NPC> chars;
 		try {
 			chars = Utility.getAllCharacters();
 		} catch(Exception ex) {
@@ -219,7 +219,7 @@ public class RecipeManager : BaseManager {
 			if (!npc.CanSocialize)
 				continue;
 
-			if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ParentSheetIndex))
+			if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ItemId))
 				continue;
 
 			int taste;
@@ -556,8 +556,9 @@ public class RecipeManager : BaseManager {
 		RegisterRuleHandler("Everything", new AllRecipesRuleHandler());
 		RegisterRuleHandler("Search", new SearchRuleHandler(Mod));
 		RegisterRuleHandler("Machine", new MachineRuleHandler(Mod));
+		RegisterRuleHandler("Storage", new StorageRuleHandler());
 		RegisterRuleHandler("Sprinkler", new SprinklerRuleHandler());
-		//RegisterTypeHandler("Light", new LightTypeHandler());
+		RegisterRuleHandler("Light", new LightRuleHandler());
 		RegisterRuleHandler("BuffFarming", new BuffRuleHandler(BuffRuleHandler.FARMING));
 		RegisterRuleHandler("BuffFishing", new BuffRuleHandler(BuffRuleHandler.FISHING));
 		RegisterRuleHandler("BuffMining", new BuffRuleHandler(BuffRuleHandler.MINING));

@@ -308,6 +308,9 @@
 	// Dynamic Filters
 	"filter.add-new": "Add New Rule",
 
+	"filter.storage": "Storage",
+	"filter.storage.about": "This rule matches items that act as storage, like chests or hoppers.",
+
 	"filter.everything": "Everything",
 	"filter.everything.about": "This rule matches every recipe.",
 
