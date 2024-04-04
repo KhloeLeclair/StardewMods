@@ -273,6 +273,7 @@ public class ModEntry : ModSubscriber {
 						material_containers: OldCraftingPage.Value.MaterialContainers,
 						silent_open: true,
 						discover_containers: OldCraftingPage.Value.DiscoverContainers,
+						discover_buildings: OldCraftingPage.Value.DiscoverBuildings,
 						listed_recipes: OldCraftingPage.Value.GetListedRecipes(),
 						station: OldCraftingPage.Value.Station?.Id
 					);
