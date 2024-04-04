@@ -18,6 +18,7 @@ using Leclair.Stardew.BetterCrafting.Menus;
 using StardewValley.Menus;
 using Leclair.Stardew.BetterCrafting.DynamicRules;
 using StardewModdingAPI;
+using System.ComponentModel.Design;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -26,6 +27,8 @@ public class PopulateContainersEventArgs : IPopulateContainersEvent {
 	public IBetterCraftingMenu Menu { get; }
 
 	public IList<Tuple<object, GameLocation?>> Containers { get; }
+
+	public bool DisableDiscovery { get; set; } = false;
 
 	public PopulateContainersEventArgs(IBetterCraftingMenu menu, IList<Tuple<object, GameLocation?>> containers) {
 		Menu = menu;
@@ -60,11 +63,6 @@ public class ModAPI : IBetterCrafting {
 		IList<string>? listed_recipes = null,
 		bool discover_buildings = false
 	) {
-		if (listed_recipes == null && Mod.intCCStation != null)
-			listed_recipes = cooking ?
-				Mod.intCCStation.GetCookingRecipes() :
-				Mod.intCCStation.GetCraftingRecipes();
-
 		var menu = Game1.activeClickableMenu;
 		if (menu != null) {
 			if (!menu.readyToClose())
@@ -120,18 +118,28 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;
 
-	internal void EmitMenuPopulate(BetterCraftingPage menu, ref IList<LocatedInventory>? containers) {
+	internal bool EmitMenuPopulate(BetterCraftingPage menu, ref IList<LocatedInventory>? containers) {
+		bool disable_discovery = false;
+
 		if (MenuPopulateContainers is not null) {
 			List<Tuple<object, GameLocation?>> values = containers == null ? new() :
 				containers.Select(x => new Tuple<object, GameLocation?>(x.Source, x.Location)).ToList();
 
-			MenuPopulateContainers.Invoke(new PopulateContainersEventArgs(menu, values));
+			var evt = new PopulateContainersEventArgs(menu, values) {
+				DisableDiscovery = disable_discovery
+			};
+
+			MenuPopulateContainers.Invoke(evt);
+
+			disable_discovery = evt.DisableDiscovery;
 
 			if (values.Count == 0)
 				containers = null;
 			else
 				containers = values.Select(x => new LocatedInventory(x.Item1, x.Item2)).ToList();
 		}
+
+		return disable_discovery;
 	}
 
 	#endregion

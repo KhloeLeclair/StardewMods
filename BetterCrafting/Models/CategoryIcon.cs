@@ -18,6 +18,7 @@ public class CategoryIcon {
 	// Item
 	public string? RecipeName { get; set; }
 
+	public string? ItemId { get; set; }
 
 	// Texture
 	public GameTexture? Source { get; set; } = null;

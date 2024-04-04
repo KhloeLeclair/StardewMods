@@ -91,9 +91,9 @@ public class SimpleBuilder {
 		return this;
 	}
 
-	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None) {
+	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None, float? overrideHeight = null) {
 		AssertState();
-		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align));
+		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align, overrideHeight));
 		return this;
 	}
 

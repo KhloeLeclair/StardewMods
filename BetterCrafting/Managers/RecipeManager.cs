@@ -23,6 +23,8 @@ namespace Leclair.Stardew.BetterCrafting.Managers;
 
 public class RecipeManager : BaseManager {
 
+	public readonly static string CATEGORY_PATH = @"Mod/leclair.bettercrafting/Categories";
+
 	// Name -> ID Conversion
 	private readonly static Regex NAME_TO_ID = new(@"[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -81,9 +83,23 @@ public class RecipeManager : BaseManager {
 	#region Events
 
 	[Subscriber]
+	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+		if (e.Name.IsEquivalentTo(CATEGORY_PATH))
+			e.LoadFrom(LoadDefaultsFromFiles, AssetLoadPriority.Exclusive);
+	}
+
+	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
 		foreach(var name in e.NamesWithoutLocale) {
-			if (name.IsEquivalentTo(@"Data\CraftingRecipes") || name.IsEquivalentTo(@"Data\CookingRecipes")) {
+			if (name.IsEquivalentTo(CATEGORY_PATH)) {
+				WithDefaultCategories(() => {
+					DefaultsLoaded = false;
+					DefaultCraftingCategories = null;
+					DefaultCookingCategories = null;
+				});
+			}
+
+			if (name.IsEquivalentTo(@"Data/CraftingRecipes") || name.IsEquivalentTo(@"Data/CookingRecipes")) {
 				Invalidate();
 				break;
 			}
@@ -976,54 +992,64 @@ public class RecipeManager : BaseManager {
 		});
 	}
 
-	public void LoadDefaults() {
-		WithDefaultCategories(() => {
-			DefaultsLoaded = true;
-			Dictionary<string, Category> CraftingByID = new();
-			Dictionary<string, Category> CookingByID = new();
+	private CPCategories LoadDefaultsFromFiles() {
 
-			// Read the primary categories data file.
-			const string path = "assets/categories.json";
-			Categories? cats = null;
+		Dictionary<string, Category> CraftingByID = new();
+		Dictionary<string, Category> CookingByID = new();
 
+		// Read the primary categories data file.
+		const string path = "assets/categories.json";
+		Categories? cats = null;
+
+		try {
+			cats = Mod.Helper.Data.ReadJsonFile<Categories>(path);
+			if (cats == null)
+				Log($"The {path} file is missing or invalid.", LogLevel.Error);
+		} catch (Exception ex) {
+			Log($"The {path} file is invalid.", LogLevel.Error, ex);
+		}
+
+		if (cats != null) {
+			if (cats.Cooking != null)
+				HydrateCategories(cats.Cooking, path, CookingByID);
+
+			if (cats.Crafting != null)
+				HydrateCategories(cats.Crafting, path, CraftingByID);
+		}
+
+		// Now read categories from content packs.
+		foreach (var cp in Mod.Helper.ContentPacks.GetOwned()) {
+			if (!cp.HasFile("categories.json"))
+				continue;
+
+			cats = null;
 			try {
-				cats = Mod.Helper.Data.ReadJsonFile<Categories>(path);
-				if (cats == null)
-					Log($"The {path} file is missing or invalid.", LogLevel.Error);
+				cats = cp.ReadJsonFile<Categories>("categories.json");
 			} catch (Exception ex) {
-				Log($"The {path} file is invalid.", LogLevel.Error, ex);
+				Log($"The categories.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
 			}
 
 			if (cats != null) {
 				if (cats.Cooking != null)
-					HydrateCategories(cats.Cooking, path, CookingByID);
-
+					HydrateCategories(cats.Cooking, cp.Manifest.Name, CookingByID);
 				if (cats.Crafting != null)
-					HydrateCategories(cats.Crafting, path, CraftingByID);
+					HydrateCategories(cats.Crafting, cp.Manifest.Name, CraftingByID);
 			}
+		}
 
-			// Now read categories from content packs.
-			foreach (var cp in Mod.Helper.ContentPacks.GetOwned()) {
-				if (!cp.HasFile("categories.json"))
-					continue;
+		return new CPCategories() {
+			Cooking = CookingByID,
+			Crafting = CraftingByID
+		};
+	}
 
-				cats = null;
-				try {
-					cats = cp.ReadJsonFile<Categories>("categories.json");
-				} catch (Exception ex) {
-					Log($"The categories.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
-				}
+	public void LoadDefaults() {
+		WithDefaultCategories(() => {
+			var categories = Mod.Helper.GameContent.Load<CPCategories>(CATEGORY_PATH);
 
-				if (cats != null) {
-					if (cats.Cooking != null)
-						HydrateCategories(cats.Cooking, cp.Manifest.Name, CookingByID);
-					if (cats.Crafting != null)
-						HydrateCategories(cats.Crafting, cp.Manifest.Name, CraftingByID);
-				}
-			}
-
-			DefaultCraftingCategories = CraftingByID.Values.ToArray();
-			DefaultCookingCategories = CookingByID.Values.ToArray();
+			DefaultsLoaded = true;
+			DefaultCookingCategories = categories.Cooking.Values.ToArray();
+			DefaultCraftingCategories = categories.Crafting.Values.ToArray();
 
 			Log($"Loaded {DefaultCookingCategories.Length} cooking categories and {DefaultCraftingCategories.Length} crafting categories.", LogLevel.Debug);
 		});

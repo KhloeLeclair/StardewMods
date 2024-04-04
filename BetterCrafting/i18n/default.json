@@ -334,6 +334,9 @@
 	"filter.light.about": "This rule matches placeable lights.",
 
 	"filter.error": "Invalid Rule",
-	"filter.error.about": "This rule ID is invalid or not registered, and may be from a mod that was removed."
+	"filter.error.about": "This rule ID is invalid or not registered, and may be from a mod that was removed.",
+
+	// Kitchen
+	"station.kitchen": "Kitchen"
 
 }

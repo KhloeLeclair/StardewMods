@@ -36,6 +36,7 @@ using Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
 using StardewValley.BellsAndWhistles;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.GameData.BigCraftables;
+using StardewValley.Buildings;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -75,6 +76,7 @@ public class ModEntry : ModSubscriber {
 	public FavoriteManager Favorites;
 	public ItemCacheManager ItemCache;
 	public TriggerManager Triggers;
+	public CraftingStationManager Stations;
 
 	internal ThemeManager<Theme> ThemeManager;
 
@@ -112,6 +114,7 @@ public class ModEntry : ModSubscriber {
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
 
+		Patches.CraftingPage_Patches.Patch(this);
 		Patches.SObject_Patches.Patch(this);
 		Patches.Item_Patches.Patch(this);
 		Patches.GameLocation_Patches.Patch(this);
@@ -130,6 +133,7 @@ public class ModEntry : ModSubscriber {
 		Recipes = new RecipeManager(this);
 		Favorites = new FavoriteManager(this);
 		Triggers = new TriggerManager(this);
+		Stations = new CraftingStationManager(this);
 
 		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
 		ThemeManager.ThemeChanged += OnThemeChanged;
@@ -269,7 +273,8 @@ public class ModEntry : ModSubscriber {
 						material_containers: OldCraftingPage.Value.MaterialContainers,
 						silent_open: true,
 						discover_containers: OldCraftingPage.Value.DiscoverContainers,
-						listed_recipes: OldCraftingPage.Value.GetListedRecipes()
+						listed_recipes: OldCraftingPage.Value.GetListedRecipes(),
+						station: OldCraftingPage.Value.Station?.Id
 					);
 
 					if (game != null) {
@@ -1329,6 +1334,7 @@ public class ModEntry : ModSubscriber {
 	public void RegisterProviders() {
 		RegisterInventoryProvider(typeof(Chest), new ChestProvider(any: true));
 		RegisterInventoryProvider(typeof(Workbench), new WorkbenchProvider());
+		RegisterInventoryProvider(typeof(Building), new BuildingProvider());
 	}
 
 	public void RegisterInventoryProvider(Type type, IInventoryProvider provider) {
@@ -1348,8 +1354,20 @@ public class ModEntry : ModSubscriber {
 		// TODO: Check for MoveToConnected?
 
 		Type? type = obj?.GetType();
-		if (type == null || !invProviders.ContainsKey(type))
+		if (type is null)
 			return null;
+
+		if (! invProviders.ContainsKey(type)) {
+			// Try less specific.
+			if (obj is Chest)
+				type = typeof(Chest);
+			else if (obj is Building)
+				type = typeof(Building);
+			else if (obj is Workbench)
+				type = typeof(Workbench);
+			else
+				return null;
+		}
 
 		return invProviders[type] as IInventoryProvider;
 	}

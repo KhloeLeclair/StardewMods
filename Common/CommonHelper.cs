@@ -563,6 +563,11 @@ public static class CommonHelper {
 
 	#endregion
 
+	internal static xTile.Dimensions.Location ToLocation(this Vector2 pos) {
+		return new((int) pos.X, (int) pos.Y);
+	}
+
+
 	public static void YeetMenu(IClickableMenu menu) {
 		if (menu == null) return;
 

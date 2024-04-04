@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.BetterCrafting.Menus;
 using Leclair.Stardew.Common;
@@ -13,6 +11,8 @@ using StardewValley;
 using StardewValley.Delegates;
 using StardewValley.Objects;
 using StardewValley.Triggers;
+
+using static System.Collections.Specialized.BitVector32;
 
 namespace Leclair.Stardew.BetterCrafting.Managers;
 
@@ -52,13 +52,21 @@ public class TriggerManager: BaseManager {
 		if (!ArgUtility.TryGetBool(args, 2, out bool includeBuildings, out error))
 			return false;
 
+		string? station = args.Length >= 4 ? args[3] : null;
+
 		if (Game1.player != who)
 			return false;
+
+		if (!string.IsNullOrEmpty(station) && !Mod.Stations.IsStation(station)) {
+			Log($"Tried to open invalid station: {station}", StardewModdingAPI.LogLevel.Warn);
+			return false;
+		}
 
 		//Log($"OpenMenu {who}, {pos}, {location}, {cooking}, {includeBuildings}", StardewModdingAPI.LogLevel.Debug);
 
 		Game1.activeClickableMenu = BetterCraftingPage.Open(
 			Mod,
+			station: station,
 			location: location,
 			position: pos.ToVector2(),
 			standalone_menu: true,
@@ -74,14 +82,23 @@ public class TriggerManager: BaseManager {
 		if (!ArgUtility.TryGetBool(args, 1, out bool cooking, out error))
 			return false;
 
-		if (!ArgUtility.TryGetBool(args, 1, out bool includeBuildings, out error))
+		if (!ArgUtility.TryGetBool(args, 2, out bool includeBuildings, out error))
 			return false;
+
+		string? station = args.Length >= 4 ? args[3] : null;
+
+		if (!string.IsNullOrEmpty(station) && !Mod.Stations.IsStation(station)) {
+			Log($"Tried to open invalid station: {station}", StardewModdingAPI.LogLevel.Warn);
+			return false;
+		}
 
 		Game1.activeClickableMenu = BetterCraftingPage.Open(
 			Mod,
+			station: station,
 			standalone_menu: true,
 			cooking: cooking,
-			material_containers: (IList<LocatedInventory>?) null
+			material_containers: (IList<LocatedInventory>?) null,
+			discover_buildings: includeBuildings
 		);
 
 		return true;

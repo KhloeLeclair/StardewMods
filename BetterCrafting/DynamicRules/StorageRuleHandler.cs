@@ -50,6 +50,14 @@ public class StorageRuleHandler : IDynamicRuleHandler {
 		if (sobj is Chest || sobj is StorageFurniture)
 			return true;
 
+		if (sobj.bigCraftable.Value
+			&& Game1.bigCraftableData.TryGetValue(sobj.ItemId, out var data)
+			&& data.CustomFields is not null
+			&& data.CustomFields.TryGetValue("furyx639.ExpandedStorage/Enabled", out string? isExpanded)
+			&& isExpanded == "true"
+		)
+			return true;
+
 		string qid = sobj.QualifiedItemId;
 		foreach(string chest in VANILLA_CHESTS)
 			if (chest == qid) return true;

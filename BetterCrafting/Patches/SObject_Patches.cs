@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 using HarmonyLib;
 
+using Leclair.Stardew.Common;
+
 using StardewModdingAPI;
 
 using StardewValley;
@@ -38,12 +40,10 @@ public static class SObject_Patches {
 			if (__result)
 				return;
 
-			var triggers = ModEntry.Instance.Triggers;
-
 			if (!__instance.bigCraftable.Value || !Game1.bigCraftableData.TryGetValue(__instance.ItemId, out var data))
 				return;
 
-			if (!data.CustomFields.TryGetValue("leclair.bettercrafting_PerformAction", out string? action))
+			if (data.CustomFields is null || !data.CustomFields.TryGetValue("leclair.bettercrafting_PerformAction", out string? action) || string.IsNullOrEmpty(action))
 				return;
 
 			// Yes, we have an action.
@@ -54,7 +54,7 @@ public static class SObject_Patches {
 				return;
 
 			// Run the action.
-			__instance.Location.performAction(action, who, new xTile.Dimensions.Location((int) __instance.TileLocation.X, (int) __instance.TileLocation.Y));
+			__instance.Location.performAction(action, who, __instance.TileLocation.ToLocation());
 
 		} catch(Exception ex) {
 			Monitor?.Log("An error occurred while attempting to interact with an object.", LogLevel.Warn);

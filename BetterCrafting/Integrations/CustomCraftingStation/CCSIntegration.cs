@@ -47,7 +47,14 @@ public class CCSIntegration : BaseIntegration<ModEntry> {
 	}
 
 
-	public List<string>? GetCookingRecipes() {
+	public List<string>? GetRemovedRecipes(bool cooking) {
+		if (!IsLoaded || Entry == null)
+			return null;
+
+		return Helper.GetField<List<string>>(Entry, cooking ? "_cookingRecipesToRemove" : "_craftingRecipesToRemove", false)?.GetValue();
+	}
+
+	/*public List<string>? GetCookingRecipes() {
 		if (!IsLoaded || Entry == null)
 			return null;
 
@@ -72,7 +79,7 @@ public class CCSIntegration : BaseIntegration<ModEntry> {
 		Log($"Removed {removed.Count} crafting recipes due to CCS.", LogLevel.Debug);
 
 		return Self.Recipes.GetRecipes(false).Select(v => v.Name).Where(v => !removed.Contains(v)).ToList();
-	}
+	}*/
 
 
 	public static bool OnSaveLoaded_Prefix(object __instance) {

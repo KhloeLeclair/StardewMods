@@ -27,11 +27,7 @@ using StardewValley.Objects;
 
 using Leclair.Stardew.BetterCrafting.DynamicRules;
 using System.Diagnostics.CodeAnalysis;
-using Leclair.Stardew.BetterCrafting.Patches;
-using StardewValley.ItemTypeDefinitions;
-using StardewValley.GameData.Objects;
 using StardewValley.Buffs;
-using static StardewValley.Menus.CharacterCustomization;
 using Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
@@ -59,7 +55,19 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public bool Standalone { get; }
 	public bool Cooking => cooking;
 
+	public bool IsReady { get; private set; } = false;
+
 	public bool DrawBG = true;
+
+	GameLocation? IBetterCraftingMenu.Location => BenchLocation;
+	Vector2? IBetterCraftingMenu.Position => BenchPosition;
+	Rectangle? IBetterCraftingMenu.Area => BenchArea;
+
+	public ISimpleNode? StationLabel { get; set; }
+
+	// Station
+	public CraftingStation? Station { get; private set; }
+	ICraftingStation? IBetterCraftingMenu.Station => Station;
 
 	// Workbench Tracking
 	public readonly GameLocation? BenchLocation;
@@ -245,7 +253,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		int y = -1,
 		bool silent_open = false,
 		IEnumerable<string>? listed_recipes = null,
-		bool discover_buildings = false
+		bool discover_buildings = false,
+		string? station = null
 	) {
 		if (width <= 0)
 			width = 800 + borderWidth * 2;
@@ -281,16 +290,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			position,
 			area,
 
-			cooking,
-			standalone_menu,
-			silent_open,
-			discover_containers,
-			discover_buildings,
+			cooking: cooking,
+			standalone_menu: standalone_menu,
+			silent_open: silent_open,
+			discover_containers: discover_containers,
+			discover_buildings: discover_buildings,
 
-			material_containers,
-			listed_recipes,
-			rows: rows
-		);
+			material_containers: material_containers,
+			listed_recipes: listed_recipes,
+			rows: rows,
+			station: station
+		);;
 	}
 
 	public static BetterCraftingPage Open(
@@ -308,7 +318,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		int y = -1,
 		bool silent_open = false,
 		IEnumerable<string>? listed_recipes = null,
-		bool discover_buildings = false
+		bool discover_buildings = false,
+		string? station = null
 	) {
 		var located = material_containers == null ? null : InventoryHelper.LocateInventories(
 			material_containers,
@@ -333,7 +344,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			discover_containers: discover_containers,
 			discover_buildings: discover_buildings,
 			material_containers: located,
-			listed_recipes: listed_recipes
+			listed_recipes: listed_recipes,
+			station: station
 		);
 	}
 
@@ -351,6 +363,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool silent_open = false,
 		bool discover_containers = true,
 		bool discover_buildings = false,
+		string? station = null,
 
 		IList<LocatedInventory>? material_containers = null,
 		IEnumerable<string>? listed_recipes = null,
@@ -369,16 +382,41 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		MAX_TABS = (height - 120) / 64;
 		VISIBLE_TABS = (height - 120) / 64;
 
+		// If we have a station, get it loaded first.
+		if (!string.IsNullOrEmpty(station)) {
+			if (Mod.Stations.TryGetStation(station, Game1.player, out var stationData)) {
+				Station = stationData;
+				// Override cooking.
+				this.cooking = Station.IsCooking;
+
+			} else {
+				// Invalid station. What should we do?
+			}
+		}
+
 		LoadTextures();
+
+		// Try to load a station name.
+		TryLoadStationName();
 
 		// Run the event to populate containers.
 		// TODO: Track which mod adds each container.
+		bool do_disable = false;
+
 		foreach (var api in ModEntry.Instance.APIInstances.Values)
-			api.EmitMenuPopulate(this, ref material_containers);
+			do_disable = api.EmitMenuPopulate(this, ref material_containers) | do_disable;
+
+		if (do_disable) {
+			DiscoverContainers = false;
+			DiscoverBuildings = false;
+		}
 
 		MaterialContainers = material_containers;
 
-		if (listed_recipes != null) {
+		if (Station != null) {
+			ListedRecipes = new List<string>(Station.Recipes);
+
+		} else if (listed_recipes != null) {
 			if (listed_recipes is List<string> basic)
 				ListedRecipes = basic;
 			else
@@ -386,10 +424,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		} else
 			ListedRecipes = null;
 
-		// If not given a specific list of recipes, then try loading them
-		// from Custom Crafting Stations.
-		if (ListedRecipes == null && Mod.intCCStation != null && Mod.intCCStation.IsLoaded)
-			ListedRecipes = cooking ? Mod.intCCStation.GetCookingRecipes() : Mod.intCCStation.GetCraftingRecipes();
+		// If not given a specific list of recipes, then try loading them.
+		ListedRecipes ??= Mod.Stations.GetNonExclusiveRecipes(cooking).Select(recipe => recipe.Name).ToList();
 
 		ChestsOnly = this.cooking && Mod.intCSkill != null && Mod.intCSkill.IsLoaded;
 
@@ -514,7 +550,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			rightNeighborID = ClickableComponent.ID_ignore
 		};
 
-		btnToggleEdit = Mod.Config.UseCategories ? new ClickableTextureComponent(
+		bool use_categories = Mod.Config.UseCategories;
+		if (Station != null)
+			use_categories = false;
+
+		btnToggleEdit = use_categories ? new ClickableTextureComponent(
 			bounds: new Rectangle(btnX, btnY, 64, 64),
 			texture: Sprites.Buttons.Texture,
 			sourceRect: SourceEdit,
@@ -665,6 +705,48 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (Game1.options.SnappyMenus)
 			snapToDefaultClickableComponent();
+
+		// We are done.
+		IsReady = true;
+	}
+
+	public void TryLoadStationName() {
+		SpriteInfo? sprite = null;
+		string? displayName = null;
+
+		if (!string.IsNullOrEmpty(Station?.DisplayName))
+			displayName = Station.DisplayName;
+
+		if (Station?.Icon != null)
+			sprite = GetSpriteFromIcon(Station.Icon);
+
+		if ((sprite == null || displayName == null) && BenchLocation != null && BenchPosition != null) {
+			// Check for fridge first.
+			var fp = BenchLocation.GetFridgePosition();
+			if (fp.HasValue && BenchPosition.Value.X == fp.Value.X && BenchPosition.Value.Y == fp.Value.Y) {
+				sprite ??= SpriteHelper.GetSprite(ItemRegistry.Create("(BC)216"));
+				displayName ??= I18n.Station_Kitchen();
+
+			} else if (BenchLocation.GetObjectAtPosition(BenchPosition.Value, out var sobj)) { 
+				sprite ??= SpriteHelper.GetSprite(sobj);
+				displayName ??= sobj.DisplayName;
+			}
+		}
+
+		if (string.IsNullOrEmpty(displayName))
+			return;
+
+		var builder = SimpleHelper.Builder(LayoutDirection.Horizontal);
+
+		if (sprite != null)
+			builder = builder.Sprite(sprite, scale: 4, align: Alignment.VCenter, overrideHeight: 32);
+		else
+			builder = builder.Text(" ");
+
+		StationLabel = builder
+			.Text(displayName, align: Alignment.Bottom)
+			.Text(" ")
+			.GetLayout();
 	}
 
 	[MemberNotNull(nameof(RecyclingBinTexture))]
@@ -758,6 +840,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			// Save any last state.
 			UpdateCategoryName();
 			SaveCategories();
+		}
+
+		if (Station != null) {
+			Editing = false;
+			return;
 		}
 
 		Editing = !Editing;
@@ -988,6 +1075,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			.Select(val => val.Category)
 			.Where(val => val.Id == "miscellaneous" || (val?.Recipes?.Count ?? 0) > 0 || (val?.DynamicRules?.Count ?? 0) > 0);
 
+		// Categories are not editable for stations yet.
+		// TODO: Update this when adding editing for stations.
+		if (Station != null)
+			return;
+
 		Mod.Recipes.SetCategories(Game1.player, categories, cooking);
 		Mod.Recipes.SaveCategories();
 	}
@@ -998,6 +1090,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		switch (icon.Type) {
 			case CategoryIcon.IconType.Item:
+				if (!string.IsNullOrEmpty(icon.ItemId))
+					return SpriteHelper.GetSprite(ItemRegistry.Create(icon.ItemId));
+
 				string? name = icon.RecipeName;
 				if (!string.IsNullOrEmpty(name)) {
 					RecipesByName.TryGetValue(name, out IRecipe? recipe);
@@ -1161,7 +1256,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			if (item is not null)
 				RecipesByItem.TryAdd(item, recipe);
 
-			if (!Editing && !recipe.HasRecipe(Game1.player) && (!cooking || Mod.Config.HideUnknown))
+			if (!Editing && (Station == null || ! Station.DisplayUnknownRecipes) && !recipe.HasRecipe(Game1.player) && (!cooking || Mod.Config.HideUnknown))
 				continue;
 
 			if (!Editing && ListedRecipes != null && !ListedRecipes.Contains(recipe.Name))
@@ -1191,9 +1286,13 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		int count = 1;
 
+		bool use_categories = Mod.Config.UseCategories;
+		if (Station != null && Station.Categories == null)
+			use_categories = false;
+
 		// Only check categories if categories are enabled.
 		// Otherwise, everything should go into misc.
-		if (Mod.Config.UseCategories) {
+		if (use_categories) {
 			// We start at 1, to leave room for the Favorites tab.
 
 			// Only show the favorites tab if we have favorites, or
@@ -1211,7 +1310,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				}, Favorites);
 			}
 
-			foreach (Category cat in Mod.Recipes.GetCategories(Game1.player, cooking)) {
+			Category[]? rawCats;
+			// TODO: Load customized station categories
+			if (Station?.Categories != null)
+				rawCats = Station.Categories;
+			else
+				rawCats = Mod.Recipes.GetCategories(Game1.player, cooking);
+
+			foreach (Category cat in rawCats) {
 				if (misc == null && (cat.Id == "misc" || cat.Id == "miscellaneous"))
 					misc = cat;
 
@@ -3785,8 +3891,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Standalone && DrawBG)
 			b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
-		if (Standalone)
+		if (Standalone) {
+			// Workstation Label
+			if (StationLabel is not null) {
+				var sz = StationLabel.GetSize(Game1.dialogueFont, Vector2.Zero);
+				StationLabel.DrawHover(b, Game1.dialogueFont, overrideX: (int) (xPositionOnScreen + 64), overrideY: (int) (yPositionOnScreen - sz.Y + 66));
+			}
+
+
 			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
+		}
+
 
 		if (!Editing)
 			drawHorizontalPartition(b, yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 248);
