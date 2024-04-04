@@ -416,9 +416,15 @@ public static class SpriteHelper {
 		return null;
 	}
 
-	public static Rectangle? GetSourceRectangle(Item? item) {
+	public static Rectangle GetSourceRectangle(Item? item) {
 		if (item is null)
-			return null;
+			return new Rectangle(0, 0, 0, 0);
+		else return GetSourceRectangle(item, GetTexture(item));
+	}
+
+	public static Rectangle GetSourceRectangle(Item? item, Texture2D texture) {
+		if (item is null)
+			return new Rectangle(0, 0, 0, 0);
 
 		int tileSize = SObject.spriteSheetTileSize;
 		Type type = item.GetType();
@@ -454,7 +460,7 @@ public static class SpriteHelper {
 			else if (gate && drawSum == 1500)
 				source = new Rectangle(112, 512, 16, 64);
 			else
-				source = Game1.getArbitrarySourceRect(fence.fenceTexture.Value, 64, 128, tile);
+				source = Game1.getArbitrarySourceRect(texture, 64, 128, tile);
 
 			return source;
 		}
@@ -468,21 +474,21 @@ public static class SpriteHelper {
 			if (obj.bigCraftable.Value)
 				return SObject.getSourceRectForBigCraftable(obj.ParentSheetIndex);
 
-			return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, obj.ParentSheetIndex, tileSize, tileSize);
+			return Game1.getSourceRectForStandardTileSheet(texture, obj.ParentSheetIndex, tileSize, tileSize);
 		}
 
 		// Weapons
 		if (item is MeleeWeapon weapon)
-			return Game1.getSquareSourceRectForNonStandardTileSheet(Tool.weaponsTexture, 16, 16, weapon.IndexOfMenuItemView);
+			return Game1.getSquareSourceRectForNonStandardTileSheet(texture, 16, 16, weapon.IndexOfMenuItemView);
 
 		// Tools
 		if (item is Tool tool)
-			return Game1.getSquareSourceRectForNonStandardTileSheet(Game1.toolSpriteSheet, 16, 16, tool.IndexOfMenuItemView);
+			return Game1.getSquareSourceRectForNonStandardTileSheet(texture, 16, 16, tool.IndexOfMenuItemView);
 
 		// Combined Ring
 		if (item is CombinedRing ring) {
 			// CombinedRings are crazy.
-			return null;
+			return new Rectangle(0, 0, 0, 0);
 		}
 
 		// Boots and Rings
@@ -493,7 +499,7 @@ public static class SpriteHelper {
 			else
 				idx = ((Ring) item).ParentSheetIndex;
 
-			return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx, tileSize, tileSize);
+			return Game1.getSourceRectForStandardTileSheet(texture, idx, tileSize, tileSize);
 		}
 
 		// Clothing
@@ -533,14 +539,13 @@ public static class SpriteHelper {
 		}
 
 		// Unknown
-		return null;
+		return new Rectangle(0, 0, 0, 0);
 	}
 
 	public static SpriteInfo? GetSprite(Item? item) {
 		if (item is null)
 			return null;
 
-		int tileSize = SObject.spriteSheetTileSize;
 		Type type = item.GetType();
 		string ts = type.ToString();
 
@@ -558,7 +563,16 @@ public static class SpriteHelper {
 				return sprite;
 		}
 
-		// Furniture
+		// Combined Ring
+		if (item is CombinedRing ring) {
+			// CombinedRings are crazy.
+			if (ring.combinedRings.Count > 1)
+				return new CombinedRingSpriteInfo(ring);
+		}
+
+		return new SpriteInfo(texture: GetTexture(item), GetSourceRectangle(item));
+
+		/*// Furniture
 		if (item is Furniture furniture) {
 			Texture2D texture = ItemRegistry.GetData(furniture.QualifiedItemId).GetTexture();
 
@@ -602,7 +616,7 @@ public static class SpriteHelper {
 			if (moddata != null) {
 				try {
 					texture = Game1.content.Load<Texture2D>(moddata.Name);
-				} catch (Exception) { /* no-op */ }
+				} catch (Exception) { *//* no-op *//* }
 			}
 
 			if (texture == null)
@@ -676,11 +690,225 @@ public static class SpriteHelper {
 			);
 		}
 
+		// Boots and Rings
+		if (item is Boots || item is Ring) {
+			int idx;
+			if (item is Boots boots)
+				idx = boots.ParentSheetIndex;
+			else
+				idx = ((Ring) item).ParentSheetIndex;
+
+			return new SpriteInfo(
+				Game1.objectSpriteSheet,
+				Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx, tileSize, tileSize)
+			);
+		}
+
+		// Clothing
+		if (item is Clothing clothing) {
+			int idx;
+
+			switch (clothing.clothesType.Value) {
+				case Clothing.ClothesType.SHIRT:
+					idx = clothing.ParentSheetIndex;
+					Rectangle source = new(
+						idx * 8 % 128,
+						idx * 8 / 128 * 32,
+						8, 8
+					);
+
+					return new SpriteInfo(
+						FarmerRenderer.shirtsTexture,
+						source,
+						overlaySource: new Rectangle(
+							source.X + 128, source.Y,
+							source.Width, source.Height
+						),
+						overlayColor: clothing.clothesColor.Value,
+						isPrismatic: clothing.isPrismatic.Value
+					);
+
+				case Clothing.ClothesType.PANTS:
+					int tiles = FarmerRenderer.pantsTexture.Width / 192;
+					idx = clothing.ParentSheetIndex;
+
+					return new SpriteInfo(
+						FarmerRenderer.pantsTexture,
+						new Rectangle(
+							192 * (idx % tiles),
+							688 * (idx / tiles) + 672,
+							16, 16
+						),
+						baseColor: clothing.clothesColor.Value,
+						isPrismatic: clothing.isPrismatic.Value
+					);
+			}
+		}
+
+		// Hat
+		if (item is Hat hat) {
+			int idx = hat.ParentSheetIndex;
+
+			return new SpriteInfo(
+				FarmerRenderer.hatsTexture,
+				new Rectangle(
+					idx * 20 % FarmerRenderer.hatsTexture.Width,
+					idx * 20 / FarmerRenderer.hatsTexture.Width * 20 * 4,
+					20, 20
+				)
+			);
+		}
+
+		// Unknown
+		return null; */
+	}
+
+	public static SpriteInfo? GetSprite(Item? item, Texture2D texture) {
+		if (item is null)
+			return null;
+
+		Type type = item.GetType();
+		string ts = type.ToString();
+
+		// DynamicGameAssets Compatibility
+		if (ts.Equals("DynamicGameAssets.Game.CustomObject")) {
+			SpriteInfo? sprite = GetDGACustomObjectSprite(item);
+			if (sprite is not null)
+				return sprite;
+		}
+
+		// RaisedGardenBed Compatibility
+		if (ts.Equals("RaisedGardenBeds.OutdoorPot")) {
+			SpriteInfo? sprite = GetGardenPotSprite(item);
+			if (sprite is not null)
+				return sprite;
+		}
+
 		// Combined Ring
 		if (item is CombinedRing ring) {
 			// CombinedRings are crazy.
 			if (ring.combinedRings.Count > 1)
 				return new CombinedRingSpriteInfo(ring);
+		}
+
+		return new SpriteInfo(texture, GetSourceRectangle(item, texture));
+
+		/*// Furniture
+		if (item is Furniture furniture) {
+			Texture2D texture = ItemRegistry.GetData(furniture.QualifiedItemId).GetTexture();
+
+			if (ts.Equals("CustomFurniture.CustomFurniture")) {
+				// TODO: More advanced furniture with layers.
+				if (Helper != null)
+					texture = Helper.Reflection.GetField<Texture2D>(item, "texture", required: false)?.GetValue() ?? texture;
+			}
+
+			return new SpriteInfo(
+				texture,
+				furniture.defaultSourceRect.Value
+			);
+		}
+
+		// Fence
+		if (item is Fence fence) {
+			Rectangle source;
+			int drawSum = fence.getDrawSum();
+			int tile = Fence.fenceDrawGuide[drawSum];
+			bool gate = fence.isGate.Value;
+
+			if (gate && drawSum == 110)
+				source = new Rectangle(0, 512, 88, 24);
+			else if (gate && drawSum == 1500)
+				source = new Rectangle(112, 512, 16, 64);
+			else
+				source = Game1.getArbitrarySourceRect(fence.fenceTexture.Value, 64, 128, tile);
+
+			return new SpriteInfo(
+				fence.fenceTexture.Value,
+				source
+			);
+		}
+
+		// Wallpaper
+		if (item is Wallpaper wallpaper) {
+			// Logic taken from the Wallpaper drawInMenu method.
+			var moddata = wallpaper.modData;
+			Texture2D? texture = null;
+			if (moddata != null) {
+				try {
+					texture = Game1.content.Load<Texture2D>(moddata.Name);
+				} catch (Exception) { *//* no-op *//* }
+			}
+
+			if (texture == null)
+				texture = Game1.content.Load<Texture2D>("Maps\\walls_and_floors");
+
+			Rectangle source;
+
+			if (Helper == null)
+				source = Rectangle.Empty;
+			else if (wallpaper.isFloor.Value)
+				source = Helper.Reflection.GetField<Rectangle>(typeof(Wallpaper), "floorContainerRect").GetValue();
+			else
+				source = Helper.Reflection.GetField<Rectangle>(typeof(Wallpaper), "wallpaperContainerRect").GetValue();
+
+			return new SpriteInfo(
+				texture: Game1.mouseCursors2,
+				baseSource: source,
+				overlayTexture: texture,
+				overlaySource: wallpaper.sourceRect.Value,
+				overlayScale: 0.5f
+			);
+		}
+
+		// Colored Object
+		if (item is ColoredObject colored) {
+			int idx = colored.ParentSheetIndex;
+			Color color = colored.color.Value;
+
+			if (colored.bigCraftable.Value)
+				return new SpriteInfo(
+					texture: Game1.bigCraftableSpriteSheet,
+					baseSource: SObject.getSourceRectForBigCraftable(idx),
+					overlaySource: SObject.getSourceRectForBigCraftable(idx + 1),
+					overlayColor: color
+				);
+
+			int offset = colored.ColorSameIndexAsParentSheetIndex ? 0 : 1;
+
+			return new SpriteInfo(
+				texture: Game1.objectSpriteSheet,
+				baseSource: Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx, tileSize, tileSize),
+				overlaySource: Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, idx + offset, tileSize, tileSize),
+				overlayColor: color
+			);
+		}
+
+		// Objects
+		if (item is SObject obj) {
+			if (obj.bigCraftable.Value)
+				return new SpriteInfo(Game1.bigCraftableSpriteSheet, SObject.getSourceRectForBigCraftable(obj.ParentSheetIndex));
+
+			return new SpriteInfo(
+				Game1.objectSpriteSheet,
+				Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, obj.ParentSheetIndex, tileSize, tileSize)
+			);
+		}
+
+		// Weapons
+		if (item is MeleeWeapon weapon) {
+			return new SpriteInfo(
+				Tool.weaponsTexture,
+				Game1.getSquareSourceRectForNonStandardTileSheet(Tool.weaponsTexture, 16, 16, weapon.IndexOfMenuItemView)
+			);
+		}
+
+		// Tools
+		if (item is Tool tool) {
+			return new SpriteInfo(
+				Game1.toolSpriteSheet,
+				Game1.getSquareSourceRectForNonStandardTileSheet(Game1.toolSpriteSheet, 16, 16, tool.IndexOfMenuItemView)
+			);
 		}
 
 		// Boots and Rings
@@ -753,8 +981,6 @@ public static class SpriteHelper {
 		}
 
 		// Unknown
-		return null;
+		return null; */
 	}
-
-
 }

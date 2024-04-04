@@ -24,6 +24,7 @@ using Leclair.Stardew.Almanac.Models;
 using StardewValley.GameData.Movies;
 using StardewValley.GameData.Shops;
 using StardewValley.Internal;
+using StardewValley.GameData;
 
 namespace Leclair.Stardew.Almanac.Managers;
 
@@ -350,23 +351,23 @@ public class NoticesManager : BaseManager {
 		if (gathering && bush == null)
 			bush = new();
 
-			if (gathering && IsBlooming(date.Season, date.DayOfMonth)) {
-				Item? berry = null;
-				if (date.SeasonIndex == 0)
-					berry = ItemRegistry.Create("(O)296", 1); // Salmonberry
+		if (gathering && IsBlooming(bush!, date.Season, date.DayOfMonth)) {
+			Item? berry = null;
+			if (date.SeasonIndex == 0)
+				berry = ItemRegistry.Create("(O)296", 1); // Salmonberry
 
-				else if (date.SeasonIndex == 2)
-					berry = ItemRegistry.Create("(O)410", 1); // Blackberry
+			else if (date.SeasonIndex == 2)
+				berry = ItemRegistry.Create("(O)410", 1); // Blackberry
 
 			if (berry != null) {
-				bool first_day = date.DayOfMonth == 1 || !IsBlooming(date.Season, date.DayOfMonth - 1);
+				bool first_day = date.DayOfMonth == 1 || !IsBlooming(bush!, date.Season, date.DayOfMonth - 1);
 				int last = date.DayOfMonth;
 
 				// If it's the first day, then we also need the last day
 				// so we can display a nice string to the user.
 				if (first_day)
 					for (int d = date.DayOfMonth + 1; d <= ModEntry.DaysPerMonth; d++) {
-						if (IsBlooming(date.Season, d))
+						if (IsBlooming(bush!, date.Season, d))
 							last = d;
 						else
 							break;
@@ -438,6 +439,48 @@ public class NoticesManager : BaseManager {
 					)
 				);
 			}
+		}
+
+		if (Mod.Config.NoticesShowFestivals && Utility.TryGetPassiveFestivalDataForDay(date.DayOfMonth, date.Season, null, out string id, out PassiveFestivalData passFestData)) {
+			string displayDate = Utility.getDateStringFor(date.DayOfMonth, date.SeasonIndex, date.Year);
+			if (passFestData.StartDay <= date.DayOfMonth && passFestData.EndDay >= date.DayOfMonth) {
+				string festName = id;
+				try {
+					Dictionary<string, string> content = Game1.content.Load<Dictionary<string, string>>("Strings\\1_6_Strings");
+					if (content.ContainsKey(id))
+						festName = content[id];
+					//These festivals aren't in 1_6_Strings
+					switch (id) {
+						case "NightMarket": {
+							festName = "Night Market";
+							break;
+						}
+						case "DesertFestival": {
+							festName = "Desert Festival";
+							break;
+						}
+					}
+				} catch {
+					ModEntry.Instance.Log("Cannot get festival name.", LogLevel.Warn);
+				}
+				yield return new RichEvent(
+					null,
+					passFestData.StartDay == date.DayOfMonth?  FlowHelper.Translate(
+						Mod.Helper.Translation.Get("page.notices.passive-festival"),
+						new {
+							name = festName,
+							startTime = Mod.FormatTime(passFestData.StartTime),
+							startDay = Utility.getDateStringFor(passFestData.StartDay, Utility.getSeasonNumber(Utility.getSeasonKey(passFestData.Season)), 1),
+							endDay = Utility.getDateStringFor(passFestData.EndDay, Utility.getSeasonNumber(Utility.getSeasonKey(passFestData.Season)), 1)
+						},
+						align: Alignment.VCenter
+					) : null,
+					new SpriteInfo(
+						Game1.mouseCursors,
+						new Rectangle(346, 392, 8, 8)
+					)
+				);
+			} else ModEntry.Instance.Log("Adding festival failed.", LogLevel.Warn);
 		}
 
 		// Weddings / Anniversaries / Children
@@ -588,24 +631,13 @@ public class NoticesManager : BaseManager {
 		// Winter
 		else if (date.SeasonIndex == 3) {
 
-			// Night Market
-			if (date.DayOfMonth >= 15 && date.DayOfMonth <= 17) {
-				yield return new RichEvent(
-					date.DayOfMonth == 15 ?
-						I18n.Page_Notices_Market() : null,
-					null,
-					new SpriteInfo(
-						Game1.mouseCursors,
-						new Rectangle(346, 392, 8, 8)
-					)
-				);
-			}
 
 		}
 
 
 		// Traveling Merchant
 		if (Mod.Config.NoticesShowMerchant != MerchantMode.Disabled && date.DayOfMonth % 7 % 5 == 0) {
+			
 			var sprite = new SpriteInfo(
 				Game1.mouseCursors,
 				new Rectangle(193, 1412, 18, 18)
@@ -656,9 +688,64 @@ public class NoticesManager : BaseManager {
 				}
 			}
 		}
+		//Bookseller
+		if (Mod.Config.NoticesShowBookseller != MerchantMode.Disabled && IsBooksellerVisiting(date)) {
+			var sprite = new SpriteInfo(
+				Game1.mouseCursors_1_6,
+				new Rectangle(177, 488, 18, 24)
+			);
+
+			if (Mod.Config.NoticesShowBookseller == MerchantMode.Visit)
+				yield return new RichEvent(
+					null,
+					FlowHelper.Builder()
+						.FormatText(I18n.Page_Notices_Bookseller(), align: Alignment.VCenter)
+						.Build(),
+					sprite
+				);
+
+			else {
+				var stock = ShopBuilder.GetShopStock(Game1.shop_bookseller);
+				if (stock.Count > 0) {
+					var builder = FlowHelper.Builder()
+						.FormatText(I18n.Page_Notices_Bookseller_Stock(), align: Alignment.VCenter)
+						.Text("\n  ");
+
+					bool first = true;
+
+					foreach (var pair in stock) {
+						var item = pair.Key;
+						if (item.Stack < 1 && !item.IsInfiniteStock())
+							continue;
+
+						if (first)
+							first = false;
+						else
+							builder.Text(", ", shadow: false);
+
+						if (item is SObject sobj)
+							builder
+								.Sprite(SpriteHelper.GetSprite(sobj,Game1.objectSpriteSheet_2), scale: 2, align: Alignment.VCenter)
+								.Text(" ");
+
+						builder.Text(item.DisplayName, shadow: false);
+					}
+
+
+					yield return new RichEvent(
+						null,
+						builder.Build(),
+						sprite: sprite
+					);
+				}
+			}
+		}
 	}
+	#endregion
+
+	#region Utility methods
 	//Copied IsBloom from Bush.cs and switched calls for current season & day to passed values
-	public bool IsBlooming(StardewValley.Season season, int dayOfMonth) {
+	public bool IsBlooming(Bush bush, StardewValley.Season season, int dayOfMonth) {
 		if (bush.size.Value == 4) {
 			return bush.tileSheetOffset.Value == 1;
 		}
@@ -686,7 +773,35 @@ public class NoticesManager : BaseManager {
 				return false;
 		}
 	}
-
+	//Copied from Utility.cs and switched calls for current date info to passed value
+	public static List<int> GetDaysOfBooksellerThisSeason(WorldDate date) {
+		Random r = Utility.CreateRandom(date.Year * 11, Game1.uniqueIDForThisGame, date.SeasonIndex);
+		int[]? possible_days = null;
+		List<int> days = new List<int>();
+		switch (date.Season) {
+			case StardewValley.Season.Spring:
+				possible_days = new int[5] { 11, 12, 21, 22, 25 };
+				break;
+			case StardewValley.Season.Summer:
+				possible_days = new int[5] { 9, 12, 18, 25, 27 };
+				break;
+			case StardewValley.Season.Fall:
+				possible_days = new int[8] { 4, 7, 8, 9, 12, 19, 22, 25 };
+				break;
+			case StardewValley.Season.Winter:
+				possible_days = new int[6] { 5, 11, 12, 19, 22, 24 };
+				break;
+		}
+		int index1 = r.Next(possible_days!.Length);
+		days.Add(possible_days[index1]);
+		days.Add(possible_days[(index1 + possible_days.Length / 2) % possible_days.Length]);
+		return days;
+	}
+	public static bool IsBooksellerVisiting(WorldDate date) {
+		List<int> visitDays = GetDaysOfBooksellerThisSeason(date);
+		foreach(int day in visitDays) if(day==date.DayOfMonth) return true;
+		return false;
+	}
 	#endregion
 
 }

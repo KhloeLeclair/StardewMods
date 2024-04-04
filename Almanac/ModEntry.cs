@@ -793,6 +793,17 @@ public class ModEntry : ModSubscriber {
 					[MerchantMode.Stock] = I18n.Settings_Notices_Merchant_Stock
 				}
 			)
+			.AddChoice(
+				I18n.Settings_Notices_Bookseller,
+				I18n.Settings_Notices_BooksellerDesc,
+				c => c.NoticesShowBookseller,
+				(c, v) => c.NoticesShowBookseller = v,
+				new Dictionary<MerchantMode, Func<string>> {
+					[MerchantMode.Disabled] = I18n.Settings_Notices_Bookseller_Disabled,
+					[MerchantMode.Visit] = I18n.Settings_Notices_Bookseller_Visit,
+					[MerchantMode.Stock] = I18n.Settings_Notices_Bookseller_Stock
+				}
+			)
 			.Add(
 				I18n.Settings_Notices_Trains,
 				I18n.Settings_Notices_TrainsDesc,
