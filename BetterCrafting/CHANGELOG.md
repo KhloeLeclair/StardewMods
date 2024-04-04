@@ -1,5 +1,46 @@
 # Changelog
 
+## 2.1.0
+Released April 4th, 2024.
+
+### New Features
+
+* Added first-party custom crafting stations for content pack creators.
+* Added a fancy label to the menu that appears when using a Kitchen,
+  Workbench, etc. as well as the knew custom stations.
+
+### Changes
+
+* Buildings with inventories are now supported, such as Junimo Huts.
+
+### Fixes
+
+* Better null handling when checking for big craftable actions. Stops
+  spamming warnings in the log in certain circumstances.
+
+### Mod Compatibility
+
+* Detect storage items added by Expanded Storage and categorize
+  them appropriately.
+
+### API Changes
+
+* Added a `[station]` property to the map tile action.
+* Added several properties to `IBetterCraftingMenu` to expose more of
+  the menu's state.
+* Add a flag to the `IPopulateContainersEvent` to let mods disable
+  container discovery.
+* Add a method to get recipes that should be exclusive to certain
+  crafting stations.
+* Expose the resource `Mods/leclair.bettercrafting/CraftingStations`
+  for loading data on custom crafting stations, as well as reading
+  `stations.json` files from content packs owned by Better Crafting.
+* Expose the resource `Mods/leclair.bettercrafting/Categories` for
+  customizing the default categories with content patcher. Please
+  note that editing the defaults in this way is not effective if
+  users have customized their categories.
+
+
 ## 2.0.0
 Released April 3rd, 2024.
 
@@ -32,7 +73,8 @@ Kept you waiting, huh?
 * Dynamic Game Assets compatibility code. DGA is dead, long live 1.6.
 
 ### API Changes
-* Added the map action `leclair.bettercrafting_OpenMenu [cooking] [includeBuildings]`
+
+* Added the `leclair.bettercrafting_OpenMenu [cooking] [includeBuildings]`
   map tile action.
 * Added the ability to run map tile actions from big craftables using the
   `leclair.bettercrafting_PerformAction` custom field.

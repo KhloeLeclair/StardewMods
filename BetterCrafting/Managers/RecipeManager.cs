@@ -23,7 +23,7 @@ namespace Leclair.Stardew.BetterCrafting.Managers;
 
 public class RecipeManager : BaseManager {
 
-	public readonly static string CATEGORY_PATH = @"Mod/leclair.bettercrafting/Categories";
+	public readonly static string CATEGORY_PATH = @"Mods/leclair.bettercrafting/Categories";
 
 	// Name -> ID Conversion
 	private readonly static Regex NAME_TO_ID = new(@"[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);

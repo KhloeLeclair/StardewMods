@@ -147,6 +147,11 @@ public class ModAPI : IBetterCrafting {
 	#region Recipes
 
 	/// <inheritdoc />
+	public IEnumerable<string> GetExclusiveRecipes(bool cooking) {
+		return Mod.Stations.GetExclusiveRecipes(cooking);
+	}
+
+	/// <inheritdoc />
 	public void AddRecipeProvider(IRecipeProvider provider) {
 		Mod.Recipes.AddProvider(provider);
 	}
@@ -164,11 +169,6 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public IReadOnlyCollection<IRecipe> GetRecipes(bool cooking) {
 		return Mod.Recipes.GetRecipes(cooking).AsReadOnly();
-	}
-
-	/// <inheritdoc />
-	public IRecipe CreateRecipeWithIngredients(CraftingRecipe recipe, IEnumerable<IIngredient> ingredients, Action<IPerformCraftEvent>? onPerformCraft = null) {
-		return new RecipeWithIngredients(recipe, ingredients, onPerformCraft);
 	}
 
 	/// <inheritdoc />

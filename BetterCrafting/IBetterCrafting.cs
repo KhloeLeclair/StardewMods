@@ -1147,6 +1147,16 @@ public interface IBetterCrafting {
 	#region Recipes
 
 	/// <summary>
+	/// Return a list of all recipes that are exclusive to a specific
+	/// crafting station. These recipes should not be listed in general
+	/// crafting stations.
+	/// </summary>
+	/// <param name="cooking">If true, return cooking recipes. If false, return
+	/// crafting recipes.</param>
+	/// <returns>An enumeration of recipe names.</returns>
+	IEnumerable<string> GetExclusiveRecipes(bool cooking);
+
+	/// <summary>
 	/// Register a recipe provider with Better Crafting. Calling this
 	/// will also invalidate the recipe cache.
 	///

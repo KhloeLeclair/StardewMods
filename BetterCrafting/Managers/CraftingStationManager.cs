@@ -48,6 +48,10 @@ public class CraftingStationManager : BaseManager {
 
 	#region Loading
 
+	public void Invalidate() {
+		Stations = null;
+	}
+
 	private Dictionary<string, CraftingStation> LoadCraftingStationsFromFiles() {
 
 		Dictionary<string, CraftingStation> result = new();
@@ -154,6 +158,11 @@ public class CraftingStationManager : BaseManager {
 	public bool IsStation(string name) {
 		LoadStations();
 		return Stations.ContainsKey(name);
+	}
+
+	public IEnumerable<CraftingStation> GetStations() {
+		LoadStations();
+		return Stations.Values;
 	}
 
 	public bool TryGetStation(string name, Farmer who, [NotNullWhen(true)] out CraftingStation? station) {

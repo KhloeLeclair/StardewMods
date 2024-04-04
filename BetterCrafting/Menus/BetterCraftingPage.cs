@@ -2112,7 +2112,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				name: "",
 				bounds: new Rectangle(0, 0, 64, 64),
 				label: null,
-				hoverText: cooking && !recipe.HasRecipe(Game1.player) ? "ghosted" : "",
+				hoverText: cooking && (Station == null || ! Station.DisplayUnknownRecipes) && !recipe.HasRecipe(Game1.player) ? "ghosted" : "",
 				texture: recipe.Texture,
 				sourceRect: recipe.SourceRectangle,
 				scale: 4f

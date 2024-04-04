@@ -12,8 +12,6 @@ using StardewValley.Delegates;
 using StardewValley.Objects;
 using StardewValley.Triggers;
 
-using static System.Collections.Specialized.BitVector32;
-
 namespace Leclair.Stardew.BetterCrafting.Managers;
 
 public class TriggerManager: BaseManager {
@@ -47,10 +45,10 @@ public class TriggerManager: BaseManager {
 
 	public bool Map_OpenMenu(GameLocation location, string[] args, Farmer who, Point pos) {
 		if (!ArgUtility.TryGetBool(args, 1, out bool cooking, out string error))
-			return false;
+			cooking = false;
 
 		if (!ArgUtility.TryGetBool(args, 2, out bool includeBuildings, out error))
-			return false;
+			includeBuildings = false;
 
 		string? station = args.Length >= 4 ? args[3] : null;
 
@@ -63,6 +61,14 @@ public class TriggerManager: BaseManager {
 		}
 
 		//Log($"OpenMenu {who}, {pos}, {location}, {cooking}, {includeBuildings}", StardewModdingAPI.LogLevel.Debug);
+
+		// Ensure we're not doing anything naughty.
+		if (Game1.activeClickableMenu != null) {
+			if (!Game1.activeClickableMenu.readyToClose())
+				return false;
+
+			CommonHelper.YeetMenu(Game1.activeClickableMenu);
+		}
 
 		Game1.activeClickableMenu = BetterCraftingPage.Open(
 			Mod,
@@ -80,16 +86,24 @@ public class TriggerManager: BaseManager {
 
 	public bool Trigger_OpenMenu(string[] args, TriggerActionContext ctx, out string? error) {
 		if (!ArgUtility.TryGetBool(args, 1, out bool cooking, out error))
-			return false;
+			cooking = false;
 
 		if (!ArgUtility.TryGetBool(args, 2, out bool includeBuildings, out error))
-			return false;
+			includeBuildings = false;
 
 		string? station = args.Length >= 4 ? args[3] : null;
 
 		if (!string.IsNullOrEmpty(station) && !Mod.Stations.IsStation(station)) {
 			Log($"Tried to open invalid station: {station}", StardewModdingAPI.LogLevel.Warn);
 			return false;
+		}
+
+		// Ensure we're not doing anything naughty.
+		if (Game1.activeClickableMenu != null) {
+			if (!Game1.activeClickableMenu.readyToClose())
+				return false;
+
+			CommonHelper.YeetMenu(Game1.activeClickableMenu);
 		}
 
 		Game1.activeClickableMenu = BetterCraftingPage.Open(

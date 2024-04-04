@@ -511,7 +511,7 @@ public static class InventoryHelper {
 				TileHelper.GetObjectAtPosition(abs.Location, abs.Position, out obj);
 				abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
 				furn = abs.Location.GetFurnitureAt(abs.Position);
-				building = includeBuildings ? abs.Location.getBuildingAt(abs.Position) : null;
+				building = abs.Location.getBuildingAt(abs.Position);
 			} else {
 				feature = null;
 				obj = null;
@@ -531,8 +531,8 @@ public static class InventoryHelper {
 					// We don't do connections from buildings, so no setting want_neighbors.
 				}
 
-				// Next, walk into the building.
-				if (building.HasIndoors() && building.GetIndoors() is GameLocation indoors)
+				// Next, walk into the building if we want to do so.
+				if (includeBuildings && building.HasIndoors() && building.GetIndoors() is GameLocation indoors)
 					scanLimit -= WalkIntoMap(result, indoors, who, getProvider, scanLimit - i, targetLimit);
 			}
 

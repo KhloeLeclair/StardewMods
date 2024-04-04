@@ -437,13 +437,14 @@ public class ModEntry : ModSubscriber {
 		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
 			Recipes.Invalidate();
 			ItemCache.Invalidate();
+			Stations.Invalidate();
 
-			Log($"Invalided caches.");
+			Log($"Invalided caches.", LogLevel.Info);
 		});
 
 		Helper.ConsoleCommands.Add("bc_retheme", "Reload all themes.", (name, args) => {
 			ThemeManager.Discover();
-			Log($"Reloaded themes. You may need to reopen menus.");
+			Log($"Reloaded themes. You may need to reopen menus.", LogLevel.Info);
 		});
 
 		Helper.ConsoleCommands.Add("bc_theme", "List all themes, or switch to a new theme.", (name, args) => {
@@ -452,6 +453,33 @@ public class ModEntry : ModSubscriber {
 				SaveConfig();
 			}
 		});
+
+		Helper.ConsoleCommands.Add("bc_stations", "List all custom crafting stations, or open one if you provide a name.", (name, args) => {
+			if ( args.Length > 0 && !string.IsNullOrEmpty(args[0]) ) {
+				string key = args[0].Trim();
+
+				if (key.Equals("reload", StringComparison.OrdinalIgnoreCase)) {
+					Stations.Invalidate();
+					Log($"Invalidated cache.", LogLevel.Info);
+					return;
+				}
+
+				if (!Stations.IsStation(key)) {
+					Log($"No such station: {key}", LogLevel.Warn);
+					return;
+				}
+
+				Triggers.Map_OpenMenu(Game1.currentLocation, new string[] {
+					"", "false", "false", key
+				}, Game1.player, Game1.player.Position.ToPoint());
+				return;
+			}
+
+			Log($"Available Crafting Stations:", LogLevel.Info);
+			foreach(var station in Stations.GetStations())
+				Log($" [{station.Id}]: {station.DisplayName} (Recipes: {station.Recipes?.Length ?? 0}, Exclusive: {station.AreRecipesExclusive})", LogLevel.Info);
+		});
+
 	}
 
 	[Subscriber]

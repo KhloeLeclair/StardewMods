@@ -567,6 +567,9 @@ public static class CommonHelper {
 		return new((int) pos.X, (int) pos.Y);
 	}
 
+	internal static Point ToPoint(this Vector2 pos) {
+		return new((int) pos.X, (int) pos.Y);
+	}
 
 	public static void YeetMenu(IClickableMenu menu) {
 		if (menu == null) return;
