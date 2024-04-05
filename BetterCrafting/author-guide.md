@@ -265,6 +265,9 @@ Stations, as well as one drawback.
 
 If this sounds good to you, then let's get started!
 
+First though, there's a converter to help get you started if you're coming from
+CCS. Check it out here: https://khloeleclair.github.io/CCSConverter/
+
 You can define crafting stations with either Content Patcher (recommended), or
 by creating a `stations.json` file in your Better Crafting content pack.
 
