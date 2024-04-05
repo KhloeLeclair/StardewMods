@@ -35,7 +35,7 @@ public class AdvancedMultipleMutexRequest {
 		OnFailure = onFailure;
 		AcquiredLocks = new();
 		Mutexes = mutexes is NetMutex[] nms ? nms : mutexes.ToArray();
-		FC = new(null);
+		FC = Game1.getOnlineFarmers();
 		RequestLock();
 	}
 

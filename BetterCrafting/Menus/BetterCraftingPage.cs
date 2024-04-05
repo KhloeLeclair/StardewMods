@@ -4163,7 +4163,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		if (Standalone) {
 			Game1.mouseCursorTransparency = 1f;
-			drawMouse(b);
+			drawMouse(b, cursor: Working ? 1 : -1);
 		}
 
 		// TODO: Better tooltip
