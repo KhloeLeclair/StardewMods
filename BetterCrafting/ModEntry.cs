@@ -109,6 +109,7 @@ public class ModEntry : ModSubscriber {
 		RenderHelper.SetHelper(helper);
 
 		Instance = this;
+		AdvancedMultipleMutexRequest.Mod = this;
 
 		// Before Harmony...
 		SpookyAction = new SpookyActionAtADistance(this);
@@ -118,6 +119,7 @@ public class ModEntry : ModSubscriber {
 
 		SpookyAction.PatchGame(Harmony);
 		Patches.CraftingPage_Patches.Patch(this);
+		Patches.LetterViewerMenu_Patches.Patch(this);
 		Patches.SObject_Patches.Patch(this);
 		Patches.Item_Patches.Patch(this);
 		Patches.GameLocation_Patches.Patch(this);

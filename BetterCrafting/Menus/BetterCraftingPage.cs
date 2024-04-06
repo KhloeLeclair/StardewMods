@@ -1753,6 +1753,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 #if DEBUG
 		Log($"Sources: {count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
+#else
+		Log($"Sources: {count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Trace);
 #endif
 	}
 
@@ -1838,8 +1840,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
 
-			if (locked.Count < (CachedInventories?.Count ?? 0))
+			if (locked.Count < (CachedInventories?.Count ?? 0)) {
+				LogInventories();
 				Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
+			}
 
 			List<Item?> items = GetActualContainerContents(locked);
 			List<Chest>? chests = ChestsOnly ? locked
@@ -2063,6 +2067,50 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		PerformTransfer(behavior, HeldItem, onDoneAction: callback);
 	}
 
+	private void LogInventories() {
+		if (CachedInventories == null)
+			return;
+
+#if DEBUG
+		LogLevel level = LogLevel.Debug;
+#else
+		LogLevel level = LogLevel.Trace;
+#endif
+
+		Mod.Log($"Inventory State as follows. Current Location: {Game1.currentLocation.NameOrUniqueName}", level);
+
+		List<string[]> states = new();
+		var active_places = Mod.Helper.Multiplayer.GetActiveLocations().ToHashSet();
+
+		foreach(var inv in CachedInventories) {
+			var provider = Mod.GetInventoryProvider(inv.Source);
+			var mutex = provider is null ? null : provider.GetMutex(inv.Source, inv.Location, Game1.player);
+
+			bool active = inv.Location is null ? false : active_places.Contains(inv.Location);
+
+			states.Add(new string[] {
+				$"{inv.Source.GetHashCode()}",
+				$"{inv.Source.GetType().FullName}",
+				$"{provider?.GetType()?.FullName}",
+				$"{mutex?.GetHashCode()}",
+				$"{inv.Location?.NameOrUniqueName}",
+				$"{active}"
+			});
+		}
+
+		string[] headers = new string[] {
+			"ID",
+			"Type",
+			"Provider",
+			"MutexID",
+			"Location",
+			"IsActive"
+		};
+
+		Mod.LogTable(headers, states, level);
+
+	}
+
 	protected void PerformTransfer(TransferBehavior behavior, Item? item, Action<Item?>? onDoneAction = null) {
 		if (Working) {
 			onDoneAction?.Invoke(item);
@@ -2075,8 +2123,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (item == null) {
 			// If we have no item, transfer everything.
 			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
-				if (locked.Count < (CachedInventories?.Count ?? 0))
+				if (locked.Count < (CachedInventories?.Count ?? 0)) {
+					LogInventories();
 					Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
+				}
 
 				void OnTransfer(Item item, int idx) {
 					if (idx < 0 || idx >= inventory.inventory.Count)
@@ -2095,8 +2145,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		} else {
 			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
-				if (locked.Count < (CachedInventories?.Count ?? 0))
+				if (locked.Count < (CachedInventories?.Count ?? 0)) {
+					LogInventories();
 					Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
+				}
 
 				List<Item?> items = new() { item };
 

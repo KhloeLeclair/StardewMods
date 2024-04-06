@@ -16,6 +16,7 @@ using StardewModdingAPI;
 
 using StardewValley;
 using StardewValley.Internal;
+using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
@@ -35,7 +36,7 @@ public class DataRecipe : IRecipe {
 		foreach (var ingredient in Data.Ingredients) {
 			switch (ingredient.Type) {
 				case IngredientType.Currency:
-					ings.Add(new CurrencyIngredient(ingredient.Currency, ingredient.Quantity));
+					ings.Add(new CurrencyIngredient(ingredient.Currency, ingredient.Quantity, ingredient.RecycleRate));
 					break;
 				case IngredientType.Item:
 					string[]? tags = ingredient.ContextTags != null && ingredient.ContextTags.Length > 0 ? ingredient.ContextTags : null;
@@ -47,8 +48,8 @@ public class DataRecipe : IRecipe {
 						ings.Add(new ErrorIngredient());
 					else if (itemId != null && ItemRegistry.GetData(itemId) == null)
 						ings.Add(new ErrorIngredient());
-					else if (itemId != null && tags == null && ingredient.DisplayName == null && ingredient.Icon.Type == CategoryIcon.IconType.Item && ingredient.Icon.ItemId == null)
-						ings.Add(new BaseIngredient(itemId, ingredient.Quantity));
+					else if (itemId != null && tags == null && ingredient.RecycleItem == null && ingredient.DisplayName == null && ingredient.Icon.Type == CategoryIcon.IconType.Item && ingredient.Icon.ItemId == null)
+						ings.Add(new BaseIngredient(itemId, ingredient.Quantity, ingredient.RecycleRate));
 					else {
 						Func<Item, bool> itemMatches;
 						if (itemId != null)
@@ -71,7 +72,22 @@ public class DataRecipe : IRecipe {
 							? () => ingredient.DisplayName
 						: () => item.Value?.DisplayName ?? "???";
 
-						ings.Add(new MatcherIngredient(itemMatches, ingredient.Quantity, displayName, () => sprite.Texture, sprite.BaseSource));
+						Func<Item?>? recycleTo = null;
+						if (ingredient.RecycleItem != null)
+							recycleTo = delegate () {
+								if (string.IsNullOrEmpty(ingredient.RecycleItem.Condition) || GameStateQuery.CheckConditions(ingredient.RecycleItem.Condition, Game1.currentLocation, Game1.player)) {
+									ItemQueryContext ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
+									Item result = ItemQueryResolver.TryResolveRandomItem(ingredient.RecycleItem, ctx, avoidRepeat: false, null, null, null, (query, error) => {
+										Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", StardewModdingAPI.LogLevel.Error);
+									});
+
+									return result;
+								}
+
+								return null;
+							};
+
+						ings.Add(new MatcherIngredient(itemMatches, ingredient.Quantity, displayName, () => sprite.Texture, sprite.BaseSource, recycleTo, ingredient.RecycleRate));
 					}
 
 					break;
@@ -126,9 +142,9 @@ public class DataRecipe : IRecipe {
 
 	public string Name => Data.Id;
 
-	public string DisplayName => Data.DisplayName ?? Data.Id;
+	public string DisplayName => TokenParser.ParseText(Data.DisplayName ?? Data.Id);
 
-	public string? Description => Data.Description;
+	public string? Description => TokenParser.ParseText(Data.Description);
 
 	public CraftingRecipe? CraftingRecipe => null;
 
@@ -213,7 +229,9 @@ public class DataRecipe : IRecipe {
 	}
 
 	public bool HasRecipe(Farmer who) {
-		if (Data.IsCooking)
+		if (Data.Default)
+			return true;
+		else if (Data.IsCooking)
 			return who.cookingRecipes.ContainsKey(Name);
 		else
 			return who.craftingRecipes.ContainsKey(Name);

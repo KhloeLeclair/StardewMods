@@ -44,12 +44,15 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 	public readonly static Rectangle ICON_CLUB_COINS = new(211, 373, 9, 10);
 
 	public readonly CurrencyType Type;
+	public readonly float RecycleRate;
 
 	public bool SupportsQuality => true;
 
-	public CurrencyIngredient(CurrencyType type, int quantity) {
+
+	public CurrencyIngredient(CurrencyType type, int quantity, float recycleRate = 1f) {
 		Type = type;
 		Quantity = quantity;
+		RecycleRate = recycleRate;
 	}
 
 	#region IRecyclable
@@ -67,10 +70,13 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 	}
 
 	public int GetRecycleQuantity(Farmer who, Item? recycledItem, bool fuzzyItems) {
-		return Quantity;
+		return (int) (Quantity * RecycleRate);
 	}
 
 	public bool CanRecycle(Farmer who, Item? recycledItem, bool fuzzyItems) {
+		if (RecycleRate <= 0f)
+			return false;
+
 		switch (Type) {
 			case CurrencyType.Money:
 			case CurrencyType.FestivalPoints:
@@ -83,18 +89,20 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 	}
 
 	public IEnumerable<Item>? Recycle(Farmer who, Item? recycledItem, bool fuzzyItems) {
+		int quantity = GetRecycleQuantity(who, recycledItem, fuzzyItems);
+
 		switch (Type) {
 			case CurrencyType.Money:
-				who.Money += Quantity;
+				who.Money += quantity;
 				break;
 			case CurrencyType.FestivalPoints:
-				who.festivalScore += Quantity;
+				who.festivalScore += quantity;
 				break;
 			case CurrencyType.ClubCoins:
-				who.clubCoins += Quantity;
+				who.clubCoins += quantity;
 				break;
 			case CurrencyType.QiGems:
-				who.QiGems += Quantity;
+				who.QiGems += quantity;
 				break;
 		}
 

@@ -1225,7 +1225,8 @@ public interface IBetterCrafting {
 	/// </summary>
 	/// <param name="item">The item ID to match.</param>
 	/// <param name="quantity">The quantity to consume.</param>
-	IIngredient CreateBaseIngredient(int item, int quantity);
+	/// <param name="recycleRate">The percentage of items to return when recycling.</param>
+	IIngredient CreateBaseIngredient(int item, int quantity, float recycleRate = 1f);
 
 	/// <summary>
 	/// Create a simple <see cref="IIngredient"/> that matches items using a
@@ -1240,7 +1241,11 @@ public interface IBetterCrafting {
 	/// ingredient. Providing a value here marks this ingredients as non-fuzzy
 	/// for the purpose of recycling. If you want fuzzy behavior, just leave
 	/// this as null and an appropriate item will be discovered.</param>
-	IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null);
+	/// <param name="recycleRate">The percentage of items to return when recycling.</param>
+	IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Func<Item?>? recycleTo = null, float recycleRate = 1f);
+
+	[Obsolete("Use the version that takes a function for the recycleTo item.")]
+	IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null, float recycleRate = 1f);
 
 	/// <summary>
 	/// Create a simple <see cref="IIngredient"/> that matches a specific
@@ -1248,7 +1253,8 @@ public interface IBetterCrafting {
 	/// </summary>
 	/// <param name="type">The currency to match.</param>
 	/// <param name="quantity">The quantity to consume.</param>
-	IIngredient CreateCurrencyIngredient(CurrencyType type, int quantity);
+	/// <param name="recycleRate">The percentage of items to return when recycling.</param>
+	IIngredient CreateCurrencyIngredient(CurrencyType type, int quantity, float recycleRate = 1f);
 
 	/// <summary>
 	/// Create a simple <see cref="IIngredient"/> that does not match anything

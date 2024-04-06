@@ -26,13 +26,16 @@ public class BaseIngredient : IOptimizedIngredient, IRecyclable {
 
 	private readonly ParsedItemData? Data;
 
+	public readonly float RecycleRate;
+
 	public bool SupportsQuality => true;
 
-	public BaseIngredient(int itemId, int quantity) : this($"{itemId}", quantity) { }
+	public BaseIngredient(int itemId, int quantity, float recycleRate = 1f) : this($"{itemId}", quantity, recycleRate) { }
 
-	public BaseIngredient(string itemId, int quantity) {
+	public BaseIngredient(string itemId, int quantity, float recycleRate = 1f) {
 		ItemId = itemId;
 		Quantity = quantity;
+		RecycleRate = recycleRate;
 
 		if (!int.TryParse(ItemId, out NumericId))
 			NumericId = int.MaxValue;
@@ -112,10 +115,13 @@ public class BaseIngredient : IOptimizedIngredient, IRecyclable {
 	}
 
 	public int GetRecycleQuantity(Farmer who, Item? recycledItem, bool fuzzyItems) {
-		return Quantity;
+		return (int) (Quantity * RecycleRate);
 	}
 
 	public bool CanRecycle(Farmer who, Item? recycledItem, bool fuzzyItems) {
+		if (RecycleRate <= 0f)
+			return false;
+
 		LoadRecycledItem();
 		if (!fuzzyItems && RecycledItem.Item1)
 			return false;
@@ -132,7 +138,7 @@ public class BaseIngredient : IOptimizedIngredient, IRecyclable {
 		if (item is null)
 			return null;
 
-		return IRecyclable.GetManyOf(item, Quantity);
+		return IRecyclable.GetManyOf(item, GetRecycleQuantity(who, recycledItem, fuzzyItems));
 	}
 
 	#endregion

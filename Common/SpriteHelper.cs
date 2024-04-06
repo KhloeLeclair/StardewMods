@@ -468,7 +468,8 @@ public static class SpriteHelper {
 			Texture2D texture = data.GetTexture();
 			Rectangle baseSource = data.GetSourceRect(0, co.ParentSheetIndex);
 
-			// TODO: SmokedFish have special rendering.
+			if (co.ItemId == "SmokedFish")
+				return new SmokedFishSpriteInfo(co);
 
 			if (co.ColorSameIndexAsParentSheetIndex) {
 				// Colored Base Layer

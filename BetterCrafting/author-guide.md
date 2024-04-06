@@ -465,3 +465,399 @@ field. That custom field tells Better Crafting to perform a map tile action
 when you attempt to use the big craftable, and the action is to open a
 Better Crafting menu with our custom crafting station.
 
+
+## Custom Recipes
+
+Better Crafting has the ability to add custom recipes that are more advanced
+than is possible in the base game. These recipes can be added either through
+Content Patcher, or by using the C# API for maximum flexibility. It is not
+yet possible to add custom recipes with a content pack targeting Better
+Crafting directly, but that is planned.
+
+> **Note:** These custom recipes are only usable through Better Crafting. They
+> do not appear in the base crafting menu. They can be used with
+> [Crafting Stations](#crafting-stations).
+
+> When using Content Patcher, you'll need to make a separate content pack
+> that targets Content Patcher rather than Better Crafting. For more on that, you'll
+> want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
+
+To edit recipes using Content Patcher, you need to use the `EditDta` action
+with the target `Mods/leclair.bettercrafting/Recipes`. Here's a quick example
+of a recipe that lets you craft a Prismatic Shard with 10 Iron Bars and 1,000g:
+
+```json
+{
+	"Format": "2.0.0",
+
+	"Changes": [
+		{
+			"Action": "EditData",
+			"Target": "Mods/leclair.bettercrafting/Recipes",
+			"Entries": {
+				"{{ModId}}_Shard": {
+					"AllowRecycling": false,
+
+					"Ingredients": [
+						{
+							"Id": "this-id-doesn't-matter",
+							"ItemID": "(O)335",
+							"Quantity": 10
+						},
+						{
+							"Id": "but-the-id-must-be-unique",
+							"Type": "Currency",
+							"Quantity": 1000
+						}
+					],
+
+					"Output": [
+						{
+							"Id": "the-id-doesn't-matter-here-either",
+							"ItemId": "(O)74"
+						}
+					]
+				}
+			}
+		}
+	]
+}
+```
+
+These custom recipes have several top level properties for customizing their
+behavior and how they appear. They can have as many ingredients as you want,
+and there is a flexible system for specifying what output the recipe should
+have building on the [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+introduced into the base game in version 1.6.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Id</code></td>
+<td>
+
+**Required.** The recipe's Id. This must be unique. It should not contain
+spaces. The recipe Id uses the same namespace as the game's built-in
+recipes, so you should not pick names that conflict with those recipes.
+
+</td>
+</tr>
+<tr>
+<td><code>Default</code></td>
+<td>
+
+*Optional.* Whether or not players should know this recipe automatically.
+If this is set to true, players will have this recipe by default.
+
+If this is set to false, then the player must learn this recipe before
+they will be able to craft it. You can use any standard method of teaching
+the player a recipe for this to work.
+
+Additionally, you can use a Crafting Station set to not require the
+player to know recipes in order to access the recipe. This can be
+combined with non-default recipes to make recipes that can only be
+used via special crafting stations.
+
+Default: `false`
+
+</td>
+</tr>
+<tr>
+<td><code>SortValue</code></td>
+<td>
+
+*Optional.* A string that should be used when sorting this recipe
+in the menu.
+
+</td>
+</tr>
+<tr>
+<td><code>Condition</code></td>
+<td>
+
+*Optional.* A [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+that determines whether or not this recipe should be available. This will
+be evaluated every time a crafting menu is opened, and happens regardless
+of if the player knows the recipe or if the recipe is listed in a
+crafting station.
+
+</td>
+</tr>
+<tr>
+<td><code>IsCooking</code></td>
+<td>
+
+*Optional.* Whether or not the recipe is a cooking recipe. This changes
+which built-in crafting stations (kitchen, workbench, cookout kit, etc.)
+are able to craft this recipe.
+
+Default: `false`
+
+</td>
+</tr>
+<tr>
+<td><code>AllowBulk</code></td>
+<td>
+
+*Optional.* Whether or not the recipe can be crafted in bulk. Setting this
+to false will stop players from being able to open the bulk crafting window
+for this recipe, as well as stopping them from holding Control or Shift to
+make more of the recipe at a time.
+
+Default: `true`
+
+</td>
+</tr>
+<tr>
+<td><code>AllowRecycling</code></td>
+<td>
+
+*Optional.* Whether or not this recipe can be reversed using Better Crafting's
+recycling feature. By default, all recipes can be reversed. You may, however,
+wish to prevent people from reversing particular recipes.
+
+Default: `true`
+
+</td>
+</tr>
+<tr>
+<td><code>DisplayName</code></td>
+<td>
+
+**Required.** The recipe's name, as it should be displayed to the player in the
+crafting menu. This supports [tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+The display name shouldn't be too long, since it is all displayed on one
+line in a large font.
+
+</td>
+</tr>
+<tr>
+<td><code>Description</code></td>
+<td>
+
+The recipe's description, which is displayed to the player in the crafting
+menu beneath the ingredients list. This also supports
+[tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+This string can be longer than the display name, as it wraps and uses a
+smaller font.
+
+</td>
+</tr>
+<tr>
+<td><code>Icon</code></td>
+<td>
+
+*Optional.* A CategoryIcon, similar to how icons are specified for categories
+and crafting stations. It may have a `Type` of `Item` or `Texture`. If the type
+is `Item`, then it can have an `ItemId` set, otherwise it will use the first
+output item.
+
+Default: `{"Type": "Item"}`
+
+</td>
+</tr>
+<tr>
+<td><code>GridSize</code></td>
+<td>
+
+*Optional.* An `X` and `Y` value for how large this recipe should appear on
+the crafting page. Normal recipes are 1x1 and big craftables, such as chests,
+are 1x2 by default.
+
+Example, to make a wide item: `{"X": 2, "Y": 1}`
+
+</td>
+</tr>
+<tr>
+<td><code>Ingredients</code></td>
+<td>
+
+**Required.** A list of [ingredients](#ingredients). You can have as many
+as you'd like, though for obvious reasons you should keep the number small.
+
+</td>
+</tr>
+<tr>
+<td><code>Output</code></td>
+<td>
+
+**Required.** A list of item spawning rules. You can have as many as you'd
+like, but at least one is required. Each output entry will be evaluated,
+in order, until one returns an item. That item will be the recipe's output.
+
+Each entry in the list uses the [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+feature built into the base game, giving you a lot of control over what
+exactly a recipe will produce.
+
+</td>
+</tr>
+</table>
+
+
+### Ingredients
+
+Each ingredient can represent a currency or item the player needs to spend
+in order to craft the recipe. Ingredients have the following fields:
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<th colspan="2">Shared Fields</th>
+</tr>
+<tr>
+<td><code>Id</code></td>
+<td>
+
+**Required.** The ingredient's Id. This only needs to be unique within
+the recipe's ingredients section.
+
+</td>
+</tr>
+<tr>
+<td><code>Type</code></td>
+<td>
+
+*Optional.* The ingredient type. This can be either `Currency` or `Item`.
+
+Default: `Item`
+
+</td>
+</tr>
+<tr>
+<td><code>RecycleRate</code></td>
+<td>
+
+*Optional.* The rate at which this ingredient's resources are returned
+when the recipe is used for recycling. Setting this to zero or below
+will prevent the ingredient from being recycled at all.
+
+For example, setting this to `0.5` will return exactly half of the
+ingredient. If, for example, the ingredient is a currency ingredient
+that takes 1,000 gold, it would return 500 to the player.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Quantity</code></td>
+<td>
+
+</td>
+</tr>
+<tr>
+<th colspan="2">Currency Fields</th>
+</tr>
+<tr>
+<td><code>Currency</code></td>
+<td>
+
+*Optional.* The currency that should be consumed by this ingredient.
+This can be one of the following values:
+
+<table>
+<tr>
+<th>Value</th><th>Description</th>
+</tr>
+<tr>
+<td><code>Money</code></td>
+<td>The player's gold.</td>
+</tr>
+<tr>
+<td><code>FestivalPoints</code></td>
+<td>The player's earned points at the current festival.</td>
+</tr>
+<tr>
+<td><code>ClubCoins</code></td>
+<td>The player's coins at the casino.</td>
+</tr>
+<tr>
+<td><code>QiGems</code></td>
+<td>The player's Qi Gems.</td>
+</tr>
+</table>
+
+Default: `Money`
+
+</td>
+</tr>
+<tr>
+<th colspan="2">Item Fields</th>
+</tr>
+<tr>
+<td><code>ItemId</code></td>
+<td>
+
+*Optional.* The qualified or unqualified Item Id of the item this
+ingredient should consume. This may also be used to consume any item
+of a specific category by using a negative number for the category,
+as you would do with traditional recipes as documented
+[on the wiki](https://stardewvalleywiki.com/Modding:Recipe_data).
+
+If this is not set, then you must supply `ContextTags`.
+
+</td>
+</tr>
+<tr>
+<td><code>ContextTags</code></td>
+<td>
+
+*Optional.* A list of one or more context tags. If these are
+provided, then any item this ingredient should consume must have
+all context tags in the list.
+
+When using this, you should include a `DisplayName` and possible
+an `Icon` as the crafting menu won't understand how to best
+display the ingredient's requirements to the user.
+
+</td>
+</tr>
+<tr>
+<td><code>RecycleItem</code></td>
+<td>
+
+*Optional.* An item spawning rule to customize the resulting item
+when this ingredient is recycled. This may be useful for overriding
+the behavior when a crafting recipe is recycled, particularly when
+using context tags or category matching.
+
+This uses the [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+feature built into the base game.
+
+</td>
+</tr>
+<tr>
+<td><code>DisplayName</code></td>
+<td>
+
+*Optional.* A name to display to the user for this ingredient. If this
+is not provided, it will be taken from the required item or currency.
+
+This automatically supports all categories built into the game, but
+will not display a sensible value when context tags are used and should
+be manually set in that case.
+
+</td>
+</tr>
+<tr>
+<td><code>Icon</code></td>
+<td>
+
+*Optional.* A CategoryIcon, similar to how icons are specified for categories
+and crafting stations. It may have a `Type` of `Item` or `Texture`. If the type
+is `Item`, then it can have an `ItemId` set, otherwise it will use the first
+item to match this ingredient.
+
+Default: `{"Type": "Item"}`
+
+</td>
+</tr>
+</table>

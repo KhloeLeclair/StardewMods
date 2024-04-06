@@ -20,16 +20,21 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 	public readonly Func<Item, bool> ItemMatcher;
 	private readonly (Func<Item, bool>, int)[] IngList;
 
+	public readonly float RecycleRate;
+
 	private readonly Func<string> _displayName;
 	private readonly Func<Texture2D> _texture;
+
+	private readonly Func<Item?>? _recycleTo;
 
 	private Rectangle? _source;
 
 	private readonly bool IsFuzzyRecycle;
 
-	public MatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null) {
+	public MatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Func<Item?>? recycleTo = null, float recycleRate = 1f) {
 		ItemMatcher = matcher;
 		Quantity = quantity;
+		RecycleRate = recycleRate;
 
 		_displayName = displayName;
 		_texture = texture;
@@ -42,7 +47,7 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 		RecycledSprite = new(item => SpriteHelper.GetSprite(item), () => RecycledItem?.Item1);
 		if (recycleTo is not null) {
 			IsFuzzyRecycle = false;
-			RecycledItem = new(recycleTo);
+			_recycleTo = recycleTo;
 		} else
 			IsFuzzyRecycle = true;
 	}
@@ -56,6 +61,11 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 	private void LoadRecycledItem() {
 		if (RecycledItem is not null)
 			return;
+
+		if ( _recycleTo is not null ) {
+			RecycledItem = new(_recycleTo());
+			return;
+		}
 
 		Item? result = null;
 		int price = 0;
@@ -97,10 +107,13 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 	}
 
 	public int GetRecycleQuantity(Farmer who, Item? recycledItem, bool fuzzyItems) {
-		return Quantity;
+		return (int) (Quantity * RecycleRate);
 	}
 
 	public bool CanRecycle(Farmer who, Item? recycledItem, bool fuzzyItems) {
+		if (RecycleRate <= 0f)
+			return false;
+
 		if (!fuzzyItems && IsFuzzyRecycle)
 			return false;
 
@@ -113,8 +126,15 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 			return null;
 
 		LoadRecycledItem();
-		if (RecycledItem.Item1 is not null)
-			return IRecyclable.GetManyOf(RecycledItem.Item1, Quantity);
+		if (RecycledItem.Item1 is not null) {
+			var output = IRecyclable.GetManyOf(RecycledItem.Item1, GetRecycleQuantity(who, recycledItem, fuzzyItems));
+
+			if (_recycleTo is not null)
+				// Reset it so it's different the next time.
+				RecycledItem = null;
+
+			return output;
+		}
 
 		return null;
 	}

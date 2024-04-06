@@ -151,7 +151,7 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 			UpdateWatching msg = e.ReadAs<UpdateWatching>();
 
 			string joined = string.Join(", ", msg.locations);
-			Mod.Log($"Got Watch from {e.FromPlayerID}: {joined}", LogLevel.Debug);
+			Mod.Log($"Got Watch from {e.FromPlayerID}: {joined}", LogLevel.Trace);
 			AddWatches(e.FromPlayerID, msg.locations);
 
 			
@@ -159,7 +159,7 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 			UpdateWatching msg = e.ReadAs<UpdateWatching>();
 
 			string joined = string.Join(", ", msg.locations);
-			Mod.Log($"Got UnWatch from {e.FromPlayerID}: {joined}", LogLevel.Debug);
+			Mod.Log($"Got UnWatch from {e.FromPlayerID}: {joined}", LogLevel.Trace);
 			RemoveWatches(e.FromPlayerID, msg.locations);
 		}
 	}
@@ -181,7 +181,7 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 
 		List<string> added = new();
 
-		foreach(var location in locations) {
+		foreach(string? location in locations) {
 			if (! string.IsNullOrEmpty(location) && ! watched.Contains(location)) {
 				watched.Add(location);
 				added.Add(location);
@@ -247,12 +247,12 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 		long playerId = who.UniqueMultiplayerID;
 
 		var added = AddWatches(playerId, locations);
+		string joined = string.Join(", ", added);
+		Mod.Log($"Self Watch from {playerId}: {joined}", LogLevel.Trace);
 
 		// We also need to update the host.
 		if (!Context.IsMainPlayer && added.Count > 0) {
-			string joined = string.Join(", ", added);
-
-			Mod.Log($"Sending Watch to Host: {joined}", LogLevel.Debug);
+			Mod.Log($"Sending Watch to Host: {joined}", LogLevel.Trace);
 			Mod.Helper.Multiplayer.SendMessage(
 				new UpdateWatching(added.ToArray()),
 				"SpookyAction:Watch",
@@ -269,12 +269,12 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 		long playerId = who.UniqueMultiplayerID;
 
 		var removed = RemoveWatches(playerId, locations);
+		string joined = string.Join(", ", removed);
+		Mod.Log($"Self UnWatch from {playerId}: {joined}", LogLevel.Trace);
 
 		// We also need to update the host.
 		if (!Context.IsMainPlayer && removed.Count > 0) {
-			string joined = string.Join(", ", removed);
-
-			Mod.Log($"Sending UnWatch to Host: {joined}", LogLevel.Debug);
+			Mod.Log($"Sending UnWatch to Host: {joined}", LogLevel.Trace);
 			Mod.Helper.Multiplayer.SendMessage(
 				new UpdateWatching(removed.ToArray()),
 				"SpookyAction:Unwatch",

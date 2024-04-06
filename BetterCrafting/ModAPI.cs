@@ -185,19 +185,39 @@ public class ModAPI : IBetterCrafting {
 
 	#region Ingredients
 
-	/// <inheritdoc />
+	[Obsolete("Added the recycleRate parameter.")]
 	public IIngredient CreateBaseIngredient(int item, int quantity) {
 		return new BaseIngredient(item, quantity);
 	}
 
-	/// <inheritdoc />
+	[Obsolete("Added the recycleRate parameter.")]
 	public IIngredient CreateCurrencyIngredient(CurrencyType type, int quantity) {
 		return new CurrencyIngredient(type, quantity);
 	}
 
-	/// <inheritdoc />
+	[Obsolete("Added the recycleRate parameter.")]
 	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null) {
-		return new MatcherIngredient(matcher, quantity, displayName, texture, source, recycleTo);
+		return new MatcherIngredient(matcher, quantity, displayName, texture, source, () => recycleTo);
+	}
+
+	/// <inheritdoc />
+	public IIngredient CreateBaseIngredient(int item, int quantity, float recycleRate = 1f) {
+		return new BaseIngredient(item, quantity, recycleRate);
+	}
+
+	/// <inheritdoc />
+	public IIngredient CreateCurrencyIngredient(CurrencyType type, int quantity, float recycleRate = 1f) {
+		return new CurrencyIngredient(type, quantity, recycleRate);
+	}
+
+	/// <inheritdoc />
+	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Func<Item?>? recycleTo = null, float recycleRate = 1f) {
+		return new MatcherIngredient(matcher, quantity, displayName, texture, source, recycleTo, recycleRate);
+	}
+
+	[Obsolete("Use the version that takes a function for the recycleTo item.")]
+	public IIngredient CreateMatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Item? recycleTo = null, float recycleRate = 1f) {
+		return new MatcherIngredient(matcher, quantity, displayName, texture, source, () => recycleTo, recycleRate);
 	}
 
 	/// <inheritdoc />

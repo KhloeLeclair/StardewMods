@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.3.0
+Released April 6th, 2024.
+
+Yes, I know. Two in one day. Sorry, I just needed to fix a few issues
+with the new data-driven crafting recipes. I've also added a bit more
+logging for the Better Chests interaction issues.
+
+### Changes
+
+* Added support for rendering smoked fish using my custom item renderer.
+* Add extra debug logging for when we are unable to lock inventories.
+* Remove useless debug logging from the PFM integration module.
+* Vanilla crafting recipes are suppressed if there is a data-driven
+  recipe with the same Id.
+
+### Fixed
+
+* Properly check each recipe's `Condition` field.
+* Properly support learning data-driven crafting recipes using the mail
+  `%item craftingrecipe [recipe]%%` command.
+
+### API Changes
+
+* `CreateBaseIngredient()`, `CreateMatcherIngredient()`, and
+  `CreateCurrencyIngredient()` now all have a parameter to set how
+  much you get back when performing recycling.
+* The `CreateMatcherIngredient()` method now takes a delegate to
+  decide which item to return upon recycling, rather than a static
+  Item reference.
+* Data-driven recipes now have a flag for if they are known by default.
+* Data-driven ingredients can now use item spawn fields to specify
+  which item they would be recycled into.
+* Data-driven ingredients now have a recycle rate field to specify
+  how much the player should get back if they recycle it.
+
+
 ## 2.2.0
 Released April 6th, 2024.
 

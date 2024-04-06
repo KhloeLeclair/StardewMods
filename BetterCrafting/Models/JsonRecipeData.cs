@@ -15,6 +15,8 @@ public class JsonRecipeData {
 
 	public string? Condition { get; set; }
 
+	public bool Default { get; set; } = false;
+
 	public bool IsCooking { get; set; } = false;
 
 	public bool AllowRecycling { get; set; } = true;
@@ -62,23 +64,33 @@ public class JsonIngredientData {
 
 	public string Id { get; set; } = string.Empty;
 
-	// Display
+	// Basic Properties
+
+	public IngredientType Type { get; set; } = IngredientType.Item;
+
+	public float RecycleRate { get; set; } = 1f;
+
+	public int Quantity { get; set; } = 1;
+
+	// Type: Currency
+
+	public CurrencyType Currency { get; set; } = CurrencyType.Money;
+
+
+	// Type: Item
+
+	public string? ItemId { get; set; }
+
+	public string[]? ContextTags { get; set; }
+
+	public GenericSpawnItemDataWithCondition? RecycleItem { get; set; }
+
+	// Item Display
 
 	public string? DisplayName { get; set; }
 
 	public CategoryIcon Icon { get; set; } = new CategoryIcon() {
 		Type = CategoryIcon.IconType.Item
 	};
-
-
-	public IngredientType Type { get; set; } = IngredientType.Item;
-
-	public int Quantity { get; set; } = 1;
-
-	public string? ItemId { get; set; }
-
-	public string[]? ContextTags { get; set; }
-
-	public CurrencyType Currency { get; set; } = CurrencyType.Money;
 
 }

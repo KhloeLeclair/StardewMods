@@ -9,9 +9,14 @@ using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Events;
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 using StardewValley;
+using StardewValley.Delegates;
 
 namespace Leclair.Stardew.BetterCrafting.Managers;
 
@@ -76,6 +81,11 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 		}
 	}
 
+	public bool TryGetRecipeById(string id, [NotNullWhen(true)] out DataRecipe? recipe) {
+		LoadRecipes();
+		return DataRecipesById.TryGetValue(id, out recipe);
+	}
+
 	#endregion
 
 	#region IRecipeProvider
@@ -84,19 +94,91 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 	public bool CacheAdditionalRecipes => false;
 
-	public IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking) {
+	public IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking, GameStateQueryContext? context = null) {
 		LoadRecipes();
 
 		foreach(var recipe in DataRecipesById.Values) {
+			if ( ! string.IsNullOrEmpty(recipe.Data.Condition) ) {
+				bool valid = context is null
+					? GameStateQuery.CheckConditions(recipe.Data.Condition)
+					: GameStateQuery.CheckConditions(recipe.Data.Condition, context.Value);
+
+				if (!valid)
+					continue;
+			}
+
+
 			if (cooking == recipe.Data.IsCooking)
 				yield return recipe;
 		}
 	}
 
 	public IRecipe? GetRecipe(CraftingRecipe recipe) {
+		LoadRecipes();
+		if (DataRecipesById.ContainsKey(recipe.name))
+			return new InvalidRecipe(recipe.name);
+
 		return null;
+	}
+
+	public IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking) {
+		return GetAdditionalRecipes(cooking, null);
 	}
 
 	#endregion
 
+}
+
+public class InvalidRecipe : IRecipe {
+
+	public InvalidRecipe(string id) {
+		Name = id;
+		Ingredients = new IIngredient[] { new ErrorIngredient() };
+	}
+
+	public string SortValue => "";
+
+	public string Name { get; }
+
+	public string DisplayName => "";
+
+	public string? Description => null;
+
+	public bool AllowRecycling => false;
+
+	public CraftingRecipe? CraftingRecipe => null;
+
+	public Texture2D Texture => Game1.mouseCursors;
+
+	public Rectangle SourceRectangle => ErrorIngredient.SOURCE;
+
+	public int GridHeight => 1;
+
+	public int GridWidth => 1;
+
+	public int QuantityPerCraft => 0;
+
+	public IIngredient[]? Ingredients { get; }
+
+	public bool Stackable => false;
+
+	public bool CanCraft(Farmer who) {
+		return false;
+	}
+
+	public Item? CreateItem() {
+		return null;
+	}
+
+	public int GetTimesCrafted(Farmer who) {
+		return 0;
+	}
+
+	public string? GetTooltipExtra(Farmer who) {
+		return null;
+	}
+
+	public bool HasRecipe(Farmer who) {
+		return false;
+	}
 }
