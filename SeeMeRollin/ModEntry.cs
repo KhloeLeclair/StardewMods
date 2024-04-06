@@ -58,7 +58,7 @@ public class ModEntry : ModSubscriber {
 		}
 	};
 
-	public static readonly int BUFF = -9999;
+	public static readonly string BUFF = "leclair.seemerollin_Rollin";
 
 #nullable disable
 	public static ModEntry Instance { get; private set; }
@@ -76,7 +76,7 @@ public class ModEntry : ModSubscriber {
 
 #if DEBUG
 	private readonly PerScreen<bool> Debugging = new(() => false);
-	private readonly PerScreen<Tuple<int, float, float>> Speeds = new(() => new(0, 0, 0));
+	private readonly PerScreen<Tuple<float, float, float>> Speeds = new(() => new(0, 0, 0));
 #endif
 
 	public override void Entry(IModHelper helper) {
@@ -108,7 +108,7 @@ public class ModEntry : ModSubscriber {
 			return false;
 
 		if (!Config.AllowWhenSlowed) {
-			int speed = who.addedSpeed;
+			float speed = who.addedSpeed;
 			if (who.hasBuff(BUFF))
 				speed -= Config.SpeedModifier;
 
@@ -119,14 +119,27 @@ public class ModEntry : ModSubscriber {
 		return true;
 	}
 
-	private void ApplyBuff() {
-		if (!Game1.buffsDisplay.hasBuff(BUFF))
-			Game1.buffsDisplay.addOtherBuff(new RollinBuff(Config.SpeedModifier));
+	private void ApplyBuff(Farmer? who = null) {
+		 who ??= Game1.player;
+		if (!who.hasBuff(BUFF))
+			who.applyBuff(new Buff(
+				id: BUFF,
+				displayName: I18n.Buff_Name(),
+				iconTexture: Game1.buffsIcons,
+				iconSheetIndex: 9,
+				duration: Buff.ENDLESS,
+				effects: new StardewValley.Buffs.BuffEffects() {
+					Speed = { Config.SpeedModifier }
+				}
+			) {
+				visible = Config.ShowBuff
+			});
 	}
 
-	private void RemoveBuff() {
-		if (Game1.buffsDisplay.hasBuff(BUFF))
-			Game1.buffsDisplay.removeOtherBuff(BUFF);
+	private void RemoveBuff(Farmer? who = null) {
+		who ??= Game1.player;
+		if ( who.hasBuff(BUFF))
+			who.buffs.Remove(BUFF);
 	}
 
 	public void StartRolling(Farmer who) {
@@ -136,7 +149,7 @@ public class ModEntry : ModSubscriber {
 		IsRollin.Value = true;
 		Speed.Value = who.temporarySpeedBuff;
 
-		ApplyBuff();
+		ApplyBuff(who);
 	}
 
 	public void StopRolling(Farmer who) {
@@ -145,7 +158,7 @@ public class ModEntry : ModSubscriber {
 
 		IsRollin.Value = false;
 
-		RemoveBuff();
+		RemoveBuff(who);
 
 		if (IsAnimating.Value && Game1.player.Equals(who)) {
 			IsAnimating.Value = false;

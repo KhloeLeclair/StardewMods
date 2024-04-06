@@ -15,6 +15,8 @@ This document is intended to help mod authors create content packs for Better Cr
   * [Using Content Patcher](#categories-using-content-patcher)
 * [Crafting Stations](#crafting-stations)
   * [Using Content Patcher](#crafting-stations-using-content-patcher)
+* [Custom Recipes](#custom-recipes)
+  * [Ingredients](#ingredients)
 
 ## Getting Started
 
