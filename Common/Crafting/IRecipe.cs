@@ -51,6 +51,11 @@ public interface IRecipe {
 	string? Description { get; }
 
 	/// <summary>
+	/// Whether or not this recipe can be reversed with recycling.
+	/// </summary>
+	bool AllowRecycling { get; }
+
+	/// <summary>
 	/// Whether or not the player knows this recipe.
 	/// </summary>
 	/// <param name="who">The player we're asking about</param>

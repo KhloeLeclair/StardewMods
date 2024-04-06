@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.2.0
+Released April 6th, 2024.
+
+### New Features
+
+* Added the ability for content pack creators to create more elaborate
+  crafting recipes.
+* Fixed a major bug.
+
+### Changes
+
+* If, for some reason, Better Crafting is unable to gain access to
+  a chest when you try crafting something, it will display a message.
+* While Better Crafting is actively processing a craft, the cursor
+  will appear as an hourglass.
+
+### Fixes
+
+* Major: The crafting menu will no longer lock up when attempting to
+  craft things using chests located in other maps. The issue has been
+  fully diagnosed through much effort of myself and the creator
+  of Better Chests.
+* When using the farmhouse kitchen, mini-fridges would not properly
+  have their contents made available.
+
+### API Changes
+
+* `IRecipe` now has a flag for marking that a recipe cannot be
+  reversed using recycling.
+* Added an entire data structure for making custom recipes through
+  Content Patcher by modifying the `Mods/leclair.bettercrafting/Recipes`
+  target. Documentation to come.
+* Added a `WithInventories()` method to let other mods take advantage
+  of Better Crafting's robust mutex handling.
+
+
 ## 2.1.0
 Released April 4th, 2024.
 

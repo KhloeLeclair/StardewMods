@@ -73,6 +73,8 @@ public class SCRecipe : IRecipe {
 
 	#region Display
 
+	public bool AllowRecycling { get; } = true;
+
 	public string DisplayName { get; }
 	public string Description => Recipe.Description ?? string.Empty;
 

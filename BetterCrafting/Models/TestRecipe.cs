@@ -51,6 +51,8 @@ internal class TestRecipe : IRecipe {
 
 	public string? Description => "This recipe exists to test ingredients, and is not otherwise valid and doesn't do anything.";
 
+	public bool AllowRecycling => true;
+
 	public CraftingRecipe? CraftingRecipe => null;
 
 	public Texture2D Texture => Game1.mouseCursors;

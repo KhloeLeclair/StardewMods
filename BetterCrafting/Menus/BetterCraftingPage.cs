@@ -437,9 +437,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			if (item is null || !item.canBeTrashed())
 				return null;
 
-			if (!RecipesByItem.TryGetValue(item, out IRecipe? recipe)) {
+			if (!RecipesByItem.TryGetValue(item, out IRecipe? recipe) || ! recipe.AllowRecycling) {
 				foreach (var entry in RecipesByItem) {
-					if (ItemEqualityComparer.Instance.Equals(entry.Key, item)) { 
+					if (entry.Value.AllowRecycling && ItemEqualityComparer.Instance.Equals(entry.Key, item)) { 
 						recipe = entry.Value;
 						break;
 					}
@@ -706,6 +706,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Game1.options.SnappyMenus)
 			snapToDefaultClickableComponent();
 
+		// Install our hooks.
+		if ( CachedInventories != null )
+			Mod.SpookyAction.WatchLocations(CachedInventories.Select(x => x.Location), Game1.player);
+
 		// We are done.
 		IsReady = true;
 	}
@@ -778,6 +782,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public override void emergencyShutDown() {
 		base.emergencyShutDown();
 
+		if (CachedInventories != null)
+			Mod.SpookyAction.UnwatchLocations(CachedInventories.Select(x => x.Location), Game1.player);
 		ReleaseLocks();
 
 		if (HeldItem != null) {
@@ -789,6 +795,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	protected override void cleanupBeforeExit() {
 		base.cleanupBeforeExit();
 
+		if (CachedInventories != null)
+			Mod.SpookyAction.UnwatchLocations(CachedInventories.Select(x => x.Location), Game1.player);
 		ReleaseLocks();
 
 		if (Editing)
@@ -1719,9 +1727,22 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		CachedInventories ??= new List<LocatedInventory>();
 
+		// The FarmHouse Kitchen always adds Mini-Fridges.
+		if (cooking && BenchLocation?.GetFridge(false) is Chest fridge && TileHelper.GetRealPosition(fridge, BenchLocation) == BenchPosition) {
+			foreach(var obj in BenchLocation.Objects.Values) {
+				if (obj is Chest chest && chest.fridge.Value)
+					CachedInventories.Add(new LocatedInventory(chest, BenchLocation));
+			}
+		}
+
+
 		int removed = CachedInventories.Count;
 		InventoryHelper.DeduplicateInventories(ref CachedInventories);
 		removed -= CachedInventories.Count;
+
+		int unloaded = CachedInventories.Count;
+		InventoryHelper.RemoveInactiveInventories(ref CachedInventories, provider);
+		unloaded -= CachedInventories.Count;
 
 		UnsafeInventories = InventoryHelper.GetUnsafeInventories(
 			CachedInventories,
@@ -1731,7 +1752,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		);
 
 #if DEBUG
-		Log($"Sources: {count} -- Duplicates: {removed} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
+		Log($"Sources: {count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
 #endif
 	}
 
@@ -1816,6 +1837,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		activeRecipe = recipe;
 
 		InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
+
+			if (locked.Count < (CachedInventories?.Count ?? 0))
+				Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
 
 			List<Item?> items = GetActualContainerContents(locked);
 			List<Chest>? chests = ChestsOnly ? locked
@@ -1937,6 +1961,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		) {
 			HeldItem.Stack += recipe.QuantityPerCraft;
 			made = true;
+
+		} else if ( ! recipe.Stackable && Game1.player.couldInventoryAcceptThisItem(HeldItem) && Game1.player.addItemToInventoryBool(HeldItem) ) {
+			HeldItem = obj;
+			made = true;
 		}
 
 		if (!made) {
@@ -2047,6 +2075,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (item == null) {
 			// If we have no item, transfer everything.
 			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
+				if (locked.Count < (CachedInventories?.Count ?? 0))
+					Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
+
 				void OnTransfer(Item item, int idx) {
 					if (idx < 0 || idx >= inventory.inventory.Count)
 						return;
@@ -2064,6 +2095,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		} else {
 			InventoryHelper.WithInventories(CachedInventories, Mod.GetInventoryProvider, Game1.player, (locked, onDone) => {
+				if (locked.Count < (CachedInventories?.Count ?? 0))
+					Game1.addHUDMessage(new HUDMessage(I18n.Error_Locking(), HUDMessage.error_type));
+
 				List<Item?> items = new() { item };
 
 				InventoryHelper.AddToInventories(items, locked, behavior);

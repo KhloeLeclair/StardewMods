@@ -22,6 +22,7 @@ using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using Leclair.Stardew.Common.Integrations.StackQuality;
 using StardewValley.Buildings;
+using Netcode;
 
 namespace Leclair.Stardew.Common;
 
@@ -161,8 +162,9 @@ public static class InventoryHelper {
 			}
 		}
 
-		Dictionary<AbsolutePosition, Vector2> origins = new();
-		origins[source] = source.Position;
+		Dictionary<AbsolutePosition, Vector2> origins = new() {
+			[source] = source.Position
+		};
 
 		AddPotentials(source.Position, source.Position, source.Location, potentials, origins, distanceLimit, includeDiagonal);
 
@@ -191,6 +193,52 @@ public static class InventoryHelper {
 				i--;
 			} else
 				objects.Add(inv.Source);
+		}
+	}
+
+	public static HashSet<INetRoot> GetActiveRoots() {
+		HashSet<INetRoot> roots = new();
+
+		roots.Add(Game1.netWorldState);
+		roots.Add(Game1.player.teamRoot);
+
+		foreach (var root in Game1.Multiplayer.farmerRoots())
+			roots.Add(root);
+		
+		if (Game1.IsClient) {
+			foreach (var loc in Game1.Multiplayer.activeLocations())
+				if (loc.Root is not null)
+					roots.Add(loc.Root);
+		} else {
+			Utility.ForEachLocation(loc => {
+				if (loc.Root is not null)
+					roots.Add(loc.Root);
+
+				return true;
+			}, includeInteriors: false, includeGenerated: true);
+		}
+
+		return roots;
+	}
+
+	public static void RemoveInactiveInventories(ref IList<LocatedInventory> inventories, Func<object, IInventoryProvider?> getProvider) {
+		var roots = GetActiveRoots();
+		var places = Context.IsMainPlayer ? null : Game1.Multiplayer.activeLocations().ToHashSet();
+
+		for(int i = 0; i < inventories.Count; i++) {
+			LocatedInventory inv = inventories[i];
+			if (places != null && inv.Location is GameLocation loc && !places.Contains(loc)) { 
+				inventories.RemoveAt(i);
+				i--;
+				continue;
+			}
+
+			var provider = getProvider(inv.Source);
+			var mutex = provider?.GetMutex(inv.Source, inv.Location, Game1.player);
+			if (mutex?.NetFields?.Root != null && ! roots.Contains(mutex.NetFields.Root)) {
+				inventories.RemoveAt(i);
+				i--;
+			}
 		}
 	}
 
@@ -783,6 +831,7 @@ public static class InventoryHelper {
 		}
 
 		List<NetMutex> mutexes = lockable.Where(entry => entry.Mutex != null).Select(entry => entry.Mutex!).Distinct().ToList();
+
 		AdvancedMultipleMutexRequest? mmr = null;
 		mmr = new AdvancedMultipleMutexRequest(
 			mutexes,

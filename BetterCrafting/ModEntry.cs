@@ -31,11 +31,8 @@ using StardewValley.TerrainFeatures;
 using Leclair.Stardew.BetterCrafting.Managers;
 using Leclair.Stardew.BetterCrafting.Models;
 using Newtonsoft.Json.Linq;
-using StardewValley.Tools;
-using Leclair.Stardew.BetterCrafting.Integrations.RaisedGardenBeds;
-using StardewValley.BellsAndWhistles;
+
 using StardewValley.ItemTypeDefinitions;
-using StardewValley.GameData.BigCraftables;
 using StardewValley.Buildings;
 
 namespace Leclair.Stardew.BetterCrafting;
@@ -72,11 +69,13 @@ public class ModEntry : ModSubscriber {
 #nullable disable
 	public ModConfig Config;
 
+	public DataRecipeManager DataRecipes;
 	public RecipeManager Recipes;
 	public FavoriteManager Favorites;
 	public ItemCacheManager ItemCache;
 	public TriggerManager Triggers;
 	public CraftingStationManager Stations;
+	public SpookyActionAtADistance SpookyAction;
 
 	internal ThemeManager<Theme> ThemeManager;
 
@@ -111,9 +110,13 @@ public class ModEntry : ModSubscriber {
 
 		Instance = this;
 
+		// Before Harmony...
+		SpookyAction = new SpookyActionAtADistance(this);
+
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
 
+		SpookyAction.PatchGame(Harmony);
 		Patches.CraftingPage_Patches.Patch(this);
 		Patches.SObject_Patches.Patch(this);
 		Patches.Item_Patches.Patch(this);
@@ -131,6 +134,7 @@ public class ModEntry : ModSubscriber {
 
 		ItemCache = new ItemCacheManager(this);
 		Recipes = new RecipeManager(this);
+		DataRecipes = new DataRecipeManager(this);
 		Favorites = new FavoriteManager(this);
 		Triggers = new TriggerManager(this);
 		Stations = new CraftingStationManager(this);
@@ -436,6 +440,7 @@ public class ModEntry : ModSubscriber {
 
 		// Commands
 		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
+			DataRecipes.Invalidate();
 			Recipes.Invalidate();
 			ItemCache.Invalidate();
 			Stations.Invalidate();

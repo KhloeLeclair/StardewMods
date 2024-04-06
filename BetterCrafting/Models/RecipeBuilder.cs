@@ -36,6 +36,7 @@ public class RecipeBuilder : IRecipeBuilder {
 	private Action<IPerformCraftEvent>? performCraft;
 	private Func<Item?>? createItem;
 
+	private bool allowRecycling = true;
 	private int? quantity;
 	private bool? stackable;
 
@@ -66,6 +67,12 @@ public class RecipeBuilder : IRecipeBuilder {
 	/// <inheritdoc />
 	public IRecipeBuilder Description(Func<string?>? value) {
 		description = value;
+		return this;
+	}
+
+	/// <inheritdoc />
+	public IRecipeBuilder AllowRecycling(bool allow) {
+		allowRecycling = allow;
 		return this;
 	}
 
@@ -231,7 +238,8 @@ public class RecipeBuilder : IRecipeBuilder {
 			performCraft: performCraft,
 			createItem: createItem,
 			quantity: quantity,
-			stackable: stackable
+			stackable: stackable,
+			allowRecycling: allowRecycling
 		);
 	}
 
@@ -267,7 +275,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	private int _h;
 
 
-	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable) {
+	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable, bool allowRecycling) {
 		CraftingRecipe = recipe;
 		Name = name;
 		Ingredients = ingredients;
@@ -284,6 +292,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 		this.tooltipExtra = tooltipExtra;
 		this.performCraft = performCraft;
 		this.createItem = createItem;
+		AllowRecycling = allowRecycling;
 
 		Item? example = CreateItem();
 
@@ -312,6 +321,9 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 
 	/// <inheritdoc />
 	public string? Description => description is null ? CraftingRecipe?.description : description();
+
+	/// <inheritdoc />
+	public bool AllowRecycling { get; }
 
 	/// <inheritdoc />
 	public bool HasRecipe(Farmer who) {

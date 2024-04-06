@@ -26,16 +26,20 @@ public class AdvancedMultipleMutexRequest {
 	private Action? OnSuccess;
 	private Action? OnFailure;
 
-	private FarmerCollection FC;
+	private int ScreenId;
 
-	public AdvancedMultipleMutexRequest(IEnumerable<NetMutex> mutexes, Action? onSuccess = null, Action? onFailure = null, IModHelper? helper = null, int timeout = 1000) {
+	//private FarmerCollection FC;
+
+	public AdvancedMultipleMutexRequest(IEnumerable<NetMutex> mutexes, Action? onSuccess = null, Action? onFailure = null, IModHelper? helper = null, int timeout = 500) {
 		Helper = helper;
 		Timeout = timeout;
 		OnSuccess = onSuccess;
 		OnFailure = onFailure;
+		ScreenId = Context.ScreenId;
+
 		AcquiredLocks = new();
 		Mutexes = mutexes is NetMutex[] nms ? nms : mutexes.ToArray();
-		FC = Game1.getOnlineFarmers();
+
 		RequestLock();
 	}
 
@@ -95,7 +99,7 @@ public class AdvancedMultipleMutexRequest {
 	}
 
 	private void OnUpdate(object? sender, UpdateTickedEventArgs e) {
-		if (!Live || ReportedCount >= Mutexes.Length)
+		if (!Live || ScreenId != Context.ScreenId || ReportedCount >= Mutexes.Length)
 			return;
 
 		// Check to see if we've timed out.
@@ -106,13 +110,12 @@ public class AdvancedMultipleMutexRequest {
 		}
 
 		// Manually update the mutexes we care about but that we haven't
-		// yet received a success/fail for. This is required for mutexes that
+		// yet received a success/fail for. This may be required for mutexes that
 		// aren't being updated normally, which normally only happens for
 		// mutexes contained by things in the currentLocation.
-		foreach(var mutex in Mutexes) {
+		foreach (var mutex in Mutexes)
 			if (!AcquiredLocks.Contains(mutex))
-				mutex.Update(FC);
-		}
+				mutex.Update(Game1.getOnlineFarmers());
 	}
 
 	private void LockAcquired(NetMutex mutex) {

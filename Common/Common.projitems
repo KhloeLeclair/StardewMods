@@ -21,6 +21,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Integrations\StackQuality\SQIntegration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BuildingProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\DiscriminatingConverter.cs" />
+    <Compile Include="..\Common\SpookyActionAtADistance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\AbsolutePosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CombinedRingSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingHelper.cs" />

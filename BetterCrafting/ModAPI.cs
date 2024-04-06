@@ -205,6 +205,39 @@ public class ModAPI : IBetterCrafting {
 		return new ErrorIngredient();
 	}
 
+	#endregion
+
+	#region Item Manipulation
+
+	/// <inheritdoc />
+	public void WithInventories(
+		IEnumerable<Tuple<object, GameLocation?>> inventories,
+		Farmer? who,
+		Action<IList<IBCInventory>, Action> withLocks
+	) {
+		// Validate the incoming inventories.
+		var located = inventories
+			.Select(pair => new LocatedInventory(pair.Item1, pair.Item2))
+			.DistinctBy(inv => inv.Source)
+			.Where(inv => Mod.GetInventoryProvider(inv.Source) != null)
+			.ToList();
+
+		var locations = located
+			.Select(inv => inv.Location)
+			.Where(inv => inv is not null);
+
+		var for_who = who ?? Game1.player;
+
+		// Make sure events are happening for the location.
+		Mod.SpookyAction.WatchLocations(locations, for_who);
+
+		// Call the thing.
+		InventoryHelper.WithInventories(located, Mod.GetInventoryProvider, who, (locked, onDone) => withLocks(locked, () => {
+			onDone();
+			Mod.SpookyAction.UnwatchLocations(locations, for_who);
+		}), true);
+	}
+
 	/// <inheritdoc />
 	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false) {
 		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst);

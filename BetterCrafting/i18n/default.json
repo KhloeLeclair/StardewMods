@@ -267,6 +267,8 @@
 
 	"ingredient.error": "Invalid Ingredient",
 
+	"error.locking": "Unable to access some inventories.",
+
 	// Bulk Crafting
 	"bulk.crafting": "Bulk Crafting",
 	"bulk.craftable": "{{count}} Craftable",

@@ -47,6 +47,8 @@ public class GardenPotRecipe : IRecipe {
 	public string DisplayName { get; }
 	public string Description { get; }
 
+	public bool AllowRecycling => true;
+
 	public virtual bool HasRecipe(Farmer who) {
 		return who.craftingRecipes.ContainsKey(Name);
 	}

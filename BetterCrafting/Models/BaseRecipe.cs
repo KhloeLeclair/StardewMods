@@ -43,6 +43,8 @@ public class BaseRecipe : IRecipe {
 
 	public virtual bool Stackable { get; }
 
+	public virtual bool AllowRecycling => true;
+
 	public virtual string SortValue => Recipe.itemToProduce[0];
 
 	public virtual string Name => Recipe.name;
