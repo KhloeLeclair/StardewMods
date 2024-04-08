@@ -29,11 +29,18 @@ using Leclair.Stardew.BetterCrafting.DynamicRules;
 using System.Diagnostics.CodeAnalysis;
 using StardewValley.Buffs;
 using Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
+using StardewValley.Extensions;
+using System.Diagnostics;
+using StardewValley.Delegates;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
 
 public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu {
+
+#if DEBUG
+	private static bool ShowTiming = false;
+#endif
 
 	public readonly int MAX_TABS;
 	public readonly int VISIBLE_TABS;
@@ -130,6 +137,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	protected readonly Dictionary<Item, IRecipe> RecipesByItem = new(ItemEqualityComparer.Instance);
 
+	//Recipe State
+	protected long CraftCachedAt = 0;
+	protected Dictionary<IRecipe, bool>? CanCraftCache;
+
 	// Tabs
 	public ClickableTextureComponent? btnTabsUp;
 	public ClickableTextureComponent? btnTabsDown;
@@ -170,8 +181,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	internal IRecipe? hoverRecipe = null;
 	internal readonly Cache<Item?, string?> lastRecipeHover;
-	internal readonly Cache<ISimpleNode[]?, string?> tipDescription;
-	internal readonly Cache<ISimpleNode[]?, string?> tipGiftTastes;
+
+	internal IRecipe? CachedTipRecipe;
+	internal bool CachedTipShifting;
+	internal bool CachedTipCtrling;
+	internal ISimpleNode? CachedTip;
+
+	//internal readonly Cache<ISimpleNode[]?, string?> tipDescription;
+	//internal readonly Cache<ISimpleNode[]?, string?> tipGiftTastes;
 	internal IRecipe? activeRecipe = null;
 
 	/// <inheritdoc />
@@ -430,8 +447,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		ChestsOnly = this.cooking && Mod.intCSkill != null && Mod.intCSkill.IsLoaded;
 
 		lastRecipeHover = new(key => hoverRecipe?.CreateItemSafe(CreateLog), () => hoverRecipe?.Name);
-		tipDescription = new(key => GetRecipeTooltipDescription(), () => hoverRecipe?.Name);
-		tipGiftTastes = new(key => GetRecipeTooltipGiftTastes(), () => hoverRecipe?.Name);
+		//tipDescription = new(key => GetRecipeTooltipDescription(), () => hoverRecipe?.Name);
+		//tipGiftTastes = new(key => GetRecipeTooltipGiftTastes(), () => hoverRecipe?.Name);
 
 		HeldItemRecyclable = new(item => {
 			if (item is null || !item.canBeTrashed())
@@ -995,10 +1012,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (cat is null)
 			return;
 
-		var types = cat.CachedRules;
-		if (types is null)
-			types = cat.CachedRules = Mod.Recipes.HydrateDynamicRules(cat.DynamicRules);
+		cat.CachedRules ??= Mod.Recipes.HydrateDynamicRules(cat.DynamicRules);
 
+		var types = cat.CachedRules;
 		var builder = FlowHelper.Builder();
 
 		bool added = false;
@@ -1105,7 +1121,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				if (!string.IsNullOrEmpty(name)) {
 					RecipesByName.TryGetValue(name, out IRecipe? recipe);
 
-					if (recipe != null && recipe.CreateItemSafe(CreateLog) is Item itm)
+					if (recipe is IDynamicDrawingRecipe ddr)
+						return new DynamicRecipeSpriteInfo(ddr);
+
+					else if (recipe != null && recipe.CreateItemSafe(CreateLog) is Item itm)
 						return SpriteHelper.GetSprite(itm);
 
 					else if (recipe != null && recipe.Texture != null)
@@ -1735,6 +1754,39 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			}
 		}
 
+		// Get nearby inventories.
+		int near_count = 0;
+		if (DiscoverContainers) {
+			List<LocatedInventory>? nearby = null;
+			if (Mod.Config.NearbyRadius == -1) {
+				nearby = InventoryHelper.DiscoverLocation(
+					Game1.player.currentLocation,
+					Game1.player,
+					Mod.GetInventoryProvider,
+					Mod.Config.MaxCheckedTiles,
+					Mod.Config.MaxInventories
+				);
+
+			} else {
+				int radius = Mod.Config.NearbyRadius; // Math.Max(Mod.Config.NearbyRadius, Mod.intCC?.GetCraftRadius() ?? 0);
+				if (radius > 0)
+					nearby = InventoryHelper.DiscoverArea(
+						Game1.player.currentLocation,
+						Game1.player.Tile,
+						radius,
+						Game1.player,
+						Mod.GetInventoryProvider,
+						Mod.Config.MaxCheckedTiles,
+						Mod.Config.MaxInventories
+					);
+			}
+
+			if (nearby != null) {
+				near_count = nearby.Count;
+				foreach (var obj in nearby)
+					CachedInventories.Add(obj);
+			}
+		}
 
 		int removed = CachedInventories.Count;
 		InventoryHelper.DeduplicateInventories(ref CachedInventories);
@@ -1752,9 +1804,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		);
 
 #if DEBUG
-		Log($"Sources: {count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
+		Log($"Sources: {count} -- Nearby: {near_count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Debug);
 #else
-		Log($"Sources: {count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Trace);
+		Log($"Sources: {count} -- Nearby: {near_count} -- Duplicates: {removed} -- Unloaded: {unloaded} -- Valid: {CachedInventories.Count}", LogLevel.Trace);
 #endif
 	}
 
@@ -1830,6 +1882,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	public void PerformCraft(IRecipe recipe, int times, Action<int>? DoneAction = null, bool playSound = true, bool moveResultToInventory = false) {
+		ClearCraftCache();
+
 		if (Working) {
 			DoneAction?.Invoke(0);
 			return;
@@ -2082,11 +2136,18 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		List<string[]> states = new();
 		var active_places = Mod.Helper.Multiplayer.GetActiveLocations().ToHashSet();
 
+		var locations = new HashSet<GameLocation>();
+
+		Utility.ForEachLocation(loc => {
+			locations.Add(loc);
+			return true;
+		}, includeInteriors: false, includeGenerated: true);
+
 		foreach(var inv in CachedInventories) {
 			var provider = Mod.GetInventoryProvider(inv.Source);
-			var mutex = provider is null ? null : provider.GetMutex(inv.Source, inv.Location, Game1.player);
+			var mutex = provider?.GetMutex(inv.Source, inv.Location, Game1.player);
 
-			bool active = inv.Location is null ? false : active_places.Contains(inv.Location);
+			bool active = inv.Location is not null && active_places.Contains(inv.Location);
 
 			states.Add(new string[] {
 				$"{inv.Source.GetHashCode()}",
@@ -2094,7 +2155,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				$"{provider?.GetType()?.FullName}",
 				$"{mutex?.GetHashCode()}",
 				$"{inv.Location?.NameOrUniqueName}",
-				$"{active}"
+				$"{active}",
+				$"{inv.Location is not null && locations.Contains(inv.Location)}",
+				inv.Location?.Root is not null ? $"{inv.Location.Root.GetHashCode()}" : "---"
 			});
 		}
 
@@ -2104,7 +2167,9 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			"Provider",
 			"MutexID",
 			"Location",
-			"IsActive"
+			"IsActive",
+			"InLocationsList",
+			"NetRoot"
 		};
 
 		Mod.LogTable(headers, states, level);
@@ -2764,6 +2829,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	}
 
 	public override void receiveKeyPress(Keys key) {
+#if DEBUG
+		if (key.Equals(Keys.F9))
+			ShowTiming = !ShowTiming;
+#endif
+
 		if (GetChildMenu() is IClickableMenu menu) {
 			if (!Standalone)
 				menu.receiveKeyPress(key);
@@ -3104,6 +3174,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 			Mod.Config.MaxQuality = CommonHelper.Cycle(Mod.Config.MaxQuality, 1, new MaxQuality[] { MaxQuality.Disabled });
 			Mod.SaveConfig();
+			ClearCraftCache();
 
 			btnToggleQuality.sourceRect = SourceQuality;
 			btnToggleQuality.scale = btnToggleQuality.baseScale;
@@ -3265,6 +3336,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 			Mod.Config.MaxQuality = CommonHelper.Cycle(Mod.Config.MaxQuality, -1, new MaxQuality[] { MaxQuality.Disabled });
 			Mod.SaveConfig();
+			ClearCraftCache();
 
 			btnToggleQuality.sourceRect = SourceQuality;
 			btnToggleQuality.scale = btnToggleQuality.baseScale;
@@ -3969,9 +4041,72 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	#endregion
 
+	#region Caching Can Craft
+
+	public void MaybeClearCraftCache() {
+
+		long now = DateTime.UtcNow.Ticks;
+
+		bool should_uncache = false;
+
+		if (now - CraftCachedAt > TimeSpan.TicksPerSecond )
+			should_uncache = true;
+
+		else if ( Game1.player.Items.LastTickSlotChanged > CraftCachedAt )
+			should_uncache = true;
+
+		else if (UnsafeInventories != null)
+			foreach(var inv in UnsafeInventories) {
+				if (inv.Inventory is not null && inv.Inventory.LastTickSlotChanged > CraftCachedAt ) {
+					should_uncache = true;
+					break;
+				}
+			}
+
+		if (should_uncache)
+			ClearCraftCache();
+	}
+
+	public void ClearCraftCache(IRecipe? recipe = null) {
+		ClearTooltipCache();
+
+		if ( recipe is not null)
+			CanCraftCache?.Remove(recipe);
+		else
+			CanCraftCache = null;
+	}
+
+	public bool CanCraft(IRecipe recipe, Lazy<IList<Item?>?>? itemListGetter) {
+		if (CanCraftCache == null) {
+			CanCraftCache = new();
+			CraftCachedAt = DateTime.UtcNow.Ticks;
+		}
+
+		if (CanCraftCache.TryGetValue(recipe, out bool value))
+			return value;
+
+		if (!recipe.CanCraft(Game1.player))
+			value = false;
+		else {
+			IList<Item?>? items = itemListGetter?.Value ?? GetEstimatedContainerContents();
+			value = recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality);
+		}
+
+		CanCraftCache[recipe] = value;
+		return value;
+	}
+
+	#endregion
+
 	#region Drawing
 
 	public override void draw(SpriteBatch b) {
+
+#if DEBUG
+		var watch = ShowTiming ? Stopwatch.StartNew() : null;
+#endif
+
+		MaybeClearCraftCache();
 
 		// Background
 		if (Standalone && DrawBG)
@@ -3984,10 +4119,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				StationLabel.DrawHover(b, Game1.dialogueFont, overrideX: (int) (xPositionOnScreen + 64), overrideY: (int) (yPositionOnScreen - sz.Y + 66));
 			}
 
-
 			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
 		}
-
 
 		if (!Editing)
 			drawHorizontalPartition(b, yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 248);
@@ -4110,9 +4243,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		// Recipes
 		List<ClickableTextureComponent> recipes = CurrentPage;
-		IList<Item?>? items = null;
-		if (recipes != null)
-			items = GetEstimatedContainerContents();
+		Lazy<IList<Item?>?>? items = new(GetEstimatedContainerContents);
 
 		bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift) && GetChildMenu() == null;
 		bool ctrling = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
@@ -4126,16 +4257,26 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 				bool in_category = Editing && IsRecipeInCategory(recipe);
 				bool shifted = !Editing && shifting && recipe.Stackable;
+				IDynamicDrawingRecipe? ddr = recipe as IDynamicDrawingRecipe;
+				bool draw_dynamic = ddr is not null && ddr.ShouldDoDynamicDrawing;
+				float drawDepth = recipe == hoverRecipe ? 0.90f : 0.89f;
 
 				if (!Editing && cmp.hoverText.Equals("ghosted")) {
 					// Unlearned Recipe
 					drawn = true;
-					cmp.DrawBounded(b, Color.Black * 0.35f, 0.89f);
+					if (draw_dynamic)
+						ddr!.Draw(b, cmp.bounds, Color.Black * 0.35f, true, false, drawDepth, cmp);
+					else
+						cmp.DrawBounded(b, Color.Black * 0.35f, drawDepth);
 
-				} else if (Editing ? !in_category : (!recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality) || !recipe.CanCraft(Game1.player))) {
+				} else if (Editing ? !in_category : ! CanCraft(recipe, items)) {
 					// Recipe without Ingredients
 					drawn = true;
-					cmp.DrawBounded(b, Color.DimGray * 0.4f, 0.89f);
+					if (draw_dynamic)
+						ddr!.Draw(b, cmp.bounds, Color.DimGray * 0.4f, false, false, drawDepth, cmp);
+					else
+						cmp.DrawBounded(b, Color.DimGray * 0.4f, drawDepth);
+
 					int count = recipe.QuantityPerCraft * (shifted ? (ctrling ? 25 : 5) : 1);
 					if (count > 1)
 						NumberSprite.draw(
@@ -4152,7 +4293,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				} else {
 					// Craftable Recipe
 					drawn = true;
-					cmp.DrawBounded(b);
+					if (draw_dynamic)
+						ddr!.Draw(b, cmp.bounds, Color.White, false, true, drawDepth, cmp);
+					else
+						cmp.DrawBounded(b, layerDepth: drawDepth);
+
 					int count = recipe.QuantityPerCraft * (shifted ? (ctrling ? 25 : 5) : 1);
 					if (count > 1)
 						NumberSprite.draw(
@@ -4252,20 +4397,23 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			drawMouse(b, cursor: Working ? 1 : -1);
 		}
 
-		// TODO: Better tooltip
-		// TODO: NO SERIOUSLY: BETTER TOOLTIP
-		// TODO: CACHE THIS IT IS A MESS
-
-		ISimpleNode? recipeTip = GetRecipeTooltip(items);
-		if (recipeTip == null)
-			return;
-
-		recipeTip.DrawHover(
+		GetRecipeTooltip(items)?.DrawHover(
 			b,
 			Game1.smallFont,
 			offsetX: offset,
 			offsetY: offset
 		);
+
+#if DEBUG
+		if (watch != null) {
+			watch.Stop();
+
+			SimpleHelper.Builder()
+				.Text($"{watch.Elapsed.TotalMilliseconds}ms")
+				.GetLayout()
+				.DrawHover(b, Game1.smallFont, overrideX: 0, overrideY: 0);
+		}
+#endif
 	}
 
 	/// <summary>
@@ -4385,16 +4533,48 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		return builder.Build();
 	}
 
-	public ISimpleNode? GetRecipeTooltip(IList<Item?>? items) {
-		if (hoverRecipe == null)
-			return null;
+	public void ClearTooltipCache() {
+		CachedTipRecipe = null;
+		CachedTip = null;
+	}
 
-		TTWhen when = Mod.Config.ShowKeybindTooltip;
+	public ISimpleNode? GetRecipeTooltip(Lazy<IList<Item?>?> items) {
+		// Do we have nothing to do?
+		if (hoverRecipe == null) {
+			ClearTooltipCache();
+			return null;
+		}
+
+		// Check some state.
 		bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift);
 		bool ctrling = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
 
+		// The following things can cause a tool-tip to change:
+		// - Editing (cannot be changed while tool-tip is visible)
+		// - shifting
+		// - ctrling
+		// - inventory state (clears this elsewhere)
+
+		// If our state hasn't changed, return the cached tip.
+		if (CachedTipRecipe == hoverRecipe && CachedTipCtrling == ctrling && CachedTipShifting == shifting)
+			return CachedTip;
+
+#if DEBUG
+		var watch = ShowTiming ? Stopwatch.StartNew() : null;
+#endif
+
+		// Alright. We're still here. Let's do this.
+
+		TTWhen when = Mod.Config.ShowKeybindTooltip;
 		Item? recipeItem = lastRecipeHover.Value;
 
+		// First, set up the cache to a clear state.
+		CachedTipRecipe = hoverRecipe;
+		CachedTipShifting = shifting;
+		CachedTipCtrling = ctrling;
+		CachedTip = null;
+
+		// Are we editing, without shifting?
 		if (Editing && ! shifting) {
 			var ebuild = SimpleHelper.Builder();
 			if (Filter != null)
@@ -4417,7 +4597,16 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 						.Text(I18n.Tooltip_UseAsIcon())
 					.EndGroup();
 
-			return ebuild.GetLayout();
+#if DEBUG
+			if (watch != null) {
+				watch.Stop();
+				ebuild.Text($"Time: {watch.Elapsed.TotalMilliseconds}ms", color: Game1.textColor * 0.5f);
+			}
+#endif
+
+			// Save this and return it.
+			CachedTip = ebuild.GetLayout();
+			return CachedTip;
 		}
 
 		bool shifted = ! Editing && shifting && hoverRecipe.Stackable;
@@ -4427,9 +4616,16 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		List<ISimpleNode> ingredients = new();
 
+		GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
+
 		if (hoverRecipe.Ingredients != null)
 			foreach (var entry in hoverRecipe.Ingredients) {
-				int amount = entry.GetAvailableQuantity(Game1.player, items, UnsafeInventories, Quality);
+				// Skip the ingredient if the quantity is not at least 1.
+				// Also skip it if we have a condition and fail.
+				if (entry.Quantity < 1 || ! entry.PassesConditionQuery(ctx))
+					continue;
+
+				int amount = entry.GetAvailableQuantity(Game1.player, items.Value, UnsafeInventories, Quality);
 				int quant = entry.Quantity * (shifted ? (ctrling ? 25 : 5) : 1);
 				craftable = Math.Min(craftable, amount / entry.Quantity);
 
@@ -4558,7 +4754,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool divided = false;
 
 		// We get the description stuff from a cache to avoid recomputing it every frame.
-		ISimpleNode[]? description = tipDescription.Value;
+		ISimpleNode[]? description = GetRecipeTooltipDescription();
 		if (description is not null) {
 			divided = true;
 			builder.Divider();
@@ -4583,7 +4779,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		bool show = Mod.Config.ShowTastes == GiftMode.Always || (Mod.Config.ShowTastes == GiftMode.Shift && shifting);
 		if (show) {
-			ISimpleNode[]? tastes = tipGiftTastes.Value;
+			ISimpleNode[]? tastes = GetRecipeTooltipGiftTastes();
 			if (tastes is not null) {
 				builder.Divider();
 				builder.AddRange(tastes);
@@ -4639,16 +4835,24 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					.AddRange(bindings);
 		}
 
-		return builder.GetLayout();
+#if DEBUG
+		if (watch != null) {
+			watch.Stop();
+			builder.Text($"Time: {watch.Elapsed.TotalMilliseconds}ms", color: Game1.textColor * 0.5f);
+		}
+#endif
+
+		CachedTip = builder.GetLayout();
+		return CachedTip;
 	}
 
 	private bool AddBuffsToTooltip(SimpleBuilder builder, Item? item, bool icons_only = false, bool divided = false) {
-		if (item is null)
+		if (item is not SObject sobj || sobj.bigCraftable.Value)
 			return divided;
 
 		bool grouped = false;
 
-		if (item is SObject sobj && sobj.Edibility != -300) {
+		if (sobj.Edibility != -300) {
 			int health = item.healthRecoveredOnConsumption();
 			int stamina = item.staminaRecoveredOnConsumption();
 

@@ -181,6 +181,11 @@ public class ModAPI : IBetterCrafting {
 		return new RecipeBuilder(name);
 	}
 
+	/// <inheritdoc />
+	public IRecipe WrapDynamicRecipe(IDynamicDrawingRecipe recipe) {
+		return recipe;
+	}
+
 	#endregion
 
 	#region Ingredients
@@ -201,6 +206,11 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
+	public IIngredient CreateBaseIngredient(string item, int quantity, float recycleRate = 1f) {
+		return new BaseIngredient(item, quantity, recycleRate);
+	}
+
+	[Obsolete("Use the method that takes a string.")]
 	public IIngredient CreateBaseIngredient(int item, int quantity, float recycleRate = 1f) {
 		return new BaseIngredient(item, quantity, recycleRate);
 	}

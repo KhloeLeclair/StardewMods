@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.Crafting;
 
@@ -14,6 +15,34 @@ public interface IRecipeWithCaching {
 	public void ClearCache();
 
 }
+
+/// <summary>
+/// An <c>IRecipe</c> that should be drawn in a unique way in the menu.
+/// This allows you to change the texture dynamically.
+/// </summary>
+public interface IDynamicDrawingRecipe : IRecipe {
+
+	/// <summary>
+	/// Whether or not the icon for this recipe should be drawn dynamically.
+	/// </summary>
+	bool ShouldDoDynamicDrawing { get; }
+
+	/// <summary>
+	/// Called to draw a recipe. The recipe must be drawn within the provided
+	/// bounds. The provided color can be ignored if you handle ghosted/canCraft
+	/// a different way.
+	/// </summary>
+	/// <param name="b">The SpriteBatch to draw with.</param>
+	/// <param name="bounds">The bounds to draw in</param>
+	/// <param name="color">The color to draw with to indicated ghosted/canCraft</param>
+	/// <param name="ghosted">Whether or not the recipe is unlearned and hidden</param>
+	/// <param name="canCraft">Whether or not the recipe is craftable</param>
+	/// <param name="layerDepth">The depth to draw at</param>
+	/// <param name="cmp">The clickable texture component that would be rendered otherwise, if one exists.</param>
+	void Draw(SpriteBatch b, Rectangle bounds, Color color, bool ghosted, bool canCraft, float layerDepth, ClickableTextureComponent? cmp);
+
+}
+
 
 /// <summary>
 /// An <c>IRecipe</c> represents a single crafting recipe, though it need not

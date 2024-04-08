@@ -287,7 +287,9 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			.Group(margin: 8)
 				.Space()
 				.Sprite(
-					new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
+					Recipe is IDynamicDrawingRecipe ddr
+						? new DynamicRecipeSpriteInfo(ddr)
+						: new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
 					quantity: Quantity
 				)
 				.Space(expand: false)

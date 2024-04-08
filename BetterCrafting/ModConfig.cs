@@ -117,6 +117,9 @@ public class ModConfig {
 	public int MaxCheckedTiles { get; set; } = 500;
 	public int MaxWorkbenchGap { get; set; } = 0;
 
+	// Nearby Chests
+	public int NearbyRadius { get; set; } = 0;
+
 	public bool UseDiagonalConnections { get; set; } = true;
 
 	public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();

@@ -117,9 +117,23 @@ public class AdvancedMultipleMutexRequest {
 		// yet received a success/fail for. This may be required for mutexes that
 		// aren't being updated normally, which normally only happens for
 		// mutexes contained by things in the currentLocation.
+		var farmers = Game1.getOnlineFarmers();
+
 		foreach (var mutex in Mutexes)
-			if (!AcquiredLocks.Contains(mutex))
-				mutex.Update(Game1.getOnlineFarmers());
+			if (!AcquiredLocks.Contains(mutex)) {
+				mutex.Update(farmers);
+
+				// See if we're held now, but didn't get an update.
+				if ( mutex.IsLockHeld() && ! AcquiredLocks.Contains(mutex)) {
+#if DEBUG
+					LogLevel level = LogLevel.Debug;
+#else
+					LogLevel level = LogLevel.Trace;
+#endif
+					Mod?.Log($"Acquired lock for mutex {mutex.NetFields.GetHashCode()} without receiving delegate call.", level);
+					LockAcquired(mutex);
+				}
+			}
 	}
 
 	private void LockAcquired(NetMutex mutex) {
@@ -182,6 +196,7 @@ public class AdvancedMultipleMutexRequest {
 							$"{mutex.IsLocked()}",
 							$"{mutex.IsLockHeld()}",
 							owner is not null ? $"{owner.Value}" : "---",
+							owner is not null ? $"{owner.TargetValue}" : "---",
 							$"{inEvents}",
 							$"{outEvents}"
 						});
@@ -192,6 +207,7 @@ public class AdvancedMultipleMutexRequest {
 						"Locked",
 						"LockHeld",
 						"Owner",
+						"OTarget",
 						"inEvents",
 						"outEvents"
 					};

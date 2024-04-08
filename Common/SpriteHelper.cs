@@ -134,27 +134,6 @@ public static class SpriteHelper {
 				return Game1.rainTexture;
 			case GameTexture.Buffs:
 				return Game1.buffsIcons;
-			/*case GameTexture.Greenhouse:
-				throw new NotImplementedException("Fix this");
-				//return Game1.greenhouseTexture;
-			case GameTexture.Barn:
-				throw new NotImplementedException("Fix this");
-				//return Game1.currentBarnTexture;
-			case GameTexture.Coop:
-				throw new NotImplementedException("Fix this");
-				//return Game1.currentCoopTexture;
-			case GameTexture.House:
-				throw new NotImplementedException("Fix this");
-				//return Game1.currentHouseTexture;
-			case GameTexture.Mailbox:
-				throw new NotImplementedException("Fix this");
-				//return Game1.mailboxTexture;
-			case GameTexture.TVStation:
-				throw new NotImplementedException("Fix this");
-				//return Game1.tvStationTexture;
-			case GameTexture.Cloud:
-				throw new NotImplementedException("Fix this");
-				//return Game1.cloud;*/
 			case GameTexture.Tool:
 				return Game1.toolSpriteSheet;
 
@@ -170,14 +149,6 @@ public static class SpriteHelper {
 			case GameTexture.Accessories:
 				return FarmerRenderer.accessoriesTexture;
 
-			// Furniture
-			/*case GameTexture.Furniture:
-				throw new NotImplementedException("Fix this");
-				//return Furniture.furnitureTexture;
-			case GameTexture.FurnitureFront:
-				throw new NotImplementedException("Fix this");
-				//return Furniture.furnitureFrontTexture;*/
-
 			// Misc
 			case GameTexture.Chair:
 				return MapSeat.mapChairTexture;
@@ -186,9 +157,9 @@ public static class SpriteHelper {
 			case GameTexture.Projectile:
 				return Projectile.projectileSheet;
 			case GameTexture.Wallpaper:
-				return Game1.content.Load<Texture2D>("Maps\\walls_and_floors");
+				return Game1.content.Load<Texture2D>(@"Maps\walls_and_floors");
 			case GameTexture.Emoji:
-				ChatBox.emojiTexture ??= Game1.content.Load<Texture2D>("LooseSprites\\emojis");
+				ChatBox.emojiTexture ??= Game1.content.Load<Texture2D>(@"LooseSprites\emojis");
 				return ChatBox.emojiTexture;
 		}
 

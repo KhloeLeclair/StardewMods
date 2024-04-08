@@ -34,6 +34,7 @@ using Newtonsoft.Json.Linq;
 
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Buildings;
+using Leclair.Stardew.BetterCrafting.Menus;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -96,6 +97,7 @@ public class ModEntry : ModSubscriber {
 
 	internal Integrations.ProducerFrameworkMod.PFMIntegration? intPFM;
 	//internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
+	//internal Integrations.ConvenientChests.CCIntegration? intCC;
 	internal Integrations.StackSplitRedux.SSRIntegration? intSSR;
 	internal Integrations.CookingSkill.CSIntegration? intCSkill;
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
@@ -307,6 +309,16 @@ public class ModEntry : ModSubscriber {
 
 		// No menu?
 		if (menu == null) {
+			// Did we *used* to have a GameMenu
+			if (CurrentMenu.Value is GameMenu gm1) {
+				if (gm1.GetCurrentPage() is not BetterCraftingPage) {
+					foreach(var page1 in gm1.pages) {
+						if (page1 is BetterCraftingPage bcp1)
+							bcp1.emergencyShutDown();
+					}
+				}
+			}
+
 			CurrentMenu.Value = null;
 			return;
 		}
@@ -436,6 +448,7 @@ public class ModEntry : ModSubscriber {
 		intPFM = new(this);
 		//intRGB = new(this);
 		intSSR = new(this);
+		//intCC = new(this);
 		intCSkill = new(this);
 		intSCore = new(this);
 		intCCStation = new(this);
@@ -846,6 +859,26 @@ public class ModEntry : ModSubscriber {
 				I18n.Setting_SortQuality_Tip,
 				c => c.LowQualityFirst,
 				(c, v) => c.LowQualityFirst = v
+			)
+			.Add(
+				I18n.Setting_Nearby_Nearby,
+				I18n.Setting_Nearby_Nearby_Tip,
+				c => c.NearbyRadius switch {
+					-1 => -1,
+					0 => 0,
+					_ => (int) (Math.Ceiling(Math.Log2(c.NearbyRadius)) - 2)
+				},
+				(c, v) => c.NearbyRadius = v switch {
+					-1 => -1,
+					0 => 0,
+					_ => (int) Math.Pow(2, v + 1)
+				},
+				-1, 4, 1,
+				format: val => val switch {
+					-1 => I18n.Setting_Nearby_Nearby_Map(),
+					0 => I18n.Setting_Nearby_Nearby_Off(),
+					_ => I18n.Setting_Nearby_Nearby_Tiles($"{Math.Pow(2, val + 1)}")
+				}
 			);
 
 		GMCMIntegration

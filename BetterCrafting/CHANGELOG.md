@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.4.0
+Released April 7th, 2024.
+
+### New Features
+
+* Added a setting to allow crafting from nearby chests. The request was
+  made for Convenient Chests compatibility, and it was easier to just
+  make a distinct feature for Better Crafting.
+
+### Changes
+
+* Started caching a lot more recipe state in the crafting menu, improving
+  performance by over 100% on average.
+
+### Fixed
+
+* Make sure to check that the item is actually an object before checking
+  for buff data.
+* The menu's exit code not running when closing the game menu while the
+  crafting page is not the current page.
+* Attempt to handle mutexes that aren't reported as locked but that we
+  have obtained a lock for, since apparently that's a thing.
+* Fix an issue with the Spooky Action system where locations would be
+  considered occupied even after the player closed their menu.
+
+### API Changes
+
+* Added `IDynamicDrawingRecipe` for recipes that should have dynamic
+  icons in the crafting menu, along with an API method that wraps
+  the recipes to force them to be detected properly.
+* The RecipeBuilder can set a drawing function using the same
+  format as `IDynamicDrawingRecipe`.
+* Data-driven ingredients can now have conditions to control whether
+  or not they're displayed and required.
+* Data-driven ingredients can now use item query fields to help
+  filter items.
+
+
 ## 2.3.0
 Released April 6th, 2024.
 

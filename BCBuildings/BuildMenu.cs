@@ -16,6 +16,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Leclair.Stardew.BCBuildings;
 
+/*
 internal class BuildMenu : IClickableMenu {
 
 	public readonly ModEntry Mod;
@@ -674,3 +675,4 @@ internal class BuildMenu : IClickableMenu {
 		}
 	}
 }
+*/

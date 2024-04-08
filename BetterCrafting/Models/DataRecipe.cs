@@ -36,20 +36,20 @@ public class DataRecipe : IRecipe {
 		foreach (var ingredient in Data.Ingredients) {
 			switch (ingredient.Type) {
 				case IngredientType.Currency:
-					ings.Add(new CurrencyIngredient(ingredient.Currency, ingredient.Quantity, ingredient.RecycleRate));
+					ings.Add(new CurrencyIngredient(ingredient.Currency, ingredient.Quantity, ingredient.RecycleRate, ingredient.Condition));
 					break;
 				case IngredientType.Item:
 					string[]? tags = ingredient.ContextTags != null && ingredient.ContextTags.Length > 0 ? ingredient.ContextTags : null;
 					string? itemId = !string.IsNullOrEmpty(ingredient.ItemId) ? ingredient.ItemId : null;
 
-					if (tags != null && itemId != null)
+					if (tags != null && itemId != null || tags != null && ingredient.Query != null || itemId != null && ingredient.Query != null )
 						ings.Add(new ErrorIngredient());
-					if (tags == null && itemId == null)
+					if (tags == null && itemId == null && ingredient.Query == null)
 						ings.Add(new ErrorIngredient());
 					else if (itemId != null && ItemRegistry.GetData(itemId) == null)
 						ings.Add(new ErrorIngredient());
 					else if (itemId != null && tags == null && ingredient.RecycleItem == null && ingredient.DisplayName == null && ingredient.Icon.Type == CategoryIcon.IconType.Item && ingredient.Icon.ItemId == null)
-						ings.Add(new BaseIngredient(itemId, ingredient.Quantity, ingredient.RecycleRate));
+						ings.Add(new BaseIngredient(itemId, ingredient.Quantity, ingredient.RecycleRate, ingredient.Condition));
 					else {
 						Func<Item, bool> itemMatches;
 						if (itemId != null)
@@ -62,6 +62,17 @@ public class DataRecipe : IRecipe {
 								}
 								return true;
 							};
+						else if (ingredient.Query != null) {
+							long id = Mod.ItemCache.GetNextCachedQueryId();
+
+							itemMatches = delegate (Item item) {
+								foreach (Item other in Mod.ItemCache.GetItems(id, ingredient.Query)) {
+									if (ItemEqualityComparer.Instance.Equals(item, other))
+										return true;
+								}
+								return false;
+							};
+						}
 						else
 							itemMatches = _ => false;
 
@@ -78,7 +89,7 @@ public class DataRecipe : IRecipe {
 								if (string.IsNullOrEmpty(ingredient.RecycleItem.Condition) || GameStateQuery.CheckConditions(ingredient.RecycleItem.Condition, Game1.currentLocation, Game1.player)) {
 									ItemQueryContext ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
 									Item result = ItemQueryResolver.TryResolveRandomItem(ingredient.RecycleItem, ctx, avoidRepeat: false, null, null, null, (query, error) => {
-										Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", StardewModdingAPI.LogLevel.Error);
+										Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", LogLevel.Error);
 									});
 
 									return result;
@@ -87,7 +98,16 @@ public class DataRecipe : IRecipe {
 								return null;
 							};
 
-						ings.Add(new MatcherIngredient(itemMatches, ingredient.Quantity, displayName, () => sprite.Texture, sprite.BaseSource, recycleTo, ingredient.RecycleRate));
+						ings.Add(new MatcherIngredient(
+							itemMatches,
+							ingredient.Quantity,
+							displayName,
+							() => sprite.Texture,
+							sprite.BaseSource,
+							recycleTo,
+							ingredient.RecycleRate,
+							ingredient.Condition
+						));
 					}
 
 					break;

@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -26,6 +27,9 @@ public class RecipeBuilder : IRecipeBuilder {
 	private Func<Rectangle?>? source;
 	private int? gridWidth;
 	private int? gridHeight;
+
+	private Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction;
+	private Func<bool>? shouldDrawCheck;
 
 	private bool ingredientsLoaded = false;
 	private List<IIngredient>? ingredients;
@@ -91,6 +95,15 @@ public class RecipeBuilder : IRecipeBuilder {
 	#endregion
 
 	#region Display
+
+	public IRecipeBuilder SetDrawFunction(
+		Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction,
+		Func<bool>? shouldDrawCheck
+	) {
+		this.drawFunction = drawFunction;
+		this.shouldDrawCheck = shouldDrawCheck;
+		return this;
+	}
 
 	/// <inheritdoc />
 	public IRecipeBuilder Texture(Func<Texture2D>? value) {
@@ -239,7 +252,9 @@ public class RecipeBuilder : IRecipeBuilder {
 			createItem: createItem,
 			quantity: quantity,
 			stackable: stackable,
-			allowRecycling: allowRecycling
+			allowRecycling: allowRecycling,
+			shouldDrawFunction: shouldDrawCheck,
+			drawFunction: drawFunction
 		);
 	}
 
@@ -247,7 +262,7 @@ public class RecipeBuilder : IRecipeBuilder {
 
 }
 
-public class BuiltRecipe : IRecipe, IRecipeWithCaching {
+public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 
 	public static readonly Rectangle ERROR_SOURCE = new(268, 470, 16, 16);
 
@@ -257,6 +272,10 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	private readonly Func<Farmer, int>? timesCrafted;
 	private readonly Func<Texture2D>? texture;
 	private readonly Func<Rectangle?>? source;
+
+	private readonly Func<bool>? shouldDrawFunction;
+	private readonly Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction;
+
 	private readonly int? gridWidth;
 	private readonly int? gridHeight;
 
@@ -275,7 +294,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	private int _h;
 
 
-	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable, bool allowRecycling) {
+	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable, bool allowRecycling, Func<bool>? shouldDrawFunction, Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction) {
 		CraftingRecipe = recipe;
 		Name = name;
 		Ingredients = ingredients;
@@ -292,6 +311,8 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 		this.tooltipExtra = tooltipExtra;
 		this.performCraft = performCraft;
 		this.createItem = createItem;
+		this.shouldDrawFunction = shouldDrawFunction;
+		this.drawFunction = drawFunction;
 		AllowRecycling = allowRecycling;
 
 		Item? example = CreateItem();
@@ -358,6 +379,12 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching {
 	#endregion
 
 	#region Display
+
+	public bool ShouldDoDynamicDrawing => shouldDrawFunction?.Invoke() ?? false;
+
+	public void Draw(SpriteBatch b, Rectangle bounds, Color color, bool ghosted, bool canCraft, float layerDepth, ClickableTextureComponent? cmp) {
+		drawFunction?.Invoke(b, bounds, color, ghosted, canCraft, layerDepth, cmp);
+	}
 
 	[MemberNotNull(nameof(_texture))]
 	private void LoadTexture() {

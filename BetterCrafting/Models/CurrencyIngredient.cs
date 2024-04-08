@@ -37,7 +37,7 @@ public enum CurrencyType {
 	QiGems
 };
 
-public class CurrencyIngredient : IIngredient, IRecyclable {
+public class CurrencyIngredient : IIngredient, IConditionalIngredient, IRecyclable {
 
 	public readonly static Rectangle ICON_MONEY = new(193, 373, 9, 10);
 	public readonly static Rectangle ICON_FESTIVAL_POINTS = new(202, 373, 9, 10);
@@ -49,11 +49,18 @@ public class CurrencyIngredient : IIngredient, IRecyclable {
 	public bool SupportsQuality => true;
 
 
-	public CurrencyIngredient(CurrencyType type, int quantity, float recycleRate = 1f) {
+	public CurrencyIngredient(CurrencyType type, int quantity, float recycleRate = 1f, string? condition = null) {
 		Type = type;
 		Quantity = quantity;
 		RecycleRate = recycleRate;
+		Condition = condition;
 	}
+
+	#region IConditionalIngredient
+
+	public string? Condition { get; }
+
+	#endregion
 
 	#region IRecyclable
 

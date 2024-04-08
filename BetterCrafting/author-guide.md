@@ -734,6 +734,16 @@ Default: `Item`
 </td>
 </tr>
 <tr>
+<td><code>Condition</code></td>
+<td>
+
+*Optional.* A [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+to control whether or not the ingredient is visible and required. If the
+query does not evaluate to true, it will not be visible nor required.
+
+</td>
+</tr>
+<tr>
 <td><code>RecycleRate</code></td>
 <td>
 
@@ -752,6 +762,8 @@ Default: `1.0`
 <tr>
 <td><code>Quantity</code></td>
 <td>
+
+*Optional.* The amount of the ingredient that is required. Defaults to 1.
 
 </td>
 </tr>
@@ -798,13 +810,13 @@ Default: `Money`
 <td><code>ItemId</code></td>
 <td>
 
+> You **must** specify one of `ItemId`, `ContextTags`, or `Query`.
+
 *Optional.* The qualified or unqualified Item Id of the item this
 ingredient should consume. This may also be used to consume any item
 of a specific category by using a negative number for the category,
 as you would do with traditional recipes as documented
 [on the wiki](https://stardewvalleywiki.com/Modding:Recipe_data).
-
-If this is not set, then you must supply `ContextTags`.
 
 </td>
 </tr>
@@ -819,6 +831,19 @@ all context tags in the list.
 When using this, you should include a `DisplayName` and possible
 an `Icon` as the crafting menu won't understand how to best
 display the ingredient's requirements to the user.
+
+</td>
+</tr>
+<tr>
+<td><code>Query</code></td>
+<td>
+
+*Optional.* An [item query](https://stardewvalleywiki.com/Modding:Item_queries)
+for filtering items that can match this ingredient.
+
+Please be careful when using this. While we do perform caching
+when we can, this can get expensive very quickly if the query
+matches a lot of items.
 
 </td>
 </tr>

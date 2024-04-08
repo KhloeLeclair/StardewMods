@@ -20,36 +20,22 @@ public class BuildingRuleHandler : IDynamicRuleHandler {
 
 	public BuildingRuleHandler(ModEntry mod) {
 		Mod = mod;
-
-		_Source = new(() => {
-			if (Mod.BuildingSources.TryGetValue("Shed", out Rectangle? source)) {
-				return (source.HasValue && !source.Value.IsEmpty) ?
-					source.Value :
-					Texture.Bounds;
-			}
-
-			return Print.Value.sourceRectForMenuView;
-		});
-
 	}
-
-	public readonly Lazy<BluePrint> Print = new(() => new BluePrint("Shed"));
-	public readonly Lazy<Rectangle> _Source;
 
 	public string DisplayName => I18n.Filter_Name();
 
 	public string Description => I18n.Filter_About();
 
-	public Texture2D Texture => Print.Value.texture;
+	public Texture2D Texture => Game1.mouseCursors;
 
-	public Rectangle Source => _Source.Value;
+	public Rectangle Source => Texture.Bounds;
 
 	public bool AllowMultiple => false;
 
 	public bool HasEditor => false;
 
 	public bool DoesRecipeMatch(IRecipe recipe, Lazy<Item?> item, object? state) {
-		return recipe is BPRecipe || recipe is ActionRecipe;
+		return recipe.Name?.StartsWith("bcbuildings:") ?? false;
 	}
 
 	public IClickableMenu? GetEditor(IClickableMenu parent, IDynamicRuleData data) {

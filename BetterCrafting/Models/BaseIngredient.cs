@@ -18,7 +18,7 @@ using StardewValley.ItemTypeDefinitions;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
-public class BaseIngredient : IOptimizedIngredient, IRecyclable {
+public class BaseIngredient : IOptimizedIngredient, IConditionalIngredient, IRecyclable {
 
 	private readonly string ItemId;
 	private readonly int NumericId;
@@ -32,10 +32,11 @@ public class BaseIngredient : IOptimizedIngredient, IRecyclable {
 
 	public BaseIngredient(int itemId, int quantity, float recycleRate = 1f) : this($"{itemId}", quantity, recycleRate) { }
 
-	public BaseIngredient(string itemId, int quantity, float recycleRate = 1f) {
+	public BaseIngredient(string itemId, int quantity, float recycleRate = 1f, string? condition = null) {
 		ItemId = itemId;
 		Quantity = quantity;
 		RecycleRate = recycleRate;
+		Condition = condition;
 
 		if (!int.TryParse(ItemId, out NumericId))
 			NumericId = int.MaxValue;
@@ -48,6 +49,12 @@ public class BaseIngredient : IOptimizedIngredient, IRecyclable {
 			new(ItemId, Quantity)
 		};
 	}
+
+	#region IConditionalIngredient
+
+	public string? Condition { get; }
+
+	#endregion
 
 	#region IRecyclable
 

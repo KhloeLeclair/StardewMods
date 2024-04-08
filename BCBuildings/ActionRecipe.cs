@@ -34,7 +34,7 @@ public class ActionRecipe : IRecipe {
 	public ActionRecipe(ActionType action, ModEntry mod) {
 		Mod = mod;
 		Action = action;
-		Name = $"buildaction:{Action}";
+		Name = $"bcbuildings:action:{Action}";
 
 		List<IIngredient> ingredients = new();
 
@@ -43,7 +43,7 @@ public class ActionRecipe : IRecipe {
 
 	// Identity
 
-	public int SortValue { get; }
+	public string SortValue => "zzz";
 	public string Name { get; }
 	public string DisplayName {
 		get {
@@ -89,16 +89,18 @@ public class ActionRecipe : IRecipe {
 
 	public bool Stackable => false;
 
+	public bool AllowRecycling => false;
+
 	public Item? CreateItem() {
 		return null;
 	}
 
 	public bool CanCraft(Farmer who) {
-		return who.currentLocation is BuildableGameLocation;
+		return who.currentLocation.IsBuildableLocation();
 	}
 
 	public string? GetTooltipExtra(Farmer who) {
-		if (who.currentLocation is BuildableGameLocation)
+		if (CanCraft(who))
 			return null;
 
 		return I18n.Error_NotBuildable();
@@ -106,6 +108,8 @@ public class ActionRecipe : IRecipe {
 
 	public void PerformCraft(IPerformCraftEvent evt) {
 
+		evt.Cancel();
+		/*
 		var menu = new BuildMenu(null, Action, evt, Mod);
 		var old_menu = Game1.activeClickableMenu;
 
@@ -114,7 +118,7 @@ public class ActionRecipe : IRecipe {
 		menu.exitFunction = () => {
 			Game1.activeClickableMenu = old_menu;
 			evt.Cancel();
-		};
+		};*/
 	}
 
 }

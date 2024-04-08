@@ -89,6 +89,17 @@ public interface IIngredient {
 }
 
 
+public interface IConditionalIngredient {
+
+	/// <summary>
+	/// A Game State Query that needs to evaluate to true for this
+	/// ingredient to be required by the recipe.
+	/// </summary>
+	string? Condition { get; }
+
+}
+
+
 public interface IOptimizedIngredient : IIngredient {
 
 	/// <summary>

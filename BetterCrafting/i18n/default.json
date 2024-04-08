@@ -87,6 +87,13 @@
 
 	"setting.nearby.enable": "Enable Extended Workbench",
 
+	"setting.nearby.nearby": "Use Nearby Chests",
+	"setting.nearby.nearby.tip": "If this is set to more than zero, you will always be able to use items in chests up to this many tiles away.",
+
+	"setting.nearby.nearby.map": "Full Map",
+	"setting.nearby.nearby.off": "Disabled",
+	"setting.nearby.nearby.tiles": "{{tiles}} Tiles",
+
 	"setting.nearby.diagonal": "Allow Diagonal Connections",
 	"setting.nearby.diagonal.tip": "When enabled, chests and connectors can be placed diagonally and still connect.",
 

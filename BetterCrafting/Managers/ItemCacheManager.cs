@@ -4,9 +4,13 @@ using System.Linq;
 
 using Leclair.Stardew.Common.Events;
 
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 
 using StardewValley;
+using StardewValley.GameData;
+using StardewValley.Internal;
 
 namespace Leclair.Stardew.BetterCrafting.Managers;
 
@@ -36,9 +40,38 @@ public class ItemCacheManager : BaseManager {
 
 	private readonly Dictionary<string, List<Item>?> ItemMaps = new();
 
+	private long LastCachedQuery;
+	private readonly PerScreen<Dictionary<long, Item[]>> CachedQueries = new(() => new());
+	private readonly PerScreen<GameLocation?> LastLocation = new(() => null);
 
 	public ItemCacheManager(ModEntry mod) : base(mod) { }
 
+	#region Queries
+
+	public long GetNextCachedQueryId() {
+		return LastCachedQuery++;
+	}
+
+	public Item[] GetItems(long id, ISpawnItemData data) {
+		var entries = CachedQueries.Value;
+
+		if (entries.TryGetValue(id, out var items))
+			return items;
+
+		items = ItemQueryResolver.TryResolve(
+			data,
+			new ItemQueryContext(Game1.player.currentLocation, Game1.player, Game1.random),
+			avoidRepeat: false,
+			logError: (query, error) => {
+				Mod.Log($"Error attempting to resolve ingredient with query '{query}': {error}", LogLevel.Error);
+			}
+		).Where(x => x.Item is Item).Select(x => (Item) x.Item).ToArray();
+
+		entries[id] = items;
+		return items;
+	}
+
+	#endregion
 
 	#region Events
 
@@ -50,13 +83,25 @@ public class ItemCacheManager : BaseManager {
 				Log($"Clearing floors and wallpapers cache.", StardewModdingAPI.LogLevel.Trace);
 				ItemMaps.Remove(ItemRegistry.type_floorpaper);
 				ItemMaps.Remove(ItemRegistry.type_wallpaper);
+				CachedQueries.ResetAllScreens();
 
 				// And the rest...
 			} else if (REVERSE_TYPE_MAPS.TryGetValue(name.BaseName, out string? typekey)) {
 				Log($"Clearing {typekey} cache.", StardewModdingAPI.LogLevel.Trace);
 				ItemMaps.Remove(typekey);
+				CachedQueries.ResetAllScreens();
 			}
 		}
+	}
+
+	[Subscriber]
+	private void OnNewDay(object? sender, DayStartedEventArgs e) {
+		CachedQueries.ResetAllScreens();
+	}
+
+	[Subscriber]
+	private void OnUpdateTicking(object? sender, WarpedEventArgs e) {
+		CachedQueries.Value.Clear();
 	}
 
 	#endregion

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using Microsoft.Xna.Framework;
 
@@ -15,9 +16,18 @@ namespace Leclair.Stardew.Common;
 
 public static class TileHelper {
 
-	internal static IEnumerable<Vector2> IterArea(this Vector2 origin, int radius) {
-		return IterArea(origin, -radius, radius, -radius, radius);
+	internal static IEnumerable<Vector2> IterArea(this Vector2 origin, int radius, bool lazy = true) {
+		var result = IterArea(origin, -radius, radius, -radius, radius);
+		if (lazy)
+			return result;
+
+		return result.Where(other => origin.Distance(other.X, other.Y) <= radius);
 	}
+
+	internal static float Distance(this Vector2 start, float x, float y) {
+		return MathF.Sqrt(MathF.Pow(start.X - x, 2) + MathF.Pow(start.Y - y, 2));
+	}
+
 
 	internal static IEnumerable<Vector2> IterArea(this Vector2 origin, int width, int height) {
 		width = Math.Max(0, width - 1);

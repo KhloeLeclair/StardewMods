@@ -15,7 +15,7 @@ using StardewModdingAPI;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
-public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
+public class MatcherIngredient : IOptimizedIngredient, IConditionalIngredient, IRecyclable {
 
 	public readonly Func<Item, bool> ItemMatcher;
 	private readonly (Func<Item, bool>, int)[] IngList;
@@ -31,7 +31,7 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 
 	private readonly bool IsFuzzyRecycle;
 
-	public MatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Func<Item?>? recycleTo = null, float recycleRate = 1f) {
+	public MatcherIngredient(Func<Item, bool> matcher, int quantity, Func<string> displayName, Func<Texture2D> texture, Rectangle? source = null, Func<Item?>? recycleTo = null, float recycleRate = 1f, string? condition = null) {
 		ItemMatcher = matcher;
 		Quantity = quantity;
 		RecycleRate = recycleRate;
@@ -39,6 +39,8 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 		_displayName = displayName;
 		_texture = texture;
 		_source = source;
+
+		Condition = condition;
 
 		IngList = new (Func<Item, bool>, int)[] {
 			(ItemMatcher, Quantity)
@@ -51,6 +53,12 @@ public class MatcherIngredient : IOptimizedIngredient, IRecyclable {
 		} else
 			IsFuzzyRecycle = true;
 	}
+
+	#region IConditionalIngredient
+
+	public string? Condition { get; }
+
+	#endregion
 
 	#region IRecyclable
 

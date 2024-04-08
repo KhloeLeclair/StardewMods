@@ -7,10 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.Objects;
 using StardewValley.Menus;
-using StardewValley.Inventories;
-using StardewValley.Network;
 
 
 #if IS_BETTER_CRAFTING
@@ -390,6 +387,34 @@ public interface IPerformCraftEvent {
 
 
 /// <summary>
+/// An <c>IRecipe</c> that should be drawn in a unique way in the menu.
+/// This allows you to change the texture dynamically.
+/// </summary>
+public interface IDynamicDrawingRecipe : IRecipe {
+
+	/// <summary>
+	/// Whether or not the icon for this recipe should be drawn dynamically.
+	/// </summary>
+	bool ShouldDoDynamicDrawing { get; }
+
+	/// <summary>
+	/// Called to draw a recipe. The recipe must be drawn within the provided
+	/// bounds. The provided color can be ignored if you handle ghosted/canCraft
+	/// a different way.
+	/// </summary>
+	/// <param name="b">The SpriteBatch to draw with.</param>
+	/// <param name="bounds">The bounds to draw in</param>
+	/// <param name="color">The color to draw with to indicated ghosted/canCraft</param>
+	/// <param name="ghosted">Whether or not the recipe is unlearned and hidden</param>
+	/// <param name="canCraft">Whether or not the recipe is craftable</param>
+	/// <param name="layerDepth">The depth to draw at</param>
+	/// <param name="cmp">The clickable texture component that would be rendered otherwise, if one exists.</param>
+	void Draw(SpriteBatch b, Rectangle bounds, Color color, bool ghosted, bool canCraft, float layerDepth, ClickableTextureComponent? cmp);
+
+}
+
+
+/// <summary>
 /// An <c>IRecipe</c> represents a single crafting recipe, though it need not
 /// be associated with a vanilla <see cref="StardewValley.CraftingRecipe"/>.
 /// Recipes usually produce <see cref="Item"/>s, but they are not required
@@ -764,6 +789,16 @@ public interface IRecipeBuilder {
 	#endregion
 
 	#region Display
+
+	/// <summary>
+	/// If this is set, the recipe will be constructed as an <see cref="IDynamicDrawingRecipe"/>
+	/// with support for dynamic icons. See that for documentation on what
+	/// these parameters are.
+	/// </summary>
+	/// <param name="drawFunction">The <seealso cref="IDynamicDrawingRecipe.Draw(SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?)"/> method.</param>
+	/// <param name="shouldDrawCheck">An optional method for checking if the recipe should be drawn dynamically. Sets <seealso cref="IDynamicDrawingRecipe.ShouldDoDynamicDrawing"/></param>
+	/// <returns>The same <see cref="IRecipeBuilder"/> instance</returns>
+	IRecipeBuilder SetDrawFunction(Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction, Func<bool>? shouldDrawCheck);
 
 	/// <summary>
 	/// The texture to use when drawing this recipe in UI. Setting this to
@@ -1215,6 +1250,13 @@ public interface IBetterCrafting {
 	/// <param name="name">The recipe's name.</param>
 	IRecipeBuilder RecipeBuilder(string name);
 
+	/// <summary>
+	/// Ensure an <see cref="IDynamicDrawingRecipe"/> is properly wrapped
+	/// as one by the API layer.
+	/// </summary>
+	/// <param name="recipe">The recipe to wrap.</param>
+	IRecipe WrapDynamicRecipe(IDynamicDrawingRecipe recipe);
+
 	#endregion
 
 	#region Ingredients
@@ -1226,6 +1268,10 @@ public interface IBetterCrafting {
 	/// <param name="item">The item ID to match.</param>
 	/// <param name="quantity">The quantity to consume.</param>
 	/// <param name="recycleRate">The percentage of items to return when recycling.</param>
+	IIngredient CreateBaseIngredient(string item, int quantity, float recycleRate = 1f);
+
+
+	[Obsolete("Use the method that takes a string.")]
 	IIngredient CreateBaseIngredient(int item, int quantity, float recycleRate = 1f);
 
 	/// <summary>

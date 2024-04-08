@@ -66,6 +66,8 @@ public class JsonIngredientData {
 
 	// Basic Properties
 
+	public string? Condition { get; set; }
+
 	public IngredientType Type { get; set; } = IngredientType.Item;
 
 	public float RecycleRate { get; set; } = 1f;
@@ -82,6 +84,8 @@ public class JsonIngredientData {
 	public string? ItemId { get; set; }
 
 	public string[]? ContextTags { get; set; }
+
+	public GenericSpawnItemData? Query { get; set; }
 
 	public GenericSpawnItemDataWithCondition? RecycleItem { get; set; }
 

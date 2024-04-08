@@ -184,62 +184,107 @@ public static class InventoryHelper {
 		);
 	}
 
-	public static void DeduplicateInventories(ref IList<LocatedInventory> inventories) {
-		HashSet<object> objects = new();
-		for(int i = 0; i < inventories.Count; i++) {
-			LocatedInventory inv = inventories[i];
-			if (objects.Contains(inv.Source)) {
-				inventories.RemoveAt(i);
-				i--;
-			} else
-				objects.Add(inv.Source);
-		}
-	}
+	public static List<LocatedInventory> DiscoverArea(
+		GameLocation location,
+		Vector2 position,
+		int radius,
+		Farmer? who,
+		Func<object, IInventoryProvider?> getProvider,
+		int scanLimit = 100,
+		int targetLimit = 20
+	) {
+		// We don't use the normal walker for this.
+		List<LocatedInventory> result = new();
 
-	public static HashSet<INetRoot> GetActiveRoots() {
-		HashSet<INetRoot> roots = new();
+		int i = 0;
+		IInventoryProvider? provider;
 
-		roots.Add(Game1.netWorldState);
-		roots.Add(Game1.player.teamRoot);
-
-		foreach (var root in Game1.Multiplayer.farmerRoots())
-			roots.Add(root);
-		
-		if (Game1.IsClient) {
-			foreach (var loc in Game1.Multiplayer.activeLocations())
-				if (loc.Root is not null)
-					roots.Add(loc.Root);
-		} else {
-			Utility.ForEachLocation(loc => {
-				if (loc.Root is not null)
-					roots.Add(loc.Root);
-
-				return true;
-			}, includeInteriors: false, includeGenerated: true);
+		// Check the fridge.
+		var fpos = location.GetFridgePosition();
+		if (fpos != null && position.Distance(fpos.Value.X, fpos.Value.Y) <= radius) {
+			var fridge = location.GetFridge(false);
+			provider = getProvider(fridge);
+			if (provider != null && provider.IsValid(fridge, location, who))
+				result.Add(new(fridge, location));
 		}
 
-		return roots;
-	}
-
-	public static void RemoveInactiveInventories(ref IList<LocatedInventory> inventories, Func<object, IInventoryProvider?> getProvider) {
-		var roots = GetActiveRoots();
-		var places = Context.IsMainPlayer ? null : Game1.Multiplayer.activeLocations().ToHashSet();
-
-		for(int i = 0; i < inventories.Count; i++) {
-			LocatedInventory inv = inventories[i];
-			if (places != null && inv.Location is GameLocation loc && !places.Contains(loc)) { 
-				inventories.RemoveAt(i);
-				i--;
-				continue;
+		foreach (var pos in position.IterArea(radius, false)) {
+			if (TileHelper.GetObjectAtPosition(location, pos, out SObject? obj)) {
+				provider = getProvider(obj);
+				if (provider != null && provider.IsValid(obj, location, who))
+					result.Add(new(obj, location));
 			}
 
-			var provider = getProvider(inv.Source);
-			var mutex = provider?.GetMutex(inv.Source, inv.Location, Game1.player);
-			if (mutex?.NetFields?.Root != null && ! roots.Contains(mutex.NetFields.Root)) {
-				inventories.RemoveAt(i);
-				i--;
+			if (location.terrainFeatures.TryGetValue(pos, out TerrainFeature? feature)) {
+				provider = getProvider(feature);
+				if (provider != null && provider.IsValid(feature, location, who))
+					result.Add(new(feature, location));
 			}
+
+			if (location.GetFurnitureAt(pos) is SObject furn) {
+				provider = getProvider(furn);
+				if (provider != null && provider.IsValid(furn, location, who))
+					result.Add(new(furn, location));
+			}
+
+			i++;
+			if (i >= scanLimit || result.Count >= targetLimit)
+				break;
 		}
+
+		return result;
+	}
+
+	public static List<LocatedInventory> DiscoverLocation(
+		GameLocation location,
+		Farmer? who,
+		Func<object, IInventoryProvider?> getProvider,
+		int scanLimit = 100,
+		int targetLimit = 20
+	) {
+		// We don't use the normal walker for this.
+		List<LocatedInventory> result = new();
+
+		int i = 0;
+		IInventoryProvider? provider;
+
+		// Check the fridge.
+		var fridge = location.GetFridge(false);
+		provider = getProvider(fridge);
+		if (provider != null && provider.IsValid(fridge, location, who))
+			result.Add(new(fridge, location));
+
+		foreach (var obj in location.Objects.Values) {
+			provider = getProvider(obj);
+			if (provider != null && provider.IsValid(obj, location, who))
+				result.Add(new(obj, location));
+
+			i++;
+			if (i >= scanLimit || result.Count >= targetLimit)
+				return result;
+		}
+
+		foreach(var obj in location.terrainFeatures.Values) {
+			provider = getProvider(obj);
+			if (provider != null && provider.IsValid(obj, location, who))
+				result.Add(new(obj, location));
+
+			i++;
+			if (i >= scanLimit || result.Count >= targetLimit)
+				return result;
+		}
+
+		foreach(var obj in location.furniture) {
+			provider = getProvider(obj);
+			if (provider != null && provider.IsValid(obj, location, who))
+				result.Add(new(obj, location));
+
+			i++;
+			if (i >= scanLimit || result.Count >= targetLimit)
+				return result;
+		}
+
+		return result;
 	}
 
 	public static List<LocatedInventory> DiscoverInventories(
@@ -619,6 +664,64 @@ public static class InventoryHelper {
 		}
 
 		return result;
+	}
+
+	public static void DeduplicateInventories(ref IList<LocatedInventory> inventories) {
+		HashSet<object> objects = new();
+		for (int i = 0; i < inventories.Count; i++) {
+			LocatedInventory inv = inventories[i];
+			if (objects.Contains(inv.Source)) {
+				inventories.RemoveAt(i);
+				i--;
+			} else
+				objects.Add(inv.Source);
+		}
+	}
+
+	public static HashSet<INetRoot> GetActiveRoots() {
+		HashSet<INetRoot> roots = new() {
+			Game1.netWorldState,
+			Game1.player.teamRoot
+		};
+
+		foreach (var root in Game1.Multiplayer.farmerRoots())
+			roots.Add(root);
+
+		if (Game1.IsClient) {
+			foreach (var loc in Game1.Multiplayer.activeLocations())
+				if (loc.Root is not null)
+					roots.Add(loc.Root);
+		} else {
+			Utility.ForEachLocation(loc => {
+				if (loc.Root is not null)
+					roots.Add(loc.Root);
+
+				return true;
+			}, includeInteriors: false, includeGenerated: true);
+		}
+
+		return roots;
+	}
+
+	public static void RemoveInactiveInventories(ref IList<LocatedInventory> inventories, Func<object, IInventoryProvider?> getProvider) {
+		var roots = GetActiveRoots();
+		var places = Context.IsMainPlayer ? null : Game1.Multiplayer.activeLocations().ToHashSet();
+
+		for (int i = 0; i < inventories.Count; i++) {
+			LocatedInventory inv = inventories[i];
+			if (places != null && inv.Location is GameLocation loc && !places.Contains(loc)) {
+				inventories.RemoveAt(i);
+				i--;
+				continue;
+			}
+
+			var provider = getProvider(inv.Source);
+			var mutex = provider?.GetMutex(inv.Source, inv.Location, Game1.player);
+			if (mutex?.NetFields?.Root != null && !roots.Contains(mutex.NetFields.Root)) {
+				inventories.RemoveAt(i);
+				i--;
+			}
+		}
 	}
 
 	public static bool DoesLocationContain(GameLocation? location, object? obj) {
