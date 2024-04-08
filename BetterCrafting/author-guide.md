@@ -685,6 +685,22 @@ as you'd like, though for obvious reasons you should keep the number small.
 </td>
 </tr>
 <tr>
+<td><code>ActionsOnCraft</code></td>
+<td>
+
+*Optional.* A list of [trigger actions](https://stardewvalleywiki.com/Modding%3ATrigger_actions)
+that should be run whenever this recipe has been crafted by a player.
+
+Example: `
+{
+	"ActionsOnCraft": [
+		"If !PLAYER_HAS_MAIL Current SomeFlag ## AddMail Current SomeFlag"
+	]
+}`
+
+</td>
+</tr>
+<tr>
 <td><code>Output</code></td>
 <td>
 
