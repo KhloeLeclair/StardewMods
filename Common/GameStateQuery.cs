@@ -15,6 +15,8 @@ using StardewValley.Network;
 
 namespace Leclair.Stardew.Common;
 
+/*
+
 /// <summary>
 /// Represents a snapshot of game state, used for evaluating game state queries
 /// or tokenizable strings. A game state may represent the current game state,
@@ -1298,3 +1300,4 @@ public static class GameStateQuery {
 
 	#endregion
 }
+*/

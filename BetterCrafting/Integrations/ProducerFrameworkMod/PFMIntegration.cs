@@ -22,8 +22,6 @@ public class PFMIntegration : BaseAPIIntegration<IProducerFrameworkModApi, ModEn
 			return null;
 
 		var output = API.GetRecipes();
-		Log($"Output: {output}", StardewModdingAPI.LogLevel.Debug);
-
 		HashSet<string> machines = new();
 
 		foreach(var recipe in output) {

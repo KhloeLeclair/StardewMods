@@ -163,5 +163,3 @@ namespace Leclair.Stardew.Common {
 				layerDepth: 1f
 			);
 		}
-	}
-}

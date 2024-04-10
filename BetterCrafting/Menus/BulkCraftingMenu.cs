@@ -43,6 +43,14 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public ClickableTextureComponent btnLess;
 	public ClickableTextureComponent btnMore;
 
+	// Paginate Ingredients
+	public int currentPage = 1;
+	public int totalPages = 1;
+	public ClickableTextureComponent? btnPrev;
+	public ClickableTextureComponent? btnNext;
+
+	public float maxWidth = -1;
+
 	private readonly SeasoningMode Seasoning;
 	private int SeasoningAmount;
 	private readonly IIngredient? SeasonIngred;
@@ -156,6 +164,37 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 		};
 
+		int ingredients = Recipe.Ingredients?.Length ?? 0;
+		if ( ingredients > 20 ) {
+			totalPages = (int) Math.Ceiling(ingredients / 20f);
+
+			btnPrev = new ClickableTextureComponent(
+				new Rectangle(0, 0, 64, 64),
+				Game1.mouseCursors,
+				new Rectangle(349, 492, 16, 16),
+				scale: 4f
+			) {
+				myID = 5,
+				upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+			};
+
+			btnNext = new ClickableTextureComponent(
+				new Rectangle(0, 0, 64, 64),
+				Game1.mouseCursors,
+				new Rectangle(365, 492, 16, 16),
+				scale: 4f
+			) {
+				myID = 6,
+				upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+			};
+		}
+
 		UpdateComponents();
 
 		if (Game1.options.SnappyMenus)
@@ -199,22 +238,47 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnCraft.bounds.X = xPositionOnScreen + (width - 64) / 2;
 		btnCraft.bounds.Y = yPositionOnScreen + height - 32;
+
+		if (btnPrev is not null) {
+			btnPrev.bounds.X = xPositionOnScreen - 16 - 64;
+			btnPrev.bounds.Y = yPositionOnScreen + (height - 64) / 2;
+		}
+
+		if (btnNext is not null) {
+			btnNext.bounds.X = xPositionOnScreen + width + 16;
+			btnNext.bounds.Y = yPositionOnScreen + (height - 64) / 2;
+		}
 	}
 
 	[MemberNotNull(nameof(Layout))]
 	public void UpdateLayout() {
 
+
 		List<ISimpleNode> ingredients = new();
 
 		int crafts = Quantity / Recipe.QuantityPerCraft;
 
-		if (Recipe.Ingredients is not null)
+		if (Recipe.Ingredients is not null) {
+			int toSkip = (currentPage - 1) * 20;
+
 			foreach (var entry in Recipe.Ingredients) {
+				if (toSkip > 0) {
+					toSkip--;
+					continue;
+				}
+
 				if (!AvailableQuantity.TryGetValue(entry, out int amount))
 					amount = 0;
 
 				ingredients.Add(BuildIngredientRow(entry, amount, crafts));
+				if (ingredients.Count >= 20)
+					break;
 			}
+
+			if (currentPage > 1)
+				while (ingredients.Count < 20)
+					ingredients.Add(new TextNode(" "));
+		}
 
 		var builder = SimpleHelper
 			.Builder(minSize: new Vector2(4 * 80, 0))
@@ -223,7 +287,9 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			.Group(margin: 8)
 				.Space()
 				.Sprite(
-					new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
+					Recipe is IDynamicDrawingRecipe ddr
+						? new DynamicRecipeSpriteInfo(ddr)
+						: new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
 					quantity: Quantity
 				)
 				.Space(expand: false)
@@ -277,6 +343,31 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		Layout = builder.GetLayout();
 		LayoutSize = Layout.GetSize(Game1.smallFont, new Vector2(400, 0));
+
+		if (currentPage == 1 && maxWidth == -1) {
+			if (totalPages == 1)
+				maxWidth = LayoutSize.X;
+			else {
+
+				var temp = Layout;
+				var tempSize = LayoutSize;
+
+				maxWidth = LayoutSize.X;
+
+				for(int page = 2; page <= totalPages; page++) {
+					currentPage = page;
+					UpdateLayout();
+				}
+
+				Layout = temp;
+				LayoutSize = tempSize;
+			}
+		}
+
+		if (maxWidth > LayoutSize.X)
+			LayoutSize.X = maxWidth;
+		else
+			maxWidth = LayoutSize.X;
 	}
 
 	private ISimpleNode BuildIngredientRow(IIngredient ing, int available, int crafts) {
@@ -334,7 +425,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 	public bool CheckQuantities() {
 		IList<Item?>? items = Menu.GetEstimatedContainerContents();
-		IList<IInventory>? unsaf = Menu.GetUnsafeInventories();
+		IList<IBCInventory>? unsaf = Menu.GetUnsafeInventories();
 
 		int old_craftable = Craftable;
 		bool changed = false;
@@ -423,6 +514,17 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public override void receiveScrollWheelAction(int direction) {
 		base.receiveScrollWheelAction(direction);
 
+		if (totalPages > 1) {
+			int target = Math.Clamp(currentPage + (direction < 0 ? 1 : -1), 1, totalPages);
+			if (target != currentPage) {
+				currentPage = target;
+				UpdateLayout();
+				UpdateComponents();
+				Game1.playSound("smallSelect");
+				return;
+			}
+		}
+
 		int amount = Recipe.QuantityPerCraft;
 		if (Game1.oldKBState.IsKeyDown(Keys.LeftShift)) {
 			amount *= 5;
@@ -454,6 +556,22 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				Game1.playSound("smallSelect");
 		}
 
+		if ((btnPrev?.containsPoint(x, y) ?? false) && currentPage > 1) {
+			currentPage--;
+			UpdateLayout();
+			UpdateComponents();
+			Game1.playSound("smallSelect");
+			return;
+		}
+
+		if ((btnNext?.containsPoint(x, y) ?? false) && currentPage < totalPages) {
+			currentPage++;
+			UpdateLayout();
+			UpdateComponents();
+			Game1.playSound("smallSelect");
+			return;
+		}
+
 		if (btnCraft.containsPoint(x, y) && Quantity > 0) {
 			bool changed = CheckQuantities();
 			if (Quantity <= CraftingLimit) {
@@ -478,6 +596,9 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnLess.tryHover(x, y);
 		btnMore.tryHover(x, y);
+
+		btnPrev?.tryHover(x, currentPage > 1 ? y : -1);
+		btnNext?.tryHover(x, currentPage < totalPages ? y : -1);
 
 		btnCraft.tryHover(x, (Quantity == 0 || Quantity > Craftable) ? -1 : y);
 
@@ -544,6 +665,20 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			btnCraft.draw(b, Color.DarkGray, 0.89f);
 		else
 			btnCraft.draw(b);
+
+		if (btnPrev is not null) {
+			if (currentPage > 1)
+				btnPrev.draw(b);
+			else
+				btnPrev.draw(b, Color.Gray, 0.89f);
+		}
+
+		if (btnNext is not null) {
+			if (currentPage < totalPages)
+				btnNext.draw(b);
+			else
+				btnNext.draw(b, Color.Gray, 0.89f);
+		}
 
 		// Base Menu
 		base.draw(b);

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 using StardewValley;
+using StardewValley.Inventories;
 using StardewValley.Network;
 
 namespace Leclair.Stardew.Common.Inventory;
@@ -12,41 +13,47 @@ namespace Leclair.Stardew.Common.Inventory;
 // Remember to update IBetterCrafting whenever this changes!
 
 /// <summary>
-/// An <c>IInventory</c> represents an item storage that
+/// An <c>IBCInventory</c> represents an item storage that
 /// Better Crafting is interacting with, whether by extracting
 /// items or inserting them.
 /// </summary>
-public interface IInventory {
+public interface IBCInventory {
 
 	/// <summary>
-	/// The object that has inventory.
+	/// Optional. If this inventory is associated with an object, that object.
 	/// </summary>
 	object Object { get; }
 
 	/// <summary>
-	/// Where this object is located, if a location is relevant.
+	/// If this inventory is associated with an object, where that object is located.
 	/// </summary>
 	GameLocation? Location { get; }
 
 	/// <summary>
-	/// The player accessing the inventory, if a player is involved.
+	/// If this inventory is associated with a player, the player.
 	/// </summary>
 	Farmer? Player { get; }
 
 	/// <summary>
-	/// The NetMutex for this object, which should be locked before
-	/// using it. If there is no mutex, then we apparently don't
-	/// need to worry about that.
+	/// If this inventory is managed by a NetMutex, or an object with one,
+	/// which should be locked before manipulating the inventory, then
+	/// provide it here.
 	/// </summary>
 	NetMutex? Mutex { get; }
 
 	/// <summary>
-	/// Whether or not the object is locked and ready for read/write usage.
+	/// Get this inventory as a vanilla IInventory, if possible. May
+	/// be null if the inventory is not a vanilla inventory.
+	/// </summary>
+	IInventory? Inventory { get; }
+
+	/// <summary>
+	/// Whether or not the inventory is locked and ready for read/write usage.
 	/// </summary>
 	bool IsLocked();
 
 	/// <summary>
-	/// Whether or not the object is a valid inventory.
+	/// Whether or not the inventory is a valid inventory.
 	/// </summary>
 	bool IsValid();
 
@@ -61,28 +68,31 @@ public interface IInventory {
 	bool CanExtractItems();
 
 	/// <summary>
-	/// For multi-tile inventories, the region that this inventory takes
-	/// up in the world. Only rectangular multi-tile inventories are
-	/// supported, and this is used primarily for discovering connections.
+	/// For inventories associated with multiple tile regions in a location,
+	/// such as a farm house kitchen, this is the region the inventory fills.
+	/// Only rectangular shapes are supported. This is used for discovering
+	/// connections to nearby inventories.
 	/// </summary>
 	Rectangle? GetMultiTileRegion();
 
 	/// <summary>
-	/// Get the tile position of this object in the world, if it has one.
+	/// For inventories associated with a tile position in a location, such
+	/// as a chest placed in the world.
+	/// 
 	/// For multi-tile inventories, this should be the primary tile if
 	/// one exists.
 	/// </summary>
 	Vector2? GetTilePosition();
 
 	/// <summary>
-	/// Get this object's inventory as a list of items. May be null if
+	/// Get this inventory as a list of items. May be null if
 	/// there is an issue accessing the object's inventory.
 	/// </summary>
 	IList<Item?>? GetItems();
 
 	/// <summary>
-	/// Check to see if a specific item is allowed to be stored in the
-	/// object's inventory.
+	/// Check to see if a specific item is allowed to be stored in
+	/// this inventory.
 	/// </summary>
 	/// <param name="item">The item we're checking</param>
 	bool IsItemValid(Item item);

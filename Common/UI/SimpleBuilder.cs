@@ -24,6 +24,12 @@ public class SimpleBuilder {
 		Layout = layout ?? new LayoutNode(LayoutDirection.Vertical, null);
 	}
 
+	public bool IsEmpty() {
+		if (Built != null) return Built.Length == 0;
+		if (Nodes != null) return Nodes.Count == 0;
+		return true;
+	}
+
 	[MemberNotNull(nameof(Nodes))]
 	private void AssertState() {
 		if (Built != null) throw new ArgumentException("cannot modify built layout");
@@ -85,9 +91,9 @@ public class SimpleBuilder {
 		return this;
 	}
 
-	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None) {
+	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None, float? overrideHeight = null) {
 		AssertState();
-		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align));
+		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align, overrideHeight));
 		return this;
 	}
 

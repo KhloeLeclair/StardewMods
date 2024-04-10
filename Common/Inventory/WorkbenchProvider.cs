@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 using StardewValley;
+using StardewValley.Inventories;
 using StardewValley.Network;
 using StardewValley.Objects;
 
@@ -54,5 +55,9 @@ public class WorkbenchProvider : BaseInventoryProvider<Workbench> {
 
 	public override bool IsValid(Workbench obj, GameLocation? location, Farmer? who) {
 		return true;
+	}
+
+	public override IInventory? GetInventory(Workbench obj, GameLocation? location, Farmer? who) {
+		return null;
 	}
 }

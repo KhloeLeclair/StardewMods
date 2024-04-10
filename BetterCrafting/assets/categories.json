@@ -145,38 +145,22 @@
 				"Type": "Item",
 				"RecipeName": "Wood Fence"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Floors"
+				},
+				{
+					"Id": "Fences"
+				},
+				{
+					"Id": "Furniture"
+				},
+				{
+					"Id": "Light"
+				}
+			],
 			"Recipes": [
-				"Gate",
-				"Wood Fence",
-				"Stone Fence",
-				"Iron Fence",
-				"Hardwood Fence",
-				"Wood Floor",
-				"Stone Floor",
-				"Weathered Floor",
-				"Crystal Floor",
-				"Straw Floor",
-				"Gravel Path",
-				"Wood Path",
-				"Crystal Path",
-				"Cobblestone Path",
-				"Stepping Stone Path",
-				"Brick Floor",
-				"Rustic Plank Floor",
-				"Stone Walkway Floor",
-				"Torch",
-				"Campfire",
-				"Wooden Brazier",
-				"Stone Brazier",
-				"Gold Brazier",
-				"Carved Brazier",
-				"Stump Brazier",
-				"Barrel Brazier",
-				"Skull Brazier",
-				"Marble Brazier",
-				"Wood Lamp-post",
-				"Iron Lamp-post",
-				"Jack-O-Lantern",
 				"Tub o' Flowers",
 				"Wicked Statue",
 				"Flute Block",
@@ -184,9 +168,13 @@
 				"Wood Sign",
 				"Stone Sign",
 				"Dark Sign",
+				"Text Sign",
 				"Garden Pot",
 				"Scarecrow",
-				"Deluxe Scarecrow"
+				"Deluxe Scarecrow",
+				"Statue Of Blessings",
+				"Statue Of The Dwarf King",
+				"Mini-Jukebox"
 			]
 		},
 		{
@@ -214,8 +202,10 @@
 				"Wild Seeds (Wi)",
 				"Ancient Seeds",
 				"Grass Starter",
+				"Blue Grass Starter",
 				"Tea Sapling",
-				"Fiber Seeds"
+				"Fiber Seeds",
+				"Mystic Tree Seed"
 			]
 		},
 		{
@@ -239,7 +229,9 @@
 				"Warp Totem: Desert",
 				"Warp Totem: Island",
 				"Rain Totem",
-				"Cookout Kit"
+				"Treasure Totem",
+				"Cookout Kit",
+				"Tent Kit"
 			]
 		},
 		{
@@ -254,10 +246,13 @@
 				"Bait",
 				"Wild Bait",
 				"Magic Bait",
+				"Deluxe Bait",
+				"Challenge Bait",
 				"Spinner",
 				"Trap Bobber",
 				"Cork Bobber",
 				"Quality Bobber",
+				"Sonar Bobber",
 				"Treasure Hunter",
 				"Dressed Spinner",
 				"Barbed Hook",
@@ -273,39 +268,17 @@
 				"Type": "Item",
 				"RecipeName": "Chest"
 			},
-			"Recipes": [
-				"Chest",
-				"Stone Chest",
-				"Sprinkler",
-				"Quality Sprinkler",
-				"Iridium Sprinkler",
-				"Mayonnaise Machine",
-				"Bee House",
-				"Preserves Jar",
-				"Cheese Press",
-				"Loom",
-				"Keg",
-				"Oil Maker",
-				"Cask",
-				"Charcoal Kiln",
-				"Crystalarium",
-				"Furnace",
-				"Lightning Rod",
-				"Solar Panel",
-				"Recycling Machine",
-				"Seed Maker",
-				"Slime Incubator",
-				"Ostrich Incubator",
-				"Slime Egg-Press",
-				"Tapper",
-				"Heavy Tapper",
-				"Worm Bin",
-				"Bone Mill",
-				"Geode Crusher",
-				"Mini-Jukebox",
-				"Mini-Obelisk",
-				"Farm Computer",
-				"Hopper"
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Machine"
+				},
+				{
+					"Id": "Sprinkler"
+				},
+				{
+					"Id": "Storage"
+				}
 			]
 		},
 		{

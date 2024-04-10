@@ -9,6 +9,7 @@ using Leclair.Stardew.Common.Inventory;
 
 using StardewValley;
 using StardewValley.Network;
+using StardewValley.Inventories;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -19,6 +20,7 @@ public class ModInventoryProvider : IInventoryProvider  {
 	private readonly Action<object, GameLocation?, Farmer?>? cleanInventory;
 	private readonly Func<object, GameLocation?, Farmer?, int>? getActualCapacity;
 	private readonly Func<object, GameLocation?, Farmer?, IList<Item?>?>? getItems;
+	private readonly Func<object, GameLocation?, Farmer?, IInventory?>? getInventory;
 	private readonly Func<object, GameLocation?, Farmer?, Item, bool>? isItemValid;
 	private readonly Func<object, GameLocation?, Farmer?, Rectangle?>? getMultiTileRegion;
 	private readonly Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition;
@@ -37,7 +39,8 @@ public class ModInventoryProvider : IInventoryProvider  {
 		Func<object, GameLocation?, Farmer?, Item, bool>? isItemValid,
 		Action<object, GameLocation?, Farmer?>? cleanInventory,
 		Func<object, GameLocation?, Farmer?, Rectangle?>? getMultiTileRegion,
-		Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition
+		Func<object, GameLocation?, Farmer?, Vector2?>? getTilePosition,
+		Func<object, GameLocation?, Farmer?, IInventory?>? getInventory
 	) {
 		this.isValid = isValid;
 		this.canExtractItems = canExtractItems;
@@ -50,6 +53,7 @@ public class ModInventoryProvider : IInventoryProvider  {
 		this.cleanInventory = cleanInventory;
 		this.getMultiTileRegion = getMultiTileRegion;
 		this.getTilePosition = getTilePosition;
+		this.getInventory = getInventory;
 	}
 
 	public bool CanExtractItems(object obj, GameLocation? location, Farmer? who) {
@@ -94,5 +98,9 @@ public class ModInventoryProvider : IInventoryProvider  {
 
 	public bool IsValid(object obj, GameLocation? location, Farmer? who) {
 		return isValid?.Invoke(obj, location, who) ?? false;
+	}
+
+	public IInventory? GetInventory(object obj, GameLocation? location, Farmer? who) {
+		return getInventory?.Invoke(obj, location, who);
 	}
 }

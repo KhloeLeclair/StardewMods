@@ -100,7 +100,7 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		// Patches
-		//Patches.GameMenu_Patches.Patch(this);
+		// Patches.GameMenu_Patches.Patch(this);
 		Common_SpriteText_Patches.Patch(Harmony, Monitor);
 
 		Assets = new(this);

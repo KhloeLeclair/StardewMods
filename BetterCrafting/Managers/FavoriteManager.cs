@@ -53,13 +53,10 @@ public class FavoriteManager : BaseManager {
 			data = new();
 		}
 
-		if (data == null)
-			data = new Favorites();
+		data ??= new Favorites();
 
-		if (data.Cooking == null)
-			data.Cooking = new();
-		if (data.Crafting == null)
-			data.Crafting = new();
+		data.Cooking ??= new();
+		data.Crafting ??= new();
 
 		UserFavorites = data;
 		Modified = false;

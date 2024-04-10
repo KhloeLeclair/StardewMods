@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "SeeMeRollin": {
-      "commandName": "Project",
-      "commandLineArgs": "--mods-path \"DevMods\""
-    }
-  }
-}

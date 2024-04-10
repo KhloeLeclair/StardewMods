@@ -202,7 +202,7 @@ public struct TextNode : IFlowNode {
 		}
 
 		if (Style.IsJunimo() || Style.IsFancy())
-			RenderHelper.DrawSpriteText(
+			SpriteText.drawString(
 				batch,
 				text,
 				(int) position.X, (int) position.Y,

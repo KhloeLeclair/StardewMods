@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection.Metadata.Ecma335;
 
 using HarmonyLib;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Extensions;
+using Leclair.Stardew.GiantCropTweaks.Models;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -15,6 +17,7 @@ using StardewModdingAPI;
 
 using StardewValley;
 using StardewValley.TerrainFeatures;
+using StardewValley.Tools;
 
 using static StardewValley.Debris;
 
@@ -40,8 +43,8 @@ public static class GiantCrop_Patches {
 			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(GiantCrop), nameof(GiantCrop.performToolAction)),
 				prefix: new HarmonyMethod(typeof(GiantCrop_Patches), nameof(performToolAction_Prefix)),
-				postfix: new HarmonyMethod(typeof(GiantCrop_Patches), nameof(performToolAction_Postfix)),
-				transpiler: new HarmonyMethod(typeof(GiantCrop_Patches), nameof(performToolAction_Transpiler))
+				postfix: new HarmonyMethod(typeof(GiantCrop_Patches), nameof(performToolAction_Postfix))
+				//transpiler: new HarmonyMethod(typeof(GiantCrop_Patches), nameof(performToolAction_Transpiler))
 			);
 
 		} catch(Exception ex) {
@@ -64,8 +67,8 @@ public static class GiantCrop_Patches {
 
 					} else {
 						source = new(
-							x: data.Corner.X,
-							y: data.Corner.Y,
+							x: data.TexturePosition.X,
+							y: data.TexturePosition.Y,
 							width: 16 * data.TileSize.X,
 							height: 16 * (data.TileSize.Y + 1)
 						);
@@ -96,7 +99,7 @@ public static class GiantCrop_Patches {
 		return true;
 	}
 
-	public static int GetCropAmount(Random r, int min, int max) {
+	/*public static int GetCropAmount(Random r, int min, int max) {
 		try {
 			if (CurrentCrop is not null && CurrentCrop.modData.TryGetValue(ModEntry.MD_ID, out string? id)) {
 				var data = ModEntry.Instance.GetGiantCropData(id);
@@ -150,16 +153,181 @@ public static class GiantCrop_Patches {
 		}
 
 		Game1.createRadialDebris(location, debrisType, xTile, yTile, numberOfChunks, resource, groundLevel, item, color);
-	}
+	}*/
 
-	public static bool performToolAction_Prefix(GiantCrop __instance, Vector2 tileLocation, GameLocation location) {
-		CurrentCrop = __instance;
-		CurrentPosition = tileLocation;
-		CurrentLocation = location;
+	public static bool PerformToolAction(GiantCrops data, GiantCrop crop, Tool tool, int damage, Vector2 tileLocation, GameLocation location) {
+		if (tool is not Axe taxe)
+			return false;
+
+		Farmer who = taxe.getLastFarmerToUse() ?? Game1.player;
+		int power = tool.UpgradeLevel / 2 + 1;
+
+		Random rnd = Game1.random;
+
+		location.playSoundAt("axchop", tileLocation);
+
+		int width = crop.width.Value;
+		int height = crop.height.Value;
+
+		int centerX = (int) tileLocation.X + width / 2;
+		int centerY = (int) tileLocation.Y + height / 2;
+
+		Game1.createRadialDebris(
+			location,
+			12,
+			centerX,
+			centerY,
+			Game1.random.Next(4, 9),
+			resource: false
+		);
+
+		IReflectedField<float> shakeField = ModEntry.Instance.Helper.Reflection.GetField<float>(crop, "shakeTimer");
+		if (shakeField.GetValue() <= 0f) {
+			shakeField.SetValue(100f);
+			crop.NeedsUpdate = true;
+		}
+
+		if (taxe.hasEnchantmentOfType<ShavingEnchantment>() && rnd.GetChance(power / 5.0) && data.HarvestItems.Count > 0) {
+			foreach(IGiantCropHarvestItemData dropData in data.HarvestItems) {
+				Item? item = null;
+				if (item is not null) {
+					Debris d = new Debris(
+						item,
+						new Vector2(centerX * 64f, centerY * 64f),
+						Game1.player.getStandingPosition()
+					);
+
+					d.Chunks[0].xVelocity.Value += rnd.Next(-10, 11) / 10f;
+					d.chunkFinalYLevel = (int) (tileLocation.Y * 64f + 128f);
+					location.debris.Add(d);
+				}
+			}
+		}
+
+		crop.health.Value -= power;
+		if (crop.health.Value > 0f)
+			return false;
+
+		who.gainExperience(5, 50 * ((who.LuckLevel + 1) / 2));
+
+		if (location.HasUnlockedAreaSecretNotes(who)) {
+			SObject obj = location.tryToCreateUnseenSecretNote(who);
+			if (obj != null)
+				Game1.createItemDebris(obj, tileLocation * 64f, -1, location);
+		}
+
+		if (data.HarvestItems.Count > 0) {
+			foreach (IGiantCropHarvestItemData dropData in data.HarvestItems) {
+				Item? item = null;
+				if (item is not null) {
+					CreateMultipleItemDebris(
+						item,
+						new Vector2(centerX * 64f, centerY * 64f),
+						-2,
+						location
+					);
+
+					Game1.setRichPresence("giantcrop", item.Name);
+				}
+			}
+		}
+
+		Game1.createRadialDebris(
+			location,
+			12,
+			centerX,
+			centerY,
+			Game1.random.Next(4, 9),
+			resource: false
+		);
+
+		location.playSoundAt("stumpCrack", tileLocation);
+		Multiplayer mp = ModEntry.Instance.Helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer").GetValue();
+
+		for (int x = 0; x < width; x++) {
+			for(int y = 0; y < height; y++) {
+				float animationInterval = Utility.RandomFloat(80f, 110f);
+				if (width >= 2 && height >= 2 && (x == 0 || x == width - 2) && (y == 0 || y == height - 2))
+					mp.broadcastSprites(
+						location,
+						new TemporaryAnimatedSprite(
+							5,
+							(tileLocation + new Vector2(x * 0.5f, y * 0.5f)) * 64f,
+							Color.White,
+							8,
+							flipped: false,
+							70f
+						)
+					);
+
+				mp.broadcastSprites(
+					location,
+					new TemporaryAnimatedSprite(
+						5,
+						(tileLocation + new Vector2(x, y)) * 64f,
+						Color.White,
+						8,
+						flipped: false,
+						animationInterval
+					)
+				);
+			}
+		}
+
 		return true;
 	}
 
-	public static IEnumerable<CodeInstruction> performToolAction_Transpiler(IEnumerable<CodeInstruction> instructions) {
+
+	public static Item? TryGetDrop(IGiantCropHarvestItemData drop, Random rnd, GameLocation location, Farmer who, bool isShaving) {
+		if (!rnd.GetChance(drop.Chance))
+			return null;
+		if (!string.IsNullOrEmpty(drop.Condition) && ! GameStateQuery.CheckConditions(drop.Condition, location: location, who: who, rnd: rnd, monitor: Monitor))
+			return null;
+		if (drop.ForShavingEnchantment.HasValue && drop.ForShavingEnchantment != isShaving)
+			return null;
+
+		// TODO: The item query resolver.
+		return null;
+	}
+
+
+	public static void CreateMultipleItemDebris(Item item, Vector2 origin, int direction, GameLocation? location = null, int groundLevel = -1) {
+		location ??= Game1.currentLocation;
+		int stack = item.Stack;
+		item.Stack = 1;
+		Game1.createItemDebris(item, origin, direction, location, groundLevel);
+		for(int i = 1; i < stack; i++) {
+			Game1.createItemDebris(item.getOne(), origin, direction, location, groundLevel);
+		}
+	}
+
+	public static bool performToolAction_Prefix(GiantCrop __instance, Tool t, int damage, Vector2 tileLocation, GameLocation location, ref bool __result) {
+		CurrentCrop = __instance;
+		CurrentPosition = tileLocation;
+		CurrentLocation = location;
+
+		try {
+			// If this giant crop doesn't have our modData, perform the usual logic.
+			if (!__instance.modData.TryGetValue(ModEntry.MD_ID, out string? id))
+				return true;
+
+			// Make sure we have data.
+			var data = ModEntry.Instance.GetGiantCropData(id);
+			if (data is null) {
+				__result = false;
+				return false;
+			}
+
+			__result = PerformToolAction(data, __instance, t, damage, tileLocation, location);
+		} catch(Exception ex) {
+			Monitor?.Log($"An error occurred while attempting to interact with a GiantCrop:\n{ex}", LogLevel.Warn);
+			__result = false;
+		}
+
+		return false;
+	}
+
+	/*public static IEnumerable<CodeInstruction> performToolAction_Transpiler(IEnumerable<CodeInstruction> instructions) {
 		var instrs = instructions.ToArray();
 
 		var method_Next = AccessTools.Method(typeof(Random), nameof(Random.Next), new Type[] {
@@ -215,7 +383,7 @@ public static class GiantCrop_Patches {
 
 			yield return in0;
 		}
-	}
+	}*/
 
 	public static void performToolAction_Postfix(GiantCrop __instance, GameLocation location, bool __result) {
 		try {

@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace Leclair.Stardew.GiantCropTweaks;
 
+public enum AllowedLocations {
+	BaseGame,
+	BaseAndIsland,
+	Anywhere
+};
+
 public class ModConfig {
 
-	public bool AllowInIslandWest { get; set; } = true;
+	public AllowedLocations AllowedLocations { get; set; } = AllowedLocations.BaseAndIsland;
 
 }

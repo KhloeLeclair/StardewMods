@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Leclair.Stardew.GiantCropTweaks.Serialization;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -15,15 +19,32 @@ public class GiantCrops : IGiantCropData {
 	public string ID { get; set; } = string.Empty;
 
 	/// <inheritdoc />
+	public string FromItemId { get; set; } = string.Empty;
+
+	/// <inheritdoc />
+	[JsonConverter(typeof(AbstractListConverter<GiantCropHarvestItemData, IGiantCropHarvestItemData>))]
+	public List<IGiantCropHarvestItemData> HarvestItems { get; set; } = new();
+
+	/// <inheritdoc />
 	public string Texture { get; set; } = string.Empty;
 
 	/// <inheritdoc />
 	[ContentSerializer(Optional = true)]
-	public Point Corner { get; set; } = Point.Zero;
+	public Point TexturePosition { get; set; } = Point.Zero;
+
+	[JsonIgnore]
+	[Obsolete("Use TexturePosition instead.")]
+	public Point Corner {
+		get => TexturePosition;
+		set => TexturePosition = value;
+	}
 
 	/// <inheritdoc />
 	[ContentSerializer(Optional = true)]
 	public Point TileSize { get; set; } = new Point(3, 3);
+
+	/// <inheritdoc />
+	public int Health { get; set; } = 3;
 
 	/// <inheritdoc />
 	[ContentSerializer(Optional = true)]
@@ -31,14 +52,67 @@ public class GiantCrops : IGiantCropData {
 
 	/// <inheritdoc />
 	[ContentSerializer(Optional = true)]
-	public string? HarvestedItemId { get; set; }
+	public string? Condition { get; set; }
+
+	[Obsolete("Use HarvestItems instead.")]
+	public string? HarvestedItemId {
+		get {
+			var data = HarvestItems.FirstOrDefault();
+			return data?.ItemId;
+		}
+		set {
+			var data = HarvestItems.FirstOrDefault();
+			if (data is null) {
+				data = new GiantCropHarvestItemData() {
+					ItemId = value
+				};
+				HarvestItems.Add(data);
+			} else
+				data.ItemId = value;
+		}
+	}
+
+	public bool ShouldSerializeHarvestedItemId() => false;
 
 	/// <inheritdoc />
-	[ContentSerializer(Optional = true)]
-	public int MinYields { get; set; } = 15;
+	[Obsolete("Use HarvestItems instead.")]
+	public int MinYields {
+		get {
+			var data = HarvestItems.FirstOrDefault();
+			return data?.MinStack ?? -1;
+		}
+		set {
+			var data = HarvestItems.FirstOrDefault();
+			if (data is null) {
+				data = new GiantCropHarvestItemData() {
+					MinStack = value
+				};
+				HarvestItems.Add(data);
+			} else
+				data.MinStack = value;
+		}
+	}
 
-	/// <inheritdoc />
-	[ContentSerializer(Optional = true)]
-	public int MaxYields { get; set; } = 21;
+	public bool ShouldSerializeMinYields() => false;
+
+	[Obsolete("Use HarvestItems instead.")]
+	public int MaxYields {
+		get {
+			var data = HarvestItems.FirstOrDefault();
+			return data?.MaxStack ?? -1;
+		}
+		set {
+			var data = HarvestItems.FirstOrDefault();
+			if (data is null) {
+				data = new GiantCropHarvestItemData() {
+					MaxStack = value
+				};
+				HarvestItems.Add(data);
+			} else
+				data.MaxStack = value;
+		}
+	}
+
+	public bool ShouldSerializeMaxYields() => false;
 
 }

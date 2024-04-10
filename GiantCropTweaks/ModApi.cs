@@ -32,8 +32,8 @@ public class ModApi : IGiantCropTweaks {
 		Mod.LoadCropData();
 		if (Mod.ApiData.TryGetValue(id, out var data)) {
 			source = new(
-				x: data.Corner.X,
-				y: data.Corner.Y,
+				x: data.TexturePosition.X,
+				y: data.TexturePosition.Y,
 				width: 16 * data.TileSize.X,
 				height: 16 * (data.TileSize.Y + 1)
 			);

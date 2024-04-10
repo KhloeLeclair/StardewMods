@@ -7,10 +7,14 @@ using StardewValley.Network;
 using StardewModdingAPI;
 using StardewValley;
 using StardewModdingAPI.Events;
+using Leclair.Stardew.Common.Events;
+using Netcode;
 
 namespace Leclair.Stardew.Common;
 
 public class AdvancedMultipleMutexRequest {
+
+	public static ModSubscriber? Mod = null;
 
 	private IModHelper? Helper;
 	private int Timeout;
@@ -26,16 +30,20 @@ public class AdvancedMultipleMutexRequest {
 	private Action? OnSuccess;
 	private Action? OnFailure;
 
-	private FarmerCollection FC;
+	private int ScreenId;
+
+	//private FarmerCollection FC;
 
 	public AdvancedMultipleMutexRequest(IEnumerable<NetMutex> mutexes, Action? onSuccess = null, Action? onFailure = null, IModHelper? helper = null, int timeout = 1000) {
 		Helper = helper;
 		Timeout = timeout;
 		OnSuccess = onSuccess;
 		OnFailure = onFailure;
+		ScreenId = Context.ScreenId;
+
 		AcquiredLocks = new();
 		Mutexes = mutexes is NetMutex[] nms ? nms : mutexes.ToArray();
-		FC = new(null);
+
 		RequestLock();
 	}
 
@@ -95,7 +103,7 @@ public class AdvancedMultipleMutexRequest {
 	}
 
 	private void OnUpdate(object? sender, UpdateTickedEventArgs e) {
-		if (!Live || ReportedCount >= Mutexes.Length)
+		if (!Live || ScreenId != Context.ScreenId || ReportedCount >= Mutexes.Length)
 			return;
 
 		// Check to see if we've timed out.
@@ -106,13 +114,26 @@ public class AdvancedMultipleMutexRequest {
 		}
 
 		// Manually update the mutexes we care about but that we haven't
-		// yet received a success/fail for. This is required for mutexes that
+		// yet received a success/fail for. This may be required for mutexes that
 		// aren't being updated normally, which normally only happens for
 		// mutexes contained by things in the currentLocation.
-		foreach(var mutex in Mutexes) {
-			if (!AcquiredLocks.Contains(mutex))
-				mutex.Update(FC);
-		}
+		var farmers = Game1.getOnlineFarmers();
+
+		foreach (var mutex in Mutexes)
+			if (!AcquiredLocks.Contains(mutex)) {
+				mutex.Update(farmers);
+
+				// See if we're held now, but didn't get an update.
+				if ( mutex.IsLockHeld() && ! AcquiredLocks.Contains(mutex)) {
+#if DEBUG
+					LogLevel level = LogLevel.Debug;
+#else
+					LogLevel level = LogLevel.Trace;
+#endif
+					Mod?.Log($"Acquired lock for mutex {mutex.NetFields.GetHashCode()} without receiving delegate call.", level);
+					LockAcquired(mutex);
+				}
+			}
 	}
 
 	private void LockAcquired(NetMutex mutex) {
@@ -148,7 +169,56 @@ public class AdvancedMultipleMutexRequest {
 		if (IsLocked()) {
 			OnSuccess?.Invoke();
 
-		} else { 
+		} else {
+			if (Mod != null) {
+				try {
+#if DEBUG
+					LogLevel level = LogLevel.Debug;
+#else
+					LogLevel level = LogLevel.Trace;
+#endif
+
+					Mod.Log($"Unable to acquire all mutexes within {Timeout} ms. IsHost: {Game1.IsMasterGame}; Multiplayer: {Context.IsMultiplayer}; Mutex state:", level);
+
+					List<string[]> states = new();
+
+					foreach (var mutex in Mutexes) {
+						var owner = Helper?.Reflection?.GetField<NetLong>(mutex, "owner", false)?.GetValue();
+						var request = Helper?.Reflection?.GetField<NetEvent1Field<long, NetLong>>(mutex, "lockRequest", false)?.GetValue();
+						object? _inEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "incomingEvents", false)?.GetValue();
+						object? _outEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "outgoingEvents", false)?.GetValue();
+
+						int inEvents = _inEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_inEvents, "Count", false)?.GetValue() ?? -1;
+						int outEvents = _outEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_outEvents, "Count", false)?.GetValue() ?? -1;
+
+						states.Add(new string[] {
+							$"{mutex.GetHashCode()}",
+							$"{mutex.IsLocked()}",
+							$"{mutex.IsLockHeld()}",
+							owner is not null ? $"{owner.Value}" : "---",
+							owner is not null ? $"{owner.TargetValue}" : "---",
+							$"{inEvents}",
+							$"{outEvents}"
+						});
+					}
+
+					string[] headers = new string[] {
+						"ID",
+						"Locked",
+						"LockHeld",
+						"Owner",
+						"OTarget",
+						"inEvents",
+						"outEvents"
+					};
+
+					Mod.LogTable(headers, states, level);
+
+				} catch(Exception) {
+					/* do nothing */
+				}
+			}
+
 			ReleaseLock();
 			OnFailure?.Invoke();
 		}

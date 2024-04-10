@@ -4,7 +4,6 @@
     <Rule Id="CS8933" Action="Warning" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
-    <Rule Id="IDE0066" Action="Hidden" />
     <Rule Id="IDE1006" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeAnalysis.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.NetAnalyzers">
@@ -188,5 +187,9 @@
     <Rule Id="IDE0084" Action="None" />
     <Rule Id="IDE0140" Action="None" />
     <Rule Id="IDE1006" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="VisualStudio.SpellChecker.CodeAnalyzer" RuleNamespace="VisualStudio.SpellChecker.CodeAnalyzer">
+    <Rule Id="VSSpell001" Action="None" />
+    <Rule Id="VSSpell002" Action="None" />
   </Rules>
 </RuleSet>
