@@ -48,8 +48,7 @@ public static class InventoryHelper {
 		if (!Game1.objectInformation.TryGetValue(id, out string? data) || string.IsNullOrWhiteSpace(data) || id < 0)
 			return null;
 
-		string[] parts = data.Split('/');
-		if (parts.Length > 3 && parts[3] == "Ring")
+		if (data.Type == "Ring")
 			return new Ring(id);
 
 		return new SObject(id, 1);*/

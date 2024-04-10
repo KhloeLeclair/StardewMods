@@ -311,7 +311,7 @@ public class AlmanacMenu : IClickableMenu {
 	public void SetErrorState() {
 		SetLeftFlow(null);
 		SetRightFlow(FlowHelper.Builder()
-			.Texture(Game1.mouseCursors, new Rectangle(268, 470, 16, 16), 3f, align: Alignment.HCenter | Alignment.VCenter)
+			.Texture(Game1.mouseCursors, new Rectangle(268, 470, 16, 16), 3f, align: Alignment.Center)
 			.Text(" ")
 			.FormatText(I18n.Page_Error(), font: Game1.dialogueFont, align: Alignment.VCenter)
 			.Text("\n\n")

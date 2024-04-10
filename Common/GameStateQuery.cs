@@ -396,14 +396,14 @@ public static class GameStateQuery {
 			if (args.Length > 1)
 				return state => {
 					foreach (string season in args) {
-						if (string.Equals(state.Date.Season, season, StringComparison.OrdinalIgnoreCase))
+						if (string.Equals(state.Date.SeasonKey, season, StringComparison.OrdinalIgnoreCase))
 							return true;
 					}
 					return false;
 				};
 
 			string season = args[0];
-			return state => string.Equals(state.Date.Season, season, StringComparison.OrdinalIgnoreCase);
+			return state => string.Equals(state.Date.SeasonKey, season, StringComparison.OrdinalIgnoreCase);
 		});
 
 		RegisterCondition("YEAR", (value, state) =>
@@ -490,14 +490,14 @@ public static class GameStateQuery {
 
 			return state => CheckMatchingPlayers(playerKey, state, farmer => {
 				Stats stats = farmer.stats;
-				if (stats.stat_dictionary.TryGetValue(statName, out uint val))
+				if (stats.Values.TryGetValue(statName, out uint val))
 					return val >= min;
 				return stats.GetType().GetField(statName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public)?.GetValue(stats) is uint v && v >= min;
 			});
 		});
 
 		RegisterCondition("FOUND_ALL_LOST_BOOKS", args => state =>
-			Game1.netWorldState.Value.LostBooksFound.Value >= 21
+			Game1.netWorldState.Value.LostBooksFound >= 21
 		);
 
 		RegisterCondition("PLAYER_COMBAT_LEVEL", (farmer, level, _) =>
@@ -622,11 +622,11 @@ public static class GameStateQuery {
 
 				if (loc is null)
 					return false;
-				else if (loc is Desert)
+				else if (loc.InDesertContext())
 					name = "Desert";
-				else if (loc.GetLocationContext() == GameLocation.LocationContext.Default)
+				else if (loc.InValleyContext())
 					name = "Default";
-				else if (loc.GetLocationContext() == GameLocation.LocationContext.Island)
+				else if (loc.InIslandContext())
 					name = "Island";
 				else
 					return false;
@@ -661,7 +661,7 @@ public static class GameStateQuery {
 
 		RegisterCondition("PLAYER_IS_MARRIED", (farmer, name, _) => {
 			if (string.Equals(name, "Any", StringComparison.OrdinalIgnoreCase))
-				return farmer.isMarried();
+				return farmer.isMarriedOrRoommates();
 			if (string.Equals(name, "Player", StringComparison.OrdinalIgnoreCase))
 				return farmer.team.GetSpouse(farmer.UniqueMultiplayerID).HasValue;
 
@@ -710,7 +710,7 @@ public static class GameStateQuery {
 
 			return _ => {
 				int count = 0;
-				foreach (int item in Game1.netWorldState.Value.MuseumPieces.Values) {
+				foreach (string item in Game1.netWorldState.Value.MuseumPieces.Values) {
 					var obj = new SObject(item, 1);
 					if (obj.Type is null)
 						continue;
@@ -759,14 +759,14 @@ public static class GameStateQuery {
 			if (name != "NightMarket")
 				return false;
 
-			return state.Date.Season == "winter" && state.Date.DayOfMonth >= 15 && state.Date.DayOfMonth <= 17 && state.TimeOfDay >= 1700;
+			return state.Date.SeasonKey == "winter" && state.Date.DayOfMonth >= 15 && state.Date.DayOfMonth <= 17 && state.TimeOfDay >= 1700;
 		});
 
 		RegisterCondition("IS_PASSIVE_FESTIVAL_TODAY", (name, state) => {
 			if (name != "NightMarket")
 				return false;
 
-			return state.Date.Season == "winter" && state.Date.DayOfMonth >= 15 && state.Date.DayOfMonth <= 17;
+			return state.Date.SeasonKey == "winter" && state.Date.DayOfMonth >= 15 && state.Date.DayOfMonth <= 17;
 		});
 
 		RegisterCondition("IS_FESTIVAL_DAY", (offset, state) => {
@@ -849,7 +849,7 @@ public static class GameStateQuery {
 		);
 
 		RegisterCondition("PLAYER_HAS_ITEM", (farmer, id, _) =>
-			farmer.hasItemInInventory(id, 1)
+			farmer.Items.Contains(ItemRegistry.Create(id, 1))
 		);
 
 		RegisterCondition("PLAYER_HAS_CAUGHT_FISH", (farmer, fish, _) =>
@@ -891,7 +891,7 @@ public static class GameStateQuery {
 				// TODO: Handle Desert
 
 				var ctx = loc.GetLocationContext();
-				var wtr = Game1.netWorldState.Value.GetWeatherForLocation(ctx);
+				var wtr = Game1.netWorldState.Value.GetWeatherForLocation(loc.GetLocationContextId());
 
 				bool wind = wtr.isDebrisWeather.Value;
 				bool storm = wtr.isLightning.Value;
@@ -908,11 +908,11 @@ public static class GameStateQuery {
 					case 3: // Storm
 						return storm;
 					case 4: // Festival
-						return ctx == GameLocation.LocationContext.Default && Utility.isFestivalDay(state.Date.DayOfMonth, state.Date.Season);
+						return ctx == Game1.locationContextData["Default"] && Utility.isFestivalDay(state.Date.DayOfMonth, state.Date.Season);
 					case 5: // Snow
 						return snow;
 					case 6: // Wedding
-						return ctx == GameLocation.LocationContext.Default && Game1.weddingToday;
+						return ctx == Game1.locationContextData["Default"] && Game1.weddingToday;
 				}
 
 				return false;
@@ -920,7 +920,7 @@ public static class GameStateQuery {
 		});
 
 		RegisterCondition("LOCATION_SEASON", args => state =>
-			state.Date.Season == args[1]
+			state.Date.SeasonKey == args[1]
 		);
 
 		RegisterCondition("LOCATION_IS_MINES", args => state =>
@@ -942,9 +942,9 @@ public static class GameStateQuery {
 					return false;
 				if (loc is Desert)
 					ctx = "Desert";
-				else if (loc.GetLocationContext() == GameLocation.LocationContext.Default)
+				else if (loc.GetLocationContext() == Game1.locationContextData["Default"])
 					ctx = "Default";
-				else if (loc.GetLocationContext() == GameLocation.LocationContext.Island)
+				else if (loc.GetLocationContext() == Game1.locationContextData["Island"])
 					ctx = "Island";
 				else
 					return false;
