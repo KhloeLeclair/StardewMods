@@ -119,8 +119,9 @@ public static class FishHelper {
 	/// </summary>
 	/// <returns> Dictionary<fishItemID, Dictionary<zone/Sublocation.Area, List<seasons>>></returns>
 	public static Dictionary<string, Dictionary<SubLocation, List<int>>> GetFishLocations() {
+		//Dictionary<SubLocation, seasons>
 		Dictionary<string, Dictionary<SubLocation, List<int>>> result = new();
-
+		//Dictionary<locationId, locationData>
 		var locations = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
 
 		foreach (var lp in locations) {
@@ -152,25 +153,7 @@ public static class FishHelper {
 						}
 					}
 				} catch {
-					Dictionary<string, List<string>> data = GetLocationFish(lp.Key, season, locations);
-					if (data == null)
-						continue;
-
-					foreach (var pair in data) {
-						string zone = pair.Key;
-						SubLocation sl = new(lp.Key, zone);
-
-						foreach (string fish in pair.Value) {
-							if (!result.TryGetValue(fish, out var locs))
-								result[fish] = locs = new();
-
-							if (locs.TryGetValue(sl, out var seasons))
-								seasons.Add(season);
-							else
-								locs[sl] = new List<int>() { season };
-						}
-					}
-					ModEntry.Instance.Log($"Error at FishHelper line 169",LogLevel.Warn);
+					ModEntry.Instance.Log($"Error at FishHelper line 156",LogLevel.Warn);
 				}
 			}
 		}
@@ -221,8 +204,8 @@ public static class FishHelper {
 			try {
 				result = GetLocationFish(season, locations[key]);
 			} catch {
-				result = GetLocationFish(season, locations[key]);
-				ModEntry.Instance.Log($"Error at FishHelper line 225", LogLevel.Warn);
+				result = new();
+				ModEntry.Instance.Log($"Error at FishHelper line 208", LogLevel.Warn);
 			}
 		else
 			result = new();
@@ -273,7 +256,6 @@ public static class FishHelper {
 				try {
 					GetLocationFish(season, locations[bits[0]], result);
 				} catch {
-					GetLocationFish(season, locations[bits[0]], result);
 					ModEntry.Instance.Log($"Error at {getLocName(locations[bits[0]])}, bits section.", LogLevel.Warn);
 				}
 
@@ -282,7 +264,6 @@ public static class FishHelper {
 		try{
 			GetLocationFish(season, locations[Game1.GetFarmTypeKey()], result);
 		} catch {
-			GetLocationFish(season, locations[Game1.GetFarmTypeKey()], result);
 			ModEntry.Instance.Log($"Error at {getLocName(locations[Game1.GetFarmTypeKey()])}, farm key section.", LogLevel.Warn);
 		}
 
@@ -309,15 +290,12 @@ public static class FishHelper {
 
 		string name = getLocName(data);
 		List<SpawnFishData> entries = data.Fish;
-		ModEntry.Instance.Log($"Fish in {name} list: {entries.Count}", LogLevel.Debug);
-
 		if (!data.Equals(Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"])) {
 			LocationData Default = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"];
 			foreach (SpawnFishData f in Default.Fish)
 				if (!entries.Contains(f))
 					entries.Add(f);
-			ModEntry.Instance.Log($"Fish in {name}+Default list: {entries.Count}");
-		} else ModEntry.Instance.Log("This is Default Location Data");
+		}
 
 		entries.Sort((a,b)=> { return a.Precedence.CompareTo(b.Precedence); });
 
@@ -326,7 +304,7 @@ public static class FishHelper {
 			string fName = string.IsNullOrEmpty(ItemRegistry.Create(fish).DisplayName)? "Fish" : ItemRegistry.Create(fish).DisplayName;
 			//if(fish=="(O)213") { fName = "Fish Taco"; }
 			string zone = string.IsNullOrEmpty(entries[i].FishAreaId) ? "No zone" : entries[i].FishAreaId;
-			if(fish.StartsWith("(O)"))
+			if (fish.StartsWith("(O)") && canAddFish(entries[i], season, data))
 				AddFish(fName, fish, zone, existing);
 		}
 		ModEntry.Instance.Log($"Added fish data for {name}, season {season}");
@@ -368,5 +346,29 @@ public static class FishHelper {
 		}
 		if (name.Length > 25) name = endCheck;
 		return name;
+	}
+	private static bool canAddFish(SpawnFishData fish, int season, LocationData data) {
+		if (fish.Season == null && fish.Condition == null) return true;
+		if (fish.Season != null) {
+			ModEntry.Instance.Log($"Season int: {season}, Season value {fish.Season}");
+			switch (season) {
+				case 0: if (fish.Season == StardewValley.Season.Spring) return true; break;
+				case 1: if (fish.Season == StardewValley.Season.Summer) return true; break;
+				case 2: if (fish.Season == StardewValley.Season.Fall) return true; break;
+				case 3: if (fish.Season == StardewValley.Season.Winter) return true; break;
+			}
+			return false;
+		}
+		string[] conditionBits = fish.Condition.Split(' ');
+		if (conditionBits[0] == "LOCATION_SEASON")
+			for(int i = 2; i<conditionBits.Length; i++)
+				switch (season) {
+					case 0: if (conditionBits[i].ToLower() == "spring") return true; break;
+					case 1: if (conditionBits[i].ToLower() == "summer") return true; break;
+					case 2: if (conditionBits[i].ToLower() == "fall") return true; break;
+					case 3: if (conditionBits[i].ToLower() == "winter") return true; break;
+				}
+		else if(GameStateQuery.CheckConditions(fish.Condition)) return true;
+		return false;
 	}
 }

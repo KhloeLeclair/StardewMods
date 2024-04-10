@@ -569,14 +569,14 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 					string key = subloc == null ? name : $"{name} ({subloc})";
 
 					bool matches = pair.Value.Contains(Menu.Season);
-					bool all_seasons = pair.Value.Count==4? true:false;
+					bool all_seasons = true;
 
-					/*for (int i = 0; i < WorldDate.MonthsPerYear; i++) {
+					for (int i = 0; i < WorldDate.MonthsPerYear; i++) {
 						if (!pair.Value.Contains(i)) {
 							all_seasons = false;
 							break;
 						}
-					}*/
+					}
 
 					Color? color = matches ? null : Game1.textColor * .5f;
 					Color? shadow = matches ? null : Game1.textShadowColor * .5f;
