@@ -10,9 +10,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AdvancedMultipleMutexRequest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Crafting\IPostCraftEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DynamicRecipeSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecyclable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\ConsoleCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\PintailModSubscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NameValueCollectionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\RandomExtensions.cs" />

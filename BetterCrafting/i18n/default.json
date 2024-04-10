@@ -44,6 +44,15 @@
 	"setting.enable-categories": "Enable Categories",
 	"setting.enable-categories.tip": "Display category tabs in crafting menus, rather than one big list of everything.",
 
+	"setting.new-recipes": "Highlight New Recipes",
+	"setting.new-recipes.tip": "When this is enabled, new recipes will have a 'NEW' label displayed on them.",
+	"setting.new-recipes.uncrafted": "Not Yet Crafted",
+	"setting.new-recipes.unseen": "Not Yet Seen",
+	"setting.new-recipes.disabled": "Disabled",
+
+	"setting.new-recipes.prismatic": "Prismatic New Recipes",
+	"setting.new-recipes.prismatic.tip": "When enabled, the 'NEW' label on recipes will be displayed with shifting colors.",
+
 	"setting.settings": "Show Settings Button",
 	"setting.settings.tip": "When enabled, a button to open Better Crafting's settings will be added to the Better Crafting menu.",
 
@@ -90,6 +99,7 @@
 	"setting.nearby.nearby": "Use Nearby Chests",
 	"setting.nearby.nearby.tip": "If this is set to more than zero, you will always be able to use items in chests up to this many tiles away.",
 
+	"setting.nearby.nearby.active": "Everywhere",
 	"setting.nearby.nearby.map": "Full Map",
 	"setting.nearby.nearby.off": "Disabled",
 	"setting.nearby.nearby.tiles": "{{tiles}} Tiles",
@@ -317,6 +327,7 @@
 
 	// Dynamic Filters
 	"filter.add-new": "Add New Rule",
+	"filter.from-rule": "Enabled By Rule",
 
 	"filter.storage": "Storage",
 	"filter.storage.about": "This rule matches items that act as storage, like chests or hoppers.",
@@ -333,11 +344,23 @@
 	"filter.search": "Search",
 	"filter.search.about": "This rule matches items against a search, using the same rules as the crafting menu.",
 
+	"filter.mod": "Items From Mod",
+	"filter.mod.about": "This rule will attempt to match all recipes added by a specific mod.",
+
 	"filter.machine": "Machines",
 	"filter.machine.about": "This rule matches items that act as machines, processing items or performing some other function.",
 
 	"filter.sprinkler": "Sprinklers",
 	"filter.sprinkler.about": "This rule matches sprinklers.",
+
+	"filter.floors": "Floors and Paths",
+	"filter.floors.about": "This rule matches all floor and path items.",
+
+	"filter.fences": "Fences",
+	"filter.fences.about": "This rule matches all fence items.",
+
+	"filter.furniture": "Furniture",
+	"filter.furniture.about": "This rule matches all furniture items.",
 
 	"filter.light": "Light",
 	"filter.light.about": "This rule matches placeable lights.",

@@ -10,6 +10,8 @@ public class CraftingStation : ICraftingStation {
 
 	public string Id { get; set; } = string.Empty;
 
+	public string? Theme { get; set; } = null;
+
 	public string? DisplayName { get; set; } = null;
 	public CategoryIcon? Icon { get; set; } = null;
 

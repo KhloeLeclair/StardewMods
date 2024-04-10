@@ -10,6 +10,20 @@ namespace Leclair.Stardew.Common.Crafting;
 
 // Remember to update IBetterCrafting whenever this changes!
 
+public interface IRealRecipe1 : IRecipeWithCaching, IPostCraftEventRecipe, IDynamicDrawingRecipe { }
+
+public interface IRealRecipe2 : IRecipeWithCaching, IDynamicDrawingRecipe { }
+
+public interface IRealRecipe3 : IPostCraftEventRecipe, IDynamicDrawingRecipe { }
+
+public interface IRealRecipe4 : IRecipeWithCaching, IPostCraftEventRecipe, IRecipe { }
+
+public interface IRealRecipe5 : IRecipeWithCaching, IRecipe { }
+
+public interface IRealRecipe6 : IPostCraftEventRecipe, IRecipe { }
+
+
+
 public interface IRecipeWithCaching {
 
 	public void ClearCache();
@@ -192,4 +206,23 @@ public interface IRecipe {
 	}
 
 	#endregion
+}
+
+
+/// <summary>
+/// An optional interface for IRecipes that adds an event to the recipe
+/// to be called after performing a craft, but before the item is added
+/// to the player's inventory.
+/// </summary>
+public interface IPostCraftEventRecipe {
+
+	/// <summary>
+	/// This method is called after a craft has been performed, and can
+	/// be used to modify the output of a craft based on the ingredients
+	/// consumed by the crafting process.
+	/// </summary>
+	/// <param name="evt">Details about the event, including a reference
+	/// to any produced item, and a list of all consumed items.</param>
+	void PostCraft(IPostCraftEvent evt);
+
 }

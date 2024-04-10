@@ -12,6 +12,7 @@ using StardewValley.GameData.Buffs;
 using StardewValley.GameData.Objects;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
+using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
@@ -31,18 +32,32 @@ public class BuffRuleHandler : IDynamicRuleHandler {
 	public const int ATTACK = 11;
 
 	public readonly int BuffIndex;
+	public readonly string? BuffId;
+
+	private readonly Texture2D? _Texture;
+
+	public BuffRuleHandler(string? buffId, BuffData data) {
+		BuffId = buffId;
+		BuffIndex = int.MinValue;
+
+		BuffName = TokenParser.ParseText(data.DisplayName);
+		_Texture = ModEntry.Instance.Helper.GameContent.Load<Texture2D>(data.IconTexture);
+		Source = Game1.getSourceRectForStandardTileSheet(Texture, data.IconSpriteIndex, 16, 16);
+	}
 
 	public BuffRuleHandler(int index) { 
 		BuffIndex = index;
+		_Texture = null;
 		Source = new Rectangle(10 + 10 * BuffIndex, 428, 10, 10);
+		BuffName = Game1.content.LoadString(@"Strings\UI:ItemHover_Buff" + BuffIndex, "").Trim();
 	}
 
-	public string BuffName => Game1.content.LoadString(@"Strings\UI:ItemHover_Buff" + BuffIndex, "").Trim();
+	public string BuffName;
 
 	public string DisplayName => I18n.Filter_Buff(BuffName);
 	public string Description => I18n.Filter_Buff_About(BuffName);
 
-	public Texture2D Texture => Game1.mouseCursors;
+	public Texture2D Texture => _Texture ?? Game1.mouseCursors;
 	public Rectangle Source { get; }
 
 	public bool AllowMultiple => false;
@@ -85,7 +100,10 @@ public class BuffRuleHandler : IDynamicRuleHandler {
 			if (buff is null)
 				continue;
 
-			if (GetBuffLevel(buff.CustomAttributes) > 0f)
+			if (BuffId != null && buff.BuffId == BuffId)
+				return true;
+
+			if (BuffIndex != int.MinValue && GetBuffLevel(buff.CustomAttributes) > 0f)
 				return true;
 		}
 

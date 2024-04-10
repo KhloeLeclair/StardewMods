@@ -47,7 +47,7 @@ public static class CraftingHelper {
 		return HasIngredients(recipe.Ingredients, who, items, inventories, maxQuality);
 	}
 
-	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst) {
+	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
 		if (ingredients != null) {
 			GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
 
@@ -55,14 +55,17 @@ public static class CraftingHelper {
 				if (entry.Quantity < 1 || ! entry.PassesConditionQuery(ctx))
 					continue;
 
-				entry.Consume(who, inventories, maxQuality, lowQualityFirst);
+				if (entry is IConsumptionTrackingIngredient cst)
+					cst.Consume(who, inventories, maxQuality, lowQualityFirst, consumedItems);
+				else
+					entry.Consume(who, inventories, maxQuality, lowQualityFirst);
 			}
 		}
 	}
 
-	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst) {
+	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
 		if (recipe.Ingredients != null)
-			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst);
+			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst, consumedItems);
 	}
 
 

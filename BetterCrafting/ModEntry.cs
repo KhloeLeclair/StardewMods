@@ -35,10 +35,11 @@ using Newtonsoft.Json.Linq;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Buildings;
 using Leclair.Stardew.BetterCrafting.Menus;
+using System.Diagnostics;
 
 namespace Leclair.Stardew.BetterCrafting;
 
-public class ModEntry : ModSubscriber {
+public class ModEntry : PintailModSubscriber {
 
 	public static readonly string NPCMapLocationPath = "Mods/Bouhm.NPCMapLocations/NPCs";
 
@@ -792,6 +793,23 @@ public class ModEntry : ModSubscriber {
 					{ MenuPriority.Normal, I18n.Setting_Priority_Normal },
 					{ MenuPriority.High, I18n.Setting_Priority_High },
 				}
+			)
+			.AddChoice(
+				name: I18n.Setting_NewRecipes,
+				tooltip: I18n.Setting_NewRecipes_Tip,
+				get: c => c.NewRecipes,
+				set: (c, v) => c.NewRecipes = v,
+				choices: new Dictionary<NewRecipeMode, Func<string>> {
+					{ NewRecipeMode.Disabled, I18n.Setting_NewRecipes_Disabled },
+					{ NewRecipeMode.Uncrafted, I18n.Setting_NewRecipes_Uncrafted },
+					{ NewRecipeMode.Unseen, I18n.Setting_NewRecipes_Unseen }
+				}
+			)
+			.Add(
+				name: I18n.Setting_NewRecipes_Prismatic,
+				tooltip: I18n.Setting_NewRecipes_Prismatic_Tip,
+				get: c => c.NewRecipesPrismatic,
+				set: (c, v) => c.NewRecipesPrismatic = v
 			);
 
 		GMCMIntegration
@@ -864,17 +882,20 @@ public class ModEntry : ModSubscriber {
 				I18n.Setting_Nearby_Nearby,
 				I18n.Setting_Nearby_Nearby_Tip,
 				c => c.NearbyRadius switch {
+					-2 => -2,
 					-1 => -1,
 					0 => 0,
 					_ => (int) (Math.Ceiling(Math.Log2(c.NearbyRadius)) - 2)
 				},
 				(c, v) => c.NearbyRadius = v switch {
+					-2 => -2,
 					-1 => -1,
 					0 => 0,
 					_ => (int) Math.Pow(2, v + 1)
 				},
 				-1, 4, 1,
 				format: val => val switch {
+					-2 => I18n.Setting_Nearby_Nearby_Active(),
 					-1 => I18n.Setting_Nearby_Nearby_Map(),
 					0 => I18n.Setting_Nearby_Nearby_Off(),
 					_ => I18n.Setting_Nearby_Nearby_Tiles($"{Math.Pow(2, val + 1)}")

@@ -18,7 +18,7 @@ using StardewValley.ItemTypeDefinitions;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
-public class BaseIngredient : IOptimizedIngredient, IConditionalIngredient, IRecyclable {
+public class BaseIngredient : IOptimizedIngredient, IConsumptionTrackingIngredient, IConditionalIngredient, IRecyclable {
 
 	private readonly string ItemId;
 	private readonly int NumericId;
@@ -290,8 +290,13 @@ public class BaseIngredient : IOptimizedIngredient, IConditionalIngredient, IRec
 	public int Quantity { get; private set; }
 
 	public void Consume(Farmer who, IList<IBCInventory>? inventories, int max_quality, bool low_quality_first) {
-		InventoryHelper.ConsumeItems(IngList, who, inventories, max_quality, low_quality_first);
+		Consume(who, inventories, max_quality, low_quality_first, null);
 	}
+
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int max_quality, bool low_quality_first, IList<Item>? consumedItems) {
+		InventoryHelper.ConsumeItems(IngList, who, inventories, max_quality, low_quality_first, consumedItems);
+	}
+
 
 	public bool HasAvailableQuantity(int quantity, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int max_quality) {
 		bool ItemMatcher(Item item) {

@@ -57,7 +57,7 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 		if (DataRecipesById != null)
 			return;
 
-		var loaded = Game1.content.Load<Dictionary<string, JsonRecipeData>>(RECIPE_PATH);
+		var loaded = Mod.Helper.GameContent.Load<Dictionary<string, JsonRecipeData>>(RECIPE_PATH);
 		DataRecipesById = new();
 
 		// Time to hydrate our recipes.
@@ -115,6 +115,7 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 	public IRecipe? GetRecipe(CraftingRecipe recipe) {
 		LoadRecipes();
+
 		if (DataRecipesById.ContainsKey(recipe.name))
 			return new InvalidRecipe(recipe.name);
 

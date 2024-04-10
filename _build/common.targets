@@ -16,6 +16,7 @@
 
 		<CodeAnalysisRuleSet>$(SolutionDir)\_build\Rules.ruleset</CodeAnalysisRuleSet>
 		<DefineConstants Condition="$(EnableHarmony) == 'True'">$(DefineConstants);HARMONY</DefineConstants>
+    <DefineConstants Condition="$(EnablePintail) == 'True'">$(DefineConstants);PINTAIL</DefineConstants>
 		<DefineConstants Condition="$(EnableTranslation) == 'True'">$(DefineConstants);TRANSLATION</DefineConstants>
 
 		<!-- game version -->
@@ -24,7 +25,8 @@
 		<ModSet>DevMods</ModSet>
 
 		<MinimumApiVersion>$(SmapiVersion)</MinimumApiVersion>
-    <ManifestWarningsAsErrors Condition="$(Configuration) == 'Release'">true</ManifestWarningsAsErrors>
+    <MinimumGameVersion>$(GameVersion)</MinimumGameVersion>
+		<ManifestWarningsAsErrors Condition="$(Configuration) == 'Release'">true</ManifestWarningsAsErrors>
 	</PropertyGroup>
 
 	<!-- paths -->
@@ -51,8 +53,8 @@
 	<!-- mod build package -->
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
-		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.2" />
-		<PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.2.0" />
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+		<PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.3.1" />
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(GamePath)\smapi-internal\Newtonsoft.Json.dll</HintPath>
 			<Private>false</Private>
@@ -61,6 +63,13 @@
 	
 	<ItemGroup Condition="$(EnableTranslation) == 'True'">
 		<PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.1" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(EnablePintail) == 'True'">
+		<Reference Include="SMAPI.Toolkit">
+			<HintPath>$(GamePath)\smapi-internal\Pintail.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
 	</ItemGroup>
 	
 </Project>
