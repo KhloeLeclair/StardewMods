@@ -1,0 +1,335 @@
+{
+	// Settings
+	"setting.show-adv": "Gelişmiş Üretim Ayarlarını Göster",
+	"setting.show-adv.tip": "Ne kadar malzemeye sahip olduğunuz ve bir tarifi daha önce kaç kere ürettiğiniz gibi gelişmiş üretim ayarlarını gösterir. Vanilla oyundaki ayarın aynısıdır, kolaylık için buraya da eklenmiştir.",
+
+	"setting.general": "Genel Ayarlar",
+
+	"setting.priority": "Menü İşleme Önceliği",
+	"setting.priority.tip": "Menü işleme önceliğini değiştirmek, Better Crafting'in diğer modlarla uyumluluğunu artırabilir. \"Düşük\" seçili ise , Better Crafting menü mantığı diğer modlardan sonra uygulanır. \"Yüksek\" seçili ise, Better Crafting menü mantığı diğer modlardan önce uygulanır.",
+
+	"setting.priority.low": "Düşük",
+	"setting.priority.normal": "Normal",
+	"setting.priority.high": "Yüksek",
+
+	"setting.theme": "Arayüz Teması",
+	"setting.theme-desc": "Bu arayüz teması Better Crafting'in butonları için kullanılacak. Better Crafting'in arayüz dokularının birçoğunun standart oyun dokularıyla aynı olduğunu unutmayın.",
+
+	"theme.automatic": "Otomatik",
+	"theme.default": "Varsayılan",
+
+	"setting.gift-taste-style": "Hediye Zevkleri Stili",
+	"setting.gift-taste-style.heads": "Kafalar",
+	"setting.gift-taste-style.names": "İsimler",
+	"setting.gift-taste-style.tip": "\"Kafalar\" seçili ise, hediye zevkleri her karakterin kafası kullanılarak belirtilir. \"İsimler\" seçili ise, bunun yerine isimler gösterilir.",
+
+	"setting.gift-taste": "Hediye Zevklerini Göster",
+	"setting.gift-taste.tip": "Etkinleştirildiğinde, bilinen hediye zevkleri kolaylık sağlamak için nesne açıklamalarında gösterilir. Eşleşen hediye zevkleri arama yaparken her zaman gösterilir.",
+	"setting.gift-taste.never": "Asla",
+	"setting.gift-taste.shift": "Shift'e Basarken",
+	"setting.gift-taste.always": "Her Zaman",
+
+	"setting.gift-taste-all": "Keşfedilmemiş Hediye Zevklerini Göster",
+	"setting.gift-taste-all.tip": "Etkinleştirildiğinde Better Crafting bütün hediye zevklerini gösterir. Oyunda keşfetmedikleriniz dahil. Bu özellik biraz hileli sayılabilir, bu yüzden varsayılan olarak devre dışıdır.",
+
+	"setting.alphabetic": "Alfabetik Sırala",
+	"setting.alphabetic.tip": "Etkinleştirildiğinde tarifler varsayılan sıra yerine alfabetik olarak sıralanır.",
+
+	"setting.replace-crafting": "Oluşturulmuş Nesne Menüsünü Değiştir",
+	"setting.replace-crafting.tip": "Etkinleştirildiğinde oluşturulmuş nesne menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
+
+	"setting.replace-cooking": "Yemek Pişirme Menüsünü Değiştir",
+	"setting.replace-cooking.tip": "Etkinleştirildiğinde yemek pişirme menüsü, yeniden yapılandırılmış başka bir tane ile değiştirilir.",
+
+	"setting.enable-categories": "Kategorileri Etkinleştir",
+	"setting.enable-categories.tip": "Üretim menülerinde her şeyi içeren büyük bir liste yerine kategori sekmeleri gösterir.",
+
+	"setting.settings": "Ayar Butonunu Göster",
+	"setting.settings.tip": "Etkinleştirildiğinde Better Crafting menüsüne, modun ayarlarını açmak için bir buton ekler.",
+
+	"setting.bindings": "Kısayol Tuşları ve Eylemler",
+	"setting.bindings.tip": "Veri girdileri ve tuşlar ile ilgili ayarlar.",
+
+	"setting.suppress": "Devre Dışı Bırakma Tuşu",
+	"setting.suppress.tip": "Bu tuş basılı tutulurken bir üretim menüsü açılırsa, Better Crafting bu menüyü değiştirmez.",
+
+	"setting.key.modifier": "Değiştirici Tuşu",
+	"setting.key.modifier.tip": "Kullanılabilir olduğunda başka bir tuş tarafından gerçekleştirilen eylemi değiştirmek için bu tuşu basılı tutun.",
+
+	"setting.key.search": "Arama Tuşu",
+	"setting.key.search.tip": "Görüntülenen tarifleri filtreleyen bir arama açmak için bu tuşa basın.",
+
+	"setting.key.favorite": "Favori Tuşu",
+	"setting.key.favorite.tip": "Bir tarifi favorilere eklemek veya favorilerden çıkarmak için tarifin üstünde bu tuşa basın.",
+
+	"setting.key.bulk": "Toptan Üretim Tuşu",
+	"setting.key.bulk.tip": "Bir tarifte Toptan Üretimi açmak için bu tuşa basın.",
+
+	"setting.key.behavior.left": "Sol Tık / A Tuşu Eylemi",
+	"setting.key.behavior.left.tip": "Bir tarifin üstünde sol tık yaparken (veya oyun kumandasında A'ya basarken) bu eylem gerçekleştirilir.",
+	"setting.key.behavior.right": "Sağ Tık / X Tuşu Eylemi",
+	"setting.key.behavior.right.tip": "Bir tarifin üstünde sağ tık yaparken (veya oyun kumandasında X'e basarken) bu eylem gerçekleştirilir.",
+
+	"setting.key.tooltip": "Kısayol Tuşlarını Nesne Açıklamalarında Göster",
+	"setting.key.tooltip.tip": "Etkinleştirildiğinde kısayol tuşları Better Crafting'in nesne açıklamalarının en altında gösterilir.",
+
+	"setting.ttwhen.Never": "Asla",
+	"setting.ttwhen.ForController": "Oyun Kumandası Kullanırken",
+	"setting.ttwhen.Always": "Her Zaman",
+
+	"setting.action.None": "Hiçbir Şey",
+	"setting.action.Craft": "Üret",
+	"setting.action.Favorite": "Favorile",
+	"setting.action.BulkCraft": "Toptan Üret",
+
+	"setting.nearby": "Uzatılmış Çalışma Tezgahı",
+	"setting.nearby.tip": "Bu özellik Çalışma Tezgahlarının ve mutfağınızın aynı anda daha fazla sandığa bağlanmasını sağlayarak oyunun varsayılan menzili olan 1 karoyu iyileştirir. Bağlantılı sandık zincirleri oluşturabilir veya boşlukları kapatmak için izin verilen bağlayıcıları kullanabilirsiniz.",
+
+	"setting.nearby.enable": "Uzatılmış Çalışma Tezgahını Etkinleştir",
+
+	"setting.nearby.diagonal": "Çapraz Bağlantıları Etkinleştir",
+	"setting.nearby.diagonal.tip": "Etkinleştirildiğinde, sandıklar ve bağlayıcılar çapraz olarak yerleştirilse bile bağlanır.",
+
+	"setting.nearby.performance": "Performans",
+	"setting.nearby.performance.tip": "Performansı artırmak için Uzatılmış Çalışma Tezgahı'nın kapsamını sınırlayan ayarlar.",
+
+	"setting.nearby.max-chests": "Maks. Envanter Sayısı",
+	"setting.nearby.max-chests.tip": "Bir Çalışma Tezgahının kullanacağı maks. envanter sayısı.",
+
+	"setting.nearby.max-distance": "Maks. Mesafe",
+	"setting.nearby.max-distance.tip": "Bir envanterin bir Çalışma Tezgahından olabileceği maks. mesafe.",
+
+	"setting.nearby.max-check": "Maks. Kontrol Mesafesi",
+	"setting.nearby.max-check.tip": "Yakındaki envanterleri keşfederken kontrol edilecek maksimum karo sayısı.",
+
+	"setting.nearby.connectors": "İzin Verilen Bağlayıcılar",
+	"setting.nearby.connectors.tip": "Bağlayıcı olarak kullanılabilen yerleştirilebilir nesneler. Performansı yüksek tutmak için gereksiz bağlayıcı türleri eklemekten kaçınmalısınız. Lütfen bu girdilerin örnek olduğunu ve diğer nesneleri ve arazi özelliklerini eklemek için config dosyanızı manuel olarak düzenleyebileceğinizi unutmayın.",
+
+	"setting.nearby.floors": "Kaplamalar",
+	"setting.nearby.other": "Diğer Örnekler",
+
+	"setting.recycle": "Geri Dönüştürme",
+	"setting.recycle.about": "Etkinleştirildiğinde, nesneleri geri dönüştürüp onları işlemek için kullanılan nesneleri geri alma amacıyla üretim menüsünü kullanabilirsiniz.",
+
+	"setting.recycle.fuzzy": "Belirsiz Nesne Eşleştirme ",
+	"setting.recycle.fuzzy.tip": "Bazı üretim tarifleri belirli nesneler istemez, onun yerine \"Yumurta (Herhangi)\" gibi nesneler eşleştirir. Varsayılan olarak, bu nesneler geri verilmez. Bunu etkinleştirmek, bu gibi durumlarda en ucuz eşleşen nesneyi geri verir.",
+
+	"setting.recycle.unknown": "Bilinmeyen Tariflere İzin Ver",
+	"setting.recycle.unknown.tip": "Etkinleştirildiğinde, üretim tariflerini bilmeseniz bile nesneleri geri dönüştürebilirsiniz.",
+
+	"setting.recycle.crafting": "Nesne Oluşturma Geri Dönüşümü",
+	"setting.recycle.crafting.tip": "Nesne oluşturma sırasında geri dönüşüme izin verilip verilmeyeceği.",
+
+	"setting.recycle.cooking": "Yemek Pişirme Geri Dönüşümü",
+	"setting.recycle.cooking.tip": "Yemek pişirme sırasında geri dönüşüme izin verilip verilmeyeceği.",
+
+	"setting.recycle-mode.enabled": "Her Zaman",
+	"setting.recycle-mode.disabled": "Asla",
+	"setting.recycle-mode.automatic": "Otomatik (Geri Dönüştürülebilir Nesne Tutulurken)",
+
+	"setting.recycle.click-toggle": "Tıklayarak Aç/Kapa",
+	"setting.recycle.click-toggle.tip": "Etkinleştirildiğinde üretim menüsünde çöp kutusuna tıklamak, geri dönüşümü açar veya kapar. Bu, sadece bir nesne tutulmazken çalışır.",
+
+	"setting.transfer": "Depolamaya Aktar",
+	"setting.transfer.about": "Bu özellik, envanterinizdeki nesneleri bir Çalışma Tezgahına veya mutfağınıza bağlı sandıklara hızlı bir şekilde depolamanıza olanak tanır. Eşleşen nesneler, Mevcut Yığınlara Ekle'ye benzer şekilde uygun sandıklara yerleştirilir.",
+
+	"setting.transfer.enable": "Depolamaya Aktarmayı Etkinleştir",
+
+	"setting.transfer.action": "Eylem Tuşu ({{binding}})",
+	"setting.transfer.action-modifier": "Değiştiricili Eylem Tuşu",
+	"setting.transfer.use-tool": "Alet Kullanma Tuşu ({{binding}})",
+	"setting.transfer.use-tool-modifier": "Değiştiricili Alet Kullanma Tuşu",
+
+	"setting.transfer.behavior": "Yöntem",
+
+	"setting.transfer.behavior.none": "Hiçbir Şey Yapma",
+	"setting.transfer.behavior.all": "Hepsini Aktar",
+	"setting.transfer.behavior.all-quantity": "Bu Miktar Dışındaki Hepsini Aktar",
+	"setting.transfer.behavior.quantity": "Bu Miktar Kadarını Aktar",
+	"setting.transfer.behavior.half": "Yarısını Aktar",
+
+	"setting.transfer.quantity": "Miktar",
+	"setting.transfer.quantity.tip": "\"Bu Miktar Kadarını Aktar\" kullanılırken aktarılacak miktar veya \"Bu Miktar Dışındaki Hepsini Aktar\" kullanılırken geride bırakılacak miktar.",
+
+	"setting.cookout": "Kamp Ocağı Ayarları",
+	"setting.cookout.about": "Bu ayarlar, Kamp Ocaklarının davranışını değiştirerek Çalışma Tezgahı gibi işlemelerini sağlar.",
+
+	"setting.cookout.workbench": "Çalışma Tezgahı Benzeri Bağlantı",
+	"setting.cookout.workbench.tip": "Etkinleştirildiğinde Kamp Ocakları, Çalışma Tezgahlarında olduğu gibi yakındaki konteynerlerden nesne çekebilir.",
+
+	"setting.cookout.durable": "Uzun Ömürlü Ocaklar",
+	"setting.cookout.durable.tip": "Etkinleştirildiğinde, Kamp Ocakları sonraki güne geçince kaybolmayacak ve onları kırdığınızda yok olmayacaklar.",
+
+	"setting.cookout.expensive": "Daha Pahalı Ocaklar",
+	"setting.cookout.expensive.tip": "Etkinleştirildiğinde Kamp Ocaklarının üretim tarifi, artan uzun ömürlülüğü dengelemeye yardımcı olmak için onları biraz daha pahalı hale getirecek şekilde ayarlanacak.",
+
+	// Quality
+
+	"setting.quality": "Kalite",
+	"setting.quality.tip": "SpaceCore gibi diğer kaynaklar tarafından eklenen bazı tariflerin API sınırlamaları nedeniyle bu ayarlara uymayabileceğini lütfen unutmayın.",
+
+	"setting.enable-quality": "Kalite Sınırını Etkinleştir",
+	"setting.enable-quality.tip": "Etkinleştirildiğinde, üretim sırasında kullanılacak maksimum nesne kalitesini seçmenize izin veren bir buton görüntülenecektir.",
+
+	"setting.sort-quality": "Önce Düşük Kalite Kullan",
+	"setting.sort-quality.tip": "Etkinleştirildiğinde, tarifler önce düşük kaliteli nesne kullanarak üretilir.",
+
+	// Crafting
+	"setting.crafting": "Nesne Oluşturma",
+	"setting.crafting.tip": "Bu ayarlar, özel olarak yeniden yapılandırılmış nesne oluşturma menüsüne uygulanır.",
+
+	"setting.uniform-grid": "Eş Boyutluluğu Zorla",
+	"setting.uniform-grid.tip": "Etkinleştirildiğinde büyük nesneler, tek satıra sığmaları için küçültülür.",
+
+	"setting.big-craftables-last": "Büyük Nesneleri Sona Koy",
+	"setting.big-craftables-last.tip": "Etkinleştirildiğinde büyük nesneler, listenin en sonuna konur.",
+
+	// Cooking
+	"setting.cooking": "Yemek Pişirme",
+	"setting.cooking.tip": "Bu ayarlar, özel olarak yeniden yapılandırılmış yemek pişirme menüsüne uygulanır.",
+
+	"setting.seasoning": "Çeşni Kullan",
+	"setting.seasoning.tip": "Pişirilen nesneleri geliştirmek için baharat kullanılıp kullanılmayacağı. \"Sadece Envanterden\" seçiliyse, sadece envanterdeki çeşniler kullanılır ve buzdolabı veya başka bir kaynaktakiler kullanılmaz.",
+
+	"seasoning.disabled": "Asla",
+	"seasoning.enabled": "Her Zaman",
+	"seasoning.inventory": "Sadece Envanterden",
+
+	"setting.hide-unknown": "Bilinmeyen Tarifleri Sakla",
+	"setting.hide-unknown.tip": "Etkinleştirildiğinde, bilmediğiniz tarifler menüde gösterilmez.",
+
+	// Tool-tips
+	"tooltip.loves": "Sever: {{npcs}}",
+	"tooltip.likes": "Hoşlanır: {{npcs}}",
+
+	"tooltip.crafted": "Toplam Üretme: {{count}}.",
+
+	"tooltip.toggle-recipe": "Kategoriye Ekle/Çıkar",
+	"tooltip.use-as-icon": "İkon Olarak Kullan",
+
+	"tooltip.transfer.to": "Nesneleri Depolamaya Ekle",
+	"tooltip.transfer.to-item": "Tutulan Nesneyi Depolamaya Ekle",
+
+	"tooltip.transfer.from": "Depolamadan Nesne Doldur",
+	"tooltip.transfer.from-item": "Depolamadan Tutulan Nesneyi Doldur",
+
+	"tooltip.transfer.all": "Hepsini Aktar",
+	"tooltip.transfer.but-quantity": "{{count}} Tanesi Hariç Hepsini Aktar",
+	"tooltip.transfer.half": "Yarısını Aktar",
+	"tooltip.transfer.quantity": "{{count}} Tanesini Aktar",
+
+	"tooltip.edit-filter-locked": "Bireysel tarifler, bir kategori için Dinamik Kurallar kullanılırken etkinleştirilemez veya devre dışı bırakılamaz. Lütfen kurallarınızı düzenleyin veya Dinamik Kurallar'ı devre dışı bırakın.",
+
+	// Recycling
+	"tooltip.recycle": "{{item}} Nesnesini Geri Dönüştür",
+	"tooltip.recycle.invalid": "Bu nesneyi geri dönüştüremezsin.",
+	"tooltip.recycle.insufficient": "Bu nesneyi geri dönüştürmek için en az {{count}} tanesine sahip olmalısınız.",
+	"tooltip.recycle.returns": "Geri Verir:",
+	"tooltip.recycle.not-returned": "Geri Verilmedi:",
+	"tooltip.recycle.all": "Hepsini Geri Dönüştür ({{amount}})",
+	"tooltip.recycle.once": "Birazını Geri Dönüştür ({{amount}})",
+
+	// Buttons
+	"tooltip.edit-mode": "Kategorileri Düzenle",
+	"tooltip.favorites": "Sadece Favorileri Göster",
+	"tooltip.seasoning": "Çeşni Kullan",
+	"tooltip.uniform": "Eş Boyutlu Izgarayı Kullan",
+	"tooltip.settings": "Ayarları Aç",
+
+	"tooltip.filter.enabled": "Dinamik Kurallar: Etkin",
+	"tooltip.filter.disabled": "Dinamik Kurallar: Devre Dışı",
+	"tooltip.filter.about": "Bu ayar, tarifleri tek tek manuel olarak seçmek yerine kurallara göre kategoriler oluşturmanıza olanak tanır.",
+
+	"tooltip.include-in-misc": "'Çeşitli'ye Dahil Et: Etkin",
+	"tooltip.include-in-misc.disabled": "'Çeşitli'ye Dahil Et: Devre Dışı",
+	"tooltip.include-in-misc.about": "Normalde, bir tarif başka bir kategorideyse \"Çeşitli\" kategorisinde görüntülenmez. Bu kategorideki tariflerin \"Çeşitli\" kategorisinde de görünmesine izin vermek için bunu etkinleştirin.",
+
+	"tooltip.search": "Tarif Ara",
+	"tooltip.search.old-tip": "İpucu: Aramanıza \"@B{{prefix}}@b\" ile başlayarak ayrıca malzemelere göre de arama yapabilirsiniz. Aramanıza \"@B{{likes}}@b\" ile başlayarak bir nesneyden hoşlanan karakterlere göre veya \"@B{{loves}}@b\" ile başlayarak bir nesneyi seven karakterlere göre arama yapabilirsiniz.",
+	"tooltip.search.tip": "Niteleyiciler: Şuna göre de aramak için aramanızı aşağıdaki karakterlerle başlatın:\n\n \"@B{{prefix}}@b\": Malzemeler\n \"@B{{likes}}@b\": Hoşlanan kişiler\n \"@B{{loves}}@b\": Seven kişiler",
+
+	"search.ingredient-prefix": "!",
+	"search.like-prefix": "#",
+	"search.love-prefix": "^",
+
+	"search.none": "Eşleşen tarif yok.",
+	"search.none.category": "Bu kategoride eşleşen tarif yok.",
+
+	"tooltip.select-icon": "İkon seç",
+
+	"tooltip.quality.none": "Sadece düşük kaliteli nesne kullan.",
+	"tooltip.quality.silver": "Sadece düşük ve gümüş kaliteli nesne kullan.",
+	"tooltip.quality.gold": "Sadece düşük, gümüş ve altın kaliteli nesne kullan.",
+	"tooltip.quality.iridium": "Her kaliteden nesne kullan.",
+
+	"tooltip.quality-unsupported": "Bu tarif, kalite ayarlarını desteklemiyor.",
+
+	"ingredient.error": "Geçersiz Malzeme",
+
+	// Bulk Crafting
+	"bulk.crafting": "Toptan Üretim",
+	"bulk.craftable": "{{count}} tane üretilebilir",
+	"bulk.craft": "{{count}} tane {{name}} üret",
+
+	// Categories
+	"category.new": "Yeni Kategori",
+	"category.favorites": "Favoriler",
+	"category.combat_rings": "Savaşma ve Yüzükler",
+	"category.consumables": "Tüketilebilirler",
+	"category.decoration": "Dekorasyon",
+	"category.fertilizer_seeds": "Gübreler ve Tohumlar",
+	"category.fishing": "Balıkçılık",
+	"category.machinery": "Makineler",
+	"category.misc": "Çeşitli",
+
+	"category.food.farming": "Çiftçilik ve Toplayıcılık",
+	"category.food.mining": "Madencilik ve Çekim",
+	"category.food.fishing": "Balıkçılık",
+	"category.food.combat": "Savaşma",
+	"category.food.other": "Şans, Hız ve Diğerleri",
+
+	// Currencies
+	"currency.gold": "Altın",
+	"currency.festival-points": "Puan",
+	"currency.club-coins": "Kulüp Sikkesi",
+	"currency.qi-gems": "Qi Taşı",
+
+	// Ingredient Categories
+	"item.category.cooking": "Yemek (Herhangi)",
+	"item.category.crafting": "Oluşturulmuş Nesne (Herhangi)",
+	"item.category.mineral": "Mineral (Herhangi)",
+	"item.category.meat": "Et (Herhangi)",
+	"item.category.fertilizer": "Gübre (Herhangi)",
+	"item.category.junk": "Çöp (Herhangi)",
+	"item.category.seeds": "Tohum (Herhangi)",
+	"item.category.fruit": "Meyve (Herhangi)",
+	"item.category.flower": "Çiçek (Herhangi)",
+
+	// Dynamic Filters
+	"filter.add-new": "Yeni Kural Ekle",
+
+	"filter.everything": "Her Şey",
+	"filter.everything.about": "Bu kural bütün nesneleri içerir.",
+
+	"filter.buff": "Etki: {{type}}",
+	"filter.buff.about": "Bu kural, tüketilince {{type}} etkisini veren nesneleri içerir.",
+
+	"filter.uncrafted": "Henüz Üretilmedi",
+	"filter.uncrafted.about": "Bu kural, henüz üretmediğiniz nesneleri içerir.",
+
+	"filter.search": "Ara",
+	"filter.search.about": "Bu kural, nesneleri bir aramaya göre kategorize eder, üretim menüsüyle aynı mantığa sahiptir.",
+
+	"filter.machine": "Makineler",
+	"filter.machine.about": "Bu kural, makine görevi gören, nesneleri işleyen veya başka bir işlevi yerine getiren nesneleri içerir.",
+
+	"filter.sprinkler": "Fıskiyeler",
+	"filter.sprinkler.about": "Bu kural, fıskiyeleri içerir.",
+
+	"filter.light": "Işık",
+	"filter.light.about": "Bu kural, yerleştirilebilir ışıklandırmayı içerir.",
+
+	"filter.error": "Geçersiz Kural",
+	"filter.error.about": "Bu kuralın ID'si geçersiz veya kayıtlı değil, ve kaldırılmış bir moda ait olabilir."
+
+}
