@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.GameData.Buildings;
 using StardewValley.Menus;
 
 namespace Leclair.Stardew.BCBuildings;
@@ -18,17 +19,28 @@ public class BuildingRuleHandler : IDynamicRuleHandler {
 
 	public readonly ModEntry Mod;
 
+	public readonly BuildingData Building;
+
+	private Lazy<Texture2D> _Texture;
+
 	public BuildingRuleHandler(ModEntry mod) {
 		Mod = mod;
+
+		var buildings = DataLoader.Buildings(Game1.content);
+		if (!buildings.TryGetValue("Shed", out var building))
+			building = buildings.First().Value;
+
+		Building = building;
+		_Texture = new Lazy<Texture2D>(() => Mod.Helper.GameContent.Load<Texture2D>(Building.Texture));
 	}
 
 	public string DisplayName => I18n.Filter_Name();
 
 	public string Description => I18n.Filter_About();
 
-	public Texture2D Texture => Game1.mouseCursors;
+	public Texture2D Texture => _Texture.Value;
 
-	public Rectangle Source => Texture.Bounds;
+	public Rectangle Source => Building.SourceRect.IsEmpty ? Texture.Bounds : Building.SourceRect;
 
 	public bool AllowMultiple => false;
 

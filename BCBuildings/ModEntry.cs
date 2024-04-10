@@ -86,6 +86,10 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 				new RuleData(BCAPI.GetAbsoluteRuleId("Building"))
 			}
 		);
+
+		BCAPI.ReportRecipeType(typeof(BuildingRecipe));
+		BCAPI.ReportRecipeType(typeof(ActionRecipe));
+
 	}
 
 	[Subscriber]
@@ -281,6 +285,15 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		}
 	}
 
+	public bool TryGetRecipe(string buildingId, string? skinId, [NotNullWhen(true)] out BuildingRecipe? recipe) {
+		LoadRecipes();
+
+		if (!string.IsNullOrEmpty(skinId) && RecipesById.TryGetValue($"{buildingId}/{skinId}", out recipe))
+			return true;
+
+		return RecipesById.TryGetValue(buildingId, out recipe);
+	}
+
 	#endregion
 
 	#region IRecipeProvider
@@ -309,10 +322,10 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			if (!okay)
 				continue;
 
-			if (!string.IsNullOrEmpty(recipe.Data.BuildCondition) && !GameStateQuery.CheckConditions(recipe.Data.BuildCondition, Game1.currentLocation, Game1.player))
+			if (!string.IsNullOrEmpty(recipe.Data.BuildCondition) && !GameStateQuery.CheckConditions(recipe.Data.BuildCondition, Game1.currentLocation))
 				continue;
 
-			yield return BCAPI!.WrapDynamicRecipe(recipe);
+			yield return recipe;
 		}
 
 		yield return new ActionRecipe(ActionType.Move, this);

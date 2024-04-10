@@ -65,7 +65,7 @@ public class ActionRecipe : IRecipe {
 	}
 
 	public virtual int GetTimesCrafted(Farmer who) {
-		return 0;
+		return -1;
 	}
 
 	public CraftingRecipe? CraftingRecipe => null;
@@ -108,9 +108,7 @@ public class ActionRecipe : IRecipe {
 
 	public void PerformCraft(IPerformCraftEvent evt) {
 
-		evt.Cancel();
-		/*
-		var menu = new BuildMenu(null, Action, evt, Mod);
+		var menu = new BuildMenu(Mod, Action, null, null, null, evt);
 		var old_menu = Game1.activeClickableMenu;
 
 		Game1.activeClickableMenu = menu;
@@ -118,7 +116,7 @@ public class ActionRecipe : IRecipe {
 		menu.exitFunction = () => {
 			Game1.activeClickableMenu = old_menu;
 			evt.Cancel();
-		};*/
+		};
 	}
 
 }
