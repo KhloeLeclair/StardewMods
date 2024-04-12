@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Leclair.Stardew.BetterCrafting.DynamicRules;
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Events;
@@ -23,8 +24,12 @@ namespace Leclair.Stardew.BetterCrafting.Managers;
 public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 	public readonly static string RECIPE_PATH = @"Mods/leclair.bettercrafting/Recipes";
+	public readonly static string RULES_PATH = @"Mods/leclair.bettercrafting/Rules";
 
 	public Dictionary<string, DataRecipe>? DataRecipesById;
+
+	private bool HasLoadedRules;
+	public readonly Dictionary<string, DataRuleHandler> RulesById = [];
 
 	public DataRecipeManager(ModEntry mod) : base(mod) {
 
@@ -36,12 +41,21 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 	public void Invalidate() {
 		DataRecipesById = null;
+		HasLoadedRules = false;
+		LoadRules();
+	}
+
+	[Subscriber]
+	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
+		LoadRules();
 	}
 
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		if (e.Name.IsEquivalentTo(RECIPE_PATH))
 			e.LoadFrom(() => new Dictionary<string, JsonRecipeData>(), AssetLoadPriority.Exclusive);
+		if (e.Name.IsEquivalentTo(RULES_PATH))
+			e.LoadFrom(() => new Dictionary<string, JsonDynamicRule>(), AssetLoadPriority.Exclusive);
 	}
 
 	[Subscriber]
@@ -49,6 +63,10 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 		foreach(var name in e.Names) {
 			if (name.IsEquivalentTo(RECIPE_PATH))
 				DataRecipesById = null;
+			if (name.IsEquivalentTo(RULES_PATH)) {
+				HasLoadedRules = false;
+				LoadRules();
+			}
 		}
 	}
 
@@ -84,6 +102,40 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 	public bool TryGetRecipeById(string id, [NotNullWhen(true)] out DataRecipe? recipe) {
 		LoadRecipes();
 		return DataRecipesById.TryGetValue(id, out recipe);
+	}
+
+	#endregion
+
+	#region Rule Loading
+
+	public void LoadRules() {
+		if (HasLoadedRules)
+			return;
+
+		HasLoadedRules = true;
+
+		// Remove all the existing items.
+		foreach (string key in RulesById.Keys)
+			Mod.Recipes.UnregisterRuleHandler($"data:{key}");
+
+		RulesById.Clear();
+
+		var loaded = Mod.Helper.GameContent.Load<Dictionary<string, JsonDynamicRule>>(RULES_PATH);
+
+		foreach(var entry in loaded) {
+			// Create all new entries.
+			entry.Value.Id = entry.Key;
+
+			if (entry.Value.Rules is null || entry.Value.Rules.Length == 0) {
+				Log($"Skipping empty data-based category rule '{entry.Value.Id}'.", LogLevel.Warn);
+				continue;
+			}
+
+			entry.Value.Icon ??= new CategoryIcon() { Type = CategoryIcon.IconType.Item };
+
+			var handler = RulesById[entry.Key] = new DataRuleHandler(Mod, entry.Value);
+			Mod.Recipes.RegisterRuleHandler($"data:{entry.Key}", handler);
+		}
 	}
 
 	#endregion

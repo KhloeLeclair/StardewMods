@@ -31,8 +31,7 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 	public readonly FinishedDelegate OnFinished;
 
-	private DynamicRuleData Data;
-	private object? Obj;
+	private readonly DynamicRuleData Data;
 
 	private ISimpleNode Layout;
 	private Vector2 LayoutSize;
@@ -57,7 +56,6 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 	public RuleEditorDialog(ModEntry mod, BetterCraftingPage menu, IDynamicRuleHandler handler, object? obj, DynamicRuleData data, FinishedDelegate onFinished) : base(mod) {
 		Menu = menu;
 		Handler = handler;
-		Obj = obj;
 		Data = data;
 		OnFinished = onFinished;
 
@@ -107,13 +105,16 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 				0, 0, Math.Max(300, Math.Min(1000, Game1.uiViewport.Width - 128)), Math.Max(300, Math.Min(600, Game1.uiViewport.Height - 256))
 			);
 
+			if (Menu.Theme.CustomScroll && Menu.Background is not null)
+				Sprites.CustomScroll.ApplyToScrollableFlow(optionPicker, Menu.Background);
+
 			btnPageDown = optionPicker.btnPageDown;
 			btnPageUp = optionPicker.btnPageUp;
 			FlowComponents = optionPicker.DynamicComponents;
 
 			var builder = FlowHelper.Builder();
 
-			Dictionary<string, SelectableNode> nodes = new();
+			Dictionary<string, SelectableNode> nodes = [];
 
 			void OnSelect(string? value) {
 				PickedOption = value;
@@ -177,9 +178,11 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 		btnSave = new ClickableTextureComponent(
 			bounds: new Rectangle(0, 0, 64, 64),
-			texture: Game1.mouseCursors,
-			sourceRect: new Rectangle(128, 256, 64, 64),
-			scale: 1f
+			texture: Menu.Background ?? Game1.mouseCursors,
+			sourceRect: Menu.Background is null
+				? new Rectangle(128, 256, 64, 64)
+				: Sprites.Other.BTN_OK,
+			scale: Menu.Background is null ? 1f : 4f
 		) {
 			myID = 1,
 			upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
@@ -190,9 +193,11 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 		btnDelete = new ClickableTextureComponent(
 			bounds: new Rectangle(0, 0, 64, 64),
-			texture: Game1.mouseCursors,
-			sourceRect: new Rectangle(192, 256, 64, 64),
-			scale: 1f
+			texture: Menu.Background ?? Game1.mouseCursors,
+			sourceRect: Menu.Background is null
+				? new Rectangle(192, 256, 64, 64)
+				: Sprites.Other.BTN_CANCEL,
+			scale: Menu.Background is null ? 1f : 4f
 		) {
 			myID = 2,
 			upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
@@ -411,17 +416,21 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 		// Dim the Background
 		b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
+		Texture2D? texture = Menu.Theme.CustomTooltip ? Menu.Background : null;
+
 		// Background
 		RenderHelper.DrawBox(
 			b,
-			texture: Game1.menuTexture,
-			sourceRect: new Rectangle(0, 256, 60, 60),
+			texture: texture ?? Game1.menuTexture,
+			sourceRect: texture is null
+				? RenderHelper.Sprites.NativeDialogue.ThinBox
+				: RenderHelper.Sprites.CustomBCraft.ThinBox,
 			x: xPositionOnScreen,
 			y: yPositionOnScreen,
 			width: width,
 			height: height,
 			color: Color.White,
-			scale: 1f
+			scale: texture is null ? 1f : 4f
 		);
 
 		Layout?.Draw(
@@ -431,8 +440,8 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 			new Vector2(width, height),
 			1f,
 			Game1.smallFont,
-			Game1.textColor,
-			null
+			(texture is null ? null : Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor) ?? Game1.textColor,
+			(texture is null ? null : Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor)
 		);
 
 		// Text
@@ -443,7 +452,11 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 		btnDelete?.draw(b);
 
 		// Options
-		optionPicker?.Draw(b);
+		optionPicker?.Draw(
+			b,
+			texture is null ? null : (Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor),
+			texture is null ? null : (Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor)
+		);
 
 		// Base Menu Stuff
 		base.draw(b);
@@ -452,7 +465,8 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 
 		// Mouse
 		Game1.mouseCursorTransparency = 1f;
-		drawMouse(b);
+		if (!Menu.Theme.CustomMouse || !RenderHelper.DrawMouse(b, Menu.Background, RenderHelper.Sprites.BCraftMouse))
+			drawMouse(b);
 	}
 
 	#endregion

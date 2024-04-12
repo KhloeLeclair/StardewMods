@@ -12,7 +12,7 @@ namespace Leclair.Stardew.Common.UI.SimpleLayout;
 public class LayoutNode : ISimpleNode {
 
 #if DEBUG
-	private static readonly Color[] DEBUG_COLORS = new Color[] {
+	private static readonly Color[] DEBUG_COLORS = [
 		Color.Pink,
 		Color.Blue,
 		Color.Red,
@@ -21,7 +21,7 @@ public class LayoutNode : ISimpleNode {
 		Color.Gold,
 		Color.Fuchsia,
 		Color.Orange
-	};
+	];
 #endif
 
 	private ISimpleNode[]? _Children;
@@ -175,18 +175,10 @@ public class LayoutNode : ISimpleNode {
 		float x = position.X;
 		float y = position.Y;
 
-		float extra;
-
-		// Expand our SpaceNodes.
-		switch (Direction) {
-			case LayoutDirection.Horizontal:
-				extra = containerSize.X - ownSize.X;
-				break;
-			case LayoutDirection.Vertical:
-			default:
-				extra = containerSize.Y - ownSize.Y;
-				break;
-		}
+		float extra = Direction switch {
+			LayoutDirection.Horizontal => containerSize.X - ownSize.X,
+			_ => containerSize.Y - ownSize.Y,
+		};
 
 		if (extra > 0) {
 			int spaces = 0;

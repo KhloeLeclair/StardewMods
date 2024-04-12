@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.6.0
+Released April 11th, 2024.
+
+This should be the last release for a while, barring any unexpected bugs.
+I've been toying with a few ideas while mindlessly working on this, but
+I have what I want thought out for Almanac now.
+
+### New Features
+* You can now re-order your categories when editing them.
+* There is a new option to open the crafting menu with the full height
+  of your screen if opened via a workbench, kitchen, or other means
+  that does not place it within the game menu.
+
+### Changes
+* When listing the available mods to include items from a mod, we now
+  count how many items there are from each mod, and put those without
+  items at the end of the list. Further, we sort the list alphabetically
+  by mod name.
+* When crafting an item that will have attachment slots, show the
+  attachment slots in the recipe tool-tip.
+* When viewing a recipe with an absurd number of ingredients, try to
+  fit it on the screen better by using more columns.
+
+### Fixed
+* Apply theme text colors more thoroughly to the crafting menu.
+* Spaces appearing near recipes when a recipe would be included both
+  by manual selection and because it matched a rule.
+
+### API Changes
+* Added the ability for content authors to create custom dynamic rules
+  using the game's native item queries feature by modifying the
+  target path `Mods/leclair.bettercrafting/Rules`
+
+
 ## 2.5.0
 Released April 10th, 2024.
 

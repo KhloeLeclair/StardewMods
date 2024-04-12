@@ -726,23 +726,21 @@ public class RecipeManager : BaseManager {
 
 		List<(IDynamicRuleHandler, object?, DynamicRuleData)> result = new();
 
-		lock (RuleHandlers) {
-			foreach (DynamicRuleData rule in ruleData) {
-				if (RuleHandlers.TryGetValue(rule.Id, out var handler)) {
-					object? state;
-					try {
-						state = handler.ParseState(rule);
-					} catch (Exception ex) {
-						Log("An error occurred while executing a dynamic type handler.", LogLevel.Error, ex);
+		foreach (DynamicRuleData rule in ruleData) {
+			if (RuleHandlers.TryGetValue(rule.Id, out var handler)) {
+				object? state;
+				try {
+					state = handler.ParseState(rule);
+				} catch (Exception ex) {
+					Log("An error occurred while executing a dynamic type handler.", LogLevel.Error, ex);
 
-						result.Add((invalidRuleHandler, invalidRuleHandler.ParseState(rule), rule));
-						continue;
-					}
-
-					result.Add((handler, state, rule));
-				} else
 					result.Add((invalidRuleHandler, invalidRuleHandler.ParseState(rule), rule));
-			}
+					continue;
+				}
+
+				result.Add((handler, state, rule));
+			} else
+				result.Add((invalidRuleHandler, invalidRuleHandler.ParseState(rule), rule));
 		}
 
 		return result.Count > 0 ? result.ToArray() : null;

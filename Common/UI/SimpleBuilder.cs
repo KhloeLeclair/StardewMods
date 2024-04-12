@@ -9,6 +9,7 @@ using Leclair.Stardew.Common.UI.SimpleLayout;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewValley;
 using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.UI;
@@ -94,6 +95,18 @@ public class SimpleBuilder {
 	public SimpleBuilder Sprite(SpriteInfo? sprite, float scale = 4f, string? label = null, int quantity = 0, Alignment align = Alignment.None, float? overrideHeight = null) {
 		AssertState();
 		Nodes.Add(new SpriteNode(sprite, scale, label, quantity, align, overrideHeight));
+		return this;
+	}
+
+	public SimpleBuilder Dynamic(DynamicDrawingNode.GetSizeDelegate getSize, DynamicDrawingNode.DrawNodeDelegate draw, Alignment align = Alignment.None) {
+		AssertState();
+		Nodes.Add(new DynamicDrawingNode(getSize, draw, align));
+		return this;
+	}
+
+	public SimpleBuilder Attachments(Item item, Alignment align = Alignment.None) {
+		AssertState();
+		Nodes.Add(new AttachmentSlotsNode(item, align));
 		return this;
 	}
 

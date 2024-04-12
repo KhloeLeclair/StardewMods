@@ -42,10 +42,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputTest", "InputTest\Inpu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TMFontStudio", "TMFontStudio\TMFontStudio.csproj", "{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakPintail", "BreakPintail\BreakPintail.csproj", "{0B07A44A-9A9E-4231-B48F-D77952899DEB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakPintailClient", "BreakPintailClient\BreakPintailClient.csproj", "{252E40AA-3F93-406E-BF83-6D7BB335CDAD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -96,14 +92,6 @@ Global
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0B07A44A-9A9E-4231-B48F-D77952899DEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0B07A44A-9A9E-4231-B48F-D77952899DEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0B07A44A-9A9E-4231-B48F-D77952899DEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0B07A44A-9A9E-4231-B48F-D77952899DEB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{252E40AA-3F93-406E-BF83-6D7BB335CDAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{252E40AA-3F93-406E-BF83-6D7BB335CDAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{252E40AA-3F93-406E-BF83-6D7BB335CDAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{252E40AA-3F93-406E-BF83-6D7BB335CDAD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -115,11 +103,9 @@ Global
 		SolutionGuid = {5650F8A0-C647-4DB3-A56E-C63685A00438}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Common\Common.projitems*{0b07a44a-9a9e-4231-b48f-d77952899deb}*SharedItemsImports = 5
 		Common\Common.projitems*{13180c19-64f0-4053-9fff-538b7b0b0855}*SharedItemsImports = 13
 		Common\Common.projitems*{19a9299f-b3c0-4ed5-95d9-94bf26a50417}*SharedItemsImports = 5
 		Common\Common.projitems*{2481e747-58e1-4858-a4f1-4d533abace8f}*SharedItemsImports = 5
-		Common\Common.projitems*{252e40aa-3f93-406e-bf83-6d7bb335cdad}*SharedItemsImports = 5
 		Common\Common.projitems*{55aaac30-053e-44c8-9c86-87a3b90c29c1}*SharedItemsImports = 5
 		Common\Common.projitems*{63a1eac9-1c94-4e38-8dde-11a03178bdd6}*SharedItemsImports = 5
 		Common\Common.projitems*{6e8021b8-817d-4b47-bf75-2acbbcb3f158}*SharedItemsImports = 5

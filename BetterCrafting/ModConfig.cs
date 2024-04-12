@@ -64,6 +64,8 @@ public class ModConfig {
 
 	public string Theme { get; set; } = "automatic";
 
+	public bool UseFullHeight { get; set; } = false;
+
 	public bool ReplaceCooking { get; set; } = true;
 	public bool ReplaceCrafting { get; set; } = true;
 

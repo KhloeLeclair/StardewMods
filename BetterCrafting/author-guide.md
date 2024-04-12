@@ -17,6 +17,8 @@ This document is intended to help mod authors create content packs for Better Cr
   * [Using Content Patcher](#crafting-stations-using-content-patcher)
 * [Custom Recipes](#custom-recipes)
   * [Ingredients](#ingredients)
+* [Dynamic Rules](#dynamic-rules)
+* [Themes](#themes)
 
 ## Getting Started
 
@@ -484,7 +486,7 @@ Crafting directly, but that is planned.
 > that targets Content Patcher rather than Better Crafting. For more on that, you'll
 > want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
 
-To edit recipes using Content Patcher, you need to use the `EditDta` action
+To edit recipes using Content Patcher, you need to use the `EditData` action
 with the target `Mods/leclair.bettercrafting/Recipes`. Here's a quick example
 of a recipe that lets you craft a Prismatic Shard with 10 Iron Bars and 1,000g:
 
@@ -904,3 +906,152 @@ Default: `{"Type": "Item"}`
 </td>
 </tr>
 </table>
+
+
+## Dynamic Rules
+
+Better Crafting has a feature to set up recipe categories using dynamic rules
+that match against one or more recipes, allowing users to benefit from
+categorization without anyone needing to go through and include recipes in
+them manually. These dynamic rules are traditionally handled via the C# API,
+but as of version 2.6 they can also be introduced using Content Patcher by
+taking advantage of the game's native
+[item queries](https://stardewvalleywiki.com/Modding:Item_queries) feature.
+
+> When using Content Patcher, you'll need to make a separate content pack
+> that targets Content Patcher rather than Better Crafting. For more on that, you'll
+> want to see [Content Patcher's own documentation](https://github.com/Pathoschild/StardewMods/blob/stable/ContentPatcher/docs/author-guide.md).
+
+To edit dynamic rules using Content Patcher, you need to use the `EditData` action
+with the target `Mods/leclair.bettercrafting/Rules`. Here's a quick example that
+adds a dynamic rule that matches fertilizer items, based on the item's category:
+
+```json
+{
+	"Format": "2.0.0",
+
+	"Changes": [
+		{
+			"Action": "EditData",
+			"Target": "Mods/leclair.bettercrafting/Rules",
+			"Entries": {
+				"{{ModId}}_Fertilizers": {
+					"DisplayName": "FERTILIZER",
+					"Description": "IT'S GOT WHAT PLANTS CRAVE.",
+					"Icon": {
+						"ItemId": "(O)167"
+					},
+					"Rules": [
+						{
+							"ItemId": "RANDOM_ITEMS (O)",
+							"PerItemCondition": "ITEM_CATEGORY Target -19"
+						}
+					]
+				}
+			}
+		}
+	]
+}
+```
+
+These dynamic rules can be added to categories you set up using their IDs,
+just like any other dynamic rules. You can set a display name, description,
+an icon, and a list of rules for matching items.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Id</code></td>
+<td>
+
+**Required.** The dynamic rule's unique identifier. This must be unique.
+
+</td>
+</tr>
+<tr>
+<td><code>DisplayName</code></td>
+<td>
+
+**Required.** The dynamic rule's name, as it should be displayed to the player in the
+crafting menu. This supports [tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+</td>
+</tr>
+<tr>
+<td><code>Description</code></td>
+<td>
+
+The dynamic rule's description, which is displayed to the player in the crafting
+menu when picking rules and hovering over the rule in the list. This also supports
+[tokenizable strings](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+This string can be longer than the display name, as it wraps and uses a
+smaller font.
+
+</td>
+</tr>
+<tr>
+<td><code>Icon</code></td>
+<td>
+
+*Optional.* A CategoryIcon, similar to how icons are specified for categories
+and crafting stations. It may have a `Type` of `Item` or `Texture`. If the type
+is `Item`, then it can have an `ItemId` set, otherwise it will use the first
+matching item.
+
+Default: `{"Type": "Item"}`
+
+</td>
+</tr>
+<tr>
+<td><code>Rules</code></td>
+<td>
+
+**Required.** A list of rules. You should keep this limited to avoid performance
+issues when performing many item matching operations. This is a list of
+[item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+though certain fields are ignored.
+
+You should stick to ItemId, RandomItemId, and PerItemCondition.
+
+</td>
+</tr>
+</table>
+
+
+### Themes
+
+Better Crafting supports custom themes, which can include both images and textures.
+I'm just going to be brief now, but please check out the Example theme included in
+the mod to see the images and `theme.json` format the mod supports.
+
+More interestingly, you should know that you can include a mod for Better Crafting
+within other mods in two ways.
+
+First, if a content pack targeting Better Crafting has a `theme.json` file in its
+root folder, that will be detected as a theme.
+
+Second, if a mod has a `leclair.bettercrafting:theme` key in its manifest, with
+the name of a JSON file containing a theme, that will be detected as a theme
+and be made available. As an example, if you have a manifest like this:
+
+```json
+{
+	"UniqueID": "leclair.example",
+	"Name": "Some Example Mode",
+	"Author": "Khloe Leclair",
+	"Version": "1.0.0",
+	"Description": "Maybe this is a UI recolor mod?",
+	"ContentPackFor": {
+		"UniqueID": "Pathoschild.ContentPatcher"
+	},
+	"leclair.bettercrafting:theme": "Supported/Better Crafting/my-theme.json"
+}
+```
+
+That would prompt Better Crafting to try loading a theme file from your mod's
+`Supported/Better Crafting` folder with the name `my-theme.json`. All assets
+would be expected to be relative to that path.

@@ -733,6 +733,12 @@ public class ModEntry : PintailModSubscriber {
 				ThemeManager.GetThemeChoiceMethods()
 			)
 			.Add(
+				I18n.Setting_UseFullHeight,
+				I18n.Setting_UseFullHeight_Tip,
+				c => c.UseFullHeight,
+				(c, v) => c.UseFullHeight = v
+			)
+			.Add(
 				I18n.Setting_Settings,
 				I18n.Setting_Settings_Tip,
 				c => c.ShowSettingsButton,

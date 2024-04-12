@@ -27,7 +27,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public readonly BetterCraftingPage Menu;
 
 	// Caching
-	private readonly Dictionary<IIngredient, int> AvailableQuantity = new();
+	private readonly Dictionary<IIngredient, int> AvailableQuantity = [];
 
 	public int Quantity { get; private set; } = 1;
 	private ISimpleNode Layout;
@@ -85,7 +85,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		initialize((int) point.X, (int) point.Y, width, height, true);
 
 		txtQuantity = new TextBox(
-			textBoxTexture: Game1.content.Load<Texture2D>("LooseSprites\\textBox"),
+			textBoxTexture: Game1.content.Load<Texture2D>(@"LooseSprites\textBox"),
 			null,
 			Game1.smallFont,
 			Game1.textColor
@@ -127,8 +127,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnLess = new ClickableTextureComponent(
 			new Rectangle(0, 0, 28, 32),
-			Game1.mouseCursors,
-			new Rectangle(177, 345, 7, 8),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(177, 345, 7, 8)
+				: Sprites.Other.BTN_MINUS,
 			4f
 		) {
 			myID = 1,
@@ -140,8 +142,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnMore = new ClickableTextureComponent(
 			new Rectangle(0, 0, 28, 32),
-			Game1.mouseCursors,
-			new Rectangle(184, 345, 7, 8),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(184, 345, 7, 8)
+				: Sprites.Other.BTN_PLUS,
 			4f
 		) {
 			myID = 2,
@@ -153,8 +157,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnCraft = new ClickableTextureComponent(
 			new Rectangle(0, 0, 64, 64),
-			Game1.mouseCursors,
-			new Rectangle(366, 373, 16, 16),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(366, 373, 16, 16)
+				: Sprites.Other.BTN_HAMMER,
 			scale: 4f
 		) {
 			myID = 4,
@@ -170,8 +176,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 			btnPrev = new ClickableTextureComponent(
 				new Rectangle(0, 0, 64, 64),
-				Game1.mouseCursors,
-				new Rectangle(349, 492, 16, 16),
+				Menu.Background ?? Game1.mouseCursors,
+				Menu.Background is null
+					? new Rectangle(349, 492, 16, 16)
+					: Sprites.CustomScroll.PAGE_LEFT,
 				scale: 4f
 			) {
 				myID = 5,
@@ -183,8 +191,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 			btnNext = new ClickableTextureComponent(
 				new Rectangle(0, 0, 64, 64),
-				Game1.mouseCursors,
-				new Rectangle(365, 492, 16, 16),
+				Menu.Background ?? Game1.mouseCursors,
+				Menu.Background is null
+					? new Rectangle(365, 492, 16, 16)
+					: Sprites.CustomScroll.PAGE_RIGHT,
 				scale: 4f
 			) {
 				myID = 6,
@@ -253,8 +263,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	[MemberNotNull(nameof(Layout))]
 	public void UpdateLayout() {
 
-
-		List<ISimpleNode> ingredients = new();
+		List<ISimpleNode> ingredients = [];
 
 		int crafts = Quantity / Recipe.QuantityPerCraft;
 
@@ -295,7 +304,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				.Space(expand: false)
 				.Group()
 					.Text(Recipe.DisplayName)
-					.Text(I18n.Bulk_Craftable(Craftable), color: Game1.textColor * .75f)
+					.Text(I18n.Bulk_Craftable(Craftable), color: ((Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor) * .75f)
 				.EndGroup()
 				.Space()
 			.EndGroup();
@@ -306,8 +315,8 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			if (ingredients.Count < 4)
 				builder.AddSpacedRange(4, ingredients);
 			else {
-				List<ISimpleNode> left = new();
-				List<ISimpleNode> right = new();
+				List<ISimpleNode> left = [];
+				List<ISimpleNode> right = [];
 
 				bool right_side = false;
 
@@ -374,16 +383,16 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		int quant = ing.Quantity * crafts;
 
 		Color color = available < ing.Quantity ?
-			(Mod.Theme?.QuantityCriticalTextColor ?? Color.Red) :
+			(Menu.Theme.QuantityCriticalTextColor ?? Color.Red) :
 			available < quant ?
-				(Mod.Theme?.QuantityWarningTextColor ?? Color.OrangeRed) :
-					Game1.textColor;
+				(Menu.Theme.QuantityWarningTextColor ?? Color.OrangeRed) :
+					(Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor;
 
 		Color? shadow = available < ing.Quantity ?
-			Mod.Theme?.QuantityCriticalShadowColor :
+			Menu.Theme.QuantityCriticalShadowColor :
 			available < quant ?
-				Mod.Theme?.QuantityWarningShadowColor :
-					null;
+				Menu.Theme.QuantityWarningShadowColor :
+					(Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor : null);
 
 		return SimpleHelper
 			.Builder(LayoutDirection.Horizontal, margin: 8)
@@ -625,17 +634,23 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		// Dim the Background
 		b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
+		Texture2D? texture = Menu.Theme.CustomTooltip ? Menu.Background : null;
+
 		// Background
 		RenderHelper.DrawBox(
 			b,
-			texture: Game1.menuTexture,
-			sourceRect: new Rectangle(0, 256, 60, 60),
+			texture: texture ?? Game1.menuTexture,
+			sourceRect: texture is null
+				? RenderHelper.Sprites.NativeDialogue.ThinBox
+				: RenderHelper.Sprites.CustomBCraft.ThinBox,
 			x: xPositionOnScreen,
 			y: yPositionOnScreen,
 			width: width,
 			height: height,
 			color: Color.White,
-			scale: 1f
+			scale: texture is null
+				? 1f
+				: 4f
 		);
 
 		Layout?.Draw(
@@ -645,8 +660,8 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			new Vector2(width, height),
 			1f,
 			Game1.smallFont,
-			Game1.textColor,
-			null
+			(texture is null ? null : Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor) ?? Game1.textColor,
+			(texture is null ? null : Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor)
 		);
 
 		txtQuantity.Draw(b);
@@ -685,7 +700,8 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		// Mouse
 		Game1.mouseCursorTransparency = 1f;
-		drawMouse(b);
+		if (!Menu.Theme.CustomMouse || !RenderHelper.DrawMouse(b, Menu.Background, RenderHelper.Sprites.BCraftMouse))
+			drawMouse(b);
 	}
 
 	#endregion

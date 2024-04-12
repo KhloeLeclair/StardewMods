@@ -15,6 +15,9 @@
 	"setting.theme": "UI Theme",
 	"setting.theme-desc": "This UI theme will be used for Better Crafting's buttons. Note that most of Better Crafting's UI is drawn from standard game textures.",
 
+	"setting.use-full-height": "Use Full Height",
+	"setting.use-full-height.tip": "When enabled, the Better Crafting menu will expand to fill the full height of the screen when not open in the game menu.",
+
 	"theme.automatic": "Automatic",
 	"theme.default": "Default",
 
@@ -219,6 +222,9 @@
 	// Tool-tips
 	"tooltip.loves": "Loves: {{npcs}}",
 	"tooltip.likes": "Likes: {{npcs}}",
+
+	"tooltip.move-up": "Move Category Up",
+	"tooltip.move-down": "Move Category Down",
 
 	"tooltip.crafted": "Crafted {{count}} Times",
 
