@@ -811,12 +811,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Theme != Mod.ThemeManager.ActiveTheme)
 			ButtonTexture = Mod.ThemeManager.Load<Texture2D>("buttons.png", ThemeId);
 
-		try {
+		if (Mod.ThemeManager.HasFile("background.png", ThemeId))
 			Background = Mod.ThemeManager.Load<Texture2D>("background.png", ThemeId);
-		} catch(Exception) {
+		else
 			Background = null;
-		}
-
 	}
 
 	public IClickableMenu Menu => this;
@@ -1995,7 +1993,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		int removed = CachedInventories.Count;
-		InventoryHelper.DeduplicateInventories(ref CachedInventories);
+		InventoryHelper.DeduplicateInventories(ref CachedInventories, Mod.GetInventoryProvider);
 		removed -= CachedInventories.Count;
 
 		int unloaded = CachedInventories.Count;

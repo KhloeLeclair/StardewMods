@@ -16,9 +16,10 @@ namespace Leclair.Stardew.Common.Inventory;
 public class ChestProvider : BaseInventoryProvider<Chest> {
 
 	public readonly Chest.SpecialChestTypes[] AllowedTypes;
-
+	
 	public ChestProvider() {
 		AllowedTypes = new[] {
+			Chest.SpecialChestTypes.JunimoChest,
 			Chest.SpecialChestTypes.BigChest,
 			Chest.SpecialChestTypes.AutoLoader,
 			Chest.SpecialChestTypes.None

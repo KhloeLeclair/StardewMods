@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.6.1
+Released April 12th, 2024.
+
+### Changes
+* Junimo Chests are no longer blacklisted.
+
+### Fixed
+* Properly check if the optional background texture is available before
+  attempting to load it. Fixes error messages every time the menu opens.
+* Fixed an issue where the Transfer to Inventories feature would not
+  work correctly when using Better Chests.
+* Improve de-duplication logic for inventories.
+
+
 ## 2.6.0
 Released April 11th, 2024.
 

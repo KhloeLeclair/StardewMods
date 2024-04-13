@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<BaseManifest>new</BaseManifest>
 		<AssemblyName>BetterCrafting</AssemblyName>
-		<Version>2.6.0</Version>
+		<Version>2.6.1</Version>
 		<RootNamespace>Leclair.Stardew.BetterCrafting</RootNamespace>
 		
 		<EnableHarmony>true</EnableHarmony>

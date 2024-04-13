@@ -27,7 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)SmokedFishSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\AttachmentSlotsNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\DynamicDrawingNode.cs" />
-    <Compile Include="..\Common\SpookyActionAtADistance.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SpookyActionAtADistance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\AbsolutePosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CombinedRingSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CraftingHelper.cs" />
@@ -61,14 +61,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\IKLayoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KObject.cs" />
-    <Compile Include="..\Common\UI\Widgets\KChildSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KChildSet.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KWidget.cs" />
-    <Compile Include="..\Common\Types\NamespaceId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\NamespaceId.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\RecommendIntegrations.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InventoryHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BaseInventoryProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\ChestProvider.cs" />
-    <Compile Include="..\Common\Inventory\IBCInventory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Inventory\IBCInventory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\IInventoryProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\StorageFurnitureProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\TransferBehavior.cs" />
@@ -97,7 +97,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\ComponentNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\DividerNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\ThemeManager.cs" />
-    <Compile Include="..\Common\UI\FlowNode\SelectableNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\SelectableNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\BaseOverlay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Overlay\IOverlay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\ScrollableFlow.cs" />
@@ -111,13 +111,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\SpriteNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\TextNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\TextureNode.cs" />
-    <Compile Include="..\Common\UI\FlowNode\IFlowNodeSlice.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\IFlowNodeSlice.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\NestedNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\SpriteNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\TextNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\TextStyle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\UnslicedNode.cs" />
-    <Compile Include="..\Common\UI\SimpleLayout\ISimpleNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\ISimpleNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\FlowNode\IFlowNode.cs" />
   </ItemGroup>
 </Project>

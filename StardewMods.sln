@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputTest", "InputTest\Inpu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TMFontStudio", "TMFontStudio\TMFontStudio.csproj", "{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoreRandomEvents", "MoreRandomEvents\MoreRandomEvents.csproj", "{56945FC6-952B-402C-ADD8-DA083EF7F52D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -92,6 +94,10 @@ Global
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E8021B8-817D-4B47-BF75-2ACBBCB3F158}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,9 +113,8 @@ Global
 		Common\Common.projitems*{19a9299f-b3c0-4ed5-95d9-94bf26a50417}*SharedItemsImports = 5
 		Common\Common.projitems*{2481e747-58e1-4858-a4f1-4d533abace8f}*SharedItemsImports = 5
 		Common\Common.projitems*{55aaac30-053e-44c8-9c86-87a3b90c29c1}*SharedItemsImports = 5
-		Common\Common.projitems*{63a1eac9-1c94-4e38-8dde-11a03178bdd6}*SharedItemsImports = 5
+		Common\Common.projitems*{56945fc6-952b-402c-add8-da083ef7f52d}*SharedItemsImports = 5
 		Common\Common.projitems*{6e8021b8-817d-4b47-bf75-2acbbcb3f158}*SharedItemsImports = 5
-		Common\Common.projitems*{93d485fd-4438-40d7-9725-c456159a1c72}*SharedItemsImports = 5
 		Common\Common.projitems*{9e918555-5563-40e7-bdd6-5f5e1cff0912}*SharedItemsImports = 5
 		Common\Common.projitems*{a06575c4-b53e-418a-8f57-b3d4b984d01c}*SharedItemsImports = 5
 		Common\Common.projitems*{b107224e-dcfb-437c-86b0-bf63d4b9324b}*SharedItemsImports = 5

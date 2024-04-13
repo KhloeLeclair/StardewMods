@@ -20,6 +20,7 @@ using StardewModdingAPI;
 using Leclair.Stardew.Common.Integrations.StackQuality;
 using StardewValley.Buildings;
 using Netcode;
+using StardewValley.Inventories;
 
 namespace Leclair.Stardew.Common;
 
@@ -236,7 +237,8 @@ public static class InventoryHelper {
 		Farmer? who,
 		Func<object, IInventoryProvider?> getProvider,
 		int scanLimit = 100,
-		int targetLimit = 20
+		int targetLimit = 20,
+		bool discover_buildings = false
 	) {
 		// We don't use the normal walker for this.
 		List<LocatedInventory> result = [];
@@ -251,17 +253,7 @@ public static class InventoryHelper {
 			locations = Game1.Multiplayer.activeLocations();
 
 		foreach (var location in locations) {
-			// Check the fridge.
-			var fridge = location.GetFridge(false);
-			provider = getProvider(fridge);
-			if (provider != null && provider.IsValid(fridge, location, who))
-				result.Add(new(fridge, location));
-
-			i++;
-			if (i >= scanLimit || result.Count >= targetLimit)
-				return result;
-
-			foreach (var obj in location.Objects.Values) {
+			foreach(object obj in GetAllThingsInLocation(location, buildings: discover_buildings)) { 
 				provider = getProvider(obj);
 				if (provider != null && provider.IsValid(obj, location, who))
 					result.Add(new(obj, location));
@@ -275,27 +267,54 @@ public static class InventoryHelper {
 		return result;
 	}
 
+	private static IEnumerable<object> GetAllThingsInLocation(GameLocation location, bool objects = true, bool buildings = false, bool furniture = true, bool features = true) {
+		if (location is null)
+			yield break;
+
+		if (objects && location.GetFridge(false) is Chest chest)
+			yield return chest;
+
+		if (objects)
+			foreach (var obj in location.Objects.Values) {
+				if (obj is not null)
+					yield return obj;
+			}
+
+		if (buildings)
+			foreach(var obj in location.buildings) {
+				if (obj is not null)
+					yield return obj;
+			}
+
+		if (furniture)
+			foreach(var obj in location.furniture) {
+				if (obj is not null)
+					yield return obj;
+			}
+
+		if (features)
+			foreach(var obj in location.terrainFeatures.Values) {
+				if (obj is not null)
+					yield return obj;
+			}
+	}
+
 	public static List<LocatedInventory> DiscoverLocation(
 		GameLocation location,
 		Farmer? who,
 		Func<object, IInventoryProvider?> getProvider,
 		int scanLimit = 100,
-		int targetLimit = 20
+		int targetLimit = 20,
+		bool discover_buildings = false,
+		bool enter_buildings = false
 	) {
 		// We don't use the normal walker for this.
 		List<LocatedInventory> result = [];
 
 		int i = 0;
-		IInventoryProvider? provider;
 
-		// Check the fridge.
-		var fridge = location.GetFridge(false);
-		provider = getProvider(fridge);
-		if (provider != null && provider.IsValid(fridge, location, who))
-			result.Add(new(fridge, location));
-
-		foreach (var obj in location.Objects.Values) {
-			provider = getProvider(obj);
+		foreach(object obj in GetAllThingsInLocation(location, buildings: discover_buildings)) {
+			IInventoryProvider? provider = getProvider(obj);
 			if (provider != null && provider.IsValid(obj, location, who))
 				result.Add(new(obj, location));
 
@@ -304,25 +323,16 @@ public static class InventoryHelper {
 				return result;
 		}
 
-		foreach (var obj in location.terrainFeatures.Values) {
-			provider = getProvider(obj);
-			if (provider != null && provider.IsValid(obj, location, who))
-				result.Add(new(obj, location));
-
-			i++;
-			if (i >= scanLimit || result.Count >= targetLimit)
-				return result;
-		}
-
-		foreach (var obj in location.furniture) {
-			provider = getProvider(obj);
-			if (provider != null && provider.IsValid(obj, location, who))
-				result.Add(new(obj, location));
-
-			i++;
-			if (i >= scanLimit || result.Count >= targetLimit)
-				return result;
-		}
+		// TODO: Better handling of the scanLimit.
+		if (enter_buildings)
+			foreach(var building in location.buildings) {
+				if (building is not null && building.GetIndoors() is GameLocation loc) {
+					var output = DiscoverLocation(loc, who, getProvider, scanLimit - i, targetLimit - result.Count, discover_buildings, false);
+					result.AddRange(output);
+					if (result.Count >= targetLimit)
+						break;
+				}
+			}
 
 		return result;
 	}
@@ -617,6 +627,7 @@ public static class InventoryHelper {
 		List<LocatedInventory>? extra
 	) {
 		List<LocatedInventory> result = [];
+		HashSet<GameLocation> visited_buildings = [];
 
 		if (extra is not null)
 			result.AddRange(extra);
@@ -625,7 +636,7 @@ public static class InventoryHelper {
 
 		if (includeBuildings) {
 			foreach (var location in origins.Keys.Select(key => key.Location).Distinct()) {
-				if (location is not null && !location.IsOutdoors)
+				if (location is not null && !location.IsOutdoors && visited_buildings.Add(location))
 					scanLimit -= WalkIntoMap(result, location, who, getProvider, scanLimit - i, targetLimit);
 
 				if (result.Count >= targetLimit)
@@ -665,7 +676,7 @@ public static class InventoryHelper {
 				}
 
 				// Next, walk into the building if we want to do so.
-				if (includeBuildings && building.HasIndoors() && building.GetIndoors() is GameLocation indoors)
+				if (includeBuildings && building.HasIndoors() && building.GetIndoors() is GameLocation indoors && visited_buildings.Add(indoors))
 					scanLimit -= WalkIntoMap(result, indoors, who, getProvider, scanLimit - i, targetLimit);
 			}
 
@@ -706,15 +717,27 @@ public static class InventoryHelper {
 		return result;
 	}
 
-	public static void DeduplicateInventories(ref IList<LocatedInventory> inventories) {
+	public static void DeduplicateInventories(ref IList<LocatedInventory> inventories, Func<object, IInventoryProvider?> getProvider) {
 		HashSet<object> objects = [];
+		HashSet<IInventory> seenInventories = new() { Game1.player.Items };
+
 		for (int i = 0; i < inventories.Count; i++) {
 			LocatedInventory inv = inventories[i];
 			if (objects.Contains(inv.Source)) {
 				inventories.RemoveAt(i);
 				i--;
+				continue;
+
 			} else
 				objects.Add(inv.Source);
+
+			if (getProvider(inv.Source) is IInventoryProvider prov && prov.GetInventory(inv.Source, inv.Location, Game1.player) is IInventory iinv) {
+				if (seenInventories.Contains(iinv)) {
+					inventories.RemoveAt(i);
+					i--;
+				} else
+					seenInventories.Add(iinv);
+			}
 		}
 	}
 
@@ -769,6 +792,9 @@ public static class InventoryHelper {
 			return false;
 
 		if (location.GetFridge(false) == obj)
+			return true;
+
+		if (obj is Building bld && location.buildings.Contains(bld))
 			return true;
 
 		if (obj is Furniture furn && location.furniture.Contains(furn))
@@ -1290,7 +1316,8 @@ public static class InventoryHelper {
 
 				if (count != final && !had_transfered)
 					onTransfer?.Invoke(item, idx);
-			}
+			} else
+				empty = false;
 		}
 
 		return empty;
