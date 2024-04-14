@@ -59,6 +59,9 @@
 	"setting.settings": "Show Settings Button",
 	"setting.settings.tip": "When enabled, a button to open Better Crafting's settings will be added to the Better Crafting menu.",
 
+	"setting.show-edit": "Show Edit Categories Button",
+	"setting.show-edit.tip": "When enabled, a button to start editing categories will appear when categories can be edited.",
+
 	"setting.bindings": "Hotkeys and Actions",
 	"setting.bindings.tip": "Settings related to input and keybindings.",
 

@@ -1,0 +1,36 @@
+{
+	"ID": "AboutMenu",
+
+	"ColorVariables": {
+		"$CreditsText": "white"
+	},
+
+	"Patches": {
+		"#AboutMenu:draw": {
+			"Colors": {
+				"White": {
+					">1": "$CreditsText"
+				}
+			}
+		},
+
+		"#TextCreditsBlock:.ctor": {
+			"Colors": {
+				"SpriteText:White": {
+					"*": "$CreditsText"
+				}
+			}
+		},
+
+		"#LinkCreditsBlock:draw": {
+			"Colors": {
+				"SpriteText:Green": {
+					"*": "$CreditsLinkHover"
+				},
+				"SpriteText:Cyan": {
+					"*": "$CreditsLink"
+				}
+			}
+		}
+	}
+}

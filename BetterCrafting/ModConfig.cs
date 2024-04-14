@@ -71,6 +71,8 @@ public class ModConfig {
 
 	public bool UseCategories { get; set; } = true;
 
+	public bool ShowEditButton { get; set; } = true;
+
 	public bool ShowSettingsButton { get; set; } = true;
 
 	public MenuPriority MenuPriority { get; set; } = MenuPriority.Normal;

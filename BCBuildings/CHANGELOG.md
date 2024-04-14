@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.1
+Released on April 13th, 2024.
+
+* Fixed: Building upgrades not functioning correctly.
+
+
 ## 2.5.0
 Released on April 10th, 2024.
 

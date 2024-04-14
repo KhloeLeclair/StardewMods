@@ -603,7 +603,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (Station != null)
 			use_categories = false;
 
-		btnToggleEdit = use_categories ? new ClickableTextureComponent(
+		btnToggleEdit = (use_categories && Mod.Config.ShowEditButton) ? new ClickableTextureComponent(
 			bounds: new Rectangle(btnX, btnY, 64, 64),
 			texture: ButtonTexture ?? Sprites.Buttons.Texture,
 			sourceRect: SourceEdit,
@@ -5088,7 +5088,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				ingredients.Add(ebuilder.GetLayout());
 			}
 
-		var builder = SimpleHelper.Builder(minSize: new Vector2(4 * 80, 0));
+		var builder = SimpleHelper.Builder(minSize: new Vector2(4 * 95, 0));
 		string quantText = quantity > 1 ? $" x{quantity}" : "";
 
 		if (Game1.options.showAdvancedCraftingInformation && ingredients.Count > 0) {

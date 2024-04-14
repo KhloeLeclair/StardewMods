@@ -11,6 +11,9 @@
 				"Red": { "*": "$CarpenterErrorText" },
 				"PaleGoldenrod": { "*": "$CarpenterMagicText" },
 				"RoyalBlue": { "*": "$CarpenterMagicBackground" }
+			},
+			"ColorFields": {
+				"Game1:textColor": { "*": "$CarpenterText" }
 			}
 		}
 	}

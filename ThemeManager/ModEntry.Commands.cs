@@ -160,10 +160,18 @@ public partial class ModEntry {
 		}
 
 		string input = string.Join(' ', args);
-		var result = ResolveMember<MethodInfo>(string.Join(' ', args), current: menu?.GetType());
+		bool want_ctor = false;
+		if (input.IndexOf(":(") != -1 || input.IndexOf(":.ctor") != -1)
+			want_ctor = true;
+
+		(Type, MethodBase)? result;
+		if (want_ctor)
+			result = ResolveMember<ConstructorInfo>(input, current: menu?.GetType());
+		else
+			result = ResolveMember<MethodInfo>(input, current: menu?.GetType());
 
 		Type? type = result?.Item1;
-		MethodInfo? info = result?.Item2;
+		MethodBase? info = result?.Item2;
 
 		if (type is null) {
 			Log($"Could not find type.");
@@ -194,34 +202,73 @@ public partial class ModEntry {
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawString)),
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringHorizontallyCenteredAt)),
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollBackground)),
-			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
+			ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,int,*)"),
+			ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,string,*)")
+			/*AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
 				typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(int), typeof(float),
-				typeof(int), typeof(int), typeof(float), typeof(bool)
+				typeof(Color?), typeof(int), typeof(float), typeof(bool)
 			}),
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
 				typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(string), typeof(float),
-				typeof(int), typeof(int), typeof(float), typeof(bool)
-			})
+				typeof(Color?), typeof(int), typeof(float), typeof(bool)
+			})*/
 		};
 
+		//MethodInfo SpriteText_getColorFromIndex = AccessTools.Method(typeof(SpriteText), nameof(SpriteText.getColorFromIndex));
+
 		MethodInfo[] Utility_DrawTextShadow = new MethodInfo[] {
-			AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
+			ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,StringBuilder,*)"),
+			ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,string,*)"),
+			/*AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
 				typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
 			}),
 			AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
 				typeof(SpriteBatch), typeof(string), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
-			})
+			})*/
 		};
 
 		MethodInfo Utility_GetRedGreenLerp = AccessTools.Method(typeof(Utility), nameof(Utility.getRedToGreenLerpColor));
 
+		Dictionary<string, Color> colorValues = new();
 		Dictionary<MethodInfo, string> colors = new();
 		foreach (var entry in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
 			if (entry.Name.Equals("White") || entry.Name.Equals("Black"))
 				continue;
 
+			if (entry.PropertyType != typeof(Color))
+				continue;
+
+			try {
+				if (entry.GetValue(null) is Color color)
+					colorValues[entry.Name] = color;
+			} catch(Exception) {
+				continue;
+			}
+
 			if (entry.GetGetMethod() is MethodInfo method) {
 				colors.Add(method, entry.Name);
+			}
+		}
+
+		foreach (var entry in typeof(SpriteText).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
+			if (entry.PropertyType != typeof(Color))
+				continue;
+
+			if (entry.GetGetMethod() is MethodInfo method) {
+				string name = entry.Name;
+				if (name.StartsWith("color_"))
+					name = name[6..];
+
+				name = $"SpriteText:{name}";
+
+				try {
+					if (entry.GetValue(null) is Color color)
+						colorValues[name] = color;
+				} catch (Exception) {
+					continue;
+				}
+
+				colors.Add(method, name);
 			}
 		}
 
@@ -233,6 +280,7 @@ public partial class ModEntry {
 
 		Dictionary<string, List<int>> Colors = new();
 		Dictionary<string, List<int>> RawColors = new();
+		//Dictionary<int, List<int>> SpriteTextColors = new();
 		Dictionary<string, List<int>> ColorFields = new();
 		Dictionary<string, List<int>> FontFields = new();
 		Dictionary<string, List<int>> TextureFields = new();
@@ -253,6 +301,13 @@ public partial class ModEntry {
 					list.Add(i);
 					found = true;
 				}
+
+				/*if (method == SpriteText_getColorFromIndex && i > 0) {
+					CodeInstruction inLast = Instructions[i - 1];
+					Log($"Previous: {inLast}", LogLevel.Debug);
+
+					found = true;
+				}*/
 
 				if (Utility_DrawTextShadow.Contains(method)) {
 					DrawTextShadow.Add(i);
@@ -316,7 +371,7 @@ public partial class ModEntry {
 				CodeInstruction in2 = Instructions[i + 2];
 				CodeInstruction in3 = Instructions[i + 3];
 
-				if (in3.opcode == OpCodes.Newobj && in3.operand is ConstructorInfo ctor && ctor.DeclaringType == typeof(Color)) {
+				if (in3.IsConstructor<Color>() || in3.IsCallConstructor<Color>()) {
 					int? val0 = in0.AsInt();
 					int? val1 = in1.AsInt();
 					int? val2 = in2.AsInt();
@@ -326,6 +381,7 @@ public partial class ModEntry {
 						if (!RawColors.TryGetValue(key, out var list)) {
 							list = new();
 							RawColors[key] = list;
+							colorValues[key] = new Color(val0.Value, val1.Value, val2.Value);
 						}
 						list.Add(i);
 						found = true;
@@ -363,6 +419,15 @@ public partial class ModEntry {
 					i++;
 				}
 			}
+
+			/*if (SpriteTextColors.Count > 0) {
+				patch.SpriteTextColors = new();
+				foreach (int key in SpriteTextColors.Keys) {
+					patch.SpriteTextColors[key] = new() {
+						{ "*", $"${name}{key}" }
+					};
+				}
+			}*/
 
 			if (ColorFields.Count > 0) {
 				patch.ColorFields = new();
@@ -507,40 +572,52 @@ public partial class ModEntry {
 			Log($"Generated Patch:\n{serialized}", LogLevel.Info);
 
 		} else {
-			Log($"Detected Supported Values:", LogLevel.Info);
+			StringBuilder bld = new();
+			bld.AppendLine("Detected Supported Values:");
+
 			if (!found)
-				Log($"- Did not find any values to patch.", LogLevel.Info);
+				bld.AppendLine($"- Did not find any values to patch.");
 			if (Colors.Count > 0) {
-				Log($"- Colors:", LogLevel.Info);
-				foreach (var entry in Colors)
-					Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+				bld.AppendLine($"- Colors:");
+				foreach (var entry in Colors) {
+					if (!colorValues.TryGetValue(entry.Key, out Color ec))
+						ec = Color.Transparent;
+					bld.AppendLine($"  - {entry.Key} {ec.ToString()} (Offsets: {string.Join(", ", entry.Value)})");
+				}
 			}
 			if (RawColors.Count > 0) {
-				Log($"- RawColors:", LogLevel.Info);
+				bld.AppendLine($"- RawColors:");
 				foreach (var entry in RawColors)
-					Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
 			}
+			/*if (SpriteTextColors.Count > 0) {
+				bld.AppendLine($"- SpriteTextColors:");
+				foreach (var entry in SpriteTextColors)
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
+			}*/
 			if (ColorFields.Count > 0) {
-				Log($"- ColorFields:", LogLevel.Info);
+				bld.AppendLine($"- ColorFields:");
 				foreach (var entry in ColorFields)
-					Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
 			}
 			if (FontFields.Count > 0) {
-				Log($"- FontFields:", LogLevel.Info);
+				bld.AppendLine($"- FontFields:");
 				foreach (var entry in FontFields)
-					Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
 			}
 			if (TextureFields.Count > 0) {
-				Log($"- TextureFields:", LogLevel.Info);
+				bld.AppendLine($"- TextureFields:");
 				foreach (var entry in TextureFields)
-					Log($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})", LogLevel.Info);
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
 			}
 			if (SpriteTextDraws.Count > 0)
-				Log($"- SpriteTextDraw (Offsets: {string.Join(", ", SpriteTextDraws)})", LogLevel.Info);
+				bld.AppendLine($"- SpriteTextDraw (Offsets: {string.Join(", ", SpriteTextDraws)})");
 			if (DrawTextShadow.Count > 0)
-				Log($"- DrawTextWithShadow (Offsets: {string.Join(", ", DrawTextShadow)})", LogLevel.Info);
+				bld.AppendLine($"- DrawTextWithShadow (Offsets: {string.Join(", ", DrawTextShadow)})");
 			if (RedToGreenLerps.Count > 0)
-				Log($"- RedToGreenLerp (Offsets: {string.Join(", ", RedToGreenLerps)})", LogLevel.Info);
+				bld.AppendLine($"- RedToGreenLerp (Offsets: {string.Join(", ", RedToGreenLerps)})");
+
+			Log(bld.ToString(), LogLevel.Info);
 		}
 	}
 
@@ -763,14 +840,13 @@ public partial class ModEntry {
 		Log(sb.ToString(), LogLevel.Info);
 	}
 
-
-	[ConsoleCommand("tm_toggle_font_fix", "Toggle Theme Manager's font alignment fix.")]
+	/*[ConsoleCommand("tm_toggle_font_fix", "Toggle Theme Manager's font alignment fix.")]
 	private void Command_ToggleFontFix(string name, string[] args) {
 		Config.AlignText = !Config.AlignText;
 		SaveConfig();
 
 		Log($"Font alignment has been set to {Config.AlignText}", LogLevel.Info);
-	}
+	}*/
 
 	[ConsoleCommand("theme", "View available themes, reload themes, and change the current themes.")]
 	private void Command_Theme(string name, string[] args) {

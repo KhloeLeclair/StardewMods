@@ -17,6 +17,8 @@ public class PatchData {
 
 	public CaseInsensitiveDictionary<Dictionary<string, string>>? TextureFields { get; set; }
 
+	public Dictionary<int, Dictionary<string, string>>? SpriteTextColors { get; set; }
+
 	public Dictionary<string, string[]>? SpriteTextDraw { get; set; }
 
 	public Dictionary<string, string>? DrawTextWithShadow { get; set; }

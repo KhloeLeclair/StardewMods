@@ -476,16 +476,16 @@ public class BuildMenu : IClickableMenu {
 			return;
 		}
 
+		building.upgradeName.Value = BuildingId;
+		building.daysUntilUpgrade.Value = Math.Max(Data.BuildDays, 1);
 		building.showUpgradeAnimation(Location);
 		if (playSound)
 			Game1.playSound("axe");
 
-		building.upgradeName.Value = BuildingId;
-		// TODO: Non-instant building.
 		building.FinishConstruction();
 
 		frozen = true;
-		DelayedAction.functionAfterDelay(SuccessClose, 2000);
+		DelayedAction.functionAfterDelay(SuccessClose, 500);
 	}
 
 	public void HandleClickMove(Vector2 pos, Building? building, bool playSound) {

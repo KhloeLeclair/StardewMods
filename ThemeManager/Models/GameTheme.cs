@@ -64,7 +64,7 @@ public class GameTheme : IGameTheme {
 		rawVariables["Text"] = ColorToString(Game1.textColor);
 		rawVariables["TextShadow"] = ColorToString(Game1.textShadowColor);
 		rawVariables["UnselectedOption"] = ColorToString(Game1.unselectedOptionColor);
-		rawVariables["TextShadowAlt"] = "221, 148, 84";
+		rawVariables["TextShadowAlt"] = ColorToString(Game1.textShadowDarkerColor);
 
 		rawVariables["ErrorText"] = "Red";
 		rawVariables["Hover"] = "Wheat";
@@ -202,7 +202,7 @@ public class GameTheme : IGameTheme {
 			Dictionary<int, string> result;
 			Processing = true;
 
-			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.TryGetTheme(Manifest.FallbackTheme, out var other) && !other.Processing) {
+			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
 				result = RawSpriteTextColors is not null ? new(RawSpriteTextColors) : new();
 				foreach (var entry in other.InheritedSpriteTextColors)
 					result.TryAdd(entry.Key, entry.Value);
@@ -224,7 +224,7 @@ public class GameTheme : IGameTheme {
 			List<string> result;
 			Processing = true;
 
-			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.TryGetTheme(Manifest.FallbackTheme, out var other) && !other.Processing) {
+			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
 				result = new(other.InheritedPatches);
 				if (RawPatches is not null)
 					foreach (string entry in RawPatches)

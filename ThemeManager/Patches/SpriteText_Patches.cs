@@ -30,10 +30,10 @@ internal static class SpriteText_Patches {
 				postfix: new HarmonyMethod(typeof(SpriteText_Patches), nameof(OnLanguageChange_Postfix))
 			);
 
-			mod.Harmony!.Patch(
+			/*mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawString)),
 				prefix: new HarmonyMethod(typeof(SpriteText_Patches), nameof(drawString_Prefix))
-			);
+			);*/
 
 			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(SpriteText), nameof(SpriteText.getColorFromIndex)),
@@ -51,7 +51,7 @@ internal static class SpriteText_Patches {
 		}
 	}
 
-	static bool drawString_Prefix(bool junimoText, ref int color) {
+	/*static bool drawString_Prefix(bool junimoText, ref int color) {
 		try {
 			if (! junimoText && color == -1) {
 				var colors = Mod?.GameTheme?.SpriteTextColors;
@@ -64,28 +64,11 @@ internal static class SpriteText_Patches {
 		}
 
 		return true;
-	}
+	}*/
 
 	static bool getColorFromIndex__Prefix(int index, ref Color __result) {
 		try {
-			if (index >= 100) {
-				__result = CommonHelper.UnpackColor(index - 100);
-				return false;
-			}
-
 			var colors = Mod?.GameTheme?.SpriteTextColors;
-
-			if (index == int.MinValue) {
-				if (colors is null || !colors.TryGetValue(-1, out __result)) {
-					if (LocalizedContentManager.CurrentLanguageLatin)
-						__result = Color.White;
-					else
-						__result = new Color(86, 22, 12);
-				}
-
-				return false;
-			}
-
 			if (colors is not null && colors.TryGetValue(index, out __result))
 				return false;
 

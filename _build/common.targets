@@ -26,7 +26,6 @@
 
 		<MinimumApiVersion>$(SmapiVersion)</MinimumApiVersion>
     <MinimumGameVersion>$(GameVersion)</MinimumGameVersion>
-		<ManifestWarningsAsErrors Condition="$(Configuration) == 'Release'">true</ManifestWarningsAsErrors>
 	</PropertyGroup>
 
   <!-- paths -->

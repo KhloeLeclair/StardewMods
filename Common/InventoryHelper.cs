@@ -194,8 +194,8 @@ public static class InventoryHelper {
 		// We don't use the normal walker for this.
 		List<LocatedInventory> result = [];
 
-		int i = 0;
 		IInventoryProvider? provider;
+		int i = 0;
 
 		// Check the fridge.
 		var fpos = location.GetFridgePosition();
@@ -207,6 +207,7 @@ public static class InventoryHelper {
 		}
 
 		foreach (var pos in position.IterArea(radius, false)) {
+			int count = result.Count;
 			if (TileHelper.GetObjectAtPosition(location, pos, out SObject? obj)) {
 				provider = getProvider(obj);
 				if (provider != null && provider.IsValid(obj, location, who))
@@ -226,7 +227,7 @@ public static class InventoryHelper {
 			}
 
 			i++;
-			if (i >= scanLimit || result.Count >= targetLimit)
+			if (/*i >= scanLimit ||*/ result.Count >= targetLimit)
 				break;
 		}
 

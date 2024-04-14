@@ -19,10 +19,12 @@
 		"5": "orangered",
 		"6": "limegreen",
 		"7": "cyan",
-		"8": "#3c3c3c"
+		"8": "#3c3c3c",
+		"9": "jojablue"
 	},
 
 	"Patches": [
+		"AboutMenu",
 		"Billboard",
 		"BobberBar",
 		"CarpenterMenu",
@@ -30,7 +32,6 @@
 		"CoopMenu",
 		"DayTimeMoneyBox",
 		"DrawHud",
-		"DrawTextWithShadow",
 		"ExitPage",
 		"ForgeMenu",
 		"ItemTooltips",
@@ -40,6 +41,7 @@
 		"MineElevatorMenu",
 		"MoneyDial",
 		"OptionsDropDown",
+		"PrairieKing",
 		"QuestLog",
 		"ShopMenu",
 		"SkillsPage",

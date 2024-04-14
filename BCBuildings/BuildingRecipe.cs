@@ -245,7 +245,7 @@ public class BuildingRecipe : IDynamicDrawingRecipe {
 
 	private void StageTwoPerformCraft(IPerformCraftEvent evt, string? skinId) { 
 
-		var menu = new BuildMenu(Mod, ActionType.Build, BuildingId, skinId, Data, evt);
+		var menu = new BuildMenu(Mod, Data.BuildingToUpgrade != null ? ActionType.Upgrade : ActionType.Build, BuildingId, skinId, Data, evt);
 		var old_menu = Game1.activeClickableMenu;
 
 		Game1.activeClickableMenu = menu;

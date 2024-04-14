@@ -60,7 +60,7 @@ public static class TileHelper {
 			return obj is not null;
 		}
 
-		return location.objects.TryGetValue(position, out obj);
+		return location.Objects.TryGetValue(position, out obj);
 	}
 
 	internal static Vector2 GetRealPosition(this SObject obj, GameLocation? location) {

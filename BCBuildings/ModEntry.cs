@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-
-using Microsoft.Xna.Framework;
 
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
-using Leclair.Stardew.Common.Types;
 
 using Leclair.Stardew.BetterCrafting;
 
 using StardewModdingAPI.Events;
 
 using StardewValley;
-using StardewValley.Menus;
 using StardewModdingAPI;
 using Newtonsoft.Json.Linq;
 

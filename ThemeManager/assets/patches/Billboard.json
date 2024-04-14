@@ -14,6 +14,9 @@
 			},
 			"ColorFields": {
 				"Game1:textColor": { "*": "$BillboardText" }
+			},
+			"DrawTextWithShadow": {
+				"*": "$BillboardTextShadow"
 			}
 		}
 	}

@@ -1,11 +1,19 @@
 {
+  /*
+   | This file is automatically updated by ModManifestBuilder
+   | when the project is compiled.
+   | 
+   | Changes made to this file may be overwritten.
+   | 
+   */
   "$schema": "https://smapi.io/schemas/manifest.json",
   "UniqueID": "leclair.thememanager",
   "Name": "Theme Manager",
   "Author": "Khloe Leclair",
-  "Version": "0.5.0-Debug",
+  "Version": "0.6.0",
   "Description": "Provides a framework for UI theme support in mods, as well as enhanced UI theme support for the base game.",
-  "MinimumApiVersion": "3.14.0",
+  "MinimumApiVersion": "4.0",
+  "MinimumGameVersion": "1.6",
   "EntryDll": "ThemeManager.dll",
   "Dependencies": [
     {

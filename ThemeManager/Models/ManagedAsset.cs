@@ -41,7 +41,7 @@ internal class ManagedAsset<TValue> : IManagedAsset<TValue> where TValue : notnu
 	public object? RawValue => Value;
 
 	/// <inheritdoc />
-	public event EventHandler? MarkedStale;
+	public event Action? MarkedStale;
 
 	#endregion
 
@@ -79,7 +79,8 @@ internal class ManagedAsset<TValue> : IManagedAsset<TValue> where TValue : notnu
 	/// <inheritdoc />
 	public void MarkStale() {
 		_IsStale = true;
-		MarkedStale?.SafeInvoke(this, monitor: Mod.Monitor);
+		MarkedStale?.Invoke();
+		//MarkedStale?.SafeInvoke(this, monitor: Mod.Monitor);
 	}
 
 	#endregion

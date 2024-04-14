@@ -56,9 +56,6 @@ public class SpriteTextManager : BaseManager {
 
 	private bool Fields_Loaded;
 
-	private IReflectedField<FontFile?>? Field_FontFile;
-	private IReflectedField<Dictionary<char, FontChar>?>? Field_CharacterMap;
-	private IReflectedField<List<Texture2D>?>? Field_FontPages;
 	private IReflectedMethod? Method_setUpCharacterMap;
 
 	#endregion
@@ -75,16 +72,10 @@ public class SpriteTextManager : BaseManager {
 		Fields_Loaded = true;
 
 		try {
-			Field_FontFile = Mod.Helper.Reflection.GetField<FontFile?>(typeof(SpriteText), "FontFile");
-			Field_CharacterMap = Mod.Helper.Reflection.GetField<Dictionary<char, FontChar>?>(typeof(SpriteText), "_characterMap");
-			Field_FontPages = Mod.Helper.Reflection.GetField<List<Texture2D>?>(typeof(SpriteText), "fontPages");
 			Method_setUpCharacterMap = Mod.Helper.Reflection.GetMethod(typeof(SpriteText), "setUpCharacterMap");
 
 		} catch (Exception ex) {
 			Log($"Unable to get SpriteText fields. Custom SpriteText fonts will not work correctly: {ex}", LogLevel.Warn);
-			Field_FontFile = null;
-			Field_CharacterMap = null;
-			Field_FontPages = null;
 			Method_setUpCharacterMap = null;
 		}
 	}
@@ -118,21 +109,17 @@ public class SpriteTextManager : BaseManager {
 	public void UpdateDefaultFont() {
 		EverUpdatedFont = true;
 
-		// If we don't have our fields, we can't do anything.
-		if (Field_FontFile is null)
-			return;
-
 		// Read the values.
-		Dictionary<char, FontChar>? charMap = Field_CharacterMap?.GetValue();
+		Dictionary<char, FontChar>? charMap = SpriteText.characterMap;
 
 		// If character map is null, call setUpCharacterMap.
 		if (charMap is null) {
 			Method_setUpCharacterMap?.Invoke();
-			charMap = Field_CharacterMap?.GetValue();
+			charMap = SpriteText.characterMap;
 		}
 
-		FontFile? file = Field_FontFile?.GetValue();
-		List<Texture2D>? fontPages = Field_FontPages?.GetValue();
+		FontFile? file = SpriteText.FontFile;
+		List<Texture2D>? fontPages = SpriteText.fontPages;
 
 		// Save the default font, which may be but should not be null.
 		if (charMap is null || file is null || fontPages is null)
@@ -175,7 +162,7 @@ public class SpriteTextManager : BaseManager {
 		changed = HandleManaged(ref ManagedColoredTexture, theme?.GetManagedTextureVariable("ST:Colored")) || changed;
 
 		if (changed)
-			OnManagedMarkedStale(this, EventArgs.Empty);
+			OnManagedMarkedStale();
 	}
 
 	#endregion
@@ -188,14 +175,14 @@ public class SpriteTextManager : BaseManager {
 			SpriteText.coloredTexture = ColoredTexture ?? DefaultColoredTexture;
 		}
 
-		if (!EverUpdatedFont || Field_FontFile is null)
+		if (!EverUpdatedFont)
 			return;
 
 		var font = Font ?? DefaultFont;
 
-		Field_FontFile.SetValue(font?.File);
-		Field_CharacterMap?.SetValue(font?.CharacterMap);
-		Field_FontPages?.SetValue(font?.FontPages);
+		SpriteText.FontFile = font?.File;
+		SpriteText.characterMap = font?.CharacterMap;
+		SpriteText.fontPages = font?.FontPages;
 		SpriteText.fontPixelZoom = font?.PixelZoom ?? 3f;
 	}
 
@@ -211,13 +198,11 @@ public class SpriteTextManager : BaseManager {
 		if (coloredTexture is not null)
 			SpriteText.coloredTexture = coloredTexture;
 
-		if (font is not null && Field_FontFile is not null) {
-			if (Field_FontFile is not null) {
-				Field_FontFile.SetValue(font.File);
-				Field_CharacterMap!.SetValue(font.CharacterMap);
-				Field_FontPages!.SetValue(font.FontPages);
-				SpriteText.fontPixelZoom = font.PixelZoom;
-			}
+		if (font is not null) {
+			SpriteText.FontFile = font.File;
+			SpriteText.characterMap = font.CharacterMap;
+			SpriteText.fontPages = font.FontPages;
+			SpriteText.fontPixelZoom = font.PixelZoom;
 		}
 	}
 
@@ -225,25 +210,23 @@ public class SpriteTextManager : BaseManager {
 
 	#region Events
 
-	private void OnManagedMarkedStale(object? sender, EventArgs e) {
+	private void OnManagedMarkedStale() {
 		SpriteTexture = ManagedSpriteTexture?.Value;
 		SpriteText.spriteTexture = SpriteTexture ?? DefaultSpriteTexture;
 
 		ColoredTexture = ManagedColoredTexture?.Value;
 		SpriteText.coloredTexture = ColoredTexture ?? DefaultColoredTexture;
 
-		Font = ManagedFont?.Value;
-		if (Field_FontFile is not null) { 
-			Font ??= DefaultFont;
-			Field_FontFile.SetValue(Font?.File);
-			Field_CharacterMap!.SetValue(Font?.CharacterMap);
-			Field_FontPages!.SetValue(Font?.FontPages);
-			SpriteText.fontPixelZoom = Font?.PixelZoom ?? 3f;
-		}
+		Font = ManagedFont?.Value ?? DefaultFont;
+
+		SpriteText.FontFile = Font?.File;
+		SpriteText.characterMap = Font?.CharacterMap;
+		SpriteText.fontPages = Font?.FontPages;
+		SpriteText.fontPixelZoom = Font?.PixelZoom ?? 3f;
 	}
 
 	[Subscriber]
-	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
+	private void OnAssetRequested(AssetRequestedEventArgs e) {
 		if (e.Name.IsEquivalentTo(SPRITE_TEXTURE_ASSET))
 			e.LoadFrom(() => DefaultSpriteTexture, priority: AssetLoadPriority.Low);
 		if (e.Name.IsEquivalentTo(COLORED_TEXTURE_ASSET))

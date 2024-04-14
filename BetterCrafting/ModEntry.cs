@@ -575,6 +575,34 @@ public class ModEntry : PintailModSubscriber {
 			}
 	}
 
+	/*
+	[Subscriber]
+	private void OnDrawStuff(object? sender, RenderedWorldEventArgs e) {
+		if (!Context.IsWorldReady)
+			return;
+
+		int radius = Config.NearbyRadius;
+		if (radius <= 0)
+			return;
+
+		foreach(var tile in Game1.player.Tile.IterArea(radius, false)) {
+			int idx = tile.Distance(Game1.player.Tile.X, Game1.player.Tile.Y) > radius ? 1 : 0;
+
+			e.SpriteBatch.Draw(
+				Game1.mouseCursors,
+				Game1.GlobalToLocal(Game1.viewport, tile * 64f),
+				new Rectangle(194 + idx * 16, 388, 16, 16),
+				Color.White,
+				0f,
+				Vector2.Zero,
+				4f,
+				SpriteEffects.None,
+				0.999f
+			);
+		}
+	}
+	*/
+
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		// Edit the cookout kit's recipe.
@@ -745,6 +773,12 @@ public class ModEntry : PintailModSubscriber {
 				(c, v) => c.ShowSettingsButton = v
 			)
 			.Add(
+				I18n.Setting_ShowEdit,
+				I18n.Setting_ShowEdit_Tip,
+				c => c.ShowEditButton,
+				(c, v) => c.ShowEditButton = v
+			)
+			.Add(
 				I18n.Setting_ReplaceCrafting,
 				I18n.Setting_ReplaceCrafting_Tip,
 				c => c.ReplaceCrafting,
@@ -891,7 +925,7 @@ public class ModEntry : PintailModSubscriber {
 					-2 => -2,
 					-1 => -1,
 					0 => 0,
-					_ => (int) (Math.Ceiling(Math.Log2(c.NearbyRadius)) - 2)
+					_ => (int) (Math.Ceiling(Math.Log2(c.NearbyRadius)) - 1)
 				},
 				(c, v) => c.NearbyRadius = v switch {
 					-2 => -2,

@@ -73,8 +73,12 @@ public static class CommonHelper {
 
 	#region Color Names
 
-	private static readonly Dictionary<string, Color> CSS4Colors = new(StringComparer.OrdinalIgnoreCase) {
+	/// <summary>
+	/// CSS4 colors, and JojaBlue from the base game.
+	/// </summary>
+	private static readonly Dictionary<string, Color> ExtraColors = new(StringComparer.OrdinalIgnoreCase) {
 		{ "rebeccapurple", new Color(102, 51, 153, 255) },
+		{ "jojablue", new Color(52, 50, 122) }
 	};
 
 	/// <summary>
@@ -136,7 +140,7 @@ public static class CommonHelper {
 				));
 		}
 
-		foreach (var entry in CSS4Colors) {
+		foreach (var entry in ExtraColors) {
 			AddColor(result, entry.Key, entry.Value);
 		}
 

@@ -97,7 +97,7 @@ theme for the base game that would make all your text pink:
 {
     "Name": "Unnecessarily Pink",
 
-    "Variables": {
+    "ColorVariables": {
         "Text": "hotpink",
         "TextShadow": "maroon",
         "TextShadowAlt": "black"
@@ -108,7 +108,7 @@ theme for the base game that would make all your text pink:
     },
 
     "Patches": [
-        "DrawTextWithShadow"
+        "ItemTooltips"
     ]
 }
 ```
@@ -263,7 +263,7 @@ A theme file for the game could be as simple as:
 {
     "Name": "Blue Drop",
 
-    "Variables": {
+    "ColorVariables": {
         "DropDownText": "navy"
     },
 
@@ -276,7 +276,7 @@ A theme file for the game could be as simple as:
 
 ## What are Color Variables?
 
-Variables are an easy way to specify certain colors to fulfill certain roles.
+ColorVariables are an easy way to specify certain colors to fulfill certain roles.
 Variables have names that start with a `$`, and they have a value that's
 either a color or the name of another variable. Because of this, patches can
 define specific variables that fall back to more generic variables if the
@@ -296,7 +296,10 @@ as they don't loop. (And don't worry, there's loop detection.)
 
 For a list of built-in color variables, please read the section on
 [Built-in Patches](#built-in-patches). Every patch is described with a list of
-supported variables, as well as example screenshots.
+supported variables, and I want to eventually add example screenshots.
+
+> Note: If someone wants to help with the screenshots and improved
+> documentation, I would appreciate you forever.
 
 
 ## What are Sprite Text Colors?
@@ -307,8 +310,12 @@ font, and by default it is a dark reddish brown. Here's an example of the text
 
 ![](docs/SpriteText.png)
 
-In Stardew Valley 1.5 and earlier, Sprite Text uses an index-based system for
-colors. Specifically, the following are the default colors:
+In previous versions of Stardew Valley, Sprite Text was limited to a few
+predefined colors. This is largely a thing of the past (you're welcome),
+but still applies to a few minor things in the game. Notably, this applies
+to mail.
+
+These are the default colors:
 ```json
 {
     "SpriteTextColors": {
@@ -320,7 +327,8 @@ colors. Specifically, the following are the default colors:
         "5": "OrangeRed",
         "6": "LimeGreen",
         "7": "Cyan",
-        "8": "60, 60, 60" // #3C3C3C
+        "8": "60, 60, 60" // #3C3C3C,
+		"9": "JoJaBlue" // ##34327A
     }
 }
 ```
@@ -340,6 +348,10 @@ Here's the same `Journal` text but with the color `-1` set to `hotpink`:
 
 ![](docs/SpriteText-Pink.png)
 
+I want to make it easier to override SpriteText colors going forward for
+code that isn't using the indexing system, but I haven't decided on the
+best way to implement it yet.
+
 
 ## What is a Patch?
 
@@ -354,19 +366,19 @@ the following example:
 {
     "ID": "OptionsDropDown",
 
-    "Variables": {
+    "ColorVariables": {
         "$DropDownHover": "$Hover",
         "$DropDownText": "$Text"
     },
 
     "Patches": {
-        "#OptionsDropDown:draw(SpriteBatch,,,)": {
+        "#OptionsDropDown:draw(SpriteBatch,*)": {
             "Colors": {
                 "Wheat": { "*": "$DropDownHover" }
             },
 
-            "Fields": {
-                "textColor": { "*": "$DropDownText" }
+            "ColorFields": {
+                "Game1:textColor": { "*": "$DropDownText" }
             }
         }
     }

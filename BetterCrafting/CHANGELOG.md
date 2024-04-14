@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.6.2
+Released April 13th, 2024.
+
+### Changes
+* Add a quick setting to hide the Edit Categories button, since
+  someone requested it and it's easy.
+
+### Fixed
+* Issue where the Use Nearby Chests setting would not have its initial
+  value set correctly when opening the settings menu, causing it to
+  be reduced over time.
+* Issue where the Use Nearby Chests setting would be unable to include
+  all chests in its active area due to scanning limitations meant to
+  limit performance impacts.
+* Improve performance of item comparison slightly by changing how we
+  apply our harmony patch for Item.canStackWith.
+* Improve word wrapping when dealing with exceptionally long unbroken
+  character sequences, which is mainly an issue in
+  non-English languages.
+
+### Translation
+* Updated Korean language strings. Thanks, wally.
+
+
 ## 2.6.1
 Released April 12th, 2024.
 
