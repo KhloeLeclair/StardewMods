@@ -4,6 +4,8 @@ This document is intended to help mod authors create content packs using Theme M
 
 # Contents
 
+* [TL;DR](#tldr)
+
 * [Getting Started](#getting-started)
   * [What is a Theme?](#what-is-a-theme)
   * [What About Game Themes?](#what-about-game-themes)
@@ -28,6 +30,41 @@ This document is intended to help mod authors create content packs using Theme M
 * [Miscellaneous](#miscellaneous)
   * [Color Parsing](#color-parsing)
   * [Helpful Commands](#helpful-commands)
+
+
+# TLDR
+
+Just want to mod the game's hard-coded colors? Sure. Do this:
+
+1. If you have an existing mod, add a line like this to its `manifest.json`:
+   ```json
+   "stardew:theme": "theme.json",
+   ```
+2. Create a new file called `theme.json` in the same folder as your
+   mod's manifest, and put this in it:
+   ```json
+   {
+       "Name": "YOUR THEME'S NAME",
+	   "SupportedMods": [
+    	   "YourMods.UniqueId.GoesHere"
+	   ],
+	   "ColorVariables": {
+    	   "Text": "hotpink", // you want hot pink text, right?
+	   }
+   }
+   ```
+3. Start putting colors in the ColorVariables section. You can
+   get their names by checking [the built-in patches list](builtin-patches.md).
+4. In game, make sure your theme is selected by Theme Manager. You can
+   use Generic Mod Config Menu for that.
+5. Use the `retheme` command whenever you change your theme to reload it.
+6. Use the `tm_repatch` command if you ever make changes to patches.
+7. ???
+8. Profit!
+
+> P.S. Please bug Khloe on the Stardew discord if there are colors you
+> can't find, or try using the `tm_method_view` command and/or
+> `tm_method_genpatch` to make your own patches!
 
 
 # Getting Started
