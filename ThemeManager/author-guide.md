@@ -140,7 +140,13 @@ theme for the base game that would make all your text pink:
         "TextShadowAlt": "black"
     },
 
-    "SpriteTextColors": {
+	"SpriteTextColorSets": {
+		"*": {
+			"default": "hotpink"
+		}
+	},
+
+    "IndexedSpriteTextColors": {
         "-1": "hotpink"
     },
 
@@ -150,9 +156,9 @@ theme for the base game that would make all your text pink:
 }
 ```
 
-In this example, `Variables` and `SpriteTextColors` are theme data that will
-be used by Theme Manager to overwrite colors used by the game. `Patches` is
-another type of data used by game themes specifically to tell Theme Manager
+In this example, `ColorVariables`, `SpriteTextColorSets`, and `IndexedSpriteTextColors`
+are theme data that will be used by Theme Manager to overwrite colors used by the game.
+`Patches` is another type of data used by game themes specifically to tell Theme Manager
 what patches should be applied. Check out the section on [Game Themes](#game-themes)
 for more details about how it all works.
 
@@ -314,7 +320,7 @@ A theme file for the game could be as simple as:
 ## What are Color Variables?
 
 ColorVariables are an easy way to specify certain colors to fulfill certain roles.
-Variables have names that start with a `$`, and they have a value that's
+ColorVariables have names that start with a `$`, and they have a value that's
 either a color or the name of another variable. Because of this, patches can
 define specific variables that fall back to more generic variables if the
 specific color hasn't been overwritten.
@@ -355,7 +361,7 @@ to mail.
 These are the default colors:
 ```json
 {
-    "SpriteTextColors": {
+    "IndexedSpriteTextColors": {
         "-1": "86, 22, 12", // #56160C
         "1": "SkyBlue",
         "2": "Red",
@@ -370,7 +376,7 @@ These are the default colors:
 }
 ```
 
-All other colors are black by default.
+All other indexes are black by default.
 
 The color `-1` has special handling from the game. If the color is `-1` and you
 are using a language that uses latin characters (English, Spanish, French,
@@ -385,9 +391,37 @@ Here's the same `Journal` text but with the color `-1` set to `hotpink`:
 
 ![](docs/SpriteText-Pink.png)
 
-I want to make it easier to override SpriteText colors going forward for
-code that isn't using the indexing system, but I haven't decided on the
-best way to implement it yet.
+However, as of Stardew Valley 1.6, I was able to request that SpriteText would
+accept any arbitrary color. In order to deal with this increased flexibility,
+we have a secondary data type: `SpriteTextColorSets`
+
+There is a default color set named `*` (asterisk), but patches can add
+their own named color sets. For example, there's also a color set named
+`Billboard:Colors` that applies specifically to the `BillboardMenu` class
+that renders the calendar and help wanted board outside Pierre's shop.
+
+That same list of indexed colors above becomes this:
+```json
+"SpriteTextColorSets": {
+	"*": {
+		"default": null,
+		"skyblue": "skyblue",
+		"red": "red",
+		"#6E2BFF": "#6E2BFF",
+		"white": "white",
+		"orangered": "orangered",
+		"limegreen": "limegreen",
+		"cyan": "cyan",
+		"#3c3c3c": "#3c3c3c",
+		"jojablue": "jojablue"
+	}
+}
+```
+
+You can use this to override *any* SpriteText rendering in the entire
+game, be it from the base game or from mods, but due to the nature it can
+be imprecise, changing all text with a specific color, everywhere. That's
+why we have color sets, so you can focus your changes onto specific menus.
 
 
 ## What is a Patch?
@@ -427,9 +461,9 @@ class, and it's doing so by replacing every reference to the color `Wheat`
 with the variable `$DropDownHover` and by replacing every reference to the
 field `Game1.textColor` with the variable `$DropDownText`.
 
-As you can see above, there's also a `Variables` section in this patch. This
-lets a patch set up sensible defaults. In this case, the default value for
-`$DropDownText` is `$Text` and the default value for `$DropDownHover` is
+As you can see above, there's also a `ColorVariables` section in this patch.
+This lets a patch set up sensible defaults. In this case, the default value
+for `$DropDownText` is `$Text` and the default value for `$DropDownHover` is
 `$Hover`. These are only used if the current theme doesn't have them defined.
 
 
@@ -441,6 +475,28 @@ demonstrating their effects.
 
 
 ## Writing a Patch
+
+Sorry, the guide isn't very fleshed out yet. There are a few helpful
+commands for writing your own patches.
+
+### `tm_method_tree [method]`
+
+This command will display a rendering tree starting from the given method,
+showing you every single method it calls that (potentially) does any drawing.
+If you don't supply a method, this will try grabbing the currently visible
+menu's draw method.
+
+### `tm_method_view [method]`
+
+This command will display a list of every color, texture, SpriteText, Lerp,
+etc. that you can modify within a given method. If you don't supply a method,
+this will try grabbing the currently visible menu's draw method.
+
+### `tm_method_genpatch [method]`
+
+This command is similar to the `tm_method_view` command, but it will generate
+a basic patch JSON and print it to the console to give you a starting point.
+
 
 # Other Mod Themes
 

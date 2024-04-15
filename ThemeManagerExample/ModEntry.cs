@@ -91,7 +91,6 @@ public class ModEntry : Mod {
 		IThemeManagerApi? api;
 		try {
 			api = Helper.ModRegistry.GetApi<IThemeManagerApi>("leclair.thememanager");
-
 		} catch (Exception ex) {
 			Monitor.Log($"Unable to get Theme Manager's API: {ex}", LogLevel.Error);
 			return;
