@@ -1417,7 +1417,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		}
 
 		// Is it loading an asset?
-		if (!e.Name.StartsWith(AssetLoaderPrefix))
+		if (!e.Name.StartsWith(AssetLoaderPrefix) || e.Name.Name.Length <= AssetLoaderPrefix.Length)
 			return;
 
 		// Figure out the theme component.

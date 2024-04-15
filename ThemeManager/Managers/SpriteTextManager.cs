@@ -179,9 +179,10 @@ public class SpriteTextManager : BaseManager {
 			return;
 
 		var font = Font ?? DefaultFont;
+		BmFontData? fnt = font is BmFontData bm ? bm : null;
 
-		SpriteText.FontFile = font?.File;
-		SpriteText.characterMap = font?.CharacterMap;
+		SpriteText.FontFile = fnt?._File ?? (font?.File as FontFile);
+		SpriteText.characterMap = fnt?._CharacterMap ?? (font?.CharacterMap as Dictionary<char, FontChar>);
 		SpriteText.fontPages = font?.FontPages;
 		SpriteText.fontPixelZoom = font?.PixelZoom ?? 3f;
 	}
@@ -199,8 +200,10 @@ public class SpriteTextManager : BaseManager {
 			SpriteText.coloredTexture = coloredTexture;
 
 		if (font is not null) {
-			SpriteText.FontFile = font.File;
-			SpriteText.characterMap = font.CharacterMap;
+			BmFontData? fnt = font is BmFontData bm ? bm : null;
+
+			SpriteText.FontFile = fnt?._File ?? (font.File as FontFile);
+			SpriteText.characterMap = fnt?._CharacterMap ?? (font.CharacterMap  as Dictionary<char, FontChar>);
 			SpriteText.fontPages = font.FontPages;
 			SpriteText.fontPixelZoom = font.PixelZoom;
 		}
@@ -218,9 +221,10 @@ public class SpriteTextManager : BaseManager {
 		SpriteText.coloredTexture = ColoredTexture ?? DefaultColoredTexture;
 
 		Font = ManagedFont?.Value ?? DefaultFont;
+		BmFontData? fnt = Font is BmFontData bm ? bm : null;
 
-		SpriteText.FontFile = Font?.File;
-		SpriteText.characterMap = Font?.CharacterMap;
+		SpriteText.FontFile = fnt?._File ?? (Font?.File as FontFile);
+		SpriteText.characterMap = fnt?._CharacterMap ?? (Font?.CharacterMap as Dictionary<char, FontChar>);
 		SpriteText.fontPages = Font?.FontPages;
 		SpriteText.fontPixelZoom = Font?.PixelZoom ?? 3f;
 	}

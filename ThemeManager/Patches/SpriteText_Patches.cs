@@ -20,6 +20,8 @@ internal static class SpriteText_Patches {
 	private static ModEntry? Mod;
 	private static IMonitor? Monitor;
 
+	internal static bool UpdateColor = true;
+
 	internal static void Patch(ModEntry mod) {
 		Mod = mod;
 		Monitor = mod.Monitor;
@@ -30,10 +32,10 @@ internal static class SpriteText_Patches {
 				postfix: new HarmonyMethod(typeof(SpriteText_Patches), nameof(OnLanguageChange_Postfix))
 			);
 
-			/*mod.Harmony!.Patch(
+			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawString)),
 				prefix: new HarmonyMethod(typeof(SpriteText_Patches), nameof(drawString_Prefix))
-			);*/
+			);
 
 			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(SpriteText), nameof(SpriteText.getColorFromIndex)),
@@ -51,12 +53,11 @@ internal static class SpriteText_Patches {
 		}
 	}
 
-	/*static bool drawString_Prefix(bool junimoText, ref int color) {
+	static bool drawString_Prefix(bool junimoText, ref Color? color) {
 		try {
-			if (! junimoText && color == -1) {
-				var colors = Mod?.GameTheme?.SpriteTextColors;
-				if (colors is not null && colors.ContainsKey(-1))
-					color = int.MinValue;
+			if (! junimoText && UpdateColor && (Mod?.GameTheme?.SpriteTextColorSets?.TryGetValue("*", out var colors) ?? false)) { 
+				if (colors is not null && colors.TryGetValue(color.HasValue ? color.Value.PackedValue : -1, out var replaced))
+					color = replaced;
 			}
 
 		} catch(Exception ex) {
@@ -64,11 +65,11 @@ internal static class SpriteText_Patches {
 		}
 
 		return true;
-	}*/
+	}
 
 	static bool getColorFromIndex__Prefix(int index, ref Color __result) {
 		try {
-			var colors = Mod?.GameTheme?.SpriteTextColors;
+			var colors = Mod?.GameTheme?.IndexedSpriteTextColors;
 			if (colors is not null && colors.TryGetValue(index, out __result))
 				return false;
 

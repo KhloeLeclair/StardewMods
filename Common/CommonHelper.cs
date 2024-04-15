@@ -149,6 +149,22 @@ public static class CommonHelper {
 
 	#endregion
 
+	public static Color PremultiplyAlpha(Color input) {
+		if (input.A == 0)
+			return Color.Transparent;
+		if (input.A == 255)
+			return input;
+
+		float alpha = input.A / 255f;
+
+		return new Color(
+			input.R * alpha,
+			input.G * alpha,
+			input.B * alpha,
+			input.A
+		);
+	}
+
 	public static Color? ParseColor(string? input) {
 		if (TryParseColor(input, out Color? result))
 			return result.Value;
@@ -157,6 +173,20 @@ public static class CommonHelper {
 	}
 
 	public static bool TryParseColor(string? input, [NotNullWhen(true)] out Color? result) {
+		bool premultiply = !string.IsNullOrEmpty(input) && input.StartsWith("premultiply:");
+		if (premultiply)
+			input = input![12..];
+
+		if (TryParseColorImpl(input, out result)) {
+			if (premultiply)
+				result = PremultiplyAlpha(result.Value);
+			return true;
+		}
+
+		return false;
+	}
+
+	private static bool TryParseColorImpl(string? input, [NotNullWhen(true)] out Color? result) {
 		if (!string.IsNullOrEmpty(input)) {
 			// Raw Format (Old)
 			if (char.IsDigit(input[0]))

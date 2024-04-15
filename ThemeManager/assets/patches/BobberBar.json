@@ -1,6 +1,10 @@
 {
 	"ID": "BobberBar",
 
+	"FontVariables": {
+		"$BobberBar:Dialogue": "$Dialogue"
+	},
+
 	"Patches": {
 		"StardewValley.Tools.FishingRod:draw(SpriteBatch)": {
 			"RedToGreenLerp": {
@@ -14,6 +18,7 @@
 
 		"#BobberBar:draw(SpriteBatch)": {
 			"Colors": {
+				"DimGray": { "*": "$FishingTreasureBarBackground" },
 				"Orange": { "*": "$FishingTreasureBar" }
 			},
 
@@ -30,6 +35,10 @@
 			"Colors": {
 				"Yellow": { "*": "$FishingPerfectText" },
 				"White": { "*": "$FishingPerfectSparkle" }
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$BobberBar:Dialogue" }
 			}
 		}
 	}

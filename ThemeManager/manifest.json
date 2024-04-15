@@ -10,7 +10,7 @@
   "UniqueID": "leclair.thememanager",
   "Name": "Theme Manager",
   "Author": "Khloe Leclair",
-  "Version": "0.6.0",
+  "Version": "0.7.0",
   "Description": "Provides a framework for UI theme support in mods, as well as enhanced UI theme support for the base game.",
   "MinimumApiVersion": "4.0",
   "MinimumGameVersion": "1.6",

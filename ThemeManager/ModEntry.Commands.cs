@@ -404,7 +404,7 @@ public partial class ModEntry {
 				patch.Colors = new();
 				foreach (string key in Colors.Keys) {
 					patch.Colors[key] = new() {
-						{ "*", $"${name}{key}" }
+						{ "*", $"${name}:{key}" }
 					};
 				}
 			}
@@ -456,6 +456,9 @@ public partial class ModEntry {
 							varname = $"${name}{key[idx..]}";
 					}
 
+					if (key.StartsWith("StardewValley.Game1:"))
+						key = key[14..];
+
 					patch.ColorFields[key] = new() {
 						{ "*", varname }
 					};
@@ -498,6 +501,9 @@ public partial class ModEntry {
 							varname = $"${name}{key[idx..]}";
 					}
 
+					if (key.StartsWith("StardewValley.Game1:"))
+						key = key[14..];
+
 					patch.FontFields[key] = new() {
 						{ "*", varname }
 					};
@@ -513,6 +519,13 @@ public partial class ModEntry {
 
 					string varname;
 
+					// Skip including certain textures.
+					if (key.EndsWith(":staminaRect") || key.EndsWith(":fadeToBlackRect"))
+						continue;
+
+					if (key.StartsWith("StardewValley.Game1:"))
+						key = key[14..];
+
 					int idx = key.IndexOf(':');
 					if (idx == -1)
 						varname = $"${name}:{key}";
@@ -523,6 +536,9 @@ public partial class ModEntry {
 						{"*", varname }
 					};
 				}
+
+				if (patch.TextureFields.Count == 0)
+					patch.TextureFields = null;
 			}
 
 			if (SpriteTextDraws.Count > 0) {
@@ -530,7 +546,8 @@ public partial class ModEntry {
 					{ "*", new string[] {
 						$"${name}:ST:Normal",
 						$"${name}:ST:Colored",
-						$"${name}:ST:Font"
+						$"${name}:ST:Font",
+						$"${name}:Colors"
 					} }
 				};
 
@@ -857,7 +874,7 @@ public partial class ModEntry {
 					"stardew",
 					GameThemeManager!.ActiveThemeId,
 					GameThemeManager!.SelectedThemeId,
-					GameThemeManager!.GetThemeChoices().Count.ToString()
+					GameThemeManager!.GetThemeChoices().Where(x => x.Key != "automatic" && x.Key != "default").Count().ToString()
 				}
 			};
 
@@ -866,7 +883,7 @@ public partial class ModEntry {
 					entry.Key.UniqueID,
 					entry.Value.Item2.ActiveThemeId,
 					entry.Value.Item2.SelectedThemeId,
-					entry.Value.Item2.GetThemeChoices().Count.ToString()
+					entry.Value.Item2.GetThemeChoices().Where(x => x.Key != "automatic" && x.Key != "default").Count().ToString()
 				});
 
 			LogTable(new string[] {
@@ -1076,6 +1093,7 @@ public partial class ModEntry {
 		GameTheme!.BmFontVariables.DefaultValues = GameTheme.PatchBmFontVariables;
 
 		DynamicPatcher.UpdateColors(GameTheme.ColorVariables);
+		DynamicPatcher.UpdateSpriteTextColors(GameTheme.SpriteTextColorSets);
 		DynamicPatcher.UpdateFonts(GameTheme.FontVariables);
 		DynamicPatcher.UpdateTextures(GameTheme.TextureVariables);
 		DynamicPatcher.UpdateBmFonts(GameTheme.BmFontVariables);

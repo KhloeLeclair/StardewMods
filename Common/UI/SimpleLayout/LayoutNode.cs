@@ -9,7 +9,27 @@ using StardewValley;
 
 namespace Leclair.Stardew.Common.UI.SimpleLayout;
 
-public class LayoutNode : ISimpleNode {
+
+public enum LayoutDirection {
+	Vertical,
+	Horizontal
+}
+
+
+public interface ILayoutNode : ISimpleNode {
+
+	ISimpleNode[] Children { get; set; }
+
+	Vector2 MinSize { get; set; }
+
+	int Margin { get; set; }
+
+	LayoutDirection Direction { get; }
+
+}
+
+
+public class LayoutNode : ILayoutNode {
 
 #if DEBUG
 	private static readonly Color[] DEBUG_COLORS = [
@@ -297,9 +317,4 @@ public class LayoutNode : ISimpleNode {
 			}
 		}
 	}
-}
-
-public enum LayoutDirection {
-	Vertical,
-	Horizontal
 }

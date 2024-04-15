@@ -870,7 +870,7 @@ public partial class ModEntry : PintailModSubscriber {
 						patcher.AddPatch(entry.Value);
 					}
 
-					if (methods.Length == 0)
+					if (methods.Length == 0 && entry.Value.WarnIfNotFound)
 						Log($"Unable to apply method patch for patch {key}. Cannot find matching method: {entry.Key}", LogLevel.Warn);
 				}
 			}
@@ -898,7 +898,8 @@ public partial class ModEntry : PintailModSubscriber {
 		GameTheme.BmFontVariables.DefaultValues = GameTheme.PatchBmFontVariables;
 
 		// Access SpriteTextColors to force all the theme's data to build.
-		int _ = GameTheme.SpriteTextColors.Count;
+		int _ = GameTheme.IndexedSpriteTextColors.Count;
+		_ = GameTheme.SpriteTextColorSets.Count;
 
 		// Apply the text color / text shadow color to the fields in Game1.
 		Game1.textColor = GameTheme.ColorVariables.GetValueOrDefault("Text", GameThemeManager!.DefaultTheme.ColorVariables["Text"]);
@@ -915,6 +916,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 		// Update the values used by the patches.
 		DynamicPatcher.UpdateColors(GameTheme.ColorVariables);
+		DynamicPatcher.UpdateSpriteTextColors(GameTheme.SpriteTextColorSets);
 		DynamicPatcher.UpdateFonts(GameTheme.FontVariables);
 		DynamicPatcher.UpdateTextures(GameTheme.TextureVariables);
 		DynamicPatcher.UpdateBmFonts(GameTheme.BmFontVariables);
@@ -1020,7 +1022,9 @@ public partial class ModEntry : PintailModSubscriber {
 				}
 
 				if (GameContentManager_Instance is not null)
-					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public);
+					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public, new Type[] {
+						typeof(IAssetName)
+					});
 			}
 		}
 	}

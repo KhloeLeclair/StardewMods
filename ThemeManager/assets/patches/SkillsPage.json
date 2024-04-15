@@ -39,6 +39,8 @@
 		},
 
 		"SpaceCore!SpaceCore.Interface.NewSkillsPage:draw": {
+			"WarnIfNotFound": false,
+
 			"Colors": {
 				"LightGreen": { "*": "$SkillsPageModifiedNumber" },
 				"SandyBrown": { "*": "$SkillsPageNumber" }

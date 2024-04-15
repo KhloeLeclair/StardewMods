@@ -11,7 +11,22 @@
 		"UnselectedOption": "#646464"
 	},
 
-	"SpriteTextColors": {
+	"SpriteTextColorSets": {
+		"*": {
+			"default": null,
+			"skyblue": "skyblue",
+			"red": "red",
+			"#6E2BFF": "#6E2BFF",
+			"white": "white",
+			"orangered": "orangered",
+			"limegreen": "limegreen",
+			"cyan": "cyan",
+			"#3c3c3c": "#3c3c3c",
+			"jojablue": "jojablue"
+		}
+	},
+
+	"IndexedSpriteTextColors": {
 		"1": "skyblue",
 		"2": "red",
 		"3": "#6E2BFF",
@@ -25,8 +40,11 @@
 
 	"Patches": [
 		"AboutMenu",
+		"AnimalPage",
+		"AnimalQueryMenu",
 		"Billboard",
 		"BobberBar",
+		"BuildingPaintMenu",
 		"CarpenterMenu",
 		"CharacterCustomization",
 		"CoopMenu",

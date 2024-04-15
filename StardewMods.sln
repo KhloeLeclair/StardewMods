@@ -44,6 +44,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TMFontStudio", "TMFontStudi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoreRandomEvents", "MoreRandomEvents\MoreRandomEvents.csproj", "{56945FC6-952B-402C-ADD8-DA083EF7F52D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakPintail", "BreakPintail\BreakPintail.csproj", "{39455D60-BDCE-4F46-89D6-B51B6F310A32}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakPintailClient", "BreakPintailClient\BreakPintailClient.csproj", "{520EFE27-FE73-4816-967D-9F1468F7C096}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +102,14 @@ Global
 		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56945FC6-952B-402C-ADD8-DA083EF7F52D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39455D60-BDCE-4F46-89D6-B51B6F310A32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39455D60-BDCE-4F46-89D6-B51B6F310A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39455D60-BDCE-4F46-89D6-B51B6F310A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39455D60-BDCE-4F46-89D6-B51B6F310A32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{520EFE27-FE73-4816-967D-9F1468F7C096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{520EFE27-FE73-4816-967D-9F1468F7C096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{520EFE27-FE73-4816-967D-9F1468F7C096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{520EFE27-FE73-4816-967D-9F1468F7C096}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,6 +124,8 @@ Global
 		Common\Common.projitems*{13180c19-64f0-4053-9fff-538b7b0b0855}*SharedItemsImports = 13
 		Common\Common.projitems*{19a9299f-b3c0-4ed5-95d9-94bf26a50417}*SharedItemsImports = 5
 		Common\Common.projitems*{2481e747-58e1-4858-a4f1-4d533abace8f}*SharedItemsImports = 5
+		Common\Common.projitems*{39455d60-bdce-4f46-89d6-b51b6f310a32}*SharedItemsImports = 5
+		Common\Common.projitems*{520efe27-fe73-4816-967d-9f1468f7c096}*SharedItemsImports = 5
 		Common\Common.projitems*{55aaac30-053e-44c8-9c86-87a3b90c29c1}*SharedItemsImports = 5
 		Common\Common.projitems*{56945fc6-952b-402c-add8-da083ef7f52d}*SharedItemsImports = 5
 		Common\Common.projitems*{6e8021b8-817d-4b47-bf75-2acbbcb3f158}*SharedItemsImports = 5

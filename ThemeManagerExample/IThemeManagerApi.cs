@@ -1,16 +1,10 @@
 #nullable enable
 
-//#define PINTAIL_CAN_OUT
-
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Intrinsics.X86;
-
-#if BM_FONTS
-using BmFont;
-#endif
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -276,17 +270,20 @@ public class VariableSetConverter : JsonConverter {
 /// They're loaded from <c>.fnt</c> files.
 /// </summary>
 public interface IBmFontData {
-#if BM_FONTS
-	/// <summary>
-	/// The raw font file.
-	/// </summary>
-	FontFile File { get; }
 
 	/// <summary>
-	/// A map of characters.
+	/// The raw font file. This is a <see cref="BmFont.FontFile"/> but
+	/// we use the type `object` so consumers won't need to
+	/// reference BmFont.
 	/// </summary>
-	Dictionary<char, FontChar> CharacterMap { get; }
-#endif
+	object File { get; }
+
+	/// <summary>
+	/// A map of characters. This is a <c>Dictionary<char, BmFont.FontChar></c>
+	/// but we use the type `object` so consumers won't need to
+	/// reference BmFont.
+	/// </summary>
+	object CharacterMap { get; }
 
 	/// <summary>
 	/// A list of loaded textures for each <see cref="FontPage" />
@@ -382,11 +379,19 @@ public interface IGameTheme {
 	IVariableSet<IManagedAsset<Texture2D>> TextureVariables { get; }
 
 	/// <summary>
-	/// A dictionary of all sprite text colors that are set by the theme.
-	/// You can just use <see cref="SpriteText.getColorFromIndex(int)"/>
+	/// A dictionary of all index-based sprite text colors that are set by
+	/// the theme. You can just use <see cref="SpriteText.getColorFromIndex(int)"/>
 	/// rather than checking this list if using the active theme.
 	/// </summary>
-	Dictionary<int, Color> SpriteTextColors { get; }
+	Dictionary<int, Color> IndexedSpriteTextColors { get; }
+
+	/// <summary>
+	/// A dictionary of dictionaries of sprite text color replacements that
+	/// are set by the theme. The key of the inner dictionary is the
+	/// <see cref="Color.PackedValue"/> as a long so we can store the
+	/// <c>null</c> value as <c>-1</c>.
+	/// </summary>
+	Dictionary<string, Dictionary<long, Color?>> SpriteTextColorSets { get; }
 
 }
 
@@ -651,7 +656,6 @@ public interface IThemeManager {
 	/// theme we're interested in.</param>
 	bool HasTheme(string themeId);
 
-#if PINTAIL_CAN_OUT
 	/// <summary>
 	/// Try to get the <see cref="IThemeManifest"/> instance for a specific
 	/// theme, if it's loaded.
@@ -662,7 +666,6 @@ public interface IThemeManager {
 	/// the requested theme, or <c>null</c> if the theme is not loaded or
 	/// has no manifest. Only the <c>default</c> theme has no manifest.</param>
 	bool TryGetManifest(string themeId, [NotNullWhen(true)] out IThemeManifest? manifest);
-#endif
 
 	/// <summary>
 	/// Get the <see cref="IThemeManifest"/> instance of a specific theme,
@@ -857,7 +860,6 @@ public interface IThemeManager<DataT> : IThemeManager where DataT : new() {
 
 	#region Theme Enumeration
 
-#if PINTAIL_CAN_OUT
 	/// <summary>
 	/// Try to get the <typeparamref name="DataT"/> instance for a specific
 	/// theme, if it's loaded.
@@ -872,7 +874,6 @@ public interface IThemeManager<DataT> : IThemeManager where DataT : new() {
 	/// <param name="theme">The <typeparamref name="DataT"/> instance for
 	/// the requested theme, or <c>null</c> if the theme is not loaded.</param>
 	bool TryGetTheme(string themeId, [NotNullWhen(true)] out DataT? theme);
-#endif
 
 	/// <summary>
 	/// Get the <typeparamref name="DataT"/> instance for a specific
@@ -933,7 +934,7 @@ public interface IThemeManager<DataT> : IThemeManager where DataT : new() {
 	#endregion
 }
 
-public interface IThemeManagerApi {
+public partial interface IThemeManagerApi {
 
 	#region Game Themes
 
@@ -964,7 +965,7 @@ public interface IThemeManagerApi {
 	/// belongs to, if one is known.</param>
 	/// <param name="result">The resulting value</param>
 	/// <returns>Whether or not a value was parsed successfully.</returns>
-	//delegate bool TryParseVariableSetValue<TValue>(string input, IThemeManager? manager, IThemeManifest? manifest, [NotNullWhen(true)] out TValue? result);
+	delegate bool TryParseVariableSetValue<TValue>(string input, IThemeManager? manager, IThemeManifest? manifest, [NotNullWhen(true)] out TValue? result);
 
 	/// <summary>
 	/// Register a new type that can be stored within a <see cref="IVariableSet{TValue}"/>.
@@ -973,7 +974,7 @@ public interface IThemeManagerApi {
 	/// <param name="parseDelegate">A method for parsing values from strings.</param>
 	/// <returns>Whether or not the parser was registered successfully. If
 	/// false, another parser for the type was already registered.</returns>
-	//bool RegisterVariableSetType<TValue>(TryParseVariableSetValue<TValue> parseDelegate);
+	bool RegisterVariableSetType<TValue>(TryParseVariableSetValue<TValue> parseDelegate);
 
 	/// <summary>
 	/// Create a new <see cref="IVariableSet{TValue}"/> instance using the
@@ -1013,7 +1014,6 @@ public interface IThemeManagerApi {
 
 	#region Custom Themes
 
-#if PINTAIL_CAN_OUT
 	/// <summary>
 	/// Try to get an existing <see cref="IThemeManager{DataT}"/> instance
 	/// for a mod. This will never create a new instance. If
@@ -1027,11 +1027,9 @@ public interface IThemeManagerApi {
 	/// <param name="forMod">An optional manifest to get the theme manager
 	/// for a specific mod.</param>
 	bool TryGetTypedManager<DataT>([NotNullWhen(true)] out IThemeManager<DataT>? themeManager, IManifest? forMod = null) where DataT : class, new();
-#endif
 
 	IThemeManager<DataT>? GetTypedManager<DataT>(IManifest? forMod = null) where DataT : class, new();
 
-#if PINTAIL_CAN_OUT
 	/// <summary>
 	/// Try to get an existing <see cref="IThemeManager"/> instance for a mod.
 	/// This will never create a new instance.
@@ -1041,7 +1039,6 @@ public interface IThemeManagerApi {
 	/// <param name="forMod">An optional manifest to get the theme manager
 	/// for a specific mod.</param>
 	bool TryGetManager([NotNullWhen(true)] out IThemeManager? themeManager, IManifest? forMod = null);
-#endif
 
 	IThemeManager? GetManager(IManifest? forMod = null);
 
@@ -1101,7 +1098,7 @@ public interface IThemeManagerApi {
 	/// <param name="value">The input string to parse</param>
 	/// <param name="color">The resulting color, or null</param>
 	/// <returns>Whether or not a color was successfully read.</returns>
-	//bool TryParseColor(string value, [NotNullWhen(true)] out Color? color);
+	bool TryParseColor(string value, [NotNullWhen(true)] out Color? color);
 
 	#endregion
 

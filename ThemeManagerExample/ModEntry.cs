@@ -8,8 +8,6 @@ using StardewValley.Menus;
 
 using StardewModdingAPI;
 
-using Leclair.Stardew.Common.Events;
-
 using Leclair.Stardew.ThemeManager;
 using System.Collections.Generic;
 
@@ -23,13 +21,13 @@ public class ThemeData {
 
 }
 
-public class ModEntry : PintailModSubscriber {
+public class ModEntry : Mod {
 
-	//internal IThemeManager<ThemeData>? ThemeManager;
-	//internal IManagedAsset<Texture2D>? Background;
+	internal IThemeManager<ThemeData>? ThemeManager;
+	internal IManagedAsset<Texture2D>? Background;
 	internal ThemeData Theme = new();
 
-	//internal IGameTheme? GameTheme;
+	internal IGameTheme? GameTheme;
 
 	public override void Entry(IModHelper helper) {
 		Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
@@ -39,15 +37,15 @@ public class ModEntry : PintailModSubscriber {
 	private void Display_RenderedHud(object? sender, StardewModdingAPI.Events.RenderedHudEventArgs e) {
 		// Read values from our theme!
 		float scale = Theme.TextScale;
-		Color color = Theme.TextColor ?? /*GameTheme?.GetColorVariable("Text") ??*/ Game1.textColor;
+		Color color = Theme.TextColor ?? GameTheme?.GetColorVariable("Text") ?? Game1.textColor;
 
 		// Set up the text!
-		string text = $"Hello!\n\nSelected Theme:"; // {ThemeManager?.SelectedThemeId}\nActive Theme: {ThemeManager?.ActiveThemeId}";
+		string text = $"Hello!\n\nSelected Theme: {ThemeManager?.SelectedThemeId}\nActive Theme: {ThemeManager?.ActiveThemeId}";
 		var size = Game1.smallFont.MeasureString(text) * scale;
 
 		// Draw a box! Not just any box, but a box using our
 		// Background texture.
-		/*if (Background?.Value != null)
+		if (Background?.Value != null)
 			IClickableMenu.drawTextureBox(
 				e.SpriteBatch,
 				texture: Background.Value,
@@ -57,7 +55,7 @@ public class ModEntry : PintailModSubscriber {
 				height: 48 + (int) size.Y,
 				color: Color.White,
 				scale: 4f
-			);*/
+			);
 
 		// Now draw our text in the box, using the color
 		// and scale from our theme.
@@ -77,14 +75,14 @@ public class ModEntry : PintailModSubscriber {
 	private void GameLoop_GameLaunched(object? sender, StardewModdingAPI.Events.GameLaunchedEventArgs e) {
 		SetupTheme();
 
-		//Background = LoadManaged<Texture2D>("Background.png");
+		Background = LoadManaged<Texture2D>("Background.png");
 	}
 
-	/*private IManagedAsset<T> LoadManaged<T>(string path) where T : notnull {
-		//if (ThemeManager is not null)
-		//	return ThemeManager.GetManagedAsset<T>(path);
+	private IManagedAsset<T> LoadManaged<T>(string path) where T : notnull {
+		if (ThemeManager is not null)
+			return ThemeManager.GetManagedAsset<T>(path);
 		return new FallbackManagedAsset<T>($"assets/{path}", Helper, Monitor);
-	}*/
+	}
 
 	private void SetupTheme() {
 		if (!Helper.ModRegistry.IsLoaded("leclair.thememanager"))
@@ -92,11 +90,7 @@ public class ModEntry : PintailModSubscriber {
 
 		IThemeManagerApi? api;
 		try {
-			object? untyped = Helper.ModRegistry.GetApi("leclair.thememanager");
-
-			Monitor.Log($"We got: {untyped}", LogLevel.Info);
-
-			TryProxyRemote<IThemeManagerApi>(untyped, "leclair.thememanager", out api);
+			api = Helper.ModRegistry.GetApi<IThemeManagerApi>("leclair.thememanager");
 
 		} catch (Exception ex) {
 			Monitor.Log($"Unable to get Theme Manager's API: {ex}", LogLevel.Error);
@@ -106,23 +100,21 @@ public class ModEntry : PintailModSubscriber {
 		if (api is null)
 			return;
 
-		//ThemeManager = api.GetOrCreateManager<ThemeData>();
+		ThemeManager = api.GetOrCreateManager<ThemeData>();
 
-		/*
 		GameTheme = api.GameTheme;
 		api.GameThemeChanged += OnBaseThemeChanged;
-		*/
 
-		//Theme = ThemeManager.Theme;
-		//ThemeManager.ThemeChanged += OnThemeChanged;
+		Theme = ThemeManager.Theme;
+		ThemeManager.ThemeChanged += OnThemeChanged;
 	}
 
-	/*private void OnBaseThemeChanged(IThemeChangedEvent<IGameTheme> e) {
+	private void OnBaseThemeChanged(IThemeChangedEvent<IGameTheme> e) {
 		GameTheme =  e.NewData;
 	}
 
 	private void OnThemeChanged(IThemeChangedEvent<ThemeData> e) {
 		Theme = e.NewData;
 		Background = LoadManaged<Texture2D>("Background.png");
-	}*/
+	}
 }
