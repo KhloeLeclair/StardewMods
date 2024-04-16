@@ -21,6 +21,8 @@ public class BaseEventData {
 
 	#region Selection
 
+	public int Priority { get; set; } = 0;
+
 	public List<EventCondition> Conditions { get; set; } = new();
 
 	#endregion

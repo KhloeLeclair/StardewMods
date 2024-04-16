@@ -56,11 +56,17 @@ public class ScriptEvent : BaseFarmEvent<ScriptEventData> {
 			Game1.previousViewportPosition = new Vector2(Game1.viewport.X, Game1.viewport.Y);
 		}
 
+		// Create a fake farmer for the event.
+		Farmer fake = Game1.player.CreateFakeEventFarmer();
+		fake.completelyStopAnimatingOrDoingAction();
+		fake.hidden.Value = false;
+		fake.currentLocation = Game1.currentLocation;
+
 		// Create our new Event instance using the script
-		// from this event.
+		// from this event and our fake farmer.
 		Event = new SDVEvent(
 			eventString: Translate(Data.Script, Game1.player),
-			farmerActor: null
+			farmerActor: fake
 		);
 
 		// Add a finished delegate that will fade the

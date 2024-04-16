@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 using HarmonyLib;
 
@@ -28,9 +30,15 @@ namespace Leclair.Stardew.MoreNightlyEvents;
 
 public class ModEntry : ModSubscriber {
 
+#if DEBUG
+	public static readonly LogLevel DEBUG_LEVEL = LogLevel.Debug;
+#else
+	public static readonly LogLevel DEBUG_LEVEL = LogLevel.Trace;
+#endif
+
 	public const string EVENTS_PATH = @"Mods/leclair.morenightlyevents/Events";
 
-	public const string FRUIT_TREE_SEASON_DATA = @"leclair.morenightlyevents/AlwaysInSeason";
+	public const string IGNORE_SEASON_DATA = @"leclair.morenightlyevents/AlwaysInSeason";
 
 #nullable disable
 
@@ -48,6 +56,9 @@ public class ModEntry : ModSubscriber {
 
 	internal Dictionary<string, BaseEventData>? Events;
 
+	internal List<KeyValuePair<string, BaseEventData>>? SortedEvents;
+
+
 	public override void Entry(IModHelper helper) {
 		base.Entry(helper);
 
@@ -57,7 +68,7 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		Utility_Patches.Patch(this);
-		FruitTree_Patches.Patch(this);
+		TreeCrop_Patches.Patch(this);
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
@@ -102,12 +113,21 @@ public class ModEntry : ModSubscriber {
 
 		Helper.ConsoleCommands.Add("mne_list", "List all available nightly events from MRE.", (_, _) => {
 			LoadEvents();
-			if (Events.Count > 0)
-				Log($"Events:", LogLevel.Info);
 
-			foreach(var evt in Events.Values) {
-				Log($"- {evt.Id}: {evt.Type}", LogLevel.Info);
+			List<string[]> entries = [];
+
+			foreach(var pair in SortedEvents) {
+				var evt = pair.Value;
+				entries.Add([
+					evt.Id,
+					$"{evt.Type}",
+					$"{evt.Priority}",
+					$"{evt.TargetMap}"
+				]);
 			}
+
+			if (entries.Count > 0)
+				LogTable(["Event Id", "Type", "Priority", "Target Map"], entries, LogLevel.Info);
 
 			Log($"Total Events: {Events.Count}", LogLevel.Info);
 		});
@@ -115,6 +135,21 @@ public class ModEntry : ModSubscriber {
 		Helper.ConsoleCommands.Add("mne_interrupt", "Interrupt the active event, immediately ending it.", (_, _) => {
 			FarmEventInterrupter.Interrupt();
 			Log($"Interrupted events.", LogLevel.Info);
+		});
+
+		Helper.ConsoleCommands.Add("mne_pick", "Pick an event for the given day.", (_, args) => {
+			if (!ArgUtility.TryGetOptionalInt(args, 0, out int day, out string? error, -1)) {
+				Log(error, LogLevel.Warn);
+				return;
+			}
+
+			WorldDate date = WorldDate.Now();
+			if (day != -1)
+				date.TotalDays = day;
+
+			Log($"Showing event pick for: Year {date.Year} - Season: {date.Season} - Day: {date.DayOfMonth}", LogLevel.Info);
+			var evt = SelectEvent(date, LogLevel.Debug, true);
+			Log($"Selected Event: {evt?.Id}", LogLevel.Info);
 		});
 
 		Helper.ConsoleCommands.Add("mne_test", "Test an event by forcing it to happen the next night.", (_, args) => {
@@ -142,8 +177,10 @@ public class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
 		foreach (var name in e.Names) {
-			if (name.IsEquivalentTo(EVENTS_PATH))
+			if (name.IsEquivalentTo(EVENTS_PATH)) {
 				Events = null;
+				SortedEvents = null;
+			}
 		}
 	}
 
@@ -218,8 +255,30 @@ public class ModEntry : ModSubscriber {
 	/// Load 
 	/// </summary>
 	[MemberNotNull(nameof(Events))]
+	[MemberNotNull(nameof(SortedEvents))]
+	[MemberNotNull(nameof(EventTranslators))]
 	private void LoadEvents() {
 		Events ??= Helper.GameContent.Load<Dictionary<string, BaseEventData>>(EVENTS_PATH);
+
+		foreach(var evt in Events.Values) {
+			evt.Conditions ??= new();
+			foreach(var cnd in evt.Conditions) {
+				if (cnd.Chance < 0 || cnd.Chance > 1) {
+					Log($"Ignoring condition of event '{evt.Id}' with invalid Chance '{cnd.Chance}': chance must be number in range 0 to 1 (inclusive)", LogLevel.Warn);
+					cnd.Chance = 0;
+				}
+			}
+		}
+
+		EventTranslators ??= new();
+
+		SortedEvents = Events.ToList();
+		SortedEvents.Sort((a, b) => {
+			if (a.Value.Priority < b.Value.Priority) return 1;
+			if (a.Value.Priority > b.Value.Priority) return -1;
+
+			return a.Key.CompareTo(b.Key);
+		});
 	}
 
 	/// <summary>
@@ -334,22 +393,50 @@ public class ModEntry : ModSubscriber {
 		return false;
 	}
 
-	public BaseEventData? SelectEvent() {
+	private void ApplyDate(WorldDate date) {
+		Game1.dayOfMonth = date.DayOfMonth;
+		Game1.season = date.Season;
+		Game1.year = date.Year;
+
+		// We also want to set this.
+		Game1.stats.DaysPlayed = (uint) (date.TotalDays + 1);
+	}
+
+	public BaseEventData? SelectEvent(WorldDate? date = null, LogLevel? useLevel = null, bool extraDebug = false) {
+		if (date is null || date == Game1.Date)
+			return SelectEventImpl(useLevel, extraDebug);
+
+		// No such luck, we need to temporarily change the date
+		// for our game state queries to run correctly.
+		var old_date = Game1.Date;
+		ApplyDate(date);
+
+		try {
+			return SelectEventImpl(useLevel, extraDebug);
+		} finally {
+			ApplyDate(old_date);
+		}
+	}
+
+	private BaseEventData? SelectEventImpl(LogLevel? useLevel = null, bool extraDebug = false) { 
 		LoadEvents();
 		if (ForcedEvent is not null)
 			return Events.GetValueOrDefault(ForcedEvent);
 
 		Random rnd = Utility.CreateDaySaveRandom();
 
-		Log($"Total Events: {Events.Count}", LogLevel.Debug);
+		List<(BaseEventData, float)> matchedEvents = new();
+		double totalWeight = 0;
 
-		foreach (var pair in Events) {
+		LogLevel level = useLevel ?? DEBUG_LEVEL;
+		Log($"Total Events: {Events.Count}", level);
+
+		foreach (var pair in SortedEvents) {
 			var evt = pair.Value;
 			if (evt?.Conditions is null || evt.Conditions.Count == 0)
 				continue;
 
 			double? val = null;
-			bool matched = false;
 
 			foreach (var cond in evt.Conditions) {
 				if (cond.Chance <= 0 || string.IsNullOrWhiteSpace(cond.Condition))
@@ -359,36 +446,66 @@ public class ModEntry : ModSubscriber {
 					if (!val.HasValue)
 						val = rnd.NextDouble();
 
-					Log($"Condition Matched for \"{evt.Id}\": {cond.Condition}\n  Chance: {cond.Chance} -- Rnd: {val.Value}", LogLevel.Trace);
-
 					if (cond.Chance >= 1 || cond.Chance >= val.Value) {
-						matched = true;
+						// If we encounter a passing exclusive event condition, we
+						// just pass the first one.
+						if (cond.IsExclusive) {
+							Log($"Selected exclusive event '{evt.Id}' with condition '{cond.Condition}'", level);
+							return evt;
+
+						} else {
+							// But if it's not exclusive, we add it to a pool.
+							totalWeight += cond.Weight;
+							matchedEvents.Add((evt, cond.Weight));
+						}
+
+						// Either way, we stop after our first matching condition.
 						break;
 					}
 				}
 			}
-
-			if (matched)
-				return evt;
 		}
 
-		return null;
+		// Now, pick a random point somewhere within the total chances.
+		double remainingWeight = totalWeight * rnd.NextDouble();
+
+		Log($"Possible Events: {matchedEvents.Count} (Total: {totalWeight}, Random: {remainingWeight})", level);
+		List<string[]>? events = extraDebug ? new() : null;
+
+		BaseEventData? selected = null;
+		foreach (var pair in matchedEvents) {
+			if (selected is null && remainingWeight <= pair.Item2) {
+				selected = pair.Item1;
+				if (!extraDebug)
+					break;
+			}
+
+			events?.Add([
+				selected == pair.Item1 ? "**" : "",
+				pair.Item1.Id,
+				$"{pair.Item2}",
+				string.Format("{0:0.00}", remainingWeight)
+			]);
+
+			remainingWeight -= pair.Item2;
+		}
+
+		if (events is not null)
+			LogTable(["", "Id", "Weight", "Remaining"], events, level);
+
+		return selected;
 	}
 
 	public FarmEvent? PickEvent(FarmEvent? existing) {
-		Log($"PickEvent: {existing}", LogLevel.Debug);
-
 		if (!CanReplaceEvent(existing))
 			return existing;
 
 		BaseEventData? evt = SelectEvent();
 
-		if (evt is null) { 
-			Log($"No matching event.", LogLevel.Debug);
+		if (evt is null) 
 			return existing;
-		}
 
-		Log($"Using Event: {evt.Id}", LogLevel.Debug);
+		Log($"Using Nightly Event: {evt.Id}", LogLevel.Debug);
 
 		if (evt is PlacementEventData ped)
 			return new PlacementEvent(evt.Id, ped);
@@ -403,6 +520,6 @@ public class ModEntry : ModSubscriber {
 		return existing;
 	}
 
-	#endregion
+#endregion
 
 }

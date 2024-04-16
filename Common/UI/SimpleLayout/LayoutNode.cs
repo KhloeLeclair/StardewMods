@@ -18,7 +18,7 @@ public enum LayoutDirection {
 
 public interface ILayoutNode : ISimpleNode {
 
-	ISimpleNode[] Children { get; set; }
+	ISimpleNode[]? Children { get; set; }
 
 	Vector2 MinSize { get; set; }
 
