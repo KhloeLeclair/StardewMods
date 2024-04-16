@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0
+## 0.1.0
 Released April 16th, 2024.
 
 This is the initial release of More Nightly Events. Please look forward
