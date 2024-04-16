@@ -5201,7 +5201,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 				builder
 					.Text(
-						I18n.Tooltip_Crafted(count),
+						cooking ? I18n.Tooltip_Cooked(count) : I18n.Tooltip_Crafted(count),
 						color: (Theme.TooltipTextColor ?? Theme.TextColor ?? Game1.textColor) * 0.5f
 					);
 			}
@@ -5254,7 +5254,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					bindings.Add(
 					SimpleHelper.Builder(LayoutDirection.Horizontal)
 						.Add(node)
-						.Text(I18n.Setting_Action_BulkCraft())
+						.Text(cooking ? I18n.Setting_Action_BulkCook() : I18n.Setting_Action_BulkCraft())
 					.GetLayout()
 				);
 			}
@@ -5532,11 +5532,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		};
 	}
 
-	public static string? GetActionTip(ButtonAction action) {
+	public string? GetActionTip(ButtonAction action) {
 		return action switch {
 			ButtonAction.Craft => I18n.Setting_Action_Craft(),
 			ButtonAction.Favorite => I18n.Setting_Action_Favorite(),
-			ButtonAction.BulkCraft => I18n.Setting_Action_BulkCraft(),
+			ButtonAction.BulkCraft => cooking ? I18n.Setting_Action_BulkCook() : I18n.Setting_Action_BulkCraft(),
 			_ => null,
 		};
 	}

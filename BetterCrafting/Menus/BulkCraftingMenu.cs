@@ -291,7 +291,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		var builder = SimpleHelper
 			.Builder(minSize: new Vector2(4 * 80, 0))
-			.Text(I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
+			.Text(Menu.cooking ? I18n.Bulk_Cooking() : I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
 			//.Divider()
 			.Group(margin: 8)
 				.Space()
@@ -304,7 +304,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				.Space(expand: false)
 				.Group()
 					.Text(Recipe.DisplayName)
-					.Text(I18n.Bulk_Craftable(Craftable), color: ((Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor) * .75f)
+					.Text(Menu.cooking ? I18n.Bulk_Cookable(Craftable) : I18n.Bulk_Craftable(Craftable), color: ((Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor) * .75f)
 				.EndGroup()
 				.Space()
 			.EndGroup();
