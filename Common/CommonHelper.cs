@@ -149,7 +149,7 @@ public static class CommonHelper {
 
 	#endregion
 
-	public static Color PremultiplyAlpha(Color input) {
+	public static Color PremultiplyAlpha(this Color input) {
 		if (input.A == 0)
 			return Color.Transparent;
 		if (input.A == 255)
@@ -163,6 +163,10 @@ public static class CommonHelper {
 			input.B * alpha,
 			input.A
 		);
+	}
+
+	public static string ToHex(this Color input) {
+		return string.Format("#{0:X02}{1:X02}{2:X02}{3:X02}", input.R, input.G, input.B, input.A);
 	}
 
 	public static Color? ParseColor(string? input) {
@@ -596,6 +600,26 @@ public static class CommonHelper {
 	}
 
 	#endregion
+
+	internal static Vector2 GetNearestPoint(this Rectangle rectangle, Vector2 position) {
+		float minX = rectangle.X;
+		float maxX = minX + rectangle.Width;
+		float minY = rectangle.Y;
+		float maxY = minY + rectangle.Height;
+
+		return new Vector2(
+			position.X < minX
+				? minX
+				: position.X > maxX
+					? maxX
+					: position.X,
+			position.Y < minY
+				? minY
+				: position.Y > maxY
+					? maxY
+					: position.Y
+		);
+	}
 
 	internal static xTile.Dimensions.Location ToLocation(this Vector2 pos) {
 		return new((int) pos.X, (int) pos.Y);

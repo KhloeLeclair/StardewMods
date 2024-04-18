@@ -88,25 +88,47 @@ Better Crafting's custom action to open the crafting menu.
 
 ### Open Crafting Menu
 
-`leclair.bettercrafting_OpenMenu [isCooking] [searchBuildings] [station-id]`
+`leclair.bettercrafting_OpenMenu [station/isCooking] [flags] [area]`
 
 This is a custom map / big craftable action that can be used to open a
 Better Crafting menu. It has three optional arguments.
 
-1. `[isCooking]`: If true, this is cooking menu. If false, this is a crafting
-   menu. This changes which set of recipes are available.
-2. `[searchBuildings]`: If true, this performs like the "Magic Workbench" and
-   searches for all the chests within connected buildings / the current building.
-3. `[station-id]` If this is included, it must be the Id of a custom crafting
-   station and it will open the menu for that station. This is how you open
-   custom crafting stations.
+1. `[station/isCooking]`: This can be either the Id of a custom crafting
+   station, in which case the opened menu will be for that crafting station,
+   or a `true` or `false` value to denote whether the menu is for cooking.
+   If this is set to `false` or left out, the menu will be for crafting.
+   If this is set to `true`, the menu will be for cooking.
+   If this is set to a station's Id, the menu will be for that station.
+2. `[flags]`: A comma separated list of flags to apply to the menu. Flags
+   control how the menu discovers inventories that the player should be
+   allowed to craft from, on top of any existing connected inventories from
+   the Extended Workbench feature. The following values are valid flags:
+
+   * `Area`: If this is present, the third argument is required and must be
+     the radius in tiles of nearby inventories that should be available.
+   * `Map`: If this is present, all inventories in the current map will
+     be made available.
+   * `World`: If this is present, all inventories in all active locations
+     will be made available.
+   * `Buildings`: If this is present, inventories inside buildings will
+     be made available. This can be combined with `Area` or `Map`, or just
+	 work in conjunction with Extended Workbench discovery.
+3. `[area]`: If the `Area` flag is present, then this should be the
+   discovery area, in tiles.
+
+Here is an example command that opens the crafting menu, using all inventories
+in a 16 tile radius, and that searches into buildings it encounters:
+
+```
+leclair.bettercrafting_OpenMenu false Area,Buildings 16
+```
 
 
 ## Trigger Actions
 
 ### Open Crafting Menu
 
-`leclair.bettercrafting_OpenMenu [isCooking] [searchBuildings] [station-id]`
+`leclair.bettercrafting_OpenMenu [station/isCooking] [flags] [area]`
 
 This is identical to the map tile action, just exposed to triggers as well.
 

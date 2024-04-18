@@ -177,7 +177,7 @@ public struct TextNode : IFlowNode {
 			return new TextSlice(this, pending, start, pendingEnd, pendingSize.X + (pendingSpace ? spaceSize.X : 0), Math.Max(spaceSize.Y, pendingSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
 
 		// If we're dealing with a no-separators-at-all situation, attempt to slice the word.
-		var sliced = start == 0 ? TryPartial(font, final.Length, start, remaining, spaceSize) : null;
+		var sliced = ! had_new && start == 0 ? TryPartial(font, final.Length, start, remaining, spaceSize) : null;
 		if (sliced is not null)
 			return sliced;
 
@@ -185,7 +185,7 @@ public struct TextNode : IFlowNode {
 		return new TextSlice(this, final, start, start + final.Length + offset, finalSize.X, Math.Max(finalSize.Y, spaceSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
 	}
 
-	private TextSlice? TryPartial(SpriteFont font, int length, int start, float remaining, Vector2 spaceSize) {
+	private TextSlice? TryPartial(SpriteFont font, int length, int start, float remaining, Vector2 spaceSize, WrapMode mode = WrapMode.None) {
 		// This word doesn't fit at all. We need to break it up.
 		int snipLength = 0;
 		Vector2 snipSize = Vector2.Zero;
@@ -208,7 +208,7 @@ public struct TextNode : IFlowNode {
 
 		// Did we get some?
 		if (snipLength > 0)
-			return new TextSlice(this, Text.Substring(start, snipLength), start, start + snipLength, snipSize.X, Math.Max(spaceSize.Y, snipSize.Y), WrapMode.None);
+			return new TextSlice(this, Text.Substring(start, snipLength), start, start + snipLength, snipSize.X, Math.Max(spaceSize.Y, snipSize.Y), mode);
 
 		return null;
 	}

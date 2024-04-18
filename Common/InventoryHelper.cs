@@ -34,36 +34,6 @@ public static class InventoryHelper {
 		intSQ ??= new SQIntegration(mod);
 	}
 
-
-	#region Item Creation
-
-	[Obsolete("No longer needed in 1.6")]
-	public static string GetItemQualifiedId(Item item) {
-		return item.QualifiedItemId;
-	}
-
-	[return: MaybeNull]
-	public static Item CreateObjectOrRing(int id) {
-		throw new NotImplementedException("Update for 1.6");
-		/*
-		if (!Game1.objectInformation.TryGetValue(id, out string? data) || string.IsNullOrWhiteSpace(data) || id < 0)
-			return null;
-
-		string[] parts = data.Split('/');
-		if (parts.Length > 3 && parts[3] == "Ring")
-			return new Ring(id);
-
-		return new SObject(id, 1);*/
-	}
-
-	[return: MaybeNull]
-	[Obsolete("Not needed in 1.6")]
-	public static Item CreateItemById(string id, int amount, int quality = 0, bool allow_null = false) {
-		return ItemRegistry.Create(id, amount, quality, allow_null);
-	}
-
-	#endregion
-
 	#region Discovery
 
 	public static List<LocatedInventory> DiscoverInventories(
@@ -188,14 +158,71 @@ public static class InventoryHelper {
 		int radius,
 		Farmer? who,
 		Func<object, IInventoryProvider?> getProvider,
-		int scanLimit = 100,
+		bool discover_buildings = false,
 		int targetLimit = 20
 	) {
-		// We don't use the normal walker for this.
-		List<LocatedInventory> result = [];
+		// What's the most efficient way to handle this?
+		int area = (int) (Math.PI * radius * radius);
+		int total = 1 + location.Objects.Length + location.furniture.Count;
 
+		if (area >= total)
+			return DiscoverArea_CheckAll(location, position, radius, who, getProvider, discover_buildings, targetLimit);
+
+		return DiscoverArea_IterArea(location, position, radius, who, getProvider, discover_buildings, targetLimit);
+	}
+
+	private static List<LocatedInventory> DiscoverArea_CheckAll(
+		GameLocation location,
+		Vector2 position,
+		int radius,
+		Farmer? who,
+		Func<object, IInventoryProvider?> getProvider,
+		bool discover_buildings = false,
+		int targetLimit = 20
+	) {
+		List<LocatedInventory> result = [];
 		IInventoryProvider? provider;
-		int i = 0;
+
+		int radiusSquared = radius * radius;
+
+		Chest? fridge = location.GetFridge(false);
+		Vector2? fridgePos = location.GetFridgePosition()?.ToVector2();
+
+		foreach(object thing in GetAllThingsInLocation(location, buildings: discover_buildings)) {
+			provider = getProvider(thing);
+			if (provider != null && provider.IsValid(thing, location, who)) {
+				Vector2? pos = thing == fridge ? fridgePos : thing switch {
+					Building bld => bld.GetBoundingBox().GetNearestPoint(position),
+					Furniture furn => furn.GetBoundingBox().GetNearestPoint(position),
+					SObject obj => obj.TileLocation,
+					_ => null
+				};
+
+				if (pos.HasValue && Vector2.DistanceSquared(position, pos.Value) < radiusSquared) {
+					result.Add(new(thing, location));
+					if (result.Count >= targetLimit)
+						return result;
+				}
+			}
+
+			if (discover_buildings && thing is Building building && building.GetIndoors() is GameLocation loc)
+				WalkIntoMap(result, loc, who, getProvider, 1000, targetLimit);
+		}
+
+		return result;
+	}
+
+	private static List<LocatedInventory> DiscoverArea_IterArea(
+		GameLocation location,
+		Vector2 position,
+		int radius,
+		Farmer? who,
+		Func<object, IInventoryProvider?> getProvider,
+		bool discover_buildings = false,
+		int targetLimit = 20
+	) {
+		List<LocatedInventory> result = [];
+		IInventoryProvider? provider;
 
 		// Check the fridge.
 		var fpos = location.GetFridgePosition();
@@ -214,11 +241,20 @@ public static class InventoryHelper {
 					result.Add(new(obj, location));
 			}
 
-			if (location.terrainFeatures.TryGetValue(pos, out TerrainFeature? feature)) {
+			if (discover_buildings && location.getBuildingAt(pos) is Building bld) {
+				provider = getProvider(bld);
+				if (provider != null && provider.IsValid(bld, location, who))
+					result.Add(new(bld, location));
+
+				if (discover_buildings && bld.GetIndoors() is GameLocation loc)
+					WalkIntoMap(result, loc, who, getProvider, 1000, targetLimit);
+			}
+
+			/*if (location.terrainFeatures.TryGetValue(pos, out TerrainFeature? feature)) {
 				provider = getProvider(feature);
 				if (provider != null && provider.IsValid(feature, location, who))
 					result.Add(new(feature, location));
-			}
+			}*/
 
 			if (location.GetFurnitureAt(pos) is SObject furn) {
 				provider = getProvider(furn);
@@ -226,8 +262,7 @@ public static class InventoryHelper {
 					result.Add(new(furn, location));
 			}
 
-			i++;
-			if (/*i >= scanLimit ||*/ result.Count >= targetLimit)
+			if (result.Count >= targetLimit)
 				break;
 		}
 
@@ -260,7 +295,7 @@ public static class InventoryHelper {
 					result.Add(new(obj, location));
 
 				i++;
-				if (i >= scanLimit || result.Count >= targetLimit)
+				if (result.Count >= targetLimit)
 					return result;
 			}
 		}
@@ -268,7 +303,7 @@ public static class InventoryHelper {
 		return result;
 	}
 
-	private static IEnumerable<object> GetAllThingsInLocation(GameLocation location, bool objects = true, bool buildings = false, bool furniture = true, bool features = true) {
+	private static IEnumerable<object> GetAllThingsInLocation(GameLocation location, bool objects = true, bool buildings = false, bool furniture = true, bool features = false) {
 		if (location is null)
 			yield break;
 
@@ -568,7 +603,7 @@ public static class InventoryHelper {
 		IInventoryProvider? provider;
 
 		// Iterate over all our objects.
-		foreach (SObject obj in GetMapObjects(indoors)) {
+		foreach(object obj in GetAllThingsInLocation(indoors)) { 
 			provider = getProvider(obj);
 			if (provider != null && provider.IsValid(obj, indoors, who))
 				result.Add(new(obj, indoors));
@@ -582,7 +617,7 @@ public static class InventoryHelper {
 		}
 
 		// Iterate over terrain features.
-		foreach (var obj in indoors.terrainFeatures.Values) {
+		/*foreach (var obj in indoors.terrainFeatures.Values) {
 			if (obj is not null) {
 				provider = getProvider(obj);
 				if (provider != null && provider.IsValid(obj, indoors, who))
@@ -595,7 +630,7 @@ public static class InventoryHelper {
 			i++;
 			if (i >= scanLimit)
 				return i;
-		}
+		}*/
 
 		return i;
 	}
@@ -649,16 +684,16 @@ public static class InventoryHelper {
 			AbsolutePosition abs = potentials[i++];
 			SObject? obj;
 			SObject? furn;
-			TerrainFeature? feature;
+			//TerrainFeature? feature;
 			Building? building;
 
 			if (abs.Location != null) {
 				TileHelper.GetObjectAtPosition(abs.Location, abs.Position, out obj);
-				abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
+				//abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
 				furn = abs.Location.GetFurnitureAt(abs.Position);
 				building = abs.Location.getBuildingAt(abs.Position);
 			} else {
-				feature = null;
+				//feature = null;
 				obj = null;
 				furn = null;
 				building = null;
@@ -690,14 +725,14 @@ public static class InventoryHelper {
 					want_neighbors = true;
 			}
 
-			if (feature != null) {
+			/*if (feature != null) {
 				provider = getProvider(feature);
 				if (provider != null && provider.IsValid(feature, abs.Location, who)) {
 					result.Add(new(feature, abs.Location));
 					want_neighbors = true;
 				} else if (!want_neighbors && checkConnector != null && checkConnector(feature))
 					want_neighbors = true;
-			}
+			}*/
 
 			if (furn != null) {
 				provider = getProvider(furn);

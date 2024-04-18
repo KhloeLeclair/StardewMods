@@ -158,6 +158,10 @@
 				},
 				{
 					"Id": "Light"
+				},
+				{
+					"Id": "ContextTag",
+					"Input": "sign_item"
 				}
 			],
 			"Recipes": [
@@ -165,9 +169,6 @@
 				"Wicked Statue",
 				"Flute Block",
 				"Drum Block",
-				"Wood Sign",
-				"Stone Sign",
-				"Dark Sign",
 				"Text Sign",
 				"Garden Pot",
 				"Scarecrow",
@@ -185,27 +186,20 @@
 				"Type": "Item",
 				"RecipeName": "Basic Fertilizer"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Category",
+					"Input": "-74"
+				},
+				{
+					"Id": "Category",
+					"Input": "-19"
+				}
+			],
 			"Recipes": [
-				"Basic Fertilizer",
-				"Quality Fertilizer",
-				"Deluxe Fertilizer",
-				"Speed-Gro",
-				"Deluxe Speed-Gro",
-				"Hyper Speed-Gro",
-				"Basic Retaining Soil",
-				"Quality Retaining Soil",
-				"Deluxe Retaining Soil",
-				"Tree Fertilizer",
-				"Wild Seeds (Sp)",
-				"Wild Seeds (Su)",
-				"Wild Seeds (Fa)",
-				"Wild Seeds (Wi)",
-				"Ancient Seeds",
 				"Grass Starter",
-				"Blue Grass Starter",
-				"Tea Sapling",
-				"Fiber Seeds",
-				"Mystic Tree Seed"
+				"Blue Grass Starter"
 			]
 		},
 		{
@@ -216,20 +210,19 @@
 				"Type": "Item",
 				"RecipeName": "Field Snack"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Edible"
+				},
+				{
+					"Id": "ContextTag",
+					"Input": "totem_item"
+				}
+			],
 			"Recipes": [
-				"Field Snack",
-				"Bug Steak",
-				"Life Elixir",
-				"Oil Of Garlic",
 				"Monster Musk",
 				"Fairy Dust",
-				"Warp Totem: Beach",
-				"Warp Totem: Mountains",
-				"Warp Totem: Farm",
-				"Warp Totem: Desert",
-				"Warp Totem: Island",
-				"Rain Totem",
-				"Treasure Totem",
 				"Cookout Kit",
 				"Tent Kit"
 			]
@@ -242,21 +235,18 @@
 				"Type": "Item",
 				"RecipeName": "Barbed Hook"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Category",
+					"Input": "-21"
+				},
+				{
+					"Id": "Category",
+					"Input": "-22"
+				}
+			],
 			"Recipes": [
-				"Bait",
-				"Wild Bait",
-				"Magic Bait",
-				"Deluxe Bait",
-				"Challenge Bait",
-				"Spinner",
-				"Trap Bobber",
-				"Cork Bobber",
-				"Quality Bobber",
-				"Sonar Bobber",
-				"Treasure Hunter",
-				"Dressed Spinner",
-				"Barbed Hook",
-				"Magnet",
 				"Crab Pot"
 			]
 		},
@@ -289,17 +279,22 @@
 				"Type": "Item",
 				"RecipeName": "Sturdy Ring"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "ContextTag",
+					"Input": "bomb_item"
+				},
+				{
+					"Id": "Category",
+					"Input": "-96"
+				},
+				{
+					"Id": "Category",
+					"Input": "-29"
+				}
+			],
 			"Recipes": [
-				"Cherry Bomb",
-				"Bomb",
-				"Mega Bomb",
-				"Sturdy Ring",
-				"Warrior Ring",
-				"Ring of Yoba",
-				"Thorns Ring",
-				"Glowstone Ring",
-				"Iridium Band",
-				"Wedding Ring",
 				"Staircase",
 				"Explosive Ammo"
 			]

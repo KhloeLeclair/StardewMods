@@ -127,6 +127,7 @@ public class RecipeManager : BaseManager {
 		//LoadRecipes();
 		LoadedSeen = false;
 
+		CategoriesLoaded = false;
 		LoadCategories();
 	}
 
@@ -625,6 +626,9 @@ public class RecipeManager : BaseManager {
 	#region Dynamic Rules
 
 	private void RegisterDefaultRuleHandlers() {
+		RegisterRuleHandler("Category", new CategoryRuleHandler(Mod));
+		RegisterRuleHandler("ContextTag", new ContextTagRuleHandler(Mod));
+		RegisterRuleHandler("Edible", new EdibleRuleHandler());
 		RegisterRuleHandler("Uncrafted", new UncraftedRuleHandler());
 		RegisterRuleHandler("Everything", new AllRecipesRuleHandler());
 		RegisterRuleHandler("Search", new SearchRuleHandler(Mod));
@@ -980,7 +984,7 @@ public class RecipeManager : BaseManager {
 			Category[] valid = entry.Value.Where(cat => {
 				return
 					!((cat.Recipes == null || cat.Recipes.Count == 0) &&
-					cat.Name.Equals(newName) &&
+					cat.Name != null && cat.Name.Equals(newName) &&
 					(cat.Icon == null ||
 						(cat.Icon.Type == CategoryIcon.IconType.Item
 						&& string.IsNullOrEmpty(cat.Icon.RecipeName))));
@@ -1002,7 +1006,7 @@ public class RecipeManager : BaseManager {
 			Category[] valid = entry.Value.Where(cat => {
 				return
 					!((cat.Recipes == null || cat.Recipes.Count == 0) &&
-					cat.Name.Equals(newName) &&
+					cat.Name != null && cat.Name.Equals(newName) &&
 					(cat.Icon == null ||
 						(cat.Icon.Type == CategoryIcon.IconType.Item
 						&& !string.IsNullOrEmpty(cat.Icon.RecipeName))));
@@ -1033,13 +1037,38 @@ public class RecipeManager : BaseManager {
 		}
 
 		// We have the data. Save it.
-		string path = $"savedata/categories/{Constants.SaveFolderName}.json";
+		string path = Mod.UseGlobalSave
+			? $"savedata/categories.json"
+			: $"savedata/categories/{Constants.SaveFolderName}.json";
 
 		try {
 			Mod.Helper.Data.WriteJsonFile(path, data);
 		} catch (Exception ex) {
 			Log($"The {path} file could not be saved.", LogLevel.Error, ex);
 		}
+	}
+
+	public bool DoesHaveSaveCategories() {
+		if (string.IsNullOrEmpty(Constants.SaveFolderName))
+			return false;
+
+		string path = $"savedata/categories/{Constants.SaveFolderName}.json";
+
+		Dictionary<long, Categories>? data;
+
+		try {
+			data = Mod.Helper.Data.ReadJsonFile<Dictionary<long, Categories>>(path);
+		} catch (Exception ex) {
+			Log($"The {path} file is invalid or corrupt.", LogLevel.Error, ex);
+			data = null;
+		}
+
+		return (data?.Count ?? 0) != 0;
+	}
+
+	public void ReloadCategories() {
+		CategoriesLoaded = false;
+		LoadCategories();
 	}
 
 	public void LoadCategories() {
@@ -1052,7 +1081,9 @@ public class RecipeManager : BaseManager {
 		CraftingCategories.Clear();
 		AppliedDefaults.Clear();
 
-		string path = $"savedata/categories/{Constants.SaveFolderName}.json";
+		string path = Mod.UseGlobalSave
+			? $"savedata/categories.json"
+			: $"savedata/categories/{Constants.SaveFolderName}.json";
 		Dictionary<long, Categories>? data;
 
 		try {

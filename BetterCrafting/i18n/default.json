@@ -3,6 +3,9 @@
 	"setting.show-adv": "Show Adv. Crafting Info",
 	"setting.show-adv.tip": "Show advanced crafting information, such as how many ingredients you have and how many times you've crafted a recipe before. This is the same as the vanilla setting, duplicated here for convenience.",
 
+	"setting.use-per-save": "Use Per-Save Data",
+	"setting.use-per-save.tip": "When this is enabled, your categories and favorites will be tracked per individual save. Disable this to use the same data for all your saves. Note that seen recipes are always per-save.",
+
 	"setting.general": "General Options",
 
 	"setting.priority": "Menu Handler Priority",
@@ -328,7 +331,8 @@
 	"currency.club-coins": "Club Coins",
 	"currency.qi-gems": "Qi Gems",
 
-	// Ingredient Categories
+	// Ingredient / Item Categories
+	"item.category.equipment": "Equipment",
 	"item.category.cooking": "Cooking (Any)",
 	"item.category.crafting": "Crafting (Any)",
 	"item.category.mineral": "Mineral (Any)",
@@ -381,6 +385,17 @@
 
 	"filter.error": "Invalid Rule",
 	"filter.error.about": "This rule ID is invalid or not registered, and may be from a mod that was removed.",
+
+	"filter.category": "Category",
+	"filter.category.about": "This rule matches items within a specific category.",
+
+	"filter.context-tag": "Context Tag",
+	"filter.context-tag.about": "This rule matches items with a specific context tag.",
+
+	"filter.edible": "Edible",
+	"filter.edible.about": "This rule matches edible items.",
+
+	"filter.recipe-count": "{{count}} Recipes",
 
 	// Kitchen
 	"station.kitchen": "Kitchen"

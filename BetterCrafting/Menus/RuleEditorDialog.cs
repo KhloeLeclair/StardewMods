@@ -95,7 +95,7 @@ public class RuleEditorDialog : MenuSubscriber<ModEntry> {
 		}
 
 		else if (Handler is IOptionInputRuleHandler opts) {
-			var options = opts.Options;
+			var options = opts.GetOptions(Menu.Cooking);
 			PickedOption = options.First().Key;
 			if (Data.Fields.TryGetValue("Input", out var token) && token.Type == JTokenType.String)
 				PickedOption = (string?) token;

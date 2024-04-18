@@ -104,7 +104,9 @@ public class ModEntry : PintailModSubscriber {
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
 	internal Integrations.CustomCraftingStation.CCSIntegration? intCCStation;
 
-	internal Models.Theme? Theme => ThemeManager.Theme;
+	private bool? _UseGlobalSave;
+
+	private TextureColorWatcher? TextureWatcher;
 
 	public override void Entry(IModHelper helper) {
 		base.Entry(helper);
@@ -143,10 +145,6 @@ public class ModEntry : PintailModSubscriber {
 		Favorites = new FavoriteManager(this);
 		Triggers = new TriggerManager(this);
 		Stations = new CraftingStationManager(this);
-
-		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
-		ThemeManager.ThemeChanged += OnThemeChanged;
-		ThemeManager.Discover();
 
 		//Sprites.Load(Helper.Content, Helper.ModRegistry);
 
@@ -211,20 +209,20 @@ public class ModEntry : PintailModSubscriber {
 	}
 
 	private void OnThemeChanged(object? sender, ThemeChangedEventArgs<Models.Theme> e) {
-		var oldTex = Sprites.Buttons.Texture;
-		var newTex = Sprites.Buttons.Texture = ThemeManager.Load<Texture2D>("buttons.png");
+		var oldTex = Sprites.Buttons._TexCache;
+		Sprites.Buttons._TexCache = null;
 
 		if (Game1.activeClickableMenu is GameMenu gm) {
 			foreach(var gmp in gm.pages) {
 				if (gmp is Menus.BetterCraftingPage bcp) {
-					UpdateTextures(oldTex, newTex, gmp);
+					UpdateTextures(oldTex, Sprites.Buttons.Texture!, gmp);
 					bcp.LoadTextures();
 				}
 			}
 		}
 
-		if (Game1.activeClickableMenu is Menus.BetterCraftingPage page) {
-			UpdateTextures(oldTex, newTex, page);
+		if (Game1.activeClickableMenu is BetterCraftingPage page) {
+			UpdateTextures(oldTex, Sprites.Buttons.Texture!, page);
 			page.LoadTextures();
 		}
 	}
@@ -284,7 +282,8 @@ public class ModEntry : PintailModSubscriber {
 						discover_containers: OldCraftingPage.Value.DiscoverContainers,
 						discover_buildings: OldCraftingPage.Value.DiscoverBuildings,
 						listed_recipes: OldCraftingPage.Value.GetListedRecipes(),
-						station: OldCraftingPage.Value.Station?.Id
+						station: OldCraftingPage.Value.Station?.Id,
+						areaOverride: OldCraftingPage.Value.DiscoverAreaOverride
 					);
 
 					if (game != null) {
@@ -434,6 +433,19 @@ public class ModEntry : PintailModSubscriber {
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		/*TextureWatcher = new(this, "Mods/leclair.bettercrafting/DynamicTextures/", (name, e) => {
+			return () => Helper.ModContent.Load<IRawTextureData>($"assets/{name}");
+		});*/
+
+		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
+
+		Sprites.Buttons._TexLoader = () => /*ThemeManager.ActiveThemeId == "default"
+			? Helper.GameContent.Load<Texture2D>("Mods/leclair.bettercrafting/DynamicTextures/buttons.png")
+			:*/ ThemeManager.Load<Texture2D>("buttons.png");
+
+		ThemeManager.ThemeChanged += OnThemeChanged;
+		ThemeManager.Discover();
+
 		// Load Data
 		LoadFloorMap();
 		LoadFenceMap();
@@ -506,12 +518,15 @@ public class ModEntry : PintailModSubscriber {
 
 	[Subscriber]
 	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
+		_UseGlobalSave = null;
 		AtTitle = false;
 		RegisterSettings();
 	}
 
+
 	[Subscriber]
 	private void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs e) {
+		_UseGlobalSave = null;
 		AtTitle = true;
 		RegisterSettings();
 	}
@@ -523,6 +538,9 @@ public class ModEntry : PintailModSubscriber {
 		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(HeadsPath))
 				HeadsCache = null;
+
+			/*if (name.IsEquivalentTo(@"Mods/leclair.bettercrafting/DynamicTextures/buttons.png") && ThemeManager.ActiveThemeId == "default")
+				Sprites.Buttons._TexCache = null;*/
 
 			bool is_objects = name.IsEquivalentTo(@"Data/Objects");
 
@@ -575,33 +593,6 @@ public class ModEntry : PintailModSubscriber {
 			}
 	}
 
-	/*
-	[Subscriber]
-	private void OnDrawStuff(object? sender, RenderedWorldEventArgs e) {
-		if (!Context.IsWorldReady)
-			return;
-
-		int radius = Config.NearbyRadius;
-		if (radius <= 0)
-			return;
-
-		foreach(var tile in Game1.player.Tile.IterArea(radius, false)) {
-			int idx = tile.Distance(Game1.player.Tile.X, Game1.player.Tile.Y) > radius ? 1 : 0;
-
-			e.SpriteBatch.Draw(
-				Game1.mouseCursors,
-				Game1.GlobalToLocal(Game1.viewport, tile * 64f),
-				new Rectangle(194 + idx * 16, 388, 16, 16),
-				Color.White,
-				0f,
-				Vector2.Zero,
-				4f,
-				SpriteEffects.None,
-				0.999f
-			);
-		}
-	}
-	*/
 
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
@@ -697,6 +688,46 @@ public class ModEntry : PintailModSubscriber {
 
 	#region Configuration
 
+	public bool UseGlobalSave {
+		get {
+			if (_UseGlobalSave.HasValue)
+				return _UseGlobalSave.Value;
+
+			string path = $"savedata/settings/{Constants.SaveFolderName}.json";
+			SaveSpecificConfig? data = null;
+
+			try {
+				data = Helper.Data.ReadJsonFile<SaveSpecificConfig>(path);
+			} catch (Exception ex) {
+				Log($"The {path} file is invalid or corrupt.", LogLevel.Error, ex);
+				data = null;
+			}
+
+			_UseGlobalSave = data?.UseGlobalSave;
+
+			// We need a sensible default.
+			_UseGlobalSave ??=
+				!(Favorites.DoesHaveSaveFavorites() ||
+				Recipes.DoesHaveSaveCategories());
+
+			return _UseGlobalSave.Value;
+		}
+
+		set {
+			if (_UseGlobalSave == value || string.IsNullOrEmpty(Constants.SaveFolderName))
+				return;
+
+			_UseGlobalSave = value;
+			string path = $"savedata/settings/{Constants.SaveFolderName}.json";
+			Helper.Data.WriteJsonFile(path, new SaveSpecificConfig() {
+				UseGlobalSave = _UseGlobalSave
+			});
+
+			Recipes.ReloadCategories();
+			Favorites.LoadFavorites();
+		}
+	}
+
 	public void SaveConfig() {
 		Helper.WriteConfig(Config);
 		Helper.GameContent.InvalidateCache(@"Data/CraftingRecipes");
@@ -733,20 +764,27 @@ public class ModEntry : PintailModSubscriber {
 
 		ConfigRegistered = true;
 
-		Dictionary<Models.SeasoningMode, Func<string>> seasoning = new();
-		seasoning.Add(Models.SeasoningMode.Disabled, I18n.Seasoning_Disabled);
-		seasoning.Add(Models.SeasoningMode.Enabled, I18n.Seasoning_Enabled);
-		seasoning.Add(Models.SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory);
+		Dictionary<SeasoningMode, Func<string>> seasoning = new();
+		seasoning.Add(SeasoningMode.Disabled, I18n.Seasoning_Disabled);
+		seasoning.Add(SeasoningMode.Enabled, I18n.Seasoning_Enabled);
+		seasoning.Add(SeasoningMode.InventoryOnly, I18n.Seasoning_Inventory);
 
 		GMCMIntegration.Register(true);
 
 		if (!AtTitle)
-			GMCMIntegration.Add(
-				I18n.Setting_ShowAdv,
-				I18n.Setting_ShowAdv_Tip,
-				c => Game1.options.showAdvancedCraftingInformation,
-				(c, v) => Game1.options.changeCheckBoxOption(Options.toggleShowAdvancedCraftingInformation, v)
-			);
+			GMCMIntegration
+				.Add(
+					I18n.Setting_ShowAdv,
+					I18n.Setting_ShowAdv_Tip,
+					c => Game1.options.showAdvancedCraftingInformation,
+					(c, v) => Game1.options.changeCheckBoxOption(Options.toggleShowAdvancedCraftingInformation, v)
+				)
+				.Add(
+					I18n.Setting_UsePerSave,
+					I18n.Setting_UsePerSave_Tip,
+					c => ! UseGlobalSave,
+					(c, v) => UseGlobalSave = ! v
+				);
 
 		GMCMIntegration
 			.AddLabel(I18n.Setting_General)

@@ -200,11 +200,17 @@ public class LayoutNode : ILayoutNode {
 			_ => containerSize.Y - ownSize.Y,
 		};
 
+		float perlayout = 0f;
+
 		if (extra > 0) {
 			int spaces = 0;
-			foreach (ISimpleNode node in _Children)
+			int layouts = 0;
+			foreach (ISimpleNode node in _Children) {
 				if (node is SpaceNode space && space.Expand)
 					spaces++;
+				else if (node is LayoutNode)
+					layouts++;
+			}
 
 			if (spaces > 0) {
 				float perspace = (float) Math.Floor(extra / spaces);
@@ -222,7 +228,8 @@ public class LayoutNode : ILayoutNode {
 						}
 					}
 				}
-			}
+			} else if (layouts > 0 && Direction == LayoutDirection.Horizontal)
+				perlayout = (float) Math.Floor(extra / layouts);
 		}
 
 		for (int i = 0; i < count; i++) {
@@ -231,6 +238,11 @@ public class LayoutNode : ILayoutNode {
 				continue;
 
 			Vector2 size = Sizes[i];
+			if (node is LayoutNode && perlayout > 0)
+				size = Direction switch {
+					LayoutDirection.Horizontal => new(size.X + perlayout, size.Y),
+					_ => new(size.X, size.Y + perlayout)
+				};
 
 			if (_Margin != 0)
 				switch (Direction) {

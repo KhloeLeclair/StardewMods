@@ -68,12 +68,14 @@ public interface ISimpleBuilder {
 	/// This node may be horizontal or vertical, depending on the
 	/// layout direction of its parent node.
 	/// </summary>
-	/// <param name="source">An optional texture to draw it from.</param>
+	/// <param name="thick">Whether to draw this as a thick divider or a thin one.</param>
+	/// <param name="thinColor">The color to draw the divider when thin.</param>
+	/// <param name="source">An optional texture to draw it from, when thick.</param>
 	/// <param name="sourceRectVert">If this is set, and the divider
 	/// is vertical, this source will be used to draw the divider.</param>
 	/// <param name="sourceRectHoriz">If this is set, and the divider
 	/// is horizontal, this source will be used to draw the divider.</param>
-	ISimpleBuilder Divider(Texture2D? source = null, Rectangle? sourceRectVert = null, Rectangle? sourceRectHoriz = null);
+	ISimpleBuilder Divider(bool thick = true, Color? thinColor = null, Texture2D? source = null, Rectangle? sourceRectVert = null, Rectangle? sourceRectHoriz = null);
 
 	/// <summary>
 	/// Add a spacing node to the builder.
@@ -179,9 +181,9 @@ public class SimpleBuilder : ISimpleBuilder {
 		return this;
 	}
 
-	public ISimpleBuilder Divider(Texture2D? source = null, Rectangle? sourceRectVert = null, Rectangle? sourceRectHoriz = null) {
+	public ISimpleBuilder Divider(bool thick = true, Color? thinColor = null, Texture2D? source = null, Rectangle? sourceRectVert = null, Rectangle? sourceRectHoriz = null) {
 		AssertState();
-		Nodes.Add(new DividerNode(Layout, source, sourceRectVert, sourceRectHoriz));
+		Nodes.Add(new DividerNode(Layout, thick, thinColor, source, sourceRectVert, sourceRectHoriz));
 		return this;
 	}
 

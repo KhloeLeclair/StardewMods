@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
@@ -46,63 +43,57 @@ public class SourceModRuleHandler : DynamicTypeHandler<ModFilterInfo>, IOptionIn
 
 	public override bool HasEditor => true;
 
-	public IEnumerable<KeyValuePair<string, string>> Options {
-		get {
-			List<KeyValuePair<string, string>> mods = new();
+	public IEnumerable<KeyValuePair<string, string>> GetOptions(bool cooking) {
+		List<KeyValuePair<string, string>> mods = new();
 
-			Dictionary<string, int> itemCount = new();
+		Dictionary<string, int> itemCount = new();
 
-			foreach (var other in Mod.Helper.ModRegistry.GetAll())
-				itemCount[other.Manifest.UniqueID] = 0;
+		foreach (var other in Mod.Helper.ModRegistry.GetAll())
+			itemCount[other.Manifest.UniqueID] = 0;
 
-			bool TryCount(string? id) {
-				if (string.IsNullOrEmpty(id))
-					return false;
-
-				if (id.StartsWith("bcbuildings:"))
-					id = id.Substring(12);
-
-				int idx = id.LastIndexOf("_");
-				if (idx <= 1)
-					return false;
-
-				string possible_id = id[..idx];
-				if (itemCount.TryGetValue(possible_id, out int count)) {
-					itemCount[possible_id] = count + 1;
-					return true;
-				}
-
+		bool TryCount(string? id) {
+			if (string.IsNullOrEmpty(id))
 				return false;
+
+			if (id.StartsWith("bcbuildings:"))
+				id = id.Substring(12);
+
+			int idx = id.LastIndexOf("_");
+			if (idx <= 1)
+				return false;
+
+			string possible_id = id[..idx];
+			if (itemCount.TryGetValue(possible_id, out int count)) {
+				itemCount[possible_id] = count + 1;
+				return true;
 			}
 
-			foreach (var recipe in Mod.Recipes.GetRecipes(false)) {
-				if (!TryCount(recipe.Name))
-					TryCount(recipe.CreateItemSafe()?.ItemId);
-			}
-
-			foreach (var recipe in Mod.Recipes.GetRecipes(true)) {
-				if (!TryCount(recipe.Name))
-					TryCount(recipe.CreateItemSafe()?.ItemId);
-			}
-
-			foreach (var other in Mod.Helper.ModRegistry.GetAll()) {
-				mods.Add(new(other.Manifest.UniqueID, $"{other.Manifest.Name} @>@h({other.Manifest.UniqueID})\n@<{itemCount.GetValueOrDefault(other.Manifest.UniqueID)} Recipes"));
-			}
-
-			mods.Sort((a, b) => {
-				int aCount = itemCount.GetValueOrDefault(a.Key);
-				int bCount = itemCount.GetValueOrDefault(b.Key);
-
-				if (aCount != 0 && bCount == 0)
-					return -1;
-				if (aCount == 0 && bCount != 0)
-					return 1;
-
-				return a.Value.CompareTo(b.Value);
-			});
-
-			return mods;
+			return false;
 		}
+
+		foreach (var recipe in Mod.Recipes.GetRecipes(cooking)) {
+			if (!TryCount(recipe.Name))
+				TryCount(recipe.CreateItemSafe()?.ItemId);
+		}
+
+		foreach (var other in Mod.Helper.ModRegistry.GetAll()) {
+			string count = I18n.Filter_RecipeCount(itemCount.GetValueOrDefault(other.Manifest.UniqueID));
+			mods.Add(new(other.Manifest.UniqueID, $"{other.Manifest.Name} @>@h({other.Manifest.UniqueID})\n@<{count}"));
+		}
+
+		mods.Sort((a, b) => {
+			int aCount = itemCount.GetValueOrDefault(a.Key);
+			int bCount = itemCount.GetValueOrDefault(b.Key);
+
+			if (aCount != 0 && bCount == 0)
+				return -1;
+			if (aCount == 0 && bCount != 0)
+				return 1;
+
+			return a.Value.CompareTo(b.Value);
+		});
+
+		return mods;
 	}
 
 	public string HelpText => string.Empty;

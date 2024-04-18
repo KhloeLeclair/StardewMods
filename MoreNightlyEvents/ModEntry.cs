@@ -23,6 +23,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Delegates;
 using StardewValley.Events;
+using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 

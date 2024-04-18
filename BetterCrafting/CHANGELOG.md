@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.7.0
+Released April 17th, 2024.
+
+### New Features
+* The mod now uses a global save for categories and favorite recipes.
+  This can be toggled on a per-save basis. Saves with existing
+  category / favorite customization will automatically start with
+  per-save customization enabled.
+* Added new dynamic rules for selecting recipes based on item category,
+  context tags, and edibility. With these, almost all recipes in the
+  base game are categorized using rules rather than manually.
+
+### Changes
+* The "Items from Mod" dynamic rule now only displays the count of
+  recipes within the current menu mode (cooking vs crafting) when
+  you're selecting a mod.
+* Update tool-tip rendering in our menu to be more like the base game.
+
+### Fixed
+* Unable to translate a certain string from the "Items from Mod"
+  selection dialog.
+* When using the Kitchen, always add the location's fridge to the
+  inventories to craft from, regardless of other discover settings.
+* The controls to toggle dynamic rules on, as well as include items
+  in the Misc. category, should not appear on the Misc. category itself.
+* Change to word wrapping causing some text to not appear on new
+  lines when it should.
+
+### API Changes
+* When using the trigger/map action to open the menu, there is a new
+  syntax that allows for greater flexibility in configuring how
+  inventories are discovered.
+
+
 ## 2.6.2
 Released April 13th, 2024.
 

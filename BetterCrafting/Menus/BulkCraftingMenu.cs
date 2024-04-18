@@ -334,7 +334,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 						.Group(align: Alignment.Top)
 							.AddSpacedRange(4, left)
 						.EndGroup()
-						.Divider()
+						.Divider(false)
 						.Group(align: Alignment.Top)
 							.AddSpacedRange(4, right)
 						.EndGroup()

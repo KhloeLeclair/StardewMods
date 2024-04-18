@@ -678,7 +678,7 @@ public static class RenderHelper {
 
 #endregion
 
-#region Scissor Rendering
+	#region Scissor Rendering
 
 	public static void WithScissor(SpriteBatch b, SpriteSortMode mode, Rectangle rectangle, Action action, RenderTarget2D? target = null) {
 
@@ -759,7 +759,7 @@ public static class RenderHelper {
 		}
 	}
 
-#endregion
+	#endregion
 
 }
 

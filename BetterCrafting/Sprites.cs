@@ -1,5 +1,7 @@
 #nullable enable
 
+using System;
+
 using Leclair.Stardew.Common.UI;
 
 using Microsoft.Xna.Framework;
@@ -53,7 +55,17 @@ public static class Sprites {
 	}
 
 	public static class Buttons {
-		public static Texture2D? Texture { get; internal set; }
+
+		internal static Func<Texture2D>? _TexLoader;
+
+		internal static Texture2D? _TexCache;
+
+		public static Texture2D? Texture {
+			get {
+				_TexCache ??= _TexLoader?.Invoke();
+				return _TexCache;
+			}
+		}
 
 		public readonly static Rectangle UNIFORM_OFF = new(0, 0, 16, 16);
 		public readonly static Rectangle UNIFORM_ON = new(0, 16, 16, 16);

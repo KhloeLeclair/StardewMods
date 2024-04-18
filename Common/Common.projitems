@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BuildingProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\DiscriminatingConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SmokedFishSpriteInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextureColorWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\AttachmentSlotsNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\DynamicDrawingNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpookyActionAtADistance.cs" />
