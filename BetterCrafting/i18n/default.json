@@ -78,7 +78,7 @@
 	"setting.key.favorite.tip": "Press this key on a recipe to favorite or unfavorite that recipe.",
 
 	"setting.key.bulk": "Bulk Crafting Key",
-	"setting.key.bulk.tip": "Press this key on a recipe to open Bulk Crafting for that recipe.",
+	"setting.key.bulk.tip": "Press this key on a recipe to open Bulk Crafting or Cooking for that recipe.",
 
 	"setting.key.behavior.left": "Left-Click / A Behavior",
 	"setting.key.behavior.left.tip": "When left clicking (or pressing A on controller) on a recipe, this action will be performed.",
@@ -96,6 +96,7 @@
 	"setting.action.Craft": "Craft",
 	"setting.action.Favorite": "Toggle Favorite",
 	"setting.action.BulkCraft": "Bulk Craft",
+	"setting.action.BulkCook": "Bulk Cook",
 
 	"setting.nearby": "Extended Workbench",
 	"setting.nearby.tip": "This feature allows Workbenches and your kitchen to connect to more chests at once, improving on the game's default range of one block. You can create chains of connected chests, or use allowed connectors to bridge gaps.",
@@ -230,6 +231,7 @@
 	"tooltip.move-down": "Move Category Down",
 
 	"tooltip.crafted": "Crafted {{count}} Times",
+	"tooltip.cooked": "Cooked {{count}} Times",
 
 	"tooltip.toggle-recipe": "Toggle in Category",
 	"tooltip.use-as-icon": "Use as Icon",
@@ -299,6 +301,9 @@
 	"bulk.crafting": "Bulk Crafting",
 	"bulk.craftable": "{{count}} Craftable",
 	"bulk.craft": "Craft {{count}} of {{name}}",
+	"bulk.cooking": "Bulk Cooking",
+	"bulk.cookable": "{{count}} Cookable",
+	"bulk.cook": "Cook {{count}} of {{name}}",
 
 	// Categories
 	"category.new": "New Category",
