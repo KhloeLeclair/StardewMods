@@ -6,177 +6,128 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewModdingAPI;
+
 namespace Leclair.Stardew.GiantCropTweaks;
 
+
 /// <summary>
-/// A custom giant crop that may spawn in-game. This implementation is based
-/// upon the new custom giant crops being added in 1.6, and once 1.6 is
-/// released Giant Crop Tweaks will begin using the base game's data format
-/// rather than its own implementation of the same.
+/// Controls how Giant Crop Tweaks decides whether a giant crop
+/// should re-plant the original crop beneath it when harvested.
 /// </summary>
-public interface IGiantCropData {
+public enum ReplantBehavior {
+	/// <summary>Never re-plant.</summary>
+	Never,
+	/// <summary>Always re-plant.</summary>
+	Always,
+	/// <summary>If the original crop is a regrowing crop, re-plant.</summary>
+	WhenRegrowing
+};
+
+public interface IExtraGiantCropData {
 
 	/// <summary>
-	/// The qualified or unqualified item ID from which this giant crop can grow. If multiple giant crops can grow from a single crop, the first one whose <see cref="Chance"/> and <see cref="Condition" /> match will be selected.
-	/// </summary>
-	string FromItemId { get; set; }
-
-	/// <summary>
-	/// The items to produce when this giant crop is broken. All matching items will be produced.
-	/// </summary>
-	List<IGiantCropHarvestItemData> HarvestItems { get; set; }
-
-	/// <summary>
-	/// The asset name for the texture containing the giant crop's sprite.
-	/// </summary>
-	string Texture { get; set; }
-
-	/// <summary>
-	/// The top-left pixel position of the sprite within the <see cref="Texture"/>, specified as a model with X and Y fields. Defaults to (0, 0).
-	/// </summary>
-	Point TexturePosition { get; set; }
-
-	/// <summary>
-	/// The area in tiles occupied by the giant crop, specified as a model with X and Y fields. This affects both its sprite size (which should be 16 pixels per tile) and the grid of crops needed for it to grow. Note that giant crops are drawn with an extra tile's height. Defaults to (3, 3).
-	/// </summary>
-	Point TileSize { get; set; }
-
-	/// <summary>
-	/// The health points that must be depleted to break the giant crop. The number of points depleted per axe chop depends on the axe power level.
-	/// </summary>
-	int Health { get; set; }
-
-	/// <summary>
-	/// The percentage chance a given grid of crops will grow into the giant crop each night, as a value between 0 (never) and 1 (always). Default 0.01.
-	/// </summary>
-	double Chance { get; set; }
-
-	/// <summary>
-	/// A game state query which indicates whether the giant crop can be selected. Defaults to always enabled.
-	/// </summary>
-	string? Condition { get; set; }
-
-}
-
-public interface IGiantCropHarvestItemData : ISpawnItemData {
-
-	/// <summary>
-	/// The probability that the item will be produced, as a value between 0 (never) and 1 (always).
-	/// </summary>
-	float Chance { get; set; }
-
-	/// <summary>
-	/// Whether to drop this item only for the Shaving enchantment (true), only when the giant crop is broken (false), or both (null).
-	/// </summary>
-	bool? ForShavingEnchantment { get; set; }
-
-}
-
-
-public interface ISpawnItemData {
-
-	/// <summary>
-	/// A game state query which indicates whether the item should be added. Defaults to always enabled.
-	/// </summary>
-	string? Condition { get; set; }
-
-	/// <summary>
-	/// The item(s) to create.
-	/// </summary>
-	string? ItemId { get; set; }
-
-	/// <summary>
-	/// A list of random item IDs to choose from, using the same format as <see cref="ItemId"/>.
-	/// </summary>
-	List<string>? RandomItemId { get; set; }
-
-	/// <summary>
-	/// The minimum stack size for the item to create, or <c>-1</c> to keep the default value.
-	/// </summary>
-	int MinStack { get; set; }
-
-	/// <summary>
-	/// The maximum stack size for the item to create, or <c>-1</c> to match <see cref="MinStack"/>.
-	/// </summary>
-	int MaxStack { get; set; }
-
-	/// <summary>
-	/// The quality of the item to create. One of <c>0</c> (normal), <c>1</c> (silver), <c>2</c> (gold), or <c>4</c> (iridium).
-	/// </summary>
-	int Quality { get; set; }
-
-	/// <summary>
-	/// For tool items only, the initial upgrade level, or <c>-1</c> to keep the default value.
-	/// </summary>
-	int ToolUpgradeLevel { get; set; }
-
-	/// <summary>
-	/// Whether to add the crafting/cooking recipe for the item, instead of the item itself.
-	/// </summary>
-	bool IsRecipe { get; set; }
-
-	/// <summary>
-	/// Changes to apply to the result of <see cref="MinStack"/> and <see cref="MaxStack"/>.
-	/// </summary>
-	List<IQuantityModifier>? StackModifiers { get; set; }
-
-	/// <summary>
-	/// How multiple <see cref="StackModifiers"/> should be combined.
-	/// </summary>
-	IQuantityModifier.QuantityModifierMode? StackModifierMode { get; set; }
-
-	/// <summary>
-	/// Changes to apply to the <see cref="Quality"/>.
-	/// </summary>
-	List<IQuantityModifier>? QualityModifiers { get; set; }
-
-	/// <summary>
-	/// How multiple <see cref="QualityModifiers"/> should be combined.
-	/// </summary>
-	IQuantityModifier.QuantityModifierMode? QualityModifierMode { get; set; }
-
-}
-
-public interface IQuantityModifier {
-
-	public enum ModificationType {
-		Add,
-		Subtract,
-		Multiply,
-		Divide,
-		Set
-	}
-
-	public enum QuantityModifierMode {
-		Stack,
-		Minimum,
-		Maximum
-	}
-
-	/// <summary>
-	/// An ID for this modifier. This only needs to be unique within the current modifier list. For a custom entry, you should use a globally unique ID which includes your mod ID like <c>ExampleMod.Id_ModifierName</c>.
+	/// Must match the ID of an existing <see cref="GiantCrops"/>
+	/// instance in <c>Data/GiantCrops</c>.
 	/// </summary>
 	string Id { get; set; }
 
-	/// <summary>
-	/// A game state query which indicates whether this change should be applied. Item-only tokens are valid for this check, and will check the input (not output) item. Defaults to always true.
-	/// </summary>
-	string? Condition { get; set; }
+	#region Behaviors
 
 	/// <summary>
-	/// The type of change to apply.
+	/// Whether or not this giant crop can grow if the source crop
+	/// is fully grown, but has been harvested and has
+	/// not yet regrown. By default, this is true, but you may
+	/// want to turn this down for regrowable crops with high
+	/// chances of growing giant.
 	/// </summary>
-	ModificationType Modification { get; set; }
+	bool CanGrowWhenNotFullyRegrown { get; set; }
 
 	/// <summary>
-	/// The operand to apply to the target value (e.g. the multiplier if <see cref="Modification"/> is set to <see cref="ModificationType.Multiply"/>).
+	/// Whether or not this giant crop should be replanted when harvested.
+	/// By default, giant crops will be replanted if the base crop is
+	/// configured to re-grow.
 	/// </summary>
-	float? Amount { get; set; }
+	ReplantBehavior ShouldReplant { get; set; }
+
+	#endregion
+
+	#region Colors
 
 	/// <summary>
-	/// A list of random amounts to choose from, using the same format as <see cref="Amount"/>.
+	/// An optional list of colors to apply to this giant crop. The color
+	/// will be used for rendering the overlay texture, and may also be
+	/// used to color the harvest items.
 	/// </summary>
-	List<float>? RandomAmount { get; set; }
+	List<Color>? Colors { get; set; }
+
+	/// <summary>
+	/// If this is set to true, we will attempt to pick this giant crop's
+	/// color based on the <see cref="CropData.TintColors"/> of the
+	/// crop matching <see cref="GiantCropData.FromItemId"/>. This
+	/// overrides <see cref="Colors"/> if set.
+	/// </summary>
+	bool UseBaseCropTintColors { get; set; }
+
+	/// <summary>
+	/// When this giant crop is harvested, any items with item Ids in
+	/// this list will be converted to colored items using this giant
+	/// crop's color.
+	/// </summary>
+	List<string>? HarvestItemsToColor { get; set; }
+
+	/// <summary>
+	/// If this is true, each individual entry in <see cref="GiantCropData.HarvestItems"/>
+	/// will have its color randomized to allow more than one
+	/// color of item to drop. Only takes effect to items listed
+	/// in <see cref="HarvestItemsToColor"/>.
+	/// </summary>
+	bool RandomizeHarvestItemColors { get; set; }
+
+	#endregion
+
+	#region Overlay Texture
+
+	/// <summary>
+	/// An optional texture for an overlay. If this is set, a second layer
+	/// will be drawn with this texture.
+	/// </summary>
+	string? OverlayTexture { get; set; }
+
+	/// <summary>
+	/// Whether or not the overlay should be drawn as prismatic. If this is
+	/// true, the overlay color will not be used for rendering.
+	/// </summary>
+	bool OverlayPrismatic { get; set; }
+
+	/// <summary>
+	/// The top-left pixel position of the overlay sprite within the texture.
+	/// If this is null, <see cref="GiantCropData.TexturePosition"/> will
+	/// be used instead.
+	/// </summary>
+	Point? OverlayPosition { get; set; }
+
+	/// <summary>
+	/// The size of the overlay sprite, in tiles. If this is null,
+	/// <see cref="GiantCropData.TileSize"/> will be used instead.
+	/// </summary>
+	Point? OverlaySize { get; set; }
+
+	/// <summary>
+	/// The number of tiles the overlay should be offset from the
+	/// base sprite.
+	/// </summary>
+	Point OverlayOffset { get; set; }
+
+	#endregion
+
+}
+
+
+public interface IExtraGiantCropDataEditor : IDictionary<string, IExtraGiantCropData> {
+
+	IExtraGiantCropData GetOrCreate(string key);
+
 
 }
 
@@ -184,21 +135,35 @@ public interface IQuantityModifier {
 public interface IGiantCropTweaks {
 
 	/// <summary>
-	/// A dictionary of giant crop data. This is an easy to read version of the
-	/// game's <c>"Data\GiantCrops"</c> asset.
+	/// Create a new <see cref="IExtraGiantCropData"/> instance. Note that this
+	/// does not add it to the data dictionary, but merely creates an instance.
+	/// To edit the dictionary, use the asset requested event and the method
+	/// here to get an editor.
 	/// </summary>
-	IReadOnlyDictionary<string, IGiantCropData> GiantCrops { get; }
+	/// <returns>A new, blank data model.</returns>
+	IExtraGiantCropData CreateNew();
 
 	/// <summary>
-	/// Try to get a giant crop's texture.
+	/// Get an editor for editing GCT's data dictionary. This is intended to
+	/// be used within the asset requested event.
 	/// </summary>
-	/// <param name="id">The ID of the giant crop.</param>
-	bool TryGetTexture(string id, [NotNullWhen(true)] out Texture2D? texture);
+	/// <param name="assetData">The asset data you get when editing an
+	/// asset in the asset requested event.</param>
+	/// <returns>A dictionary-like interface for editing the asset.</returns>
+	IExtraGiantCropDataEditor GetEditor(IAssetData assetData);
 
 	/// <summary>
-	/// Try to get a giant crop's source rectangle.
+	/// Get all the entries in the loaded data dictionary.
 	/// </summary>
-	/// <param name="id">The ID of the giant crop.</param>
-	bool TryGetSource(string id, [NotNullWhen(true)] out Rectangle? source);
+	IEnumerable<KeyValuePair<string, IExtraGiantCropData>> GetData();
+
+	/// <summary>
+	/// Try to get the data for a specific giant crop, if it exists.
+	/// </summary>
+	/// <param name="key">The crop Id to search for.</param>
+	/// <param name="data">The crop data, if it exists.</param>
+	/// <returns>Whether or not it was found.</returns>
+	bool TryGetData(string key, [NotNullWhen(true)] out IExtraGiantCropData? data);
+
 
 }

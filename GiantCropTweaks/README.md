@@ -9,3 +9,4 @@ into a giant crop.
 * [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/14370)
 * [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/GiantCropTweaks/CHANGELOG.md)
 * [API](https://github.com/KhloeLeclair/StardewMods/blob/main/GiantCropTweaks/IGiantCropTweaks.cs)
+* [Author Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/GiantCropTweaks/author-guide.md)
