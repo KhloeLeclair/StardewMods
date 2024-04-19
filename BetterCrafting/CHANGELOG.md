@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.8.0
+Released April 19th, 2024.
+
+### New Features
+* You can copy, paste, and delete categories when editing them now,
+  making it easier to move a category into or out of your Per-Save
+  Data or to share them. Additionally, you can shift-click the
+  delete button to reset *all* your categories.
+* Better Crafting will attempt to automatically color its UI
+  buttons to match your current UI theme.
+
+### Changed
+* When opening the game menu, the Better Crafting menu won't
+  load until you directly access it, which should improve
+  performance somewhat.
+* Added some diagnostic logging for performance.
+
+### Fixed
+* Workbench connectors not working correctly.
+
+### Translation
+* Removed the Turkish translation file, as that is out of
+  date and there is an external mod providing it.
+
+### API
+* Added a new event to let other mods add extra icons to the
+  built-in icon picker.
+* Fixed setting item to `null` in pre-craft event causing
+  crafting to fail.
+
+
 ## 2.7.0
 Released April 17th, 2024.
 

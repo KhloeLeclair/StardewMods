@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -454,6 +455,8 @@ public class RecipeManager : BaseManager {
 	public Category[] GetCategories(Farmer who, bool cooking) {
 		AssertFarmer(who);
 
+		Stopwatch timer = Stopwatch.StartNew();
+
 		if (!DefaultsLoaded)
 			LoadDefaults();
 
@@ -499,6 +502,9 @@ public class RecipeManager : BaseManager {
 			// further changes to their categories.
 		}
 
+		timer.Stop();
+		Log($"Loaded categories after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
+
 		return result;
 	}
 
@@ -508,8 +514,7 @@ public class RecipeManager : BaseManager {
 
 		string?[] ids = existing.Select(cat => cat.Id).ToArray();
 
-		if (applied is null)
-			applied = new();
+		applied ??= new();
 
 		List<Category> working = new(existing);
 
@@ -602,21 +607,28 @@ public class RecipeManager : BaseManager {
 		AssertFarmer(who);
 
 		long id = who.UniqueMultiplayerID;
-		Category[] array;
+		Category[]? array;
 		if (categories is Category[] cats)
 			array = cats;
 		else
-			array = categories?.ToArray() ?? Array.Empty<Category>();
+			array = categories?.ToArray();
 
 		if (cooking) {
-			if (array == null)
+			if (array == null) {
 				CookingCategories.Remove(id);
-			else
+				if (AppliedDefaults.TryGetValue(id, out var applied))
+					applied.Cooking = new();
+					
+				AppliedDefaults.Remove(id);
+			} else
 				CookingCategories[id] = array;
 		} else {
-			if (array == null)
+			if (array == null) {
 				CraftingCategories.Remove(id);
-			else
+				if (AppliedDefaults.TryGetValue(id, out var applied))
+					applied.Crafting = new();
+
+			} else
 				CraftingCategories[id] = array;
 		}
 	}
@@ -832,13 +844,13 @@ public class RecipeManager : BaseManager {
 
 			// We don't care if CreateItem returns null, but it
 			// cannot throw an exception.
-			try {
+			/*try {
 				recipe.CreateItem();
 
 			} catch (Exception ex) {
 				Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}. The recipe will be skipped.", LogLevel.Warn, ex);
 				return null;
-			}
+			}*/
 
 			// Try to upgrade this proxy.
 			ProviderMods.TryGetValue(provider, out string? modId);
@@ -860,6 +872,8 @@ public class RecipeManager : BaseManager {
 		if (RecipesLoaded.Value)
 			return;
 
+		Stopwatch timer = Stopwatch.StartNew();
+
 		RecipesLoaded.Value = true;
 		CraftingRecipesByName.Value.Clear();
 		CookingRecipesByName.Value.Clear();
@@ -880,6 +894,8 @@ public class RecipeManager : BaseManager {
 			CookingRecipes.Value.Add(recipe);
 		}
 
+		//Log($"Loaded {CookingRecipes.Value.Count} base cooking recipes after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
+
 		foreach (IRecipeProvider provider in Providers) {
 			if (!provider.CacheAdditionalRecipes)
 				continue;
@@ -894,13 +910,13 @@ public class RecipeManager : BaseManager {
 
 					// We don't care if CreateItem returns null, but it
 					// cannot throw an exception.
-					try {
+					/*try {
 						recipe.CreateItem();
 
 					} catch (Exception ex) {
 						Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}", LogLevel.Warn, ex);
 						continue;
-					}
+					}*/
 
 					var upgraded = modId is not null
 						? UpgradeRecipeProxy(modId, recipe)
@@ -913,6 +929,8 @@ public class RecipeManager : BaseManager {
 
 		CookingRecipes.Value.Sort((a, b) => a.SortValue.CompareTo(b.SortValue));
 
+		//Log($"Extra cooking recipes after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
+
 		// Crafting
 		foreach (string key in CraftingRecipe.craftingRecipes.Keys) {
 			IRecipe? recipe = GetProvidedRecipe(key, false);
@@ -922,6 +940,8 @@ public class RecipeManager : BaseManager {
 			CraftingRecipesByName.Value.Add(key, recipe);
 			CraftingRecipes.Value.Add(recipe);
 		}
+
+		//Log($"Loaded {CraftingRecipes.Value.Count} base crafting recipes after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
 
 		foreach (IRecipeProvider provider in Providers) {
 			if (!provider.CacheAdditionalRecipes)
@@ -937,13 +957,13 @@ public class RecipeManager : BaseManager {
 
 					// We don't care if CreateItem returns null, but it
 					// cannot throw an exception.
-					try {
+					/*try {
 						recipe.CreateItem();
 
 					} catch (Exception ex) {
 						Log($"An error occurred creating an item for the recipe \"{recipe.Name}\" from {provider.GetType().FullName ?? provider.GetType().Name}", LogLevel.Warn, ex);
 						continue;
-					}
+					}*/
 
 					var upgraded = modId is not null
 						? UpgradeRecipeProxy(modId, recipe)
@@ -954,7 +974,10 @@ public class RecipeManager : BaseManager {
 				}
 		}
 
-		Log($"Loaded {CookingRecipes.Value.Count} cooking recipes and {CraftingRecipes.Value.Count} crafting recipes.", LogLevel.Debug);
+		//CraftingRecipes.Value.Sort((a, b) => a.SortValue.CompareTo(b.SortValue));
+
+		timer.Stop();
+		Log($"Loaded {CookingRecipes.Value.Count} cooking recipes and {CraftingRecipes.Value.Count} crafting recipes in {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
 	}
 
 	private Dictionary<string, Category> HydrateCategories(IEnumerable<Category> categories, string source, Dictionary<string, Category>? byID = null) {
@@ -1075,6 +1098,8 @@ public class RecipeManager : BaseManager {
 		if (CategoriesLoaded)
 			return;
 
+		Stopwatch timer = Stopwatch.StartNew();
+
 		CategoriesLoaded = true;
 
 		CookingCategories.Clear();
@@ -1095,6 +1120,8 @@ public class RecipeManager : BaseManager {
 
 		if (data == null)
 			return;
+
+		Log($"Loaded category data file after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
 
 		foreach (KeyValuePair<long, Categories> entry in data) {
 			if (entry.Value == null)
@@ -1127,6 +1154,9 @@ public class RecipeManager : BaseManager {
 					entry.Value.Applied
 				);
 		}
+
+		timer.Stop();
+		Log($"Finished hydrating category data file after {timer.ElapsedMilliseconds}ms.", LogLevel.Debug);
 	}
 
 	private CPCategories LoadDefaultsFromFiles() {

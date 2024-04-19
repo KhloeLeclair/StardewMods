@@ -684,16 +684,16 @@ public static class InventoryHelper {
 			AbsolutePosition abs = potentials[i++];
 			SObject? obj;
 			SObject? furn;
-			//TerrainFeature? feature;
+			TerrainFeature? feature;
 			Building? building;
 
 			if (abs.Location != null) {
 				TileHelper.GetObjectAtPosition(abs.Location, abs.Position, out obj);
-				//abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
+				abs.Location.terrainFeatures.TryGetValue(abs.Position, out feature);
 				furn = abs.Location.GetFurnitureAt(abs.Position);
 				building = abs.Location.getBuildingAt(abs.Position);
 			} else {
-				//feature = null;
+				feature = null;
 				obj = null;
 				furn = null;
 				building = null;
@@ -725,14 +725,14 @@ public static class InventoryHelper {
 					want_neighbors = true;
 			}
 
-			/*if (feature != null) {
+			if (feature != null) {
 				provider = getProvider(feature);
 				if (provider != null && provider.IsValid(feature, abs.Location, who)) {
 					result.Add(new(feature, abs.Location));
 					want_neighbors = true;
 				} else if (!want_neighbors && checkConnector != null && checkConnector(feature))
 					want_neighbors = true;
-			}*/
+			}
 
 			if (furn != null) {
 				provider = getProvider(furn);

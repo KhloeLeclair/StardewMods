@@ -18,7 +18,6 @@ using Leclair.Stardew.BetterCrafting.Menus;
 using StardewValley.Menus;
 using Leclair.Stardew.BetterCrafting.DynamicRules;
 using StardewModdingAPI;
-using System.ComponentModel.Design;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -34,6 +33,17 @@ public class PopulateContainersEventArgs : IPopulateContainersEvent {
 		Menu = menu;
 		Containers = containers;
 	}
+}
+
+
+public class DiscoverIconsEventArgs : IDiscoverIconsEvent {
+
+	public IList<(string, Rectangle)> Icons { get; }
+
+	public DiscoverIconsEventArgs() {
+		Icons = new List<(string, Rectangle)>();
+	}
+
 }
 
 
@@ -72,7 +82,7 @@ public class ModAPI : IBetterCrafting {
 			Game1.exitActiveMenu();
 		}
 
-		Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+		Game1.activeClickableMenu = BetterCraftingPage.Open(
 			Mod,
 			location,
 			position,
@@ -91,7 +101,7 @@ public class ModAPI : IBetterCrafting {
 
 	/// <inheritdoc />
 	public Type GetMenuType() {
-		return typeof(Menus.BetterCraftingPage);
+		return typeof(BetterCraftingPage);
 	}
 
 	/// <inheritdoc />
@@ -118,6 +128,19 @@ public class ModAPI : IBetterCrafting {
 	#endregion
 
 	#region Events
+
+	/// <inheritdoc />
+	public event Action<IDiscoverIconsEvent>? DiscoverIcons;
+
+	internal IList<(string, Rectangle)>? EmitDiscoverIcons() {
+		if (DiscoverIcons is not null) {
+			var evt = new DiscoverIconsEventArgs();
+			DiscoverIcons(evt);
+			return evt.Icons;
+		}
+
+		return null;
+	}
 
 	/// <inheritdoc />
 	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;

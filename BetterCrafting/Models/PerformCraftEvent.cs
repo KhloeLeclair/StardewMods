@@ -119,7 +119,6 @@ public class ChainedPerformCraftHandler {
 
 		// We don't set this immediately to avoid weird double events.
 		currentEvent.OnDone = Finish;
-
 	}
 
 

@@ -1239,6 +1239,24 @@ public interface IPopulateContainersEvent {
 
 }
 
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> whenever the
+/// player opens the category icon picker, and serves to allow other
+/// mods to add icons to the list for the player to pick from.
+/// </summary>
+public interface IDiscoverIconsEvent {
+
+	/// <summary>
+	/// A list of all the extra icons the icon picker should present to
+	/// the player. This expects texture paths to load from game content,
+	/// and source rectangles.
+	/// </summary>
+	IList<(string, Rectangle)> Icons { get; }
+
+}
+
+
+
 public interface IBetterCrafting {
 
 	#region GUI
@@ -1300,6 +1318,12 @@ public interface IBetterCrafting {
 	#endregion
 
 	#region Events
+
+	/// <summary>
+	/// This event is fired when the player opens the category icon picker,
+	/// and can be used to register extra icons for the player to pick from.
+	/// </summary>
+	event Action<IDiscoverIconsEvent>? DiscoverIcons;
 
 	/// <summary>
 	/// This event is fired whenever a new Better Crafting menu is opened,

@@ -37,6 +37,10 @@ using StardewValley.Buildings;
 using Leclair.Stardew.BetterCrafting.Menus;
 using System.Diagnostics;
 
+
+using SMAPIJsonHelper = StardewModdingAPI.Toolkit.Serialization.JsonHelper;
+using System.Reflection;
+
 namespace Leclair.Stardew.BetterCrafting;
 
 public class ModEntry : PintailModSubscriber {
@@ -55,6 +59,7 @@ public class ModEntry : PintailModSubscriber {
 
 	internal readonly Dictionary<IManifest, ModAPI> APIInstances = new();
 
+	internal SMAPIJsonHelper? JsonHelper;
 	internal Harmony? Harmony;
 
 	private readonly PerScreen<IClickableMenu?> CurrentMenu = new();
@@ -145,8 +150,6 @@ public class ModEntry : PintailModSubscriber {
 		Favorites = new FavoriteManager(this);
 		Triggers = new TriggerManager(this);
 		Stations = new CraftingStationManager(this);
-
-		//Sprites.Load(Helper.Content, Helper.ModRegistry);
 
 		CheckRecommendedIntegrations();
 		InjectMenuHandler();
@@ -266,7 +269,7 @@ public class ModEntry : PintailModSubscriber {
 						menu = Game1.activeClickableMenu = game;
 					}
 
-					var bcm = Menus.BetterCraftingPage.Open(
+					var bcm = BetterCraftingPage.Open(
 						mod: this,
 						location: OldCraftingPage.Value.BenchLocation,
 						position: OldCraftingPage.Value.BenchPosition,
@@ -406,24 +409,11 @@ public class ModEntry : PintailModSubscriber {
 		if (menu is GameMenu gm && Config.ReplaceCrafting) {
 			for (int i = 0; i < gm.pages.Count; i++) {
 				if (gm.pages[i] is CraftingPage cp) {
-					// Make a copy of the existing chests.
-					List<object>? containers = cp._materialContainers is null ? null : new(cp._materialContainers);
+
+					gm.pages[i] = new TemporaryCraftingPage(this, cp);
 
 					// Make sure to clean up the existing menu.
 					CommonHelper.YeetMenu(cp);
-
-					gm.pages[i] = Menus.BetterCraftingPage.Open(
-						mod: this,
-						location: Game1.player.currentLocation,
-						position: null,
-						width: gm.width,
-						height: gm.height,
-						cooking: false,
-						standalone_menu: false,
-						material_containers: containers,
-						x: gm.xPositionOnScreen,
-						y: gm.yPositionOnScreen
-					);
 				}
 			}
 		}
@@ -433,15 +423,15 @@ public class ModEntry : PintailModSubscriber {
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
-		/*TextureWatcher = new(this, "Mods/leclair.bettercrafting/DynamicTextures/", (name, e) => {
+		TextureWatcher = new(this, "Mods/leclair.bettercrafting/DynamicTextures/", (name, e) => {
 			return () => Helper.ModContent.Load<IRawTextureData>($"assets/{name}");
-		});*/
+		});
 
-		ThemeManager = new ThemeManager<Models.Theme>(this, Config.Theme);
+		ThemeManager = new ThemeManager<Theme>(this, Config.Theme);
 
-		Sprites.Buttons._TexLoader = () => /*ThemeManager.ActiveThemeId == "default"
+		Sprites.Buttons._TexLoader = () => ThemeManager.ActiveThemeId == "default"
 			? Helper.GameContent.Load<Texture2D>("Mods/leclair.bettercrafting/DynamicTextures/buttons.png")
-			:*/ ThemeManager.Load<Texture2D>("buttons.png");
+			: ThemeManager.Load<Texture2D>("buttons.png");
 
 		ThemeManager.ThemeChanged += OnThemeChanged;
 		ThemeManager.Discover();
@@ -520,6 +510,10 @@ public class ModEntry : PintailModSubscriber {
 	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
 		_UseGlobalSave = null;
 		AtTitle = false;
+
+		// Touch this to load our texture ahead of time.
+		_ = Sprites.Buttons.Texture;
+
 		RegisterSettings();
 	}
 
@@ -1357,6 +1351,23 @@ public class ModEntry : PintailModSubscriber {
 			hasBiggerBackpacks = Helper.ModRegistry.IsLoaded("spacechase0.BiggerBackpack");
 
 		return hasBiggerBackpacks.Value;
+	}
+
+	internal void GetJsonHelper() {
+		if (JsonHelper is not null)
+			return;
+
+		if (Helper.Data.GetType().GetField("JsonHelper", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(Helper.Data) is SMAPIJsonHelper helper) {
+			JsonHelper = new();
+			var converters = JsonHelper.JsonSettings.Converters;
+			converters.Clear();
+			foreach (var converter in helper.JsonSettings.Converters)
+				if (converter.GetType().Name != "ColorConverter")
+					converters.Add(converter);
+
+			//converters.Add(new VariableSetConverter());
+			converters.Add(new Common.Serialization.Converters.ColorConverter());
+		}
 	}
 
 	public IEnumerable<GameLocation> GetLocations() {

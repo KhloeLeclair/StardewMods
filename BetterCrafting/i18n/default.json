@@ -230,6 +230,14 @@
 	"tooltip.loves": "Loves: {{npcs}}",
 	"tooltip.likes": "Likes: {{npcs}}",
 
+	"tooltip.copy-cat": "Copy Category to Clipboard",
+	"tooltip.paste-cat": "Paste Category from Clipboard",
+	"tooltip.trash-cat": "Delete Category",
+	"tooltip.trash-cat.confirm": "Are you sure you wish to delete the category \"{{name}}\"?",
+
+	"tooltip.trash-all": "Reset Categories to Defaults",
+	"tooltip.trash-all.confirm": "Are you sure you wish to reset all your categories to the defaults?",
+
 	"tooltip.move-up": "Move Category Up",
 	"tooltip.move-down": "Move Category Down",
 
@@ -299,6 +307,7 @@
 	"ingredient.error": "Invalid Ingredient",
 
 	"error.locking": "Unable to access some inventories.",
+	"error.pasting": "Unable to paste category.",
 
 	// Bulk Crafting
 	"bulk.crafting": "Bulk Crafting",

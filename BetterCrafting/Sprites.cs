@@ -97,6 +97,10 @@ public static class Sprites {
 		public readonly static Rectangle INCLUDE_MISC_OFF = new(16, 64, 16, 16);
 		public readonly static Rectangle INCLUDE_MISC_ON = new(0, 64, 16, 16);
 
+		public readonly static Rectangle COPY = new(0, 64, 16, 16);
+		public readonly static Rectangle PASTE = new(32, 64, 16, 16);
+		public readonly static Rectangle TRASH = new(48, 64, 16, 16);
+
 		public readonly static Rectangle SELECT_BG = new(64, 48, 16, 16);
 	}
 

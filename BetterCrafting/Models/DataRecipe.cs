@@ -208,7 +208,7 @@ public class DataRecipe : IRecipe {
 		foreach(var entry in Data.Output) {
 			if ( string.IsNullOrEmpty(entry.Condition) || GameStateQuery.CheckConditions(entry.Condition, Game1.currentLocation, Game1.player) ) {
 				Item result = ItemQueryResolver.TryResolveRandomItem(entry, ctx, avoidRepeat: false, null, null, null, (query, error) => {
-					Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", StardewModdingAPI.LogLevel.Error);
+					Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", LogLevel.Error);
 				});
 				if (result != null)
 					return result;
@@ -223,7 +223,7 @@ public class DataRecipe : IRecipe {
 		if (Data.ActionsOnCraft != null) {
 			foreach (string action in Data.ActionsOnCraft) {
 				if (!TriggerActionManager.TryRunAction(action, out string error, out var ex)) {
-					Mod.Log($"Error running action after crafting item for recipe {Name}: {error}", StardewModdingAPI.LogLevel.Error, ex);
+					Mod.Log($"Error running action after crafting item for recipe {Name}: {error}", LogLevel.Error, ex);
 				}
 			}
 		}
