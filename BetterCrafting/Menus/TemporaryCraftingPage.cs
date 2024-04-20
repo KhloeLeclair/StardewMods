@@ -74,9 +74,16 @@ public class TemporaryCraftingPage : CraftingPage {
 		);
 	}
 
+	public override void RepositionElements() {
+		
+	}
+
+	public override void snapToDefaultClickableComponent() {
+		
+	}
 
 	protected override List<string> GetRecipesToDisplay() {
-		return [];
+		return ["Torch", "Fried Egg"];
 	}
 
 	public override void receiveKeyPress(Keys key) {

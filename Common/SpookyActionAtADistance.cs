@@ -11,8 +11,6 @@ using HarmonyLib;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.UI;
 
-using Netcode;
-
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -50,31 +48,12 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 
 		try {
 			harmony.Patch(
-				original: AccessTools.Method(typeof(NetMutex), nameof(NetMutex.Update), new Type[] { typeof(FarmerCollection) }),
-				//prefix: new HarmonyMethod(typeof(SpookyActionAtADistance), nameof(Mutex_Update_Prefix)),
+				original: AccessTools.Method(typeof(NetMutex), nameof(NetMutex.Update), [typeof(FarmerCollection)]),
 				transpiler: new HarmonyMethod(typeof(SpookyActionAtADistance), nameof(Mutex_Update_Transpiler))
 			);
 		} catch(Exception ex) {
 			Mod.Log("An error occurred while registering a harmony patch for the NetMutex.Update", LogLevel.Warn, ex);
 		}
-
-		/*try {
-			harmony.Patch(
-				original: AccessTools.Method(typeof(NetMutex), "<.ctor>b__9_0"),
-				prefix: new HarmonyMethod(typeof(SpookyActionAtADistance), nameof(Mutex_Delegate_Prefix))
-			);
-		} catch (Exception ex) {
-			Mod.Log("An error occurred while registering a harmony patch for the NetMutex.ReleaseLock", LogLevel.Warn, ex);
-		}
-
-		try {
-			harmony.Patch(
-				original: AccessTools.Method(typeof(NetMutex), nameof(NetMutex.ReleaseLock)),
-				prefix: new HarmonyMethod(typeof(SpookyActionAtADistance), nameof(Mutex_Release_Prefix))
-			);
-		} catch (Exception ex) {
-			Mod.Log("An error occurred while registering a harmony patch for the NetMutex.ReleaseLock", LogLevel.Warn, ex);
-		}*/
 
 		try {
 			harmony.Patch(
@@ -95,17 +74,6 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 			Mod.Log("An error occurred while registering a harmony patch for the GameLocation.UpdateWhenCurrentLocation", LogLevel.Warn, ex);
 		}
 #endif
-
-		/*
-		try {
-			harmony.Patch(
-				original: AccessTools.Method(typeof(Multiplayer), nameof(Multiplayer.updateRoots)),
-				transpiler: new HarmonyMethod(typeof(SpookyActionAtADistance), nameof(Multiplayer_updateRoots_Transpiler))
-			);
-
-		} catch (Exception ex) {
-			Mod.Log("An error occurred while registering a harmony patch for the Multiplayer.updateRoots", LogLevel.Warn, ex);
-		}*/
 
 	}
 
@@ -138,11 +106,6 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 
 #endif
 
-	/*
-	public static void Mutex_Delegate_Prefix(NetMutex __instance, long playerId) {
-		Instance?.Mod?.Log($"Mutex lock request: {__instance.GetHashCode()}; isMaster: {Game1.IsMasterGame}; pId: {playerId}", LogLevel.Debug);
-	}*/
-
 	public static void ForEachLocationPatched(Func<GameLocation, bool> action, bool includeInteriors = true, bool includeGenerated = false) {
 		if (Instance is null) {
 			Utility.ForEachLocation(action, includeInteriors, includeGenerated);
@@ -172,25 +135,6 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 				break;
 		}
 	}
-
-	/*
-	public static IEnumerable<CodeInstruction> Multiplayer_updateRoots_Transpiler(IEnumerable<CodeInstruction> instructions) {
-
-		var method = AccessTools.Method(typeof(Utility), nameof(Utility.ForEachLocation));
-		var our_method = AccessTools.Method(typeof(SpookyActionAtADistance), nameof(ForEachLocationPatched));
-
-		foreach(var instr in instructions) {
-			if (instr.opcode == OpCodes.Call && instr.operand is MethodInfo minfo && minfo == method) {
-				yield return new CodeInstruction(instr) {
-					operand = our_method
-				};
-
-				continue;
-			}
-
-			yield return instr;
-		}
-	}*/
 
 	public static IEnumerable<CodeInstruction> Game1_UpdateLocation_Transpiler(IEnumerable<CodeInstruction> instructions) {
 
@@ -284,45 +228,7 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 
 			yield return in0;
 		}
-
-		/*
-		return new CodeMatcher(instructions)
-			// Find the end if the if ( ) statement around ReleaseLock.
-			.MatchStartForward(
-				new CodeMatch(OpCodes.Brtrue_S),
-				new CodeMatch(OpCodes.Ldarg_0),
-				new CodeMatch(OpCodes.Call, method)
-			)
-			// Insert a call to our ShouldLocationUpdate method
-			.Insert(
-				new CodeInstruction(OpCodes.Ldarg_1),
-				new CodeInstruction(OpCodes.Call, our_method),
-				new CodeInstruction(OpCodes.And)
-			)
-			// Return
-			.InstructionEnumeration();*/
 	}
-
-	/*
-	public static void Mutex_Release_Prefix(NetMutex __instance) {
-		Instance?.Mod?.Log($"Mutex releasing: {__instance.GetHashCode()}", LogLevel.Debug);
-	}
-
-	public static void Mutex_Update_Prefix(NetMutex __instance, ref FarmerCollection farmers) {
-
-		try {
-			var field = Instance?.Mod?.Helper?.Reflection?.GetField<GameLocation>(farmers, "_locationFilter", false);
-			if (field != null) {
-				var value = field.GetValue();
-				if (value != null && ShouldLocationUpdate(value))
-					farmers = Game1.getOnlineFarmers();
-			}
-
-		} catch(Exception ex) {
-			Instance?.Mod?.Log("Error inside Mutex.Update prefix.", LogLevel.Error, ex, once: true);
-		}
-
-	}*/
 
 	public static void AllowMutexRelease(NetMutex mutex, FarmerCollection collection) {
 		try {
@@ -351,6 +257,20 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 	#endregion
 
 	#region Events
+
+	[Subscriber]
+	private void OnPeerConnected(object? sender, PeerConnectedEventArgs e) {
+		if (!e.Peer.IsHost)
+			return;
+
+		if (!e.Peer.HasSmapi) {
+			Mod.Log($"Connected to host: {e.Peer.PlayerID} -- Host does not have SMAPI.", LogLevel.Trace);
+			return;
+		}
+
+		var info = e.Peer.GetMod(Mod.ModManifest.UniqueID);
+		Mod.Log($"Connected to host: {e.Peer.PlayerID} -- Game Version: {e.Peer.GameVersion} -- SMAPI: {e.Peer.ApiVersion} -- Better Crafting: {info?.Version}", LogLevel.Trace);
+	}
 
 	[Subscriber]
 	private void OnPeerDisconnected(object? sender, PeerDisconnectedEventArgs e) {
@@ -492,18 +412,23 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 		long playerId = who.UniqueMultiplayerID;
 
 		var added = AddWatches(playerId, locations);
-		string joined = string.Join(", ", added);
-		Mod.Log($"Self Watch from {playerId}: {joined}", LogLevel.Trace);
+		if (added.Count == 0)
+			return;
 
-		// We also need to update the host.
-		if (!Context.IsMainPlayer && added.Count > 0) {
+		string joined = string.Join(", ", added);
+
+		if (Context.IsMainPlayer) {
+			// We're the host. Just log it.
+			Mod.Log($"Self Watch from {playerId}: {joined}", LogLevel.Trace);
+		} else {
+			// Update the host.
 			Mod.Log($"Sending Watch to Host: {joined}", LogLevel.Trace);
 			Mod.Helper.Multiplayer.SendMessage(
 				new UpdateWatching(added.ToArray()),
 				"SpookyAction:Watch",
 				null,
 				// Only send to the host. No one else needs to know.
-				new[] { GetHostId() }
+				[GetHostId()]
 			);
 		}
 	}
@@ -514,18 +439,23 @@ public class SpookyActionAtADistance: EventSubscriber<ModSubscriber> {
 		long playerId = who.UniqueMultiplayerID;
 
 		var removed = RemoveWatches(playerId, locations);
-		string joined = string.Join(", ", removed);
-		Mod.Log($"Self UnWatch from {playerId}: {joined}", LogLevel.Trace);
+		if (removed.Count == 0)
+			return;
 
-		// We also need to update the host.
-		if (!Context.IsMainPlayer && removed.Count > 0) {
+		string joined = string.Join(", ", removed);
+
+		if (Context.IsMainPlayer) {
+			// We're the host. Just log it.
+			Mod.Log($"Self UnWatch from {playerId}: {joined}", LogLevel.Trace);
+		} else {
+			// Update the host.
 			Mod.Log($"Sending UnWatch to Host: {joined}", LogLevel.Trace);
 			Mod.Helper.Multiplayer.SendMessage(
 				new UpdateWatching(removed.ToArray()),
 				"SpookyAction:Unwatch",
 				null,
 				// Only send to the host. No one else needs to know.
-				new[] { GetHostId() }
+				[GetHostId()]
 			);
 		}
 	}

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.8.2
+Released April 20th, 2024.
+
+### Changed
+* Improve cursor snapping for controller users when using
+  the crafting menu.
+
+### Fixed
+* Issue where an error would be printed to the console when
+  attempting to load certain textures.
+* Update mutexes before attempting to lock them, which should
+  improve some issues where mutexes were failing to lock when
+  attempting to craft.
+
+
+## 2.8.1
+Released April 19th, 2024.
+
+Sorry for the back to back, but there was a compatibility issue
+with other mods causing the menu to not work.
+
+### Fixed
+* The temporary menu class used to avoid immediately loading
+  the full Better Crafting menu would throw an error when
+  the user is using certain mod combinations.
+
+
 ## 2.8.0
 Released April 19th, 2024.
 

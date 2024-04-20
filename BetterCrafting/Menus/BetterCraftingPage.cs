@@ -2777,7 +2777,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
-				fullyImmutable = true,
+				//fullyImmutable = true,
 				region = 8000
 			};
 
@@ -2818,6 +2818,43 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		return false;
+	}
+
+	protected void UpdatePageSnapping(ClickableTextureComponent[,] layout, int maxX, int startY) {
+		// Update our snapping.
+		int inventory_columns = inventory.capacity / inventory.rows;
+
+		for (int x = 0; x < maxX; x++) {
+			for (int y = startY; y >= 0; y--) {
+				// We need a component to work with, of course.
+				if (layout[x, y] is not ClickableComponent cmp)
+					continue;
+
+				// Left to Right Snapping
+				if (x > 0 && layout[x - 1, y] is ClickableComponent toLeft && toLeft != cmp) {
+					toLeft.rightNeighborID = cmp.myID;
+					cmp.leftNeighborID = toLeft.myID;
+				}
+
+				// Up Snapping
+				if (y > 0 && layout[x, y - 1] is ClickableComponent toUp && toUp != cmp) {
+					toUp.downNeighborID = cmp.myID;
+					cmp.upNeighborID = toUp.myID;
+				}
+
+				// Bottom snapping
+				if (y < startY && layout[x, y + 1] is ClickableComponent toDown && toDown != cmp) {
+					toDown.upNeighborID = cmp.myID;
+					cmp.downNeighborID = toDown.myID;
+
+				} else if (y >= startY || layout[x, y + 1] is null) {
+					int targetSlot = Math.Clamp((int) Math.Floor(inventory_columns * ((float) x / maxX)), 0, inventory_columns - 1);
+					if (targetSlot < inventory.inventory.Count) {
+						cmp.downNeighborID = inventory.inventory[targetSlot].myID;
+					}
+				}
+			}
+		}
 	}
 
 	protected void LayoutRecipes() {
@@ -2899,6 +2936,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					x = 0;
 					y++;
 					if (y >= yLimit) {
+						UpdatePageSnapping(layout, xLimit, yLimit - 1);
 						page = CreateNewPage();
 						layout = CreateNewPageLayout();
 						y = 0;
@@ -2916,8 +2954,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			} else
 				cmp.upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
 
-			// TODO: Start using GridHeight and GridWidth.
-			// ??? Aren't we using it already? TODO: Check this TODO
+			// Reset neighbors
+			cmp.leftNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+			cmp.rightNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+			cmp.downNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+
 			cmp.bounds = new Rectangle(
 				offsetX + x * (64 + marginX),
 				offsetY + y * 72,
@@ -2936,6 +2977,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					}
 				}
 		}
+
+		UpdatePageSnapping(layout, xLimit, y >= yLimit ? yLimit - 1 : y);
 
 		if (Pages.Count > 1 && btnPageUp == null) { 
 			bool custom_scroll = Theme.CustomScroll && Background is not null;
@@ -3013,6 +3056,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			pageIndex = Pages.Count - 1;
 
 		UpdateCurrentButtons();
+
+		// Fix the inventory snapping.
+		for (int i = 0; i < 12; i++) {
+			if (inventory.inventory.Count > i)
+				inventory.inventory[i].upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+		}
+
+		// Find closest snapped component.
+		snapToNearestClickableComponent();
 	}
 
 
@@ -3061,6 +3113,16 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		PositionTabMoveButtons();
 
 		LayoutRecipes();
+
+		// Fix the inventory snapping.
+		for (int i = 0; i < 12; i++) {
+			if (inventory.inventory.Count > i)
+				inventory.inventory[i].upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+		}
+
+		// Find closest snapped component.
+		snapToNearestClickableComponent();
+
 		return true;
 	}
 
@@ -3232,6 +3294,21 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	#region Events
 
 	protected override bool _ShouldAutoSnapPrioritizeAlignedElements() => cooking || Mod.Config.UseUniformGrid;
+
+	public void snapToNearestClickableComponent() {
+		int x = Game1.getOldMouseX();
+		int y = Game1.getOldMouseY();
+
+		if (allClickableComponents != null)
+			foreach(var cmp in allClickableComponents)
+				if (cmp.containsPoint(x, y)) {
+					currentlySnappedComponent = cmp;
+					snapCursorToCurrentSnappedComponent();
+					return;
+				}
+
+		snapToDefaultClickableComponent();
+	}
 
 	public override void snapToDefaultClickableComponent() {
 		currentlySnappedComponent = CurrentPage?.Count > 0 ? CurrentPage[0] : null;

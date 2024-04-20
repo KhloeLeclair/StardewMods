@@ -117,7 +117,7 @@ public class TextureColorWatcher : IDisposable {
 		if (!e.Name.StartsWith(AssetPrefix))
 			return;
 
-		var provider = Loader(e.Name.Name.Substring(AssetPrefix.Length), e);
+		var provider = Loader(e.Name.BaseName[AssetPrefix.Length..], e);
 		if (provider == null)
 			return;
 

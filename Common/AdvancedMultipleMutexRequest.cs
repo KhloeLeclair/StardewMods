@@ -14,23 +14,23 @@ namespace Leclair.Stardew.Common;
 
 public class AdvancedMultipleMutexRequest {
 
-	public static ModSubscriber? Mod = null;
+	public static ModSubscriber? Mod;
 
-	private IModHelper? Helper;
-	private int Timeout;
+	private readonly IModHelper? Helper;
+	private readonly int Timeout;
 
 	private double Started;
-	private int ReportedCount;
-	private List<NetMutex> AcquiredLocks;
-	private NetMutex[] Mutexes;
+	private readonly List<NetMutex> AcquiredLocks;
+	private readonly List<NetMutex> ReportedLocks;
+	private readonly NetMutex[] Mutexes;
 
 	private bool Live;
 	private bool Evented;
 
-	private Action? OnSuccess;
-	private Action? OnFailure;
+	private readonly Action? OnSuccess;
+	private readonly Action? OnFailure;
 
-	private int ScreenId;
+	private readonly int ScreenId;
 
 	//private FarmerCollection FC;
 
@@ -42,7 +42,14 @@ public class AdvancedMultipleMutexRequest {
 		ScreenId = Context.ScreenId;
 
 		AcquiredLocks = new();
+		ReportedLocks = new();
 		Mutexes = mutexes is NetMutex[] nms ? nms : mutexes.ToArray();
+
+		// Update each mutex before we get started. This will ensure
+		// their previous owner fields are updated correctly.
+		var farmers = Game1.getOnlineFarmers();
+		foreach (var mutex in Mutexes)
+			mutex.Update(farmers);
 
 		RequestLock();
 	}
@@ -103,7 +110,7 @@ public class AdvancedMultipleMutexRequest {
 	}
 
 	private void OnUpdate(object? sender, UpdateTickedEventArgs e) {
-		if (!Live || ScreenId != Context.ScreenId || ReportedCount >= Mutexes.Length)
+		if (!Live || ScreenId != Context.ScreenId || ReportedLocks.Count >= Mutexes.Length)
 			return;
 
 		// Check to see if we've timed out.
@@ -142,12 +149,22 @@ public class AdvancedMultipleMutexRequest {
 			return;
 		}
 
-		if (AcquiredLocks.Contains(mutex))
+		if (ReportedLocks.Contains(mutex)) {
+#if DEBUG
+			LogLevel level = LogLevel.Debug;
+#else
+			LogLevel level = LogLevel.Trace;
+#endif
+			Mod?.Log($"Acquired lock for mutex {mutex.NetFields.GetHashCode()} that we already received report from.", level);
 			return;
+		}
 
-		ReportedCount++;
-		AcquiredLocks.Add(mutex);
-		if (ReportedCount >= Mutexes.Length)
+		ReportedLocks.Add(mutex);
+
+		if (! AcquiredLocks.Contains(mutex))
+			AcquiredLocks.Add(mutex);
+
+		if (ReportedLocks.Count >= Mutexes.Length)
 			LockFinished();
 	}
 
@@ -155,9 +172,77 @@ public class AdvancedMultipleMutexRequest {
 		if (!Live)
 			return;
 
-		ReportedCount++;
-		if (ReportedCount >= Mutexes.Length)
+		if (ReportedLocks.Contains(mutex)) {
+#if DEBUG
+			LogLevel level = LogLevel.Debug;
+#else
+			LogLevel level = LogLevel.Trace;
+#endif
+			Mod?.Log($"Received lock failed for mutex {mutex.NetFields.GetHashCode()} that we already received report from.", level);
+			return;
+		}
+
+		ReportedLocks.Add(mutex);
+
+		if (ReportedLocks.Count >= Mutexes.Length)
 			LockFinished();
+	}
+
+	private void LogMutexes() {
+		if (Mod is null)
+			return;
+
+#if DEBUG
+		LogLevel level = LogLevel.Debug;
+#else
+		LogLevel level = LogLevel.Trace;
+#endif
+
+		try {
+			List<string[]> states = new();
+
+			foreach (var mutex in Mutexes) {
+				var owner = Helper?.Reflection?.GetField<NetLong>(mutex, "owner", false)?.GetValue();
+				var request = Helper?.Reflection?.GetField<NetEvent1Field<long, NetLong>>(mutex, "lockRequest", false)?.GetValue();
+				object? _inEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "incomingEvents", false)?.GetValue();
+				object? _outEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "outgoingEvents", false)?.GetValue();
+
+				bool acquired = AcquiredLocks.Contains(mutex);
+				bool reported = ReportedLocks.Contains(mutex);
+
+				int inEvents = _inEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_inEvents, "Count", false)?.GetValue() ?? -1;
+				int outEvents = _outEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_outEvents, "Count", false)?.GetValue() ?? -1;
+
+				states.Add(new string[] {
+							$"{mutex.GetHashCode()}",
+							$"{mutex.IsLocked()}",
+							$"{mutex.IsLockHeld()}",
+							$"{acquired}",
+							$"{reported}",
+							owner is not null ? $"{owner.Value}" : "---",
+							owner is not null ? $"{owner.TargetValue}" : "---",
+							$"{inEvents}",
+							$"{outEvents}"
+						});
+			}
+
+			string[] headers = [
+				"ID",
+						"Locked",
+						"LockHeld",
+						"Acquired",
+						"Reported",
+						"Owner",
+						"OTarget",
+						"inEvents",
+						"outEvents"
+			];
+
+			Mod.LogTable(headers, states, level);
+
+		} catch(Exception) {
+			/* do nothing */
+		}
 	}
 
 	private void LockFinished() {
@@ -177,42 +262,8 @@ public class AdvancedMultipleMutexRequest {
 #else
 					LogLevel level = LogLevel.Trace;
 #endif
-
 					Mod.Log($"Unable to acquire all mutexes within {Timeout} ms. IsHost: {Game1.IsMasterGame}; Multiplayer: {Context.IsMultiplayer}; Mutex state:", level);
-
-					List<string[]> states = new();
-
-					foreach (var mutex in Mutexes) {
-						var owner = Helper?.Reflection?.GetField<NetLong>(mutex, "owner", false)?.GetValue();
-						var request = Helper?.Reflection?.GetField<NetEvent1Field<long, NetLong>>(mutex, "lockRequest", false)?.GetValue();
-						object? _inEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "incomingEvents", false)?.GetValue();
-						object? _outEvents = request is null ? null : Helper!.Reflection!.GetField<object>(request, "outgoingEvents", false)?.GetValue();
-
-						int inEvents = _inEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_inEvents, "Count", false)?.GetValue() ?? -1;
-						int outEvents = _outEvents is null ? -1 : Helper!.Reflection!.GetProperty<int>(_outEvents, "Count", false)?.GetValue() ?? -1;
-
-						states.Add(new string[] {
-							$"{mutex.GetHashCode()}",
-							$"{mutex.IsLocked()}",
-							$"{mutex.IsLockHeld()}",
-							owner is not null ? $"{owner.Value}" : "---",
-							owner is not null ? $"{owner.TargetValue}" : "---",
-							$"{inEvents}",
-							$"{outEvents}"
-						});
-					}
-
-					string[] headers = new string[] {
-						"ID",
-						"Locked",
-						"LockHeld",
-						"Owner",
-						"OTarget",
-						"inEvents",
-						"outEvents"
-					};
-
-					Mod.LogTable(headers, states, level);
+					LogMutexes();
 
 				} catch(Exception) {
 					/* do nothing */
@@ -232,7 +283,7 @@ public class AdvancedMultipleMutexRequest {
 			mutex.ReleaseLock();
 
 		Live = false;
-		ReportedCount = 0;
+		ReportedLocks.Clear();
 		AcquiredLocks.Clear();
 
 		if (Evented) {

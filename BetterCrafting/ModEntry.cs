@@ -510,11 +510,10 @@ public class ModEntry : PintailModSubscriber {
 	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
 		_UseGlobalSave = null;
 		AtTitle = false;
+		RegisterSettings();
 
 		// Touch this to load our texture ahead of time.
 		_ = Sprites.Buttons.Texture;
-
-		RegisterSettings();
 	}
 
 
