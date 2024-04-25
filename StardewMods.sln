@@ -48,6 +48,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakPintailClient", "Break
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudySkies", "CloudySkies\CloudySkies.csproj", "{0177E807-6933-4CD5-9BAF-E48329EAC254}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlmanacNext", "AlmanacNext\AlmanacNext.csproj", "{2EA651BC-21BE-4AED-88C5-7463BC1A41B1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContentPipelineStuff", "ContentPipelineStuff\ContentPipelineStuff.csproj", "{FA8A15C0-CE4F-4269-9889-D485AF57226C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,6 +114,14 @@ Global
 		{0177E807-6933-4CD5-9BAF-E48329EAC254}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0177E807-6933-4CD5-9BAF-E48329EAC254}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0177E807-6933-4CD5-9BAF-E48329EAC254}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EA651BC-21BE-4AED-88C5-7463BC1A41B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EA651BC-21BE-4AED-88C5-7463BC1A41B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EA651BC-21BE-4AED-88C5-7463BC1A41B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EA651BC-21BE-4AED-88C5-7463BC1A41B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA8A15C0-CE4F-4269-9889-D485AF57226C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA8A15C0-CE4F-4269-9889-D485AF57226C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA8A15C0-CE4F-4269-9889-D485AF57226C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA8A15C0-CE4F-4269-9889-D485AF57226C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,8 +137,10 @@ Global
 		Common\Common.projitems*{13180c19-64f0-4053-9fff-538b7b0b0855}*SharedItemsImports = 13
 		Common\Common.projitems*{19a9299f-b3c0-4ed5-95d9-94bf26a50417}*SharedItemsImports = 5
 		Common\Common.projitems*{2481e747-58e1-4858-a4f1-4d533abace8f}*SharedItemsImports = 5
+		Common\Common.projitems*{2ea651bc-21be-4aed-88c5-7463bc1a41b1}*SharedItemsImports = 5
 		Common\Common.projitems*{55aaac30-053e-44c8-9c86-87a3b90c29c1}*SharedItemsImports = 5
 		Common\Common.projitems*{56945fc6-952b-402c-add8-da083ef7f52d}*SharedItemsImports = 5
+		Common\Common.projitems*{63a1eac9-1c94-4e38-8dde-11a03178bdd6}*SharedItemsImports = 5
 		Common\Common.projitems*{6e8021b8-817d-4b47-bf75-2acbbcb3f158}*SharedItemsImports = 5
 		Common\Common.projitems*{93d485fd-4438-40d7-9725-c456159a1c72}*SharedItemsImports = 5
 		Common\Common.projitems*{9e918555-5563-40e7-bdd6-5f5e1cff0912}*SharedItemsImports = 5
