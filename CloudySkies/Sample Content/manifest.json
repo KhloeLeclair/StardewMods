@@ -1,0 +1,16 @@
+{
+	"Name": "[CS] Test Weather",
+	"Author": "Khloe Leclair",
+	"Version": "1.0.0",
+	"Description": "Test weather types for the Cloudy Skies mod.",
+	"UniqueID": "leclair.cs.test",
+	"UpdateKeys": [],
+	"Dependencies": [
+		{
+			"UniqueID": "leclair.cloudyskies"
+		}
+	],
+	"ContentPackFor": {
+		"UniqueID": "Pathoschild.ContentPatcher"
+	}
+}
