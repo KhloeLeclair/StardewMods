@@ -621,6 +621,134 @@ All other effect values are specific to their individual `Type`s, as follows:
 
 ### `Buff`
 
+The `Buff` effect will add a buff to the player. This buff will persist the
+entire time the effect is active, and may linger after the effect ends for
+a time.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>BuffId</code></td>
+<td>
+
+**Required.** The Id of the buff to apply to the player. This must be set,
+but it doesn't necessarily have to be an existing buff in `Data/Buffs`. The
+game requires an Id for tracking the buff.
+
+If this Id *does* exist in `Data/Buffs`, then most buff data will be loaded
+from that entry assuming you don't override it here.
+
+If you're making your own buff, a good idea is to include your mod's unique
+Id as a prefix.
+
+</td>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
+<td><code>DisplayName</code></td>
+<td>
+
+*Optional.* A display name for this buff. This is a
+[tokenizable string](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+</td>
+</tr>
+<tr>
+<td><code>Description</code></td>
+<td>
+
+*Optional.* A description for this buff. This is a
+[tokenizable string](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+</td>
+</tr>
+<tr>
+<td><code>IconTexture</code></td>
+<td>
+
+*Optional.* The asset name for a texture containing this buff's icon.
+
+</td>
+</tr>
+<tr>
+<td><code>IconSpriteIndex</code></td>
+<td>
+
+*Optional.* The sprite index for this buff's icon within `IconTexture`.
+
+</td>
+</tr>
+<tr>
+<td><code>GlowColor</code></td>
+<td>
+
+*Optional.* The glow color to apply to the player when they have this buff.
+
+</td>
+</tr>
+<tr><th colspan=2>Behavior</th></tr>
+<tr>
+<td><code>IsDebuff</code></td>
+<td>
+
+*Optional.* Whether this buff counts as a debuff, so its duration should be
+halved when wearing a sturdy ring.
+
+> Note: The duration is endless while the effect is active. This merely
+> affects the lingering duration.
+
+</td>
+</tr>
+<tr>
+<td><code>LingerDuration</code></td>
+<td>
+
+*Optional.* The duration, in milliseconds, for which this buff should remain
+on the player after the effect is no longer active. This can be set to `-2`
+for a buff that should last for the rest of the day.
+
+Default: `0`
+
+</td>
+</tr>
+<tr>
+<td><code>LingerMaxDuration</code></td>
+<td>
+
+*Optional.* The maximum duration the buff should remain on after the effect
+is no longer active. If this is set to a number larger than `LingerDuration`,
+then a random value between `LingerDuration` and `LingerMaxDuration` will
+be selected.
+
+</td>
+</tr>
+<tr>
+<td><code>Effects</code></td>
+<td>
+
+*Optional.* Extra attributes to apply for this buff. See the
+[1.6 migration guide](https://stardewvalleywiki.com/Modding:Migrate_to_Stardew_Valley_1.6#Custom_buffs)
+for more details on this data model.
+
+</td>
+</tr>
+<tr>
+<td><code>CustomFields</code></td>
+<td>
+
+*Optional.* The custom fields for this buff. This can be used to, for example,
+add SpaceCore skills to a buff (or debuff).
+
+> Note: Despite listing it as an example, I haven't actually added support
+> for SpaceCore skills yet. Sorry. :(
+
+</td>
+</tr>
+</table>
+
 
 ### `ModifyHealth`
 
@@ -757,6 +885,47 @@ Default: `1.0`
 
 ### `Trigger`
 
+The `Trigger` effect allows you to run trigger actions. These trigger actions
+will run for all players, not just the host, and they may run frequently so
+you'll want to be careful not to go overboard.
+
+Trigger actions can be run whenever the effect becomes active, periodically
+while the effect is active, and when the effect is removed.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>ApplyActions</code></td>
+<td>
+
+*Optional.* The actions to apply whenever this effect becomes active, as a
+list of strings.
+
+</td>
+</tr>
+<tr>
+<td><code>Actions</code></td>
+<td>
+
+*Optional.* The actions to apply whenever this effect updates, as a
+list of strings. This happens every `Rate` ticks at most.
+
+</td>
+</tr>
+<tr>
+<td><code>RemoveActions</code></td>
+<td>
+
+*Optional.* The actions to apply whenever this effect is removed, as a
+list of strings.
+
+</td>
+</tr>
+</table>
+
 
 ## Layers
 
@@ -807,12 +976,27 @@ they significantly change how the layer is drawn to the screen:
 	This blending mode just draws things on top of other things as you
 	would expect. Normally, so to speak.
 
+	Say you have a background of solid white (`255, 255, 255`). If you
+	draw over that in `Normal` mode with solid red (`255, 0, 0`) then
+	you'll end up with solid red (`255, 0, 0`). If you use 50% opacity,
+	then you'll end up with a blend between the solid red and the white
+	(`255, 128, 128`).
+
+
 * `Lighting`
 
 	This blending mode functions the same way the game handles lightmap
 	drawing. Specifically, the color blending function is called
 	'ReverseSubtract'. Rather than adding values together, you're
 	subtracting, basically.
+
+	Say you have a background of solid white (`255, 255, 255`). If you
+	draw over that in `Lighting` mode with solid red (`255, 0, 0`) then
+	you'll end up with solid cyan (`0, 255, 255`). If you use 50%
+	opacity, then you'll end up with (`192, 255, 255`) which isn't quite
+	half. But, as you can see, it's about subtracting. In this example,
+	we have `255` in the red channel and it's being subtracted from the
+	underlying white.
 
 	You'll probably just want to experiment with this. It can be great
 	for things like moving shadows from clouds in the sky.
@@ -857,8 +1041,239 @@ All other layer properties are specific to their individual `Type`s, as follows:
 
 ### `Color`
 
+A `Color` layer draws a full-screen rectangle of a color. This can be used
+to apply a tint. Here is an example of using color layers to tint the screen
+similarly to when it's raining:
+```json
+{
+	"Id": "first",
+	"Type": "Color",
+	"Mode": "Lighting",
+	"Color": "orangered",
+	"Opacity": 0.45
+},
+{
+	"Id": "second",
+	"Type": "Color",
+	"Mode": "Normal",
+	"Color": "blue",
+	"Opacity": 0.2
+}
+```
+
+![](docs/ColorSample.png)
+
+`Color` layers support the following properties:
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Color</code></td>
+<td>
+
+*Optional.* The color to draw to the screen.
+
+Default: `white`
+
+</td>
+</tr>
+<tr>
+<td><code>Opacity</code></td>
+<td>
+
+*Optional.* The opacity to draw the color with. This will handle
+pre-multiplied alpha for you, so it is recommended to use this rather
+than messing with `Color`'s alpha channel.
+
+Default: `1.0`
+
+</td>
+</tr>
+</table>
+
 
 ### `Debris`
+
+A `Debris` layer can be used to draw floating debris particles, similar
+to the leaves, flower petals, and snow flakes that appear in the base
+game's `Wind` weather type. This uses the same logic for animating and
+moving particles.
+
+> Note: `Debris` layers do not natively obey the `IgnoreDebrisWeather`
+> flag of locations. As such, you should probably add a `Condition`
+> to all of your `Debris` layers with the following query:
+> ```
+> !CS_LOCATION_IGNORE_DEBRIS_WEATHER Here
+> ```
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
+<td><code>UseSeasonal</code></td>
+<td>
+
+*Optional.* As an alternative to `Texture` and `Sources`, you can use the
+game's built-in seasonal debris sprites. If this is set to `-1` then it
+will use the current season.
+
+You can use `0` for Spring, `1` for Summer, `2` for Fall, `3` for Winter.
+There's also `999` for something special, but I'll leave that for
+you to discover.
+
+![](docs/DebrisNative.png)
+
+</td>
+</tr>
+<tr>
+<td><code>Texture</code></td>
+<td>
+
+*Optional.* The asset name of a texture to use for drawing this debris
+layer. If this isn't set, then we'll fall back to using the native
+seasonal sprites as described in `UseSeasonal`.
+
+You can either use static or animated debris. If you use animated, the
+logic for changing frames will function exactly the same as it does
+for the native sprites, so you'll want to look at those for an
+example of how to design your sprites.
+
+</td>
+</tr>
+<tr>
+<td><code>Sources</code></td>
+<td>
+
+*Optional.* A list of source rectangles to use for debris particles
+added by this debris layer. Each of these rectangles is specifically
+for the first animation frame. The subsequent frame positions will
+be calculated automatically. This assumes that the frames are laid
+out in a horizontal line.
+
+</td>
+</tr>
+<tr>
+<td><code>FlipHorizontal</code></td>
+<td>
+
+*Optional.* When set to true, this debris layer's sprites will be
+flipped horizontally when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>FlipVertical</code></td>
+<td>
+
+*Optional.* When set to true, this debris layer's sprites will be
+flipped vertically when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>Color</code></td>
+<td>
+
+*Optional.* The color to draw this debris layer's sprites with.
+
+Default: `White`
+
+</td>
+</tr>
+<tr>
+<td><code>Opacity</code></td>
+<td>
+
+*Optional.* The opacity to draw this debris layer's sprites with.
+This sets up pre-multiplied alpha with `Color`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Scale</code></td>
+<td>
+
+*Optional.* The scale this debris layer's sprites should be drawn at.
+
+Default: `2.0`
+
+</td>
+</tr>
+<tr><th colspan=2>Behavior</th></tr>
+<tr>
+<td><code>CanBlow</code></td>
+<td>
+
+*Optional.* Whether or not the particles for this debris layer can enter
+a 'blowing' state where they move upwards.
+
+Default: `false`
+
+</td>
+</tr>
+<tr>
+<td><code>MinCount</code></td>
+<td>
+
+*Optional.* The minimum number of particles to spawn for this debris layer.
+
+Default: `16`
+
+</td>
+</tr>
+<tr>
+<td><code>MaxCount</code></td>
+<td>
+
+*Optional.* The maximum number of particles to spawn for this debris layer.
+
+Default: `64`
+
+</td>
+</tr>
+<tr>
+<td><code>MinTimePerFrame</code></td>
+<td>
+
+*Optional.* The minimum amount of time a specific frame should be
+displayed, in milliseconds.
+
+Default: `76`
+
+</td>
+</tr>
+<tr>
+<td><code>MaxTimePerFrame</code></td>
+<td>
+
+*Optional.* The maximum amount of time a specific frame should be
+displayed, in milliseconds.
+
+Default: `126`
+
+</td>
+</tr>
+<tr>
+<td><code>ShouldAnimate</code></td>
+<td>
+
+*Optional.* Whether or not this debris layer should draw animated
+sprites. If this is set to false, only the first frame will ever
+be drawn.
+
+Default: `true`
+
+</td>
+</tr>
+</table>
 
 
 ### `Rain`
