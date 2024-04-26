@@ -10,7 +10,7 @@ using StardewValley;
 
 namespace Leclair.Stardew.CloudySkies.Models;
 
-internal record struct LayerCache {
+internal record struct EffectCache {
 
 	public WeatherData Data { get; set; }
 
@@ -20,9 +20,9 @@ internal record struct LayerCache {
 
 	public bool EventUp { get; set; }
 
-	public Dictionary<string, IWeatherLayer> LayersById { get; set; }
-	public Dictionary<string, BaseLayerData> DataById { get; set; }
+	public Dictionary<string, IEffect> EffectsById { get; set; }
+	public Dictionary<string, BaseEffectData> DataById { get; set; }
 
-	public List<IWeatherLayer>? Layers { get; set; }
+	public List<IEffect>? Effects { get; set; }
 
 }

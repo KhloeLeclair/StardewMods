@@ -110,6 +110,48 @@ public interface IWeatherData {
 
 	#endregion
 
+	#region Weather Totem
+
+	/// <summary>
+	/// An optional string to display to the player when this weather
+	/// condition is triggered using a custom weather totem. This is
+	/// a tokenizable string.
+	/// </summary>
+	string? TotemMessage { get; }
+
+	/// <summary>
+	/// A sound to play immediately when using the totem. The base
+	/// game's Rain Totem uses the <c>thunder</c> sound.
+	/// </summary>
+	string? TotemSound { get; }
+
+	/// <summary>
+	/// A sound to play 2 seconds after using a totem, as the animation
+	/// ends. The base game's Rain Totem uses the <c>rainsound</c> sound.
+	/// </summary>
+	string? TotemAfterSound { get; }
+
+	/// <summary>
+	/// A color to flash the screen when using a totem. The base game's
+	/// Rain Totem uses the color <c>slateblue</c>.
+	/// </summary>
+	Color? TotemScreenTint { get; }
+
+	/// <summary>
+	/// A texture to use for displaying particles when using a totem.
+	/// The base game's Rain Totem uses the texture <c>LooseSprites\Cursors</c>
+	/// </summary>
+	string? TotemParticleTexture { get; }
+
+	/// <summary>
+	/// The source rectangle of the texture to use when displaying
+	/// particles. Defaults to the entire texture. The base game's
+	/// Rain Totem uses <c>648, 1045, 52, 33</c>.
+	/// </summary>
+	Rectangle? TotemParticleSource { get; }
+
+	#endregion
+
 	#endregion
 
 	#region Behavior - Music

@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework;
 
 using Newtonsoft.Json;
 
-namespace Leclair.Stardew.CloudySkies.Models;
+namespace Leclair.Stardew.CloudySkies.LayerData;
 
 
 [DiscriminatedType("Snow")]

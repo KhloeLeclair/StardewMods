@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Leclair.Stardew.CloudySkies.Models;
 using Leclair.Stardew.CloudySkies.Serialization;
 
 using Newtonsoft.Json;
 
-namespace Leclair.Stardew.CloudySkies.Models;
+namespace Leclair.Stardew.CloudySkies.LayerData;
 
 [JsonConverter(typeof(LayerDataConverter))]
 public record BaseLayerData {

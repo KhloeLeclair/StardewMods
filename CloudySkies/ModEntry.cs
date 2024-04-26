@@ -2,32 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Reflection;
-using System.Reflection.Emit;
 
 using HarmonyLib;
 
+using Leclair.Stardew.CloudySkies.Effects;
+using Leclair.Stardew.CloudySkies.Integrations.ContentPatcher;
+using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Layers;
 using Leclair.Stardew.CloudySkies.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
-using Leclair.Stardew.Common.Types;
 using Leclair.Stardew.Common.UI;
-
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 using StardewValley;
-using StardewValley.BellsAndWhistles;
 using StardewValley.Delegates;
-using StardewValley.Extensions;
-using StardewValley.GameData.LocationContexts;
+using StardewValley.GameData.Objects;
 using StardewValley.Mods;
 using StardewValley.TokenizableStrings;
 
@@ -37,6 +31,10 @@ namespace Leclair.Stardew.CloudySkies;
 public partial class ModEntry : ModSubscriber {
 
 	public static ModEntry Instance { get; private set; } = null!;
+
+	public const string WEATHER_TOTEM_DATA = @"leclair.cloudyskies/WeatherTotem";
+
+	public const string ALLOW_TOTEM_DATA = @"leclair.cloudyskies/AllowTotem:";
 
 	public const string DATA_ASSET = @"Mods/leclair.cloudyskies/WeatherData";
 
@@ -50,7 +48,8 @@ public partial class ModEntry : ModSubscriber {
 
 #nullable enable
 
-	internal GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
+	internal GMCMIntegration<ModConfig, ModEntry>? intGMCM;
+	internal CPIntegration? intCP;
 
 	private ulong lastLayerId = 0;
 
@@ -77,6 +76,7 @@ public partial class ModEntry : ModSubscriber {
 		Patches.GameLocation_Patches.Patch(this);
 		Patches.LocationWeather_Patches.Patch(this);
 		Patches.Music_Patches.Patch(this);
+		Patches.SObject_Patches.Patch(this);
 		Patches.TV_Patches.Patch(this);
 
 		// Read Config
@@ -85,29 +85,24 @@ public partial class ModEntry : ModSubscriber {
 		// Init
 		I18n.Init(Helper.Translation);
 
+		// Register some early stuff.
+		RegisterQueries();
+
 	}
 
 	public override object? GetApi(IModInfo mod) {
 		return new ModApi(this, mod.Manifest);
 	}
 
-	public static bool LocationIgnoreDebrisWeather(string[] query, GameStateQueryContext context) {
-		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
-			return GameStateQuery.Helpers.ErrorResult(query, error);
-
-		return location?.ignoreDebrisWeather.Value ?? false;
-	}
-
 	#region Configuration
 
 	private void RegisterSettings() {
-		if (GMCMIntegration is null || !GMCMIntegration.IsLoaded)
+		if (intGMCM is null || !intGMCM.IsLoaded)
 			return;
 
-		GMCMIntegration.Register(true);
+		intGMCM.Register(true);
 
-		GMCMIntegration
+		intGMCM
 			.Add(
 				I18n.Setting_WeatherTooltip,
 				I18n.Setting_WeatherTooltip_About,
@@ -139,67 +134,10 @@ public partial class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 
-		GMCMIntegration = new(this, () => Config, ResetConfig, SaveConfig);
+		intGMCM = new(this, () => Config, ResetConfig, SaveConfig);
+		intCP = new(this);
+
 		RegisterSettings();
-
-		GameStateQuery.Register("leclair.cloudyskies_LOCATION_IGNORE_DEBRIS_WEATHER", LocationIgnoreDebrisWeather);
-
-		if (!GameStateQuery.Exists("LOCATION_IGNORE_DEBRIS_WEATHER"))
-			GameStateQuery.RegisterAlias("LOCATION_IGNORE_DEBRIS_WEATHER", "leclair.cloudyskies_LOCATION_IGNORE_DEBRIS_WEATHER");
-
-
-		Helper.ConsoleCommands.Add("cs_reload", "Force the current weather layers to re-generate.", (_, _) => {
-			UncacheLayers();
-			Log($"Invalidated layer cache.", LogLevel.Info);
-		});
-
-		Helper.ConsoleCommands.Add("cs_list", "List the available custom weather Ids.", (_, _) => {
-			LoadWeatherData();
-
-			List<string[]> table = new();
-
-			string? weather = Game1.currentLocation?.GetWeather().Weather;
-			string? tomorrow = Game1.weatherForTomorrow;
-
-			foreach(var entry in Data) {
-				int count = entry.Value.Layers is null ? 0 : entry.Value.Layers.Count;
-
-				table.Add([
-					weather == entry.Key ? "**" : "",
-					tomorrow == entry.Key ? "**" : "",
-					entry.Key,
-					TokenParser.ParseText(entry.Value.DisplayName ?? ""),
-					$"{count}"
-				]);
-			}
-
-			LogTable([
-				"Active",
-				"Tomorrow",
-				"Id",
-				"Display Name",
-				"Layer Count"
-			], table, LogLevel.Info);
-		});
-
-		Helper.ConsoleCommands.Add("cs_tomorrow", "Force tomorrow's weather to have a specific type in your current location.", (_, args) => {
-			if (!Game1.IsMasterGame) {
-				Log($"Only the host can do this.", LogLevel.Error);
-				return;
-			}
-
-			string input = string.Join(' ', args);
-			if (string.IsNullOrWhiteSpace(input)) { 
-				Log($"Invalid weather provided.", LogLevel.Error);
-				return;
-			}
-
-			Game1.currentLocation.GetWeather().WeatherForTomorrow = input;
-			if (Game1.currentLocation.GetLocationContextId() == "Default")
-				Game1.weatherForTomorrow = input;
-
-			Log($"Changed tomorrow's weather to: {input}", LogLevel.Info);
-		});
 
 	}
 
@@ -215,34 +153,9 @@ public partial class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 
-		// Gaze upon my test data in fear.
-		/*if (e.Name.IsEquivalentTo(@"Data/LocationContexts"))
-			e.Edit(editor => {
-
-				var data = editor.AsDictionary<string, LocationContextData>();
-
-				foreach(var pair in data.Data) {
-					var entry = pair.Value;
-					entry.WeatherConditions.Clear();
-
-					if (pair.Key == "Default")
-						entry.WeatherConditions.Add(new() {
-							Id = "KhloeTest",
-							Condition = "TRUE",
-							Weather = "KhloeTest"
-						});
-					else
-						entry.WeatherConditions.Add(new() {
-							Id = "KhloeOtherTest",
-							Condition = "TRUE",
-							Weather = "KhloeOtherTest"
-						});
-				}
-
-			}, AssetEditPriority.Late);*/
-
 		if (e.Name.IsEquivalentTo(DATA_ASSET))
 			e.LoadFrom(() => new Dictionary<string, WeatherData>(), priority: AssetLoadPriority.Exclusive);
+
 	}
 
 
@@ -255,6 +168,8 @@ public partial class ModEntry : ModSubscriber {
 			if (name.IsEquivalentTo(DATA_ASSET)) {
 				Log($"Invalidated our weather data.", LogLevel.Info);
 				Data = null;
+				CachedTryGetValue.ResetAllScreens();
+				CachedWeather.ResetAllScreens();
 			}
 
 			if (AssetsByName.TryGetValue(name.BaseName, out var layers))
@@ -271,6 +186,13 @@ public partial class ModEntry : ModSubscriber {
 					foreach(var layer in pair.Value.Value.Layers) {
 						if (MatchedLayers.Contains(layer.Id))
 							layer.ReloadAssets();
+					}
+			}
+			foreach (var pair in CachedEffects.GetActiveValues()) {
+				if (pair.Value.HasValue && pair.Value.Value.Effects is not null)
+					foreach (var effect in pair.Value.Value.Effects) {
+						if (MatchedLayers.Contains(effect.Id))
+							effect.ReloadAssets();
 					}
 			}
 		}
@@ -313,8 +235,30 @@ public partial class ModEntry : ModSubscriber {
 
 	}
 
+	[Subscriber]
+	private void OnUpdating(object? sender, UpdateTickingEventArgs e) {
 
-	#endregion
+		// Do not process effects when time is not passing. We need a special
+		// check for when the process is out of focus, since this event still
+		// fires in that situation. Also don't process effects in events.
+		if (!Game1.game1.IsActiveNoOverlay && Game1.options.pauseWhenOutOfFocus && Game1.multiplayerMode == 0)
+			return;
+		if (Game1.eventUp || !Game1.shouldTimePass())
+			return;
+
+		// See if we have effects. If we don't, return.
+		var effects = GetCachedWeatherEffects(Game1.player!.currentLocation, Game1.timeOfDay);
+		if (effects is null)
+			return;
+
+		foreach(var effect in effects) {
+			// Only run effects at a multiple of their Rate.
+			if (e.IsMultipleOf(effect.Rate))
+				effect.Update(Game1.currentGameTime);
+		}
+	}
+
+#endregion
 
 	#region Loading
 
@@ -344,20 +288,42 @@ public partial class ModEntry : ModSubscriber {
 		}
 	}
 
+	private readonly PerScreen<string?> CachedTryGetName = new();
+	private readonly PerScreen<WeatherData?> CachedTryGetValue = new();
 
+	/// <summary>
+	/// Try to get weather data for the weather with the provided key.
+	/// This uses an internal lookup cache between calls to improve
+	/// performance, only falling back to a dictionary lookup if both
+	/// caches aren't set to the value.
+	/// </summary>
+	/// <param name="key">The Id of the weather condition we want data for.</param>
+	/// <param name="weather">The data, if it exists.</param>
+	/// <returns>Whether or not the data exists.</returns>
 	public bool TryGetWeather(string? key, [NotNullWhen(true)] out WeatherData? weather) {
 		if (key is null) {
 			weather = null;
 			return false;
 		}
 
+		if (key == CachedTryGetName.Value) {
+			weather = CachedTryGetValue.Value;
+			return weather is not null;
+		}
+
 		if (key == CachedWeatherName.Value) {
 			weather = CachedWeather.Value;
 			return weather is not null;
 		}
-
+		
 		LoadWeatherData();
-		return Data.TryGetValue(key, out weather);
+		Log($"Relying on dictionary lookup to get weather data: {key} -- cached: {CachedTryGetName.Value} -- secondary: {CachedWeatherName.Value}", LogLevel.Debug);
+		Data.TryGetValue(key, out weather);
+
+		CachedTryGetName.Value = key;
+		CachedTryGetValue.Value = weather;
+
+		return weather is not null;
 	}
 
 	public void MarkLoadsAsset(ulong id, string path) {
@@ -406,7 +372,7 @@ public partial class ModEntry : ModSubscriber {
 	private readonly PerScreen<string?> CachedWeatherName = new();
 	private readonly PerScreen<WeatherData?> CachedWeather = new();
 	private readonly PerScreen<LayerCache?> CachedLayers = new();
-
+	private readonly PerScreen<EffectCache?> CachedEffects = new();
 
 	internal void UncacheLayers(string? weatherId = null) {
 		foreach(var entry in CachedLayers.GetActiveValues()) {
@@ -420,6 +386,121 @@ public partial class ModEntry : ModSubscriber {
 				CachedLayers.SetValueForScreen(entry.Key, thing);
 			}
 		}
+
+		foreach (var entry in CachedEffects.GetActiveValues()) {
+			string? id = CachedWeatherName.GetValueForScreen(entry.Key);
+			if (weatherId != null && id != weatherId)
+				continue;
+
+			if (entry.Value.HasValue) {
+				var thing = entry.Value.Value;
+				thing.Hour = -1;
+				CachedEffects.SetValueForScreen(entry.Key, thing);
+			}
+		}
+	}
+
+
+	internal List<IEffect>? GetCachedWeatherEffects(GameLocation? location = null, int? timeOfDay = null) {
+		var data = CachedWeather.Value;
+		location ??= Game1.player?.currentLocation;
+		if (location is null || data?.Layers is null || data.Layers.Count == 0)
+			return null;
+
+		int hour = (timeOfDay ?? Game1.timeOfDay) / 100;
+
+		EffectCache? cache = CachedEffects.Value;
+		if (cache.HasValue && cache.Value.Data == data && cache.Value.EventUp == Game1.eventUp && cache.Value.Hour == hour && cache.Value.Location == location)
+			return cache.Value.Effects;
+
+		var old_by_id = cache?.EffectsById;
+		var old_data_by_id = cache?.DataById;
+
+		Dictionary<string, IEffect> effectsById = new();
+		Dictionary<string, BaseEffectData> dataById = new();
+		List<IEffect> result = new();
+		HashSet<string> groups = new();
+
+		GameStateQueryContext ctx = new(location, Game1.player, null, null, Game1.random);
+
+		int reused = 0;
+		int instanced = 0;
+
+		foreach (var effect in data.Effects) {
+			if (effect.Group != null && groups.Contains(effect.Group))
+				continue;
+
+			if (!string.IsNullOrEmpty(effect.Condition) && !GameStateQuery.CheckConditions(effect.Condition, ctx))
+				continue;
+
+			if (effect.Group != null)
+				groups.Add(effect.Group);
+
+			IEffect instance;
+
+			// We rely upon record value equality checks.
+			if (old_by_id is not null && old_data_by_id is not null &&
+				old_by_id.TryGetValue(effect.Id, out var existing) &&
+				old_data_by_id.TryGetValue(effect.Id, out var existingData) &&
+				existingData == effect
+			) {
+				// Remove the old instance.
+				old_by_id.Remove(effect.Id);
+				instance = existing;
+				reused++;
+
+			} else
+				try {
+					// TODO: Better way of instantiating based on type.
+					if (effect is ModifyHealthEffectData healthData)
+						instance = new ModifyHealthEffect(lastLayerId, healthData);
+					else if (effect is ModifyStaminaEffectData staminaData)
+						instance = new ModifyStaminaEffect(lastLayerId, staminaData);
+					else if (effect is BuffEffectData buffData)
+						instance = new BuffEffect(this, lastLayerId, buffData);
+					else if (effect is TriggerEffectData triggerData)
+						instance = new TriggerEffect(this, lastLayerId, triggerData);
+					else
+						throw new ArgumentException($"unknown data type: {effect.Type}");
+
+					lastLayerId++;
+					instanced++;
+
+				} catch (Exception ex) {
+					Log($"Unable to instantiate weather layer '{effect.Id}': {ex}", LogLevel.Warn);
+					continue;
+				}
+
+			dataById[effect.Id] = effect;
+			effectsById[effect.Id] = instance;
+			result.Add(instance);
+		}
+
+		// Clean up the old instances that weren't used.
+		if (old_by_id is not null)
+			foreach (var effect in old_by_id.Values)
+				effect.Remove();
+
+		int skipped = data.Effects.Count - (reused + instanced);
+#if DEBUG
+		LogLevel level = LogLevel.Debug;
+#else
+		LogLevel level = LogLevel.Trace;
+#endif
+
+		Log($"Regenerated weather effects for: {Game1.player?.displayName}\n\tReused {reused} effect instances.\n\tCreated {instanced} new effect instances.\n\tSkipped {skipped} effects.", level);
+
+		CachedEffects.Value = new() { 
+			Data = data,
+			DataById = dataById,
+			EventUp = Game1.eventUp,
+			EffectsById = effectsById,
+			Location = location,
+			Hour = hour,
+			Effects = result.Count > 0 ? result : null
+		};
+
+		return result.Count > 0 ? result : null;
 	}
 
 
@@ -485,6 +566,7 @@ public partial class ModEntry : ModSubscriber {
 					else
 						throw new ArgumentException($"unknown data type: {layer.Type}");
 
+					lastLayerId++;
 					instanced++;
 
 				} catch (Exception ex) {

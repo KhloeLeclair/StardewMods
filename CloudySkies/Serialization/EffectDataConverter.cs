@@ -1,6 +1,6 @@
 using System;
 
-using Leclair.Stardew.CloudySkies.LayerData;
+using Leclair.Stardew.CloudySkies.Models;
 using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.Common.Types;
 
@@ -8,20 +8,20 @@ using Newtonsoft.Json;
 
 namespace Leclair.Stardew.CloudySkies.Serialization;
 
-public class LayerDataConverter : JsonConverter {
+public class EffectDataConverter : JsonConverter { 
 
 	private static readonly CaseInsensitiveDictionary<Type> Types = new();
 
-	private static readonly DiscriminatingConverter<BaseLayerData> Converter;
+	private static readonly DiscriminatingConverter<BaseEffectData> Converter;
 
-	static LayerDataConverter() {
+	static EffectDataConverter() {
 		Converter = new("Type", Types);
 		Converter.PopulateTypes();
 	}
 
 	public static bool RegisterType(string key, Type type) {
-		if (!type.IsAssignableFrom(typeof(BaseLayerData)))
-			throw new InvalidCastException($"{type} is not a subclass of {typeof(BaseLayerData)}");
+		if (!type.IsAssignableFrom(typeof(BaseEffectData)))
+			throw new InvalidCastException($"{type} is not a subclass of {typeof(BaseEffectData)}");
 
 		return Types.TryAdd(key, type);
 	}

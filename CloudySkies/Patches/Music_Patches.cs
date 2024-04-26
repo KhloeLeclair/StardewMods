@@ -443,6 +443,7 @@ public static class Music_Patches {
 
 					yield return new CodeInstruction(OpCodes.Call, hasMusic);
 
+					i++;
 					continue;
 				}
 			}

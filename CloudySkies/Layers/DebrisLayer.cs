@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
 
 using Microsoft.Xna.Framework;

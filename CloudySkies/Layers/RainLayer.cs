@@ -1,5 +1,6 @@
 using System;
 
+using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
 
 using Microsoft.Xna.Framework;

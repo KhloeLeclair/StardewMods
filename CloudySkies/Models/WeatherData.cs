@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.Common.Serialization.Converters;
 
 using Microsoft.Xna.Framework;
@@ -17,6 +18,19 @@ public class WeatherData : IWeatherData {
 	public string Id { get; set; } = string.Empty;
 
 	public string DisplayName { get; set; } = string.Empty;
+
+	public string? TotemMessage { get; set; }
+
+	public string? TotemSound { get; set; }
+
+	public string? TotemAfterSound { get; set; }
+
+	[JsonConverter(typeof(ColorConverter))]
+	public Color? TotemScreenTint { get; set; }
+
+	public string? TotemParticleTexture { get; set; }
+
+	public Rectangle? TotemParticleSource { get; set; }
 
 	public string? Forecast { get; set; }
 
@@ -86,7 +100,9 @@ public class WeatherData : IWeatherData {
 
 	#endregion
 
-	#region Layers
+	#region Layers and Effects
+
+	public List<BaseEffectData> Effects { get; set; } = new();
 
 	public List<BaseLayerData> Layers { get; set; } = new();
 

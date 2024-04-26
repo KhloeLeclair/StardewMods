@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CloudySkies</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <RootNamespace>Leclair.Stardew.CloudySkies</RootNamespace>
 
     <Name>Cloudy Skies</Name>
@@ -15,7 +15,9 @@
     <EnableTranslation>true</EnableTranslation>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="assets\" />
+
+    <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" />
+    
   </ItemGroup>
 
   <Import Project="..\Common\Common.projitems" Label="Shared" />
