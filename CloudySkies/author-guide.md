@@ -4,9 +4,6 @@ Well, look who blew in. Howdy, farmer! Looking to make some custom weather
 types for your mod? You've come to the right place!
 
 
-> Note: This isn't done yet! Sorry.
-
-
 ## Contents
 
 * [Getting Started](#getting-started)
@@ -569,10 +566,10 @@ weather type containing it.
 <td>
 
 **Required.** The type of effect. Valid options are:
-* `Buff`
-* `ModifyHealth`
-* `ModifyStamina`
-* `Trigger`
+* [`Buff`](#buff)
+* [`ModifyHealth`](#modifyhealth)
+* [`ModifyStamina`](#modifystamina)
+* [`Trigger`](#trigger)
 
 More types may be added in the future, or by C# mods (in the future).
 
@@ -954,11 +951,11 @@ weather type containing it.
 <td>
 
 **Required.** The type of layer. Valid options are:
-* `Color`
-* `Debris`
-* `Rain`
-* `Snow`
-* `TextureScroll`
+* [`Color`](#color)
+* [`Debris`](#debris)
+* [`Rain`](#rain)
+* [`Snow`](#snow)
+* [`TextureScroll`](#texturescroll)
 
 More types may be added in the future, or by C# mods (in the future).
 
@@ -1278,8 +1275,133 @@ Default: `true`
 
 ### `Rain`
 
+A `Rain` layer can be used to draw falling particles, similar to the rain
+effect that appears in the base game's `Rain`, `Storm`, and `GreenRain`
+weather types.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
+<td><code>Texture</code></td>
+<td>
+
+*Optional.* The asset name of a texture to use for drawing this rain layer.
+If this is not set, then this rain layer will use the game's native rain
+sprites for drawing.
+
+</td>
+</tr>
+<tr>
+<td><code>Source</code></td>
+<td>
+
+*Optional.* A source rectangle for the first frame of the rain animation
+within the provided texture. If `Texture` is not set, this is ignored and
+the source is automatically determined for the game's native rain texture.
+
+</td>
+</tr>
+<tr>
+<td><code>Frames</code></td>
+<td>
+
+*Optional.* How many frames of animation your rain texture has. This is
+ignored if `Texture` is not set.
+
+Default: `5`
+
+</td>
+</tr>
+<tr>
+<td><code>FlipHorizontal</code></td>
+<td>
+
+*Optional.* When set to true, this rain layer's sprites will be
+flipped horizontally when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>FlipVertical</code></td>
+<td>
+
+*Optional.* When set to true, this rain layer's sprites will be
+flipped vertically when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>Color</code></td>
+<td>
+
+*Optional.* The color to draw this rain layer's sprites with.
+
+Default: `White`
+
+</td>
+</tr>
+<tr>
+<td><code>Opacity</code></td>
+<td>
+
+*Optional.* The opacity to draw this rain layer's sprites with.
+This sets up pre-multiplied alpha with `Color`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Vibrancy</code></td>
+<td>
+
+*Optional.* How many times to draw this rain layer's sprites. The
+base game's Green Rain effect uses this with a value of `2`.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>Scale</code></td>
+<td>
+
+*Optional.* The scale to draw the rain particle sprites with.
+
+Default: `4.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Count</code></td>
+<td>
+
+*Optional.* How many rain particles to draw.
+
+Default: `70`
+
+</td>
+</tr>
+<tr>
+<td><code>Speed</code></td>
+<td>
+
+*Optional.* The speed this rain layer's particles should move.
+
+Default: `-16, 32`
+
+</td>
+</tr>
+</table>
+
 
 ### `Snow`
+
+
 
 
 ### `TextureScroll`
