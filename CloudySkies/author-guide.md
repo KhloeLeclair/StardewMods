@@ -1277,7 +1277,19 @@ Default: `true`
 
 A `Rain` layer can be used to draw falling particles, similar to the rain
 effect that appears in the base game's `Rain`, `Storm`, and `GreenRain`
-weather types.
+weather types. At its most basic, the rain layer replicates the game's
+normal rain particles completely:
+```json
+{
+	"Id": "first",
+	"Type": "Rain",
+}
+```
+
+![](docs/RainSample.png)
+
+> Note: For the full rain experience, you'll need to do screen tinting
+> as well.
 
 <table>
 <tr>
@@ -1376,11 +1388,14 @@ Default: `4.0`
 
 </td>
 </tr>
+<tr><th colspan=2>Behavior</th></tr>
 <tr>
 <td><code>Count</code></td>
 <td>
 
-*Optional.* How many rain particles to draw.
+*Optional.* How many rain particles to draw. This can be used to make
+the rain lighter or heavier, but you should be careful not to go too
+overboard, as drawing too many particles can cause performance issues.
 
 Default: `70`
 
