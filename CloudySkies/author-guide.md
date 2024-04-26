@@ -624,8 +624,135 @@ All other effect values are specific to their individual `Type`s, as follows:
 
 ### `ModifyHealth`
 
+The `ModifyHealth` effect will either damage or heal the player. This can be
+used to, for example, damage the player if they're caught outside in a
+particularly nasty bit of weather like acid rain, or a snowstorm, or volcanic
+heat, etc. Or maybe there's a sacred grove with special weather that heals
+the player? Anything is possible.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Amount</code></td>
+<td>
+
+**Required.** The amount to change the player's health by. Setting this to
+a negative value will damage them, and setting this to a positive value will
+heal them.
+
+Note that when damaging players, the player will get temporary invulnerability
+to further damage so you may as to increase the time between damage ticks to
+avoid effectively making them immune to other dangers on the map because of
+the weather damage.
+
+There is no such rate limitation when healing the player.
+
+</td>
+</tr>
+<tr>
+<td><code>MinValue</code></td>
+<td>
+
+*Optional.* The minimum value that the player's health can reach.
+
+> Please note that, due to the random nature of applying damage, the player's
+> health may dip under this value. If you want to use it to stop the player
+> from dying to your damage, you should set it to a higher value like `10`
+> rather than `1` to prevent an unlucky damage roll from killing them.
+
+Default: `0`
+
+</td>
+</tr>
+<tr>
+<td><code>MaxValue</code></td>
+<td>
+
+*Optional.* The maximum value that the player's health can reach when they
+are being healed. Unlike the `MinValue`, this should be perfectly reliable.
+Unfortunately, there is no way to set it based on the player's maximum
+health at this time aside from that, if this value is greater than the
+player's maximum health, it will be reduced to the player's maximum health.
+
+Default: `2147483647`
+
+</td>
+<tr>
+<td><code>Chance</code></td>
+<td>
+
+*Optional.* The chance that this effect applies on any given update. You can
+use this to make the effect only occasionally damage/heal the player. This is
+a number from `0.0` to `1.0`, where `1.0` is a 100% chance and `0.0` is a
+0% chance.
+
+Default: `1.0`
+
+</td>
+</tr>
+</table>
+
 
 ### `ModifyStamina`
+
+The `ModifyStamina` effect will either drain or fill the player's stamina. This
+can be used to, for example, make the player lose stamina while they're caught
+outside in a hostile bit of weather like extreme winds or a sand storm.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Amount</code></td>
+<td>
+
+**Required.** The amount to change the player's stamina by. Setting this to
+a negative value will drain it, and setting this to a positive value will
+fill it.
+
+</td>
+</tr>
+<tr>
+<td><code>MinValue</code></td>
+<td>
+
+*Optional.* The minimum value that the player's stamina can reach.
+
+Default: `0`
+
+</td>
+</tr>
+<tr>
+<td><code>MaxValue</code></td>
+<td>
+
+*Optional.* The maximum value that the player's stamina can reach.
+Unfortunately, there is no way to set it based on the player's maximum
+stamina at this time aside from that, if this value is greater than the
+player's maximum stamina, it will be reduced to the player's maximum stamina.
+
+Default: `2147483647`
+
+</td>
+<tr>
+<td><code>Chance</code></td>
+<td>
+
+*Optional.* The chance that this effect applies on any given update. You can
+use this to make the effect only occasionally drain/fill the player's stamina.
+This is a number from `0.0` to `1.0`, where `1.0` is a 100% chance and `0.0`
+is a 0% chance.
+
+Default: `1.0`
+
+</td>
+</tr>
+</table>
 
 
 ### `Trigger`
@@ -682,7 +809,7 @@ they significantly change how the layer is drawn to the screen:
 
 * `Lighting`
 
-    This blending mode functions the same way the game handles lightmap
+	This blending mode functions the same way the game handles lightmap
 	drawing. Specifically, the color blending function is called
 	'ReverseSubtract'. Rather than adding values together, you're
 	subtracting, basically.
