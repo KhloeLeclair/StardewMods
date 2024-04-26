@@ -178,6 +178,7 @@ the same texture, if you use `TVSource` and `IconSource`.
 </tr>
 <tr>
 <td><code>TVSource</code></td>
+<td>
 
 *Optional.* The top-left corner of the first frame of your weather type's TV
 animation. Each frame is always 13 by 13 pixels, and the frames are always
@@ -267,6 +268,7 @@ color. The base game's Rain Totem uses the color: `slateblue`
 </tr>
 <tr>
 <td><code>TotemParticleTexture</code></td>
+<td>
 
 *Optional.* The texture name of a texture to display as particles when the
 player uses a custom weather totem for this weather type. If this is not set,
