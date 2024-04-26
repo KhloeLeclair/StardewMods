@@ -317,7 +317,6 @@ public partial class ModEntry : ModSubscriber {
 		}
 		
 		LoadWeatherData();
-		Log($"Relying on dictionary lookup to get weather data: {key} -- cached: {CachedTryGetName.Value} -- secondary: {CachedWeatherName.Value}", LogLevel.Debug);
 		Data.TryGetValue(key, out weather);
 
 		CachedTryGetName.Value = key;

@@ -5,11 +5,7 @@ Released April 25th, 2024.
 
 ### Added
 * Custom weather totems are now possible!
-* Weather effects! These are effects that are applied to the
-  player while they are in a location experiencing a weather
-  condition. Currently there are effects for modifying the
-  player's health, modifying the player's stamina, applying
-  a buff to the player, and for running trigger actions.
+* Weather effects!
 * There are now Game State Queries and a Content Patcher
   token for reading the weather state. This is useful for,
   as an example, determining if it's rainy without checking
