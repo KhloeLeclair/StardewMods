@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Leclair.Stardew.Common.Serialization.Converters;
 
-[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
 public class DiscriminatedType : Attribute {
 
 	public string Key { get; }
@@ -32,15 +32,16 @@ public class DiscriminatingConverter<T> : JsonConverter where T : class {
 
 	public void PopulateTypes(Assembly[]? assemblies = null) {
 		var types =
-			from a in (assemblies ?? new[] { typeof(T).Assembly })
+			from a in (assemblies ?? [typeof(T).Assembly])
 			from t in a.GetTypes()
 			where typeof(T).IsAssignableFrom(t)
-			let attrs = t.GetCustomAttributes(typeof(DiscriminatedType), false)
+			let attrs = t.GetCustomAttributes<DiscriminatedType>(false).ToArray()
 			where attrs != null && attrs.Length > 0
-			select new { Type = t, Attr = attrs[0] as DiscriminatedType };
+			select new { Type = t, Attributes = attrs };
 
-		foreach(var entry in types) {
-			Types.TryAdd(entry.Attr.Key, entry.Type);
+		foreach (var entry in types) {
+			foreach (var attr in entry.Attributes)
+				Types.TryAdd(attr.Key, entry.Type);
 		}
 	}
 

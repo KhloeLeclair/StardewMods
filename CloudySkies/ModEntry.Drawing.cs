@@ -102,7 +102,7 @@ public partial class ModEntry {
 		bool old_lighting = false;
 
 		// Start rendering with a Begin
-		Game1.spriteBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.PointClamp);
+		Game1.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 
 		// Now, we technically need to run the drawing hook.
 		if (hooks.OnRendering(StardewValley.Mods.RenderSteps.World_Weather, Game1.spriteBatch, time, targetScreen) && Game1.currentLocation!.IsOutdoors) {
@@ -116,7 +116,7 @@ public partial class ModEntry {
 						old_lighting = lighting;
 						Game1.spriteBatch.End();
 						Game1.spriteBatch.Begin(
-							SpriteSortMode.Texture,
+							SpriteSortMode.Deferred,
 							lighting ? LightingBlend : BlendState.AlphaBlend,
 							SamplerState.PointClamp
 						);

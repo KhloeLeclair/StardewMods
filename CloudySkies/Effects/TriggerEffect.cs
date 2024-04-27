@@ -1,24 +1,24 @@
 using System;
+using System.Collections.Generic;
 
-using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization.Converters;
+using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
-using StardewValley;
-using System.Collections.Generic;
+
 using StardewValley.Triggers;
-using System.Linq;
 
 namespace Leclair.Stardew.CloudySkies.Effects;
 
 [DiscriminatedType("Trigger")]
 public record TriggerEffectData : BaseEffectData {
 
-	public List<string>? ApplyActions { get; set; }
+	public ValueEqualityList<string>? ApplyActions { get; set; }
 
-	public List<string>? Actions { get; set; }
+	public ValueEqualityList<string>? Actions { get; set; }
 
-	public List<string>? RemoveActions { get; set; }
+	public ValueEqualityList<string>? RemoveActions { get; set; }
 
 }
 
@@ -38,7 +38,7 @@ public class TriggerEffect : IEffect {
 	private bool isApplied = false;
 	private bool isRemoved = true;
 
-	private static string[]? LoadListToArray(List<string>? input) {
+	private static string[]? ToArrayOrNull(List<string>? input) {
 		if (input is null || input.Count == 0)
 			return null;
 		return input.ToArray();
@@ -50,12 +50,12 @@ public class TriggerEffect : IEffect {
 		_Rate = data.Rate;
 		Rate = data.Rate;
 
-		ApplyActions = LoadListToArray(data.ApplyActions);
-		Actions = LoadListToArray(data.Actions);
-		RemoveActions = LoadListToArray(data.RemoveActions);
+		ApplyActions = ToArrayOrNull(data.ApplyActions);
+		Actions = ToArrayOrNull(data.Actions);
+		RemoveActions = ToArrayOrNull(data.RemoveActions);
 
 		if (Actions is not null)
-			foreach(string action in Actions) {
+			foreach (string action in Actions) {
 				if (action.Contains("If ") && action.Contains("##")) {
 					Mod.Log($"Weather effect '{data.Id}' action contains 'If'. You should not use game state queries in Actions for performance reasons.", StardewModdingAPI.LogLevel.Warn);
 					break;
@@ -70,7 +70,7 @@ public class TriggerEffect : IEffect {
 		if (!isApplied) {
 			isApplied = true;
 			if (ApplyActions != null)
-				foreach(string action in ApplyActions)
+				foreach (string action in ApplyActions)
 					if (!TriggerActionManager.TryRunAction(action, out string? error, out Exception? ex)) {
 						Mod.Log($"Error running trigger for weather effect.\nAction: {action}\nError: {error}", StardewModdingAPI.LogLevel.Error, ex);
 						break;
@@ -101,7 +101,7 @@ public class TriggerEffect : IEffect {
 		isRemoved = true;
 		Rate = _Rate;
 
-		foreach(string action in RemoveActions)
+		foreach (string action in RemoveActions)
 			if (!TriggerActionManager.TryRunAction(action, out string? error, out Exception? ex)) {
 				Mod.Log($"Error running trigger for weather effect.\nAction: {action}\nError: {error}", StardewModdingAPI.LogLevel.Error, ex);
 				break;

@@ -1,18 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using HarmonyLib;
 
 using Leclair.Stardew.Common;
 
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TokenizableStrings;
 
@@ -31,7 +25,7 @@ public static class TV_Patches {
 				.CreateSetter<TV, TemporaryAnimatedSprite>();
 
 			mod.Harmony.Patch(
-				original: AccessTools.Method(typeof(TV), "getWeatherForecast"),
+				original: AccessTools.Method(typeof(TV), "getWeatherForecast", [typeof(string)]),
 				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(GetWeatherForecast__Postfix))
 			);
 
@@ -41,7 +35,7 @@ public static class TV_Patches {
 			);
 
 			mod.Harmony.Patch(
-				original: AccessTools.Method(typeof(TV), "setWeatherOverlay"),
+				original: AccessTools.Method(typeof(TV), "setWeatherOverlay", [typeof(string)]),
 				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(SetWeatherOverlay__Postfix))
 			);
 
@@ -51,18 +45,10 @@ public static class TV_Patches {
 
 	}
 
-	private static void SetWeatherOverlay__Postfix(TV __instance, bool island = false) {
+	private static void SetWeatherOverlay__Postfix(TV __instance, string weatherId) {
 
 		try {
-			WorldDate tomorrow = new(Game1.Date);
-			tomorrow.TotalDays++;
-
-			string weather = Game1.IsMasterGame
-				? Game1.weatherForTomorrow : Game1.netWorldState.Value.WeatherForTomorrow;
-
-			weather = Game1.getWeatherModificationsForDate(tomorrow, weather);
-
-			if (Mod is not null && Mod.TryGetWeather(weather, out var weatherData)) {
+			if (Mod is not null && Mod.TryGetWeather(weatherId, out var weatherData)) {
 
 				TemporaryAnimatedSprite sprite;
 
@@ -114,21 +100,19 @@ public static class TV_Patches {
 			WorldDate tomorrow = new(Game1.Date);
 			tomorrow.TotalDays++;
 
-			string weather = Game1.IsMasterGame
-				? Game1.weatherForTomorrow : Game1.netWorldState.Value.WeatherForTomorrow;
-
+			string weather = Game1.netWorldState.Value.GetWeatherForLocation("Island").WeatherForTomorrow;
 			weather = Game1.getWeatherModificationsForDate(tomorrow, weather);
 
 			if (Mod is not null && Mod.TryGetWeather(weather, out var weatherData)) {
 				if (weatherData.ForecastByContext is null || !weatherData.ForecastByContext.TryGetValue("Island", out string? val))
 					val = weatherData.Forecast;
 
-				__result = val;
+				string? result = val;
 
-				if (string.IsNullOrEmpty(__result))
+				if (string.IsNullOrEmpty(result))
 					__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV.cs.13164");
 				else
-					__result = TokenParser.ParseText(__result);
+					__result = TokenParser.ParseText(result);
 
 				__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV_IslandWeatherIntro") + __result;
 
@@ -140,26 +124,18 @@ public static class TV_Patches {
 
 	}
 
-	private static void GetWeatherForecast__Postfix(TV __instance, ref string __result) {
+	private static void GetWeatherForecast__Postfix(TV __instance, string weatherId, ref string __result) {
 
 		try {
-			WorldDate tomorrow = new(Game1.Date);
-			tomorrow.TotalDays++;
-
-			string weather = Game1.IsMasterGame
-				? Game1.weatherForTomorrow : Game1.netWorldState.Value.WeatherForTomorrow;
-
-			weather = Game1.getWeatherModificationsForDate(tomorrow, weather);
-
-			if (Mod is not null && Mod.TryGetWeather(weather, out var weatherData)) {
-				__result = weatherData.Forecast;
-				if (string.IsNullOrEmpty(__result))
+			if (Mod is not null && Mod.TryGetWeather(weatherId, out var weatherData)) {
+				string? result = weatherData.Forecast;
+				if (string.IsNullOrEmpty(result))
 					__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV.cs.13164");
 				else
-					__result = TokenParser.ParseText(__result);
+					__result = TokenParser.ParseText(result);
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Mod?.Log($"Error getting weather forecast: {ex}", StardewModdingAPI.LogLevel.Error);
 		}
 

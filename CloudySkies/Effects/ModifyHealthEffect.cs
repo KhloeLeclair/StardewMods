@@ -1,9 +1,10 @@
 using System;
 
-using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization.Converters;
 
 using Microsoft.Xna.Framework;
+
 using StardewValley;
 
 namespace Leclair.Stardew.CloudySkies.Effects;
@@ -46,7 +47,7 @@ public class ModifyHealthEffect : IEffect {
 	}
 
 	public void Remove() {
-		
+
 	}
 
 	public void Update(GameTime time) {

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
@@ -9,7 +8,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.Locations;
 
 namespace Leclair.Stardew.CloudySkies.Layers;
 
@@ -79,7 +77,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 
 				var source_list = new List<Rectangle>();
 
-				foreach(var entry in Game1.objectData.Values) {
+				foreach (var entry in Game1.objectData.Values) {
 					if (entry.Texture is null || entry.Texture == Game1.objectSpriteSheetName)
 						source_list.Add(Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, entry.SpriteIndex, 16, 16));
 				}
@@ -119,7 +117,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 		int width = 0;
 		int height = 0;
 
-		foreach(Rectangle source in Sources) {
+		foreach (Rectangle source in Sources) {
 			if (source.Width > width) width = source.Width;
 			if (source.Height > height) height = source.Height;
 		}
@@ -140,7 +138,9 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 				Game1.random.Next(1, 4) * 16,
 				Game1.random.Next(data.MinTimePerFrame, data.MaxTimePerFrame),
 				should_animate
-			));
+			) {
+				CurrentFrame = should_animate ? Game1.random.Next(9) : 0
+			});
 		}
 
 	}
@@ -190,7 +190,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 		if (IsDisposed)
 			return;
 
-		foreach(var debris in Debris) {
+		foreach (var debris in Debris) {
 			debris.Position = new Vector2(Game1.random.Next(0, Game1.viewport.Width), Game1.random.Next(0, Game1.viewport.Height));
 			debris.ClampToViewport();
 		}
@@ -200,7 +200,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 		if (IsDisposed)
 			return;
 
-		foreach(var debris in Debris) {
+		foreach (var debris in Debris) {
 			debris.Position.X -= offsetX;
 			debris.Position.Y -= offsetY;
 
@@ -213,7 +213,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 			return;
 
 		// First, update the wind.
-		if (! HasUpdatedThisFrame) {
+		if (!HasUpdatedThisFrame) {
 			HasUpdatedThisFrame = true;
 
 			if (Game1.currentLocation.GetSeason() == Season.Fall) {

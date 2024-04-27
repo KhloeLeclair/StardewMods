@@ -42,7 +42,7 @@ public class CPIntegration : BaseAPIIntegration<IContentPatcherAPI, ModEntry> {
 			if (weather.IsSnowing)
 				flags.Add("Snowing");
 			if (weather.IsLightning)
-				flags.Add("Lighting");
+				flags.Add("Lightning");
 			if (weather.IsDebrisWeather)
 				flags.Add("Debris");
 			if (weather.IsGreenRain)

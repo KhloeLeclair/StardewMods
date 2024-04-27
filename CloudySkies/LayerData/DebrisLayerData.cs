@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Leclair.Stardew.Common.Serialization.Converters;
+using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
 
@@ -17,7 +12,7 @@ public record DebrisLayerData : BaseLayerData {
 
 	public string? Texture { get; set; }
 
-	public List<Rectangle>? Sources { get; set; }
+	public ValueEqualityList<Rectangle>? Sources { get; set; }
 
 	public int UseSeasonal { get; set; } = -1;
 

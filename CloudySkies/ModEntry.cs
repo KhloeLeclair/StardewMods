@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using HarmonyLib;
@@ -21,9 +20,7 @@ using StardewModdingAPI.Utilities;
 
 using StardewValley;
 using StardewValley.Delegates;
-using StardewValley.GameData.Objects;
 using StardewValley.Mods;
-using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies;
 
@@ -164,7 +161,7 @@ public partial class ModEntry : ModSubscriber {
 
 		HashSet<ulong> MatchedLayers = new();
 
-		foreach(var name in e.Names) {
+		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(DATA_ASSET)) {
 				Log($"Invalidated our weather data.", LogLevel.Info);
 				Data = null;
@@ -181,9 +178,9 @@ public partial class ModEntry : ModSubscriber {
 		// for a better developer experience.
 
 		if (Data is not null && MatchedLayers.Count > 0) {
-			foreach(var pair in CachedLayers.GetActiveValues()) { 
+			foreach (var pair in CachedLayers.GetActiveValues()) {
 				if (pair.Value.HasValue && pair.Value.Value.Layers is not null)
-					foreach(var layer in pair.Value.Value.Layers) {
+					foreach (var layer in pair.Value.Value.Layers) {
 						if (MatchedLayers.Contains(layer.Id))
 							layer.ReloadAssets();
 					}
@@ -251,14 +248,14 @@ public partial class ModEntry : ModSubscriber {
 		if (effects is null)
 			return;
 
-		foreach(var effect in effects) {
+		foreach (var effect in effects) {
 			// Only run effects at a multiple of their Rate.
 			if (e.IsMultipleOf(effect.Rate))
 				effect.Update(Game1.currentGameTime);
 		}
 	}
 
-#endregion
+	#endregion
 
 	#region Loading
 
@@ -278,7 +275,7 @@ public partial class ModEntry : ModSubscriber {
 				int i = 0;
 
 				foreach (var layer in entry.Value.Layers) {
-					if (string.IsNullOrEmpty(layer.Id) || ! seen_ids.Add(layer.Id)) {
+					if (string.IsNullOrEmpty(layer.Id) || !seen_ids.Add(layer.Id)) {
 						layer.Id = $"{i}#{layer.Type}";
 						seen_ids.Add(layer.Id);
 					}
@@ -315,7 +312,7 @@ public partial class ModEntry : ModSubscriber {
 			weather = CachedWeather.Value;
 			return weather is not null;
 		}
-		
+
 		LoadWeatherData();
 		Data.TryGetValue(key, out weather);
 
@@ -348,7 +345,7 @@ public partial class ModEntry : ModSubscriber {
 
 		AssetsByLayer.Remove(id);
 
-		foreach(string path in layerAssets) {
+		foreach (string path in layerAssets) {
 			if (AssetsByName.TryGetValue(path, out var assetLayers) && assetLayers.Remove(id)) {
 				if (assetLayers.Count == 0)
 					AssetsByName.Remove(path);
@@ -357,7 +354,7 @@ public partial class ModEntry : ModSubscriber {
 	}
 
 	public void RemoveLoadsAsset(ulong id, string path) {
-		if (!AssetsByLayer.TryGetValue(id, out var layerAssets) || ! layerAssets.Remove(path))
+		if (!AssetsByLayer.TryGetValue(id, out var layerAssets) || !layerAssets.Remove(path))
 			return;
 
 		if (AssetsByName.TryGetValue(path, out var assetLayers))
@@ -374,7 +371,7 @@ public partial class ModEntry : ModSubscriber {
 	private readonly PerScreen<EffectCache?> CachedEffects = new();
 
 	internal void UncacheLayers(string? weatherId = null) {
-		foreach(var entry in CachedLayers.GetActiveValues()) {
+		foreach (var entry in CachedLayers.GetActiveValues()) {
 			string? id = CachedWeatherName.GetValueForScreen(entry.Key);
 			if (weatherId != null && id != weatherId)
 				continue;
@@ -489,7 +486,7 @@ public partial class ModEntry : ModSubscriber {
 
 		Log($"Regenerated weather effects for: {Game1.player?.displayName}\n\tReused {reused} effect instances.\n\tCreated {instanced} new effect instances.\n\tSkipped {skipped} effects.", level);
 
-		CachedEffects.Value = new() { 
+		CachedEffects.Value = new() {
 			Data = data,
 			DataById = dataById,
 			EventUp = Game1.eventUp,
@@ -528,7 +525,7 @@ public partial class ModEntry : ModSubscriber {
 		int reused = 0;
 		int instanced = 0;
 
-		foreach(var layer in data.Layers) {
+		foreach (var layer in data.Layers) {
 			if (layer.Group != null && groups.Contains(layer.Group))
 				continue;
 
@@ -554,12 +551,10 @@ public partial class ModEntry : ModSubscriber {
 					// TODO: Better way of instantiating based on type.
 					if (layer is ColorLayerData colorData)
 						instance = new ColorLayer(lastLayerId, colorData);
-					else if (layer is SnowLayerData snowData)
-						instance = new SnowLayer(this, lastLayerId, snowData);
+					else if (layer is TextureScrollLayerData texData)
+						instance = new TextureScrollLayer(this, lastLayerId, texData);
 					else if (layer is RainLayerData rainData)
 						instance = new RainLayer(this, lastLayerId, rainData);
-					else if (layer is TextureScrollLayerData texScrollData)
-						instance = new TextureScrollLayer(this, lastLayerId, texScrollData);
 					else if (layer is DebrisLayerData debrisData)
 						instance = new DebrisLayer(this, lastLayerId, debrisData);
 					else
@@ -625,6 +620,6 @@ public partial class ModEntry : ModSubscriber {
 		return result;
 	}
 
-#endregion
+	#endregion
 
 }

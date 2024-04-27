@@ -19,8 +19,7 @@ types for your mod? You've come to the right place!
   * [Color](#color)
   * [Debris](#debris)
   * [Rain](#rain)
-  * [Snow](#snow)
-  * [Texture Scroll](#texturescroll)
+  * [Snow / Texture Scroll](#snow-texturescroll)
 * [How Do I Make My Weather Happen?](#how-do-i-make-my-weather-happen)
   * [Custom Weather Totems](#custom-weather-totems)
 * [Commands](#commands)
@@ -954,8 +953,8 @@ weather type containing it.
 * [`Color`](#color)
 * [`Debris`](#debris)
 * [`Rain`](#rain)
-* [`Snow`](#snow)
-* [`TextureScroll`](#texturescroll)
+* [`Snow`](#snow-texturescroll)
+* [`TextureScroll`](#snow-texturescroll)
 
 More types may be added in the future, or by C# mods (in the future).
 
@@ -1291,6 +1290,13 @@ normal rain particles completely:
 > Note: For the full rain experience, you'll need to do screen tinting
 > as well.
 
+> Note: `Rain` layers do not automatically stop working during events,
+> as the base game's rain effect does. If you want to make sure your
+> rain does not appear during an event, you should add a `Condition` like:
+> ```
+> !IS_EVENT
+> ```
+
 <table>
 <tr>
 <th>Field</th>
@@ -1414,12 +1420,152 @@ Default: `-16, 32`
 </table>
 
 
-### `Snow`
+### `Snow` / `TextureScroll`
 
+A `Snow` or `TextureScroll` layer can be used to draw an animated texture
+in a tightly packed grid. This is used by the base game for rendering snow
+during the `Snow` weather type. At its most basic, this layer replicates
+the game's normal snow rendering exactly:
+```json
+{
+	"Id": "first",
+	"Type": "Snow"
+}
+```
+![](docs/SnowSample.png)
 
+But you can override this behavior by giving it your own texture. Using
+`Snow` or `TextureScroll` changes the default behavior slightly, with
+`ViewSpeed` having a value for `Snow` and not `TextureScroll`. Additionally,
+when using `Snow` your layer's opacity will be multiplifed by the user's
+snow transparency setting.
 
+<table>
+<tr>
+<th>Field</th>
+<th>Description>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
+<td><code>Texture</code></td>
+<td>
 
-### `TextureScroll`
+**Required/Optional.** The asset name of a texture to use for drawing this
+layer. This must be set for `TextureScroll`. If this is not set, and the
+type is `Snow`, then this layer will use the game's native snow
+sprites for drawing.
+
+</td>
+</tr>
+<tr>
+<td><code>Source</code></td>
+<td>
+
+*Optional.* A source rectangle for the first frame of the animation
+within the provided texture. If `Texture` is not set, this is ignored and
+the source is automatically determined for the game's native snow texture.
+
+</td>
+</tr>
+<tr>
+<td><code>Frames</code></td>
+<td>
+
+*Optional.* How many frames of animation your texture has. This is
+ignored if `Texture` is not set.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>TimePerFrame</code></td>
+<td>
+
+*Optional.* How long each frame should be displayed, in milliseconds.
+
+Default: `75`
+
+</td>
+</tr>
+<tr>
+<td><code>FlipHorizontal</code></td>
+<td>
+
+*Optional.* When set to true, this layer's sprites will be
+flipped horizontally when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>FlipVertical</code></td>
+<td>
+
+*Optional.* When set to true, this layer's sprites will be
+flipped vertically when drawn.
+
+</td>
+</tr>
+<tr>
+<td><code>Color</code></td>
+<td>
+
+*Optional.* The color to draw this layer's sprites with.
+
+Default: `White`
+
+</td>
+</tr>
+<tr>
+<td><code>Opacity</code></td>
+<td>
+
+*Optional.* The opacity to draw this layer's sprites with.
+This sets up pre-multiplied alpha with `Color`.
+
+> Note: When drawing a `Snow` layer, we also multiply by the user's
+> snow transparency setting.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Scale</code></td>
+<td>
+
+*Optional.* The scale to draw this layer's texture with.
+
+Default: `4.0`
+
+</td>
+</tr>
+<tr><th colspan=2>Behavior</th></tr>
+<tr>
+<td><code>Speed</code></td>
+<td>
+
+*Optional.* The speed this layer's position should change. By
+default, these layers don't move at all.
+
+Default: `0, 0`
+
+</td>
+</tr>
+<tr>
+<td><code>ViewSpeed</code></td>
+<td>
+
+*Optional.* The speed this layer's position should change relative
+to the movement of the viewport. A value of `-1, -1` means the
+position changes the exact opposite amount as the viewport, effectively
+locking the texture in place against the world.
+
+Default: `-1, -1`
+
+</td>
+</tr>
+</table>
 
 
 ## How Do I Make My Weather Happen?

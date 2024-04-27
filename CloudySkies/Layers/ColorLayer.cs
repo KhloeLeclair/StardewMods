@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
@@ -29,24 +25,23 @@ public class ColorLayer : IWeatherLayer {
 		DrawType = data.Mode;
 
 		Color = data.Color ?? Color.White;
-		Opacity = data.Opacity;
-
+		Opacity = Math.Clamp(data.Opacity, 0f, 1f);
 	}
 
 	public void ReloadAssets() {
-		
+
 	}
 
 	public void Resize(Point newSize, Point oldSize) {
-		
+
 	}
 
 	public void MoveWithViewport(int offsetX, int offsetY) {
-		
+
 	}
 
 	public void Update(GameTime time) {
-		
+
 	}
 
 	public void Draw(SpriteBatch batch, GameTime time, RenderTarget2D targetScreen) {
@@ -54,7 +49,12 @@ public class ColorLayer : IWeatherLayer {
 		batch.Draw(
 			Game1.fadeToBlackRect,
 			batch.GraphicsDevice.Viewport.Bounds,
-			Color * Opacity
+			Game1.fadeToBlackRect.Bounds,
+			Color * Opacity,
+			0f,
+			Vector2.Zero,
+			SpriteEffects.None,
+			1f
 		);
 
 	}

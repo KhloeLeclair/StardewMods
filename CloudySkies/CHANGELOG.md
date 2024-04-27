@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.2.0
+Released April 26th, 2024.
+
+### Changed
+* The `Buff` effect now has `CustomFields`, though they haven't been
+  hooked up to anything yet. (SpaceCore Skill support coming soon.)
+* Merge `Snow` and `TextureScroll` into a single layer type.
+
+### Fixed
+* Layers did not have the correct sprite sorting applied.
+* Typo in the Content Patcher token. `Lighting` instead of `Lightning`.
+* Some Harmony patches not working on 1.6.6. They have been updated
+  to hopefully be more robust against game changes.
+* When invalidating the icon for a `Buff` texture, the buff's
+  texture was not being updated correctly.
+* The equality comparisons for some layer types were not working as
+  expected, causing layers to be recreated unnecessarily.
+
+### API
+* We have a proper author's guide now!
+
+
 ## 1.1.0
 Released April 25th, 2024.
 

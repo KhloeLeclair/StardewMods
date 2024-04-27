@@ -1,13 +1,16 @@
 using System;
 
-using Leclair.Stardew.Common.Serialization.Converters;
-
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization.Converters;
+using Leclair.Stardew.Common.Types;
+
 using Microsoft.Xna.Framework;
-using StardewValley;
 using Microsoft.Xna.Framework.Graphics;
-using StardewValley.Buffs;
+
 using Newtonsoft.Json;
+
+using StardewValley;
+using StardewValley.Buffs;
 using StardewValley.GameData.Buffs;
 
 namespace Leclair.Stardew.CloudySkies.Effects;
@@ -17,22 +20,26 @@ public record BuffEffectData : BaseEffectData {
 
 	public string? BuffId { get; set; }
 
+	public string? DisplayName { get; set; }
+
+	public string? Description { get; set; }
+
 	public string? IconTexture { get; set; }
 
 	public int IconSpriteIndex { get; set; } = -1;
 
-	public bool? IsDebuff { get; set; }
-
 	[JsonConverter(typeof(ColorConverter))]
 	public Color? GlowColor { get; set; }
 
+	public bool? IsDebuff { get; set; }
+
 	public int LingerDuration { get; set; } = 0;
+
+	public int LingerMaxDuration { get; set; } = 0;
 
 	public BuffAttributesData? Effects { get; set; }
 
-	public string? DisplayName { get; set; }
-
-	public string? Description { get; set; }
+	public ValueEqualityDictionary<string, string>? CustomFields { get; set; }
 
 }
 
@@ -55,12 +62,16 @@ public class BuffEffect : IEffect, IDisposable {
 	private readonly Color? GlowColor;
 
 	private readonly int LingerDuration;
+	private readonly int LingerMaxDuration;
 
 	private readonly string? IconTexture;
 	private readonly int IconSpriteIndex;
 	private Texture2D? Texture;
 
+	private readonly ValueEqualityDictionary<string, string>? CustomFields;
+
 	private bool IsDisposed;
+	private Buff? Buff;
 
 	#region Life Cycle
 
@@ -77,14 +88,16 @@ public class BuffEffect : IEffect, IDisposable {
 		DisplayName = data.DisplayName;
 		Description = data.Description;
 		LingerDuration = data.LingerDuration;
+		LingerMaxDuration = data.LingerMaxDuration;
 		IconTexture = data.IconTexture;
 		IconSpriteIndex = data.IconSpriteIndex;
 		GlowColor = data.GlowColor;
 		IsDebuff = data.IsDebuff;
+		CustomFields = data.CustomFields;
 
 		Effects = new BuffEffects(data.Effects);
 
-		if (IconTexture != null) { 
+		if (IconTexture != null) {
 			Texture = Mod.Helper.GameContent.Load<Texture2D>(IconTexture);
 			Mod.MarkLoadsAsset(Id, IconTexture);
 		}
@@ -93,6 +106,7 @@ public class BuffEffect : IEffect, IDisposable {
 	protected virtual void Dispose(bool disposing) {
 		if (!IsDisposed) {
 
+			Buff = null;
 			Texture = null;
 			Mod.RemoveLoadsAsset(Id);
 
@@ -109,8 +123,12 @@ public class BuffEffect : IEffect, IDisposable {
 	#endregion
 
 	public void ReloadAssets() {
-		if (IconTexture != null)
+		if (IconTexture != null) {
 			Texture = Mod.Helper.GameContent.Load<Texture2D>(IconTexture);
+
+			if (Buff != null)
+				Buff.iconTexture = Texture;
+		}
 	}
 
 	public void Remove() {
@@ -123,20 +141,22 @@ public class BuffEffect : IEffect, IDisposable {
 			return;
 		}
 
-		if (Game1.player.buffs.AppliedBuffs.TryGetValue(BuffId, out var buff))
-			buff.millisecondsDuration = LingerDuration;
+		if (Game1.player.buffs.AppliedBuffs.TryGetValue(BuffId, out var buff)) {
+			int duration = LingerDuration;
+			if (duration != -2 && LingerMaxDuration > duration)
+				duration = Game1.random.Next(duration, LingerMaxDuration);
+
+			buff.millisecondsDuration = duration;
+		}
 	}
 
 	public void Update(GameTime time) {
-		if (BuffId is null)
-			return;
-
 		if (Game1.player.buffs.AppliedBuffs.TryGetValue(BuffId, out var buff)) {
 			buff.millisecondsDuration = Buff.ENDLESS;
 			return;
 		}
 
-		buff = new Buff(
+		Buff = new Buff(
 			BuffId,
 			null,
 			null,
@@ -149,10 +169,12 @@ public class BuffEffect : IEffect, IDisposable {
 			Description
 		);
 
-		if (GlowColor.HasValue)
-			buff.glow = GlowColor.Value;
+		// TODO: SpaceCore-ize the Buff
 
-		Game1.player.applyBuff(buff);
+		if (GlowColor.HasValue)
+			Buff.glow = GlowColor.Value;
+
+		Game1.player.applyBuff(Buff);
 
 	}
 

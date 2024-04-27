@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CloudySkies</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <RootNamespace>Leclair.Stardew.CloudySkies</RootNamespace>
 
     <Name>Cloudy Skies</Name>
@@ -11,6 +11,8 @@
     <Description>A framework mod for adding custom weather types to the game via content packs!</Description>
     <UpdateKeys>Nexus:23135</UpdateKeys>
 
+    <MinimumGameVersion>1.6.6</MinimumGameVersion>
+    
     <EnableHarmony>true</EnableHarmony>
     <EnableTranslation>true</EnableTranslation>
   </PropertyGroup>
