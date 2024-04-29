@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization;
 using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.Common.Types;
 
@@ -16,7 +18,7 @@ using StardewValley.GameData.Buffs;
 namespace Leclair.Stardew.CloudySkies.Effects;
 
 [DiscriminatedType("Buff")]
-public record BuffEffectData : BaseEffectData {
+public record BuffEffectData : BaseEffectData, IBuffEffectData {
 
 	public string? BuffId { get; set; }
 
@@ -39,7 +41,8 @@ public record BuffEffectData : BaseEffectData {
 
 	public BuffAttributesData? Effects { get; set; }
 
-	public ValueEqualityDictionary<string, string>? CustomFields { get; set; }
+	[JsonConverter(typeof(AbstractConverter<ValueEqualityDictionary<string, string>, Dictionary<string, string>>))]
+	public Dictionary<string, string> CustomFields { get; set; } = new ValueEqualityDictionary<string, string>();
 
 }
 
@@ -68,7 +71,7 @@ public class BuffEffect : IEffect, IDisposable {
 	private readonly int IconSpriteIndex;
 	private Texture2D? Texture;
 
-	private readonly ValueEqualityDictionary<string, string>? CustomFields;
+	private readonly Dictionary<string, string>? CustomFields;
 
 	private bool IsDisposed;
 	private Buff? Buff;

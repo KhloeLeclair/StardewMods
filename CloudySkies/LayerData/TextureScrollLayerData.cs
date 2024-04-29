@@ -9,7 +9,18 @@ namespace Leclair.Stardew.CloudySkies.LayerData;
 
 [DiscriminatedType("Snow")]
 [DiscriminatedType("TextureScroll")]
-public record TextureScrollLayerData : BaseLayerData {
+public record TextureScrollLayerData : BaseLayerData, ITextureScrollLayerData {
+
+	[JsonIgnore]
+	public bool IsSnow {
+		get => Type == "Snow";
+		set {
+			if (value)
+				Type = "Snow";
+			else
+				Type = "TextureScroll";
+		}
+	}
 
 	public string? Texture { get; set; }
 

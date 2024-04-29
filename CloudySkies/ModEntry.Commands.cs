@@ -1,15 +1,13 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 using Leclair.Stardew.Common.Events;
 
-using StardewValley;
 using StardewModdingAPI;
-using StardewValley.Internal;
-using StardewValley.TokenizableStrings;
+
+using StardewValley;
 using StardewValley.Network;
-using System.Linq;
-using Microsoft.Xna.Framework.Input;
-using System.Text;
 
 namespace Leclair.Stardew.CloudySkies;
 
@@ -17,7 +15,7 @@ public partial class ModEntry {
 
 	[ConsoleCommand("cs_reload", "Force the current weather layers and effects to be recreated.")]
 	public void ReloadCommand(string name, string[] args) {
-		UncacheLayers();
+		UncacheLayers(null, true);
 		Log($"Invalidated weather cache.", LogLevel.Info);
 	}
 
@@ -66,7 +64,7 @@ public partial class ModEntry {
 
 			table.Add([
 				entry.Key,
-				TokenParser.ParseText(entry.Value.DisplayName ?? ""),
+				TokenizeText(entry.Value.DisplayName ?? ""),
 				$"{layerCount}",
 				$"{effectCount}",
 				string.Join(", ", contextWeather.Where(x => x.Value.Weather == entry.Key).Select(x => x.Key)),
@@ -96,7 +94,7 @@ public partial class ModEntry {
 			return;
 		}
 
-		if (!Context.IsMainPlayer) { 
+		if (!Context.IsMainPlayer) {
 			Log($"Only the host can do this.", LogLevel.Error);
 			return;
 		}

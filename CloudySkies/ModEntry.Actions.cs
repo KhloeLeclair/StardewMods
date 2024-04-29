@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -129,7 +127,7 @@ public partial class ModEntry {
 		if (applied) {
 			string message;
 			if (weatherData != null && !string.IsNullOrEmpty(weatherData.TotemMessage))
-				message = TokenParser.ParseText(weatherData.TotemMessage);
+				message = TokenizeText(weatherData.TotemMessage);
 			else
 				message = Game1.content.LoadString("Strings\\StringsFromCSFiles:Object.cs.12822");
 
@@ -235,6 +233,51 @@ public partial class ModEntry {
 
 		return true;
 	}
+
+	#endregion
+
+	#region Tokenized Text Stuff
+
+	[return: NotNullIfNotNull(nameof(input))]
+	public string? TokenizeText(string? input, Farmer? who = null, Random? rnd = null) {
+		if (string.IsNullOrWhiteSpace(input))
+			return input;
+
+		bool ParseToken(string[] query, out string? replacement, Random? random, Farmer? player) {
+			if (!ArgUtility.TryGet(query, 0, out string? cmd, out string? error))
+				return TokenParser.LogTokenError(query, error, out replacement);
+
+			if (cmd is null || !cmd.Equals("LocalizedText")) {
+				replacement = null;
+				return false;
+			}
+
+			if (!ArgUtility.TryGet(query, 1, out string? key, out error))
+				return TokenParser.LogTokenError(query, error, out replacement);
+
+			var tl = Helper.Translation.Get(key);
+			if (!tl.HasValue()) {
+				replacement = null;
+				return false;
+			}
+
+			Dictionary<int, string> replacements;
+			if (query.Length > 2) {
+				replacements = new();
+				for (int i = 2; i < query.Length; i++) {
+					replacements[i - 2] = query[i];
+				}
+
+			} else
+				replacements = [];
+
+			replacement = tl.Tokens(replacements).ToString();
+			return true;
+		}
+
+		return TokenParser.ParseText(input, rnd, ParseToken, who);
+	}
+
 
 	#endregion
 

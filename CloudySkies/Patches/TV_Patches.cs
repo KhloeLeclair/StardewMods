@@ -2,9 +2,12 @@ using System;
 
 using HarmonyLib;
 
+using Leclair.Stardew.CloudySkies.Menus;
 using Leclair.Stardew.Common;
 
 using Microsoft.Xna.Framework;
+
+using StardewModdingAPI;
 
 using StardewValley;
 using StardewValley.Objects;
@@ -15,14 +18,23 @@ namespace Leclair.Stardew.CloudySkies.Patches;
 public static class TV_Patches {
 
 	private static ModEntry? Mod;
+	private static Func<TV, int>? GetCurrentChannel;
 	private static Action<TV, TemporaryAnimatedSprite>? SetAnimatedSprite;
 
 	public static void Patch(ModEntry mod) {
 		Mod = mod;
 
 		try {
+			GetCurrentChannel = AccessTools.Field(typeof(TV), "currentChannel")
+				.CreateGetter<TV, int>();
+
 			SetAnimatedSprite = AccessTools.Field(typeof(TV), "screenOverlay")
 				.CreateSetter<TV, TemporaryAnimatedSprite>();
+
+			mod.Harmony.Patch(
+				original: AccessTools.Method(typeof(TV), nameof(TV.proceedToNextScene)),
+				prefix: new HarmonyMethod(typeof(TV_Patches), nameof(TV_proceedToNextScene__Prefix))
+			);
 
 			mod.Harmony.Patch(
 				original: AccessTools.Method(typeof(TV), "getWeatherForecast", [typeof(string)]),
@@ -44,6 +56,27 @@ public static class TV_Patches {
 		}
 
 	}
+
+
+	private static bool TV_proceedToNextScene__Prefix(TV __instance) {
+
+		try {
+			if (Mod is null || !Mod.Config.ReplaceTVMenu || GetCurrentChannel?.Invoke(__instance) != 2)
+				return true;
+
+			CommonHelper.YeetMenu(Game1.activeClickableMenu);
+
+			Game1.activeClickableMenu = new TVWeatherMenu(Mod, __instance);
+			return false;
+
+		} catch (Exception ex) {
+			Mod?.Log($"Error handling TV proceedToNextScene: {ex}", LogLevel.Error, once: true);
+		}
+
+		return true;
+
+	}
+
 
 	private static void SetWeatherOverlay__Postfix(TV __instance, string weatherId) {
 

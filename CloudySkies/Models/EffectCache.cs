@@ -1,10 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Leclair.Stardew.CloudySkies.LayerData;
 
 using StardewValley;
 
@@ -21,7 +15,7 @@ internal record struct EffectCache {
 	public bool EventUp { get; set; }
 
 	public Dictionary<string, IEffect> EffectsById { get; set; }
-	public Dictionary<string, BaseEffectData> DataById { get; set; }
+	public Dictionary<string, IEffectData> DataById { get; set; }
 
 	public List<IEffect>? Effects { get; set; }
 

@@ -10,7 +10,7 @@ using StardewValley;
 namespace Leclair.Stardew.CloudySkies.Effects;
 
 [DiscriminatedType("ModifyHealth")]
-public record ModifyHealthEffectData : BaseEffectData {
+public record ModifyHealthEffectData : BaseEffectData, IModifyHealthEffectData {
 
 	public float Chance { get; set; } = 1f;
 

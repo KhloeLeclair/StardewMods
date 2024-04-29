@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CloudySkies</AssemblyName>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <RootNamespace>Leclair.Stardew.CloudySkies</RootNamespace>
 
     <Name>Cloudy Skies</Name>
@@ -12,14 +12,15 @@
     <UpdateKeys>Nexus:23135</UpdateKeys>
 
     <MinimumGameVersion>1.6.6</MinimumGameVersion>
+
+    <DefineConstants>$(DefineConstants);IS_CLOUDY_SKIES</DefineConstants>
     
+    <EnablePintail>true</EnablePintail>
     <EnableHarmony>true</EnableHarmony>
     <EnableTranslation>true</EnableTranslation>
   </PropertyGroup>
   <ItemGroup>
-
     <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" />
-    
   </ItemGroup>
 
   <Import Project="..\Common\Common.projitems" Label="Shared" />

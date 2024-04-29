@@ -10,6 +10,7 @@ types for your mod? You've come to the right place!
 * [What is a Weather Type?](#what-is-a-weather-type)
 * [What is a Weather Flag?](#what-is-a-weather-flag)
 * [Custom Weather Type](#custom-weather-type)
+* [Screen Tint](#screen-tint)
 * [Effects](#effects)
   * [Buff](#buff)
   * [Modify Health](#modifyhealth)
@@ -19,9 +20,10 @@ types for your mod? You've come to the right place!
   * [Color](#color)
   * [Debris](#debris)
   * [Rain](#rain)
-  * [Snow / Texture Scroll](#snow-texturescroll)
+  * [Snow / Texture Scroll](#snow--texturescroll)
 * [How Do I Make My Weather Happen?](#how-do-i-make-my-weather-happen)
   * [Custom Weather Totems](#custom-weather-totems)
+* [Location Context Extension Data](#location-context-extension-data)
 * [Commands](#commands)
 * [Mod Data / Custom Fields](#mod-data-custom-fields)
 * [Game State Queries](#game-state-queries)
@@ -442,7 +444,115 @@ which checks for sunny days in summer.
 
 </td>
 </tr>
-<tr><th colspan=2>Screen Tinting</th></tr>
+<tr><th colspan=2>The Good Stuff</th></tr>
+<tr>
+<td><code>Lighting</code></td>
+<td>
+
+*Optional.* A list of [Screen Tint](#screen-tint) entries that should apply
+when the current location has this weather type.
+
+</td>
+</tr>
+<tr>
+<td><code>Effects</code></td>
+<td>
+
+*Optional.* A list of [Effects](#effects) that should apply to the player
+while they are in a location with this weather type.
+
+</td>
+</tr>
+<tr>
+<td><code>Layers</code></td>
+<td>
+
+*Optional.* A list of [Layers](#layers) that should render when the
+current location has this weather type.
+
+</td>
+</tr>
+</table>
+
+
+## Screen Tint
+
+Screen tinting data entries allow you to not just override the ambient
+light and tinting applied at any given time, but also smoothly fade
+between different colors and opacity levels.
+
+> Note: It is very important that you sort these entries by their
+> `TimeOfDay`.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Id</code></td>
+<td>
+
+**Required.** The Id of this screen tint data point. This only needs to
+be unique within the custom weather type containing it.
+
+</td>
+</tr>
+<tr>
+<td><code>TimeOfDay</code></td>
+<td>
+
+*Optional.* The time of day that this screen tint should apply at. This
+should be a three or four digit number where the first one or two digits
+is the hour and the last two digits are the current minutes. For example:
+
+*  6:00am => `600`
+*  6:30am => `630`
+* 12:00pm => `1200`
+*  7:10pm => `1910`
+
+If this is set to zero, or a negative value, then the value will be set
+based on the time it gets dark out in the current location. That time has
+a few possible values in the base game.
+
+* At Ginger Island, the value is always `2000` (8:00 pm)
+* In Fall, the value is `1900` (7:00pm)
+* In Winter, the value is `1700` (5:00pm)
+* In Spring and Summer, the value is `2000` (8:00pm)
+
+Default: `600`
+
+</td>
+</tr>
+<tr>
+<td><code>Condition</code></td>
+<td>
+
+*Optional.* A game state query for determining whether or not this screen
+tint data point should be used.
+
+*Optional.* A [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+to determine whether or not this screen tint data point may be used. If
+this is not set, this data point may always be used.
+
+These conditions are only reevaluated upon location change, an event starting,
+or the in-game hour changing.
+
+</td>
+</tr>
+<tr>
+<td><code>TweenMode</code></td>
+<td>
+
+*Optional.* How smooth blending should happen between this and other
+data points. Possible values: `None`, `Before`, `After`, `Both`
+
+Default: `Both`
+
+</td>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
 <td><code>AmbientColor</code></td>
 <td>
 
@@ -452,6 +562,20 @@ weather type is active. In the base game, this is only used if the
 value: `255, 200, 80`.
 
 > Note: You can use hex or color names here, and not just `R, G, B` values.
+
+</td>
+</tr>
+<tr>
+<td><code>AmbientOutdoorOpacity</code></td>
+<td>
+
+*Optional.* The opacity that should be used when applying the `AmbientColor`
+lighting color. In the base game, this is set to `0.3` during the day
+if the `IsRaining` weather flag is applied, and once it gets dark out it
+steadily rises until hitting `0.93`.
+
+You can leave this value out, or set it to `null`, to use the
+default behavior.
 
 </td>
 </tr>
@@ -509,25 +633,6 @@ to have it behave how you expect.
 In the base game, this is only used if the `IsRaining` weather flag is
 applied, in which case it will use the value `0.2`. If the `IsGreenRain`
 flag is applied, it instead uses the value `0.22`
-
-</td>
-</tr>
-<tr><th colspan=2>The Good Stuff</th></tr>
-<tr>
-<td><code>Effects</code></td>
-<td>
-
-*Optional.* A list of [Effects](#effects) that should apply to the player
-while they are in a location with this weather type.
-
-</td>
-</tr>
-<tr>
-<td><code>Layers</code></td>
-<td>
-
-*Optional.* A list of [Layers](#layers) that should render when the
-current location has this weather type.
 
 </td>
 </tr>
@@ -954,7 +1059,7 @@ weather type containing it.
 * [`Debris`](#debris)
 * [`Rain`](#rain)
 * [`Snow`](#snow-texturescroll)
-* [`TextureScroll`](#snow-texturescroll)
+* [`TextureScroll`](#snow--texturescroll)
 
 More types may be added in the future, or by C# mods (in the future).
 
@@ -1595,6 +1700,12 @@ in its `Data/Objects` entry with the key `leclair.cloudyskies/WeatherTotem`
 and a value with the desired weather type's Id.
 
 
+## Location Context Extension Data
+
+Y
+
+
+
 ## Commands
 
 Cloudy Skies has the following console commands:
@@ -1649,6 +1760,9 @@ for the weather type with the Id `[ID]` can be used to override
 tomorrow's weather in the relevant location context.
 
 The value should be `true` or `false`
+
+> Note: This takes priority over the Location Context Extension Data
+> model, but is only provided as an alternative for ease of use.
 
 
 ## Game State Queries

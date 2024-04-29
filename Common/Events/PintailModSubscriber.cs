@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
+
 using HarmonyLib;
 
 using Leclair.Stardew.Common.Extensions;
@@ -102,7 +103,7 @@ public abstract class PintailModSubscriber : ModSubscriber {
 		return false;
 	}
 
-	public bool TryUnproxy( object? sourceInstance, [NotNullWhen(true)] out object? unproxiedInstance, bool silent = false, Type? sourceType = null) {
+	public bool TryUnproxy(object? sourceInstance, [NotNullWhen(true)] out object? unproxiedInstance, bool silent = false, Type? sourceType = null) {
 		var proxy = GetProxyManager();
 		if (proxy is null || sourceInstance is null) {
 			unproxiedInstance = null;
@@ -115,6 +116,9 @@ public abstract class PintailModSubscriber : ModSubscriber {
 			// Short circuit Pintail proxies if we can.
 			if (sourceType.GetField("__Target", BindingFlags.Instance | BindingFlags.NonPublic) is FieldInfo field) {
 				unproxiedInstance = field.GetValue(sourceInstance);
+				if (TryUnproxy(unproxiedInstance, out object? moreUnproxied, silent))
+					unproxiedInstance = moreUnproxied;
+
 				return unproxiedInstance is not null;
 			}
 

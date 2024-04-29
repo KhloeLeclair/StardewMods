@@ -1,15 +1,16 @@
 using System;
 
-using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization.Converters;
 
 using Microsoft.Xna.Framework;
+
 using StardewValley;
 
 namespace Leclair.Stardew.CloudySkies.Effects;
 
 [DiscriminatedType("ModifyStamina")]
-public record ModifyStaminaEffectData : BaseEffectData {
+public record ModifyStaminaEffectData : BaseEffectData, IModifyStaminaEffectData {
 
 	public float Chance { get; set; } = 1f;
 

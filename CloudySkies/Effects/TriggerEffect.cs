@@ -2,23 +2,29 @@ using System;
 using System.Collections.Generic;
 
 using Leclair.Stardew.CloudySkies.Models;
+using Leclair.Stardew.Common.Serialization;
 using Leclair.Stardew.Common.Serialization.Converters;
 using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
+
+using Newtonsoft.Json;
 
 using StardewValley.Triggers;
 
 namespace Leclair.Stardew.CloudySkies.Effects;
 
 [DiscriminatedType("Trigger")]
-public record TriggerEffectData : BaseEffectData {
+public record TriggerEffectData : BaseEffectData, ITriggerEffectData {
 
-	public ValueEqualityList<string>? ApplyActions { get; set; }
+	[JsonConverter(typeof(AbstractConverter<ValueEqualityList<string>, List<string>>))]
+	public List<string> ApplyActions { get; set; } = new ValueEqualityList<string>();
 
-	public ValueEqualityList<string>? Actions { get; set; }
+	[JsonConverter(typeof(AbstractConverter<ValueEqualityList<string>, List<string>>))]
+	public List<string> Actions { get; set; } = new ValueEqualityList<string>();
 
-	public ValueEqualityList<string>? RemoveActions { get; set; }
+	[JsonConverter(typeof(AbstractConverter<ValueEqualityList<string>, List<string>>))]
+	public List<string> RemoveActions { get; set; } = new ValueEqualityList<string>();
 
 }
 

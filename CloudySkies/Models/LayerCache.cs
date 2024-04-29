@@ -1,10 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Leclair.Stardew.CloudySkies.LayerData;
 
 using StardewValley;
 
@@ -21,7 +15,7 @@ internal record struct LayerCache {
 	public bool EventUp { get; set; }
 
 	public Dictionary<string, IWeatherLayer> LayersById { get; set; }
-	public Dictionary<string, BaseLayerData> DataById { get; set; }
+	public Dictionary<string, ILayerData> DataById { get; set; }
 
 	public List<IWeatherLayer>? Layers { get; set; }
 

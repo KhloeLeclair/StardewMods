@@ -54,7 +54,7 @@ public class TextureScrollLayer : IWeatherLayer {
 		Id = id;
 		DrawType = data.Mode;
 
-		IsSnow = data.Type == "Snow";
+		IsSnow = data.IsSnow;
 
 		TextureName = data.Texture;
 		if (TextureName is not null) {

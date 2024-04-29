@@ -5,6 +5,12 @@ namespace Leclair.Stardew.Common.Types;
 
 public class ValueEqualityList<TValue> : List<TValue> {
 
+	public ValueEqualityList() : base() { }
+
+	public ValueEqualityList(int capacity) : base(capacity) { }
+
+	public ValueEqualityList(IEnumerable<TValue> values) : base(values) { }
+
 	public override bool Equals(object? obj) {
 		if (obj is not IList<TValue> olist || olist.Count != Count)
 			return false;

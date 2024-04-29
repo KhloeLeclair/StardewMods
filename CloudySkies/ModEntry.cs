@@ -14,6 +14,9 @@ using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 using Leclair.Stardew.Common.UI;
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -25,7 +28,7 @@ using StardewValley.Mods;
 namespace Leclair.Stardew.CloudySkies;
 
 
-public partial class ModEntry : ModSubscriber {
+public partial class ModEntry : PintailModSubscriber {
 
 	public static ModEntry Instance { get; private set; } = null!;
 
@@ -34,6 +37,9 @@ public partial class ModEntry : ModSubscriber {
 	public const string ALLOW_TOTEM_DATA = @"leclair.cloudyskies/AllowTotem:";
 
 	public const string DATA_ASSET = @"Mods/leclair.cloudyskies/WeatherData";
+	public const string EXTENSION_DATA_ASSET = @"Mods/leclair.cloudyskies/LocationContextExtensionData";
+
+	public const string WEATHER_OVERLAY_DEFAULT_ASSET = @"Mods/leclair.cloudyskies/Textures/WeatherOverlay";
 
 	private static readonly Func<ModHooks> HookDelegate = AccessTools.Field(typeof(Game1), "hooks").CreateGetter<ModHooks>();
 
@@ -54,6 +60,7 @@ public partial class ModEntry : ModSubscriber {
 	internal readonly Dictionary<string, HashSet<ulong>> AssetsByName = new();
 
 	internal Dictionary<string, WeatherData>? Data;
+	internal Dictionary<string, LocationContextExtensionData>? ContextData;
 
 	internal readonly PerScreen<double> UpdateTiming = new();
 	internal readonly PerScreen<double> DrawTiming = new();
@@ -101,6 +108,12 @@ public partial class ModEntry : ModSubscriber {
 
 		intGMCM
 			.Add(
+				I18n.Setting_ReplaceTvMenu,
+				I18n.Setting_ReplaceTvMenu_About,
+				c => c.ReplaceTVMenu,
+				(c, v) => c.ReplaceTVMenu = v
+			)
+			.Add(
 				I18n.Setting_WeatherTooltip,
 				I18n.Setting_WeatherTooltip_About,
 				c => c.ShowWeatherTooltip,
@@ -109,7 +122,7 @@ public partial class ModEntry : ModSubscriber {
 			.AddLabel("")
 			.Add(
 				I18n.Setting_Debug,
-				I18n.Setting_Debut_About,
+				I18n.Setting_Debug_About,
 				c => c.ShowDebugTiming,
 				(c, v) => c.ShowDebugTiming = v
 			);
@@ -153,8 +166,37 @@ public partial class ModEntry : ModSubscriber {
 		if (e.Name.IsEquivalentTo(DATA_ASSET))
 			e.LoadFrom(() => new Dictionary<string, WeatherData>(), priority: AssetLoadPriority.Exclusive);
 
-	}
+		else if (e.Name.IsEquivalentTo(WEATHER_OVERLAY_DEFAULT_ASSET))
+			e.LoadFromModFile<Texture2D>("assets/WeatherChannelOverlay.png", AssetLoadPriority.Low);
 
+		else if (e.Name.IsEquivalentTo(EXTENSION_DATA_ASSET))
+			e.LoadFrom(() => new Dictionary<string, LocationContextExtensionData>() {
+				{ "Default", new() {
+					DisplayName = "[LocalizedText location.stardew-valley]",
+					IncludeInWeatherChannel = true,
+				} },
+				{ "Desert", new() {
+					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:Utility.cs.5861]",
+					IncludeInWeatherChannel = true,
+					WeatherChannelCondition = "PLAYER_HAS_MAIL Host ccVault Any",
+					WeatherChannelBackgroundTexture = "LooseSprites\\map",
+					WeatherChannelBackgroundSource = Point.Zero,
+					WeatherChannelBackgroundFrames = 1
+				} },
+				{ "Island", new() {
+					IncludeInWeatherChannel = true,
+					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:IslandName]",
+					WeatherChannelCondition = "PLAYER_HAS_MAIL Current Visited_Island Any",
+					WeatherForecastPrefix = "[LocalizedText Strings\\StringsFromCSFiles:TV_IslandWeatherIntro]",
+					WeatherChannelOverlayTexture = "LooseSprites\\Cursors2",
+					WeatherChannelOverlayIntroSource = new Point(148, 62),
+					WeatherChannelOverlayIntroFrames = 1,
+					WeatherChannelOverlayWeatherSource = new Point(148, 62),
+					WeatherChannelOverlayWeatherFrames = 1
+				} }
+			}, priority: AssetLoadPriority.Exclusive);
+
+	}
 
 	[Subscriber]
 	private void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
@@ -163,10 +205,16 @@ public partial class ModEntry : ModSubscriber {
 
 		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(DATA_ASSET)) {
-				Log($"Invalidated our weather data.", LogLevel.Info);
+				Log($"Invalidated our weather data.", LogLevel.Debug);
 				Data = null;
+				CachedTryGetName.ResetAllScreens();
 				CachedTryGetValue.ResetAllScreens();
 				CachedWeather.ResetAllScreens();
+			}
+
+			if (name.IsEquivalentTo(EXTENSION_DATA_ASSET)) {
+				Log($"Invalidated our location context extension data.", LogLevel.Debug);
+				ContextData = null;
 			}
 
 			if (AssetsByName.TryGetValue(name.BaseName, out var layers))
@@ -223,7 +271,11 @@ public partial class ModEntry : ModSubscriber {
 				.Text($"Snowing: {weather.IsSnowing}")
 				.Text($"Lightning: {weather.IsLightning}")
 				.Text($"Debris: {weather.IsDebrisWeather}")
-				.Text($"???: {weather.IsGreenRain}");
+				.Text($"???: {weather.IsGreenRain}")
+				.Divider(false)
+				.Text($"Draw Lighting: {Game1.drawLighting}")
+				.Text($"Ambient: {Game1.ambientLight}")
+				.Text($"Outdoor: {Game1.outdoorLight}");
 		}
 
 		builder
@@ -259,6 +311,29 @@ public partial class ModEntry : ModSubscriber {
 
 	#region Loading
 
+	[MemberNotNull(nameof(ContextData))]
+	internal void LoadContextData() {
+		if (ContextData is not null)
+			return;
+
+		ContextData = Helper.GameContent.Load<Dictionary<string, LocationContextExtensionData>>(EXTENSION_DATA_ASSET);
+
+		// Normalize all the Id fields.
+		foreach (var entry in ContextData)
+			entry.Value.Id = entry.Key;
+	}
+
+
+	public bool TryGetContextData(string? id, [NotNullWhen(true)] out LocationContextExtensionData? data) {
+		if (id is null) {
+			data = null;
+			return false;
+		}
+
+		LoadContextData();
+		return ContextData.TryGetValue(id, out data);
+	}
+
 	[MemberNotNull(nameof(Data))]
 	internal void LoadWeatherData() {
 		if (Data is not null)
@@ -269,6 +344,81 @@ public partial class ModEntry : ModSubscriber {
 		// Normalize all the Id fields, as well as de-duplicating layer Ids.
 		foreach (var entry in Data) {
 			entry.Value.Id = entry.Key;
+
+			// Un-box all the things we can.
+			if (entry.Value.Lighting is not null) {
+				for (int i = 0; i < entry.Value.Lighting.Count; i++) {
+					var item = entry.Value.Lighting[i];
+					if (item is not ScreenTintData && TryUnproxy(item, out object? obj) && obj is ScreenTintData sd)
+						entry.Value.Lighting[i] = sd;
+				}
+			}
+
+			if (entry.Value.Layers is not null) {
+				for (int i = 0; i < entry.Value.Layers.Count; i++) {
+					var item = entry.Value.Layers[i];
+					if (item is not BaseLayerData && TryUnproxy(item, out object? obj) && obj is BaseLayerData ld)
+						entry.Value.Layers[i] = ld;
+				}
+			}
+
+			if (entry.Value.Effects is not null) {
+				for (int i = 0; i < entry.Value.Effects.Count; i++) {
+					var item = entry.Value.Effects[i];
+					if (item is not BaseEffectData && TryUnproxy(item, out object? obj) && obj is BaseEffectData ed)
+						entry.Value.Effects[i] = ed;
+				}
+			}
+
+			// Migrate to the new lighting format.
+			if (entry.Value.AmbientColor.HasValue || entry.Value.LightingTint.HasValue || entry.Value.PostLightingTint.HasValue) {
+				if (entry.Value.Lighting is null || entry.Value.Lighting.Count == 0) {
+					entry.Value.Lighting ??= new List<IScreenTintData>();
+
+					if (entry.Value.AmbientOutdoorOpacity.HasValue && entry.Value.AmbientOutdoorOpacity.Value < 0.93) {
+						entry.Value.Lighting.Add(new ScreenTintData() {
+							AmbientColor = entry.Value.AmbientColor,
+							AmbientOutdoorOpacity = entry.Value.AmbientOutdoorOpacity,
+							LightingTint = entry.Value.LightingTint,
+							LightingTintOpacity = entry.Value.LightingTintOpacity,
+							PostLightingTint = entry.Value.PostLightingTint,
+							PostLightingTintOpacity = entry.Value.PostLightingTintOpacity
+						});
+
+						entry.Value.Lighting.Add(new ScreenTintData() {
+							AmbientColor = entry.Value.AmbientColor,
+							TimeOfDay = -200,
+							TweenMode = LightingTweenMode.After,
+							AmbientOutdoorOpacity = entry.Value.AmbientOutdoorOpacity,
+							LightingTint = entry.Value.LightingTint,
+							LightingTintOpacity = entry.Value.LightingTintOpacity,
+							PostLightingTint = entry.Value.PostLightingTint,
+							PostLightingTintOpacity = entry.Value.PostLightingTintOpacity
+						});
+
+						entry.Value.Lighting.Add(new ScreenTintData() {
+							AmbientColor = entry.Value.AmbientColor,
+							TimeOfDay = 0,
+							AmbientOutdoorOpacity = 0.93f,
+							LightingTint = entry.Value.LightingTint,
+							LightingTintOpacity = entry.Value.LightingTintOpacity,
+							PostLightingTint = entry.Value.PostLightingTint,
+							PostLightingTintOpacity = entry.Value.PostLightingTintOpacity
+						});
+
+					} else
+						entry.Value.Lighting.Add(new ScreenTintData() {
+							AmbientColor = entry.Value.AmbientColor,
+							AmbientOutdoorOpacity = entry.Value.AmbientOutdoorOpacity,
+							LightingTint = entry.Value.LightingTint,
+							LightingTintOpacity = entry.Value.LightingTintOpacity,
+							PostLightingTint = entry.Value.PostLightingTint,
+							PostLightingTintOpacity = entry.Value.PostLightingTintOpacity
+						});
+
+				} else
+					Log($"Ignoring legacy lighting data for weather type '{entry.Key}' because Lighting is present and has data.", LogLevel.Warn);
+			}
 
 			if (entry.Value.Layers is not null) {
 				HashSet<string> seen_ids = new();
@@ -369,8 +519,9 @@ public partial class ModEntry : ModSubscriber {
 	private readonly PerScreen<WeatherData?> CachedWeather = new();
 	private readonly PerScreen<LayerCache?> CachedLayers = new();
 	private readonly PerScreen<EffectCache?> CachedEffects = new();
+	private readonly PerScreen<CachedTintData?> CachedTint = new();
 
-	internal void UncacheLayers(string? weatherId = null) {
+	internal void UncacheLayers(string? weatherId = null, bool force_reinstance = false) {
 		foreach (var entry in CachedLayers.GetActiveValues()) {
 			string? id = CachedWeatherName.GetValueForScreen(entry.Key);
 			if (weatherId != null && id != weatherId)
@@ -378,7 +529,7 @@ public partial class ModEntry : ModSubscriber {
 
 			if (entry.Value.HasValue) {
 				var thing = entry.Value.Value;
-				thing.Hour = -1;
+				thing.Hour = force_reinstance ? -2 : -1;
 				CachedLayers.SetValueForScreen(entry.Key, thing);
 			}
 		}
@@ -390,17 +541,171 @@ public partial class ModEntry : ModSubscriber {
 
 			if (entry.Value.HasValue) {
 				var thing = entry.Value.Value;
-				thing.Hour = -1;
+				thing.Hour = force_reinstance ? -2 : -1;
 				CachedEffects.SetValueForScreen(entry.Key, thing);
 			}
 		}
+
+		foreach (var entry in CachedTint.GetActiveValues()) {
+			if (entry.Value.HasValue) {
+				var thing = entry.Value.Value;
+				thing.EndTime = 0;
+				CachedTint.SetValueForScreen(entry.Key, thing);
+			}
+		}
+	}
+
+
+	internal CachedTintData? GetCachedTint(GameLocation? location = null) {
+		location ??= Game1.player?.currentLocation;
+		string? weather = location?.GetWeather()?.Weather;
+		TryGetWeather(weather, out var data);
+		if (location is null || data?.Lighting is null || data.Lighting.Count == 0)
+			return null;
+
+		int time = Game1.timeOfDay;
+
+		CachedTintData? cache = CachedTint.Value;
+		if (cache.HasValue &&
+			cache.Value.Data == data &&
+			cache.Value.EventUp == Game1.eventUp &&
+			cache.Value.Location == location &&
+			time >= cache.Value.StartTime &&
+			time <= cache.Value.EndTime
+		)
+			return cache;
+
+		GameStateQueryContext ctx = new(location, Game1.player, null, null, Game1.random);
+
+		// We need to collect a start and end value.
+		IScreenTintData? start = null;
+		IScreenTintData? end = null;
+
+		int darkTime = Game1.getTrulyDarkTime(location);
+		int startDarkTime = Game1.getStartingToGetDarkTime(location);
+
+		foreach (var tintData in data.Lighting) {
+			if (!string.IsNullOrEmpty(tintData.Condition) && !GameStateQuery.CheckConditions(tintData.Condition, ctx))
+				continue;
+
+			int tod = tintData.TimeOfDay;
+			if (tod <= 0)
+				tod = darkTime - tod;
+
+			if (tod <= time)
+				start = tintData;
+
+			else if (start != null && tod > time) {
+				end = tintData;
+				break;
+			}
+		}
+
+		// If we have no data, return nothing basically.
+		if (start == null)
+			cache = new() {
+				Data = data,
+				Location = location,
+				EventUp = Game1.eventUp,
+				StartTime = int.MinValue,
+				EndTime = int.MaxValue,
+				DurationInTenMinutes = 1,
+				HasAmbientColor = false,
+				HasLightingTint = false,
+				HasPostLightingTint = false,
+			};
+
+		else {
+			bool can_tween = start.TweenMode.HasFlag(LightingTweenMode.After) &&
+				end != null && end.TweenMode.HasFlag(LightingTweenMode.Before);
+
+			int start_time = start.TimeOfDay;
+			int end_time;
+
+			if (end is null) {
+				end_time = int.MaxValue;
+				end = start;
+			} else {
+				end_time = end.TimeOfDay;
+				if (!can_tween)
+					end = start;
+			}
+
+			if (start_time <= 0)
+				start_time = darkTime - start_time;
+			if (end_time <= 0)
+				end_time = darkTime - end_time;
+
+			float start_opacity;
+			if (start.AmbientOutdoorOpacity.HasValue)
+				start_opacity = start.AmbientOutdoorOpacity.Value;
+			else {
+				int adjusted = (int) ((start_time - start_time % 100) + (start_time % 100 / 10) * 16.66f);
+				if (start_time >= darkTime)
+					start_opacity = Math.Min(0.93f, 0.75f + (adjusted - darkTime) * 0.000625f);
+				else if (start_time >= startDarkTime) {
+					start_opacity = Math.Min(0.93f, 0.3f + (adjusted - startDarkTime) * 0.00225f);
+				} else
+					start_opacity = 0.3f;
+			}
+
+			float end_opacity;
+
+			if (end.AmbientOutdoorOpacity.HasValue)
+				end_opacity = end.AmbientOutdoorOpacity.Value;
+			else {
+				int adjusted = (int) ((end_time - end_time % 100) + (end_time % 100 / 10) * 16.66f);
+				if (start_time >= darkTime)
+					end_opacity = Math.Min(0.93f, 0.75f + (adjusted - darkTime) * 0.000625f);
+				else if (start_time >= startDarkTime) {
+					end_opacity = Math.Min(0.93f, 0.3f + (adjusted - startDarkTime) * 0.00225f);
+				} else
+					end_opacity = 0.3f;
+			}
+
+			cache = new() {
+				Data = data,
+				Location = location,
+				EventUp = Game1.eventUp,
+
+				StartTime = start_time,
+				EndTime = end_time,
+
+				DurationInTenMinutes = Utility.CalculateMinutesBetweenTimes(start_time, end_time) / 10,
+
+				HasAmbientColor = start.AmbientColor.HasValue || end.AmbientColor.HasValue,
+				HasLightingTint = start.LightingTint.HasValue || end.LightingTint.HasValue,
+				HasPostLightingTint = start.PostLightingTint.HasValue || end.PostLightingTint.HasValue,
+
+				StartAmbientColor = start.AmbientColor ?? Color.White,
+				EndAmbientColor = end.AmbientColor ?? Color.White,
+
+				StartAmbientOutdoorOpacity = start_opacity,
+				EndAmbientOutdoorOpacity = end_opacity,
+
+				StartLightingTint = start.LightingTint ?? Color.White,
+				EndLightingTint = end.LightingTint ?? Color.White,
+
+				StartLightingTintOpacity = start.LightingTintOpacity,
+				EndLightingTintOpacity = end.LightingTintOpacity,
+
+				StartPostLightingTint = start.PostLightingTint ?? Color.White,
+				EndPostLightingTint = end.PostLightingTint ?? Color.White,
+
+				StartPostLightingTintOpacity = start.PostLightingTintOpacity,
+				EndPostLightingTintOpacity = end.PostLightingTintOpacity
+			};
+		}
+
+		CachedTint.Value = cache;
+		return cache;
 	}
 
 
 	internal List<IEffect>? GetCachedWeatherEffects(GameLocation? location = null, int? timeOfDay = null) {
 		var data = CachedWeather.Value;
 		location ??= Game1.player?.currentLocation;
-		if (location is null || data?.Layers is null || data.Layers.Count == 0)
+		if (location is null || data?.Effects is null || data.Effects.Count == 0)
 			return null;
 
 		int hour = (timeOfDay ?? Game1.timeOfDay) / 100;
@@ -409,11 +714,12 @@ public partial class ModEntry : ModSubscriber {
 		if (cache.HasValue && cache.Value.Data == data && cache.Value.EventUp == Game1.eventUp && cache.Value.Hour == hour && cache.Value.Location == location)
 			return cache.Value.Effects;
 
+		bool force_reinstance = cache?.Hour == -2;
 		var old_by_id = cache?.EffectsById;
 		var old_data_by_id = cache?.DataById;
 
 		Dictionary<string, IEffect> effectsById = new();
-		Dictionary<string, BaseEffectData> dataById = new();
+		Dictionary<string, IEffectData> dataById = new();
 		List<IEffect> result = new();
 		HashSet<string> groups = new();
 
@@ -436,6 +742,7 @@ public partial class ModEntry : ModSubscriber {
 
 			// We rely upon record value equality checks.
 			if (old_by_id is not null && old_data_by_id is not null &&
+				!force_reinstance &&
 				old_by_id.TryGetValue(effect.Id, out var existing) &&
 				old_data_by_id.TryGetValue(effect.Id, out var existingData) &&
 				existingData == effect
@@ -512,11 +819,12 @@ public partial class ModEntry : ModSubscriber {
 		if (cache.HasValue && cache.Value.Data == data && cache.Value.EventUp == Game1.eventUp && cache.Value.Hour == hour && cache.Value.Location == location)
 			return cache.Value.Layers;
 
+		bool force_reinstance = cache?.Hour == -2;
 		var old_by_id = cache?.LayersById;
 		var old_data_by_id = cache?.DataById;
 
 		Dictionary<string, IWeatherLayer> layersById = new();
-		Dictionary<string, BaseLayerData> dataById = new();
+		Dictionary<string, ILayerData> dataById = new();
 		List<IWeatherLayer> result = new();
 		HashSet<string> groups = new();
 
@@ -539,6 +847,7 @@ public partial class ModEntry : ModSubscriber {
 
 			// We rely upon record value equality checks.
 			if (old_by_id is not null && old_data_by_id is not null &&
+				!force_reinstance &&
 				old_by_id.TryGetValue(layer.Id, out var existing) &&
 				old_data_by_id.TryGetValue(layer.Id, out var existingData) &&
 				existingData == layer
@@ -557,6 +866,8 @@ public partial class ModEntry : ModSubscriber {
 						instance = new RainLayer(this, lastLayerId, rainData);
 					else if (layer is DebrisLayerData debrisData)
 						instance = new DebrisLayer(this, lastLayerId, debrisData);
+					else if (layer is ParticleLayerData particleData)
+						instance = new ParticleLayer(this, lastLayerId, particleData);
 					else
 						throw new ArgumentException($"unknown data type: {layer.Type}");
 

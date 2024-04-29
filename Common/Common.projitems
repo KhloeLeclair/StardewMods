@@ -24,9 +24,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Integrations\StackQuality\SQIntegration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BuildingProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ReflectionHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)serialization\AbstractConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\DiscriminatingConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SmokedFishSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureColorWatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)types\ModAssetEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\AttachmentSlotsNode.cs" />

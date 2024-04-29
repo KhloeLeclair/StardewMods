@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies;
 
@@ -24,7 +23,7 @@ public partial class ModEntry {
 		WeatherData? data = CachedWeather.Value;
 
 		if (data is not null)
-			return data.DisplayName is null ? data.Id : TokenParser.ParseText(data.DisplayName);
+			return data.DisplayName is null ? data.Id : TokenizeText(data.DisplayName);
 
 		return CachedWeatherName.Value switch {
 			"Sun" => I18n.Weather_Sunny(),
