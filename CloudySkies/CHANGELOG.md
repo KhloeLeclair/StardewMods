@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.3.0
+Released April 29th, 2024.
+
+### Added
+* We now replace the TV Menu! Get weather for more locations. This
+  requires the locations to opt into the new system.
+* There is now a more flexible system for applying screen tints,
+  letting you use game state queries and have multiple data points
+  across time that are smoothly blended between.
+
+### Changed
+* Deprecated the old screen tints system.
+* Internal changes to prepare for letting C# mods add custom
+  effect and layer types.
+
+### API
+* The API now supports modifying data assets from C# mods using the
+  AssetRequested event.
+
+
 ## 1.2.0
 Released April 26th, 2024.
 

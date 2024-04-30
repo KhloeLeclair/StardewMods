@@ -528,9 +528,6 @@ Default: `600`
 <td><code>Condition</code></td>
 <td>
 
-*Optional.* A game state query for determining whether or not this screen
-tint data point should be used.
-
 *Optional.* A [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
 to determine whether or not this screen tint data point may be used. If
 this is not set, this data point may always be used.
@@ -1702,9 +1699,214 @@ and a value with the desired weather type's Id.
 
 ## Location Context Extension Data
 
-Y
+Cloudy Skies has a secondary data asset for adding custom data to
+location contexts with the goal of expanding the in-game forecasting
+system. To edit this data, you need an `EditData` action with
+this target:
+```
+Mods/leclair.cloudyskies/LocationContextExtensionData
+```
 
 
+<table>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>Id</code></td>
+<td>
+
+**Required.** The Id of the location context that this entry
+is extending. This needs to match an entry in the
+`Data/LocationContexts` asset.
+
+</td>
+</tr>
+<tr>
+<td><code>DisplayName</code></td>
+<td>
+
+*Optional.* A display name for this location context, to be
+used when this context should be presented to the user in
+some way. So far, that means when the user has a choice of
+selecting this location context from the TV's Weather channel
+to view its forecast.
+
+This is a [tokenizable string](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+</td>
+</tr>
+<tr><th colspan=2>Totems</th></tr>
+<tr>
+<td><code>AllowWeatherTotem</code></td>
+<td>
+
+*Optional.* A map of weather type Ids to boolean values setting
+whether or not a custom weather totem should be allowed to work
+in this location context.
+
+Example: `{ "Sun": true, "Wind": false }`
+
+</td>
+</tr>
+<tr><th colspan=2>TV Forecast</th></tr>
+<tr>
+<td><code>IncludeInWeatherChannel</code></td>
+<td>
+
+*Optional.* Whether or not this location context should be included
+in the TV's Weather channel.
+
+Default: `false`
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelCondition</code></td>
+<td>
+
+*Optional.* A [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+to determine whether or not the player should currently see this location
+context in the TV's Weather channel.
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherForecastPrefix</code></td>
+<td>
+
+*Optional.* A string that is displayed by the TV's Weather
+channel before the weather-specific string. As an example, the
+base game uses this for Ginger Island's forecast.
+
+This is a [tokenizable string](https://stardewvalleywiki.com/Modding:Tokenizable_strings).
+
+</td>
+</tr>
+<tr><th colspan=2>TV Forecast: Sprites</th></tr>
+<tr>
+<td><code>WeatherChannelBackgroundTexture</code></td>
+<td>
+
+*Optional.* The asset name of a texture that should be displayed as the
+background of the TV's Weather channel when viewing the weather for
+this location context.
+
+This can be used to change the background behind the meteorologist.
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelBackgroundSource</code></td>
+<td>
+
+*Optional.* The position of the top-left corner of the first frame of the
+TV's Weather channel background. Each background frame is 42 by 28 pixels.
+This is ignored if `WeatherChannelBackgroundTexture` is not set.
+
+If there are multiple frames, they are assumed to be laid out in a
+horizontal strip.
+
+Example: `{"X": 42, "Y": 0}`
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelBackgroundFrames</code></td>
+<td>
+
+*Optional.* How many frames of animation does the TV's Weather channel
+background have. This is ignored if `WeatherChannelBackgroundTexture`
+is not set.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayTexture</code></td>
+<td>
+
+*Optional.* The asset name of a texture that should be displayed as the
+foreground of the TV's Weather channel when viewing the weather for
+this location context.
+
+This can be used to replace the entire image, or to replace the
+meteorologist specifically.
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayIntroSource</code></td>
+<td>
+
+*Optional.* The position of the top-left corner of the first frame of the
+TV's Weather channel intro foreground. Each frame is 42 by 28 pixels.
+This is ignored if `WeatherChannelOverlayTexture` is not set.
+
+If there are multiple frames, they are assumed to be laid out in a
+horizontal strip.
+
+This is, specifically, for the foreground animation that plays while the
+user is selecting which region they would like to view the forecast for.
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayIntroFrames</code></td>
+<td>
+
+*Optional.* How many frames of animation does the TV's Weather channel
+intro foreground have. This is ignored if `WeatherChannelOverlayTexture`
+is not set.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayWeatherSource</code></td>
+<td>
+
+*Optional.* The position of the top-left corner of the first frame of the
+TV's Weather channel weather foreground. Each frame is 42 by 28 pixels.
+This is ignored if `WeatherChannelOverlayTexture` is not set.
+
+If there are multiple frames, they are assumed to be laid out in a
+horizontal strip.
+
+This is, specifically, for the foreground animation that plays while the
+player is viewing the forecast in the region. While this plays, the
+forecasted weather's icon will be displayed over this foreground animation.
+
+If this is not set, it is assumed to be positioned directly to
+the right of the last intro foreground frame.
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayWeatherFrames</code></td>
+<td>
+
+*Optional.* How many frames of animation does the TV's Weather channel
+weather foreground have. This is ignored if `WeatherChannelOverlayTexture`
+is not set.
+
+Default: `1`
+
+</td>
+</tr>
+</table>
+
+### Example Data
+
+As an example, Cloudy Skies itself includes the following data to support
+the three location contexts in the base game:
+```json
+
+
+```
 
 ## Commands
 
