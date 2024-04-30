@@ -1904,8 +1904,34 @@ Default: `1`
 As an example, Cloudy Skies itself includes the following data to support
 the three location contexts in the base game:
 ```json
-
-
+{
+  "Default": {
+    "Id": "Default",
+    "DisplayName": "[LocalizedText location.stardew-valley]",
+    "IncludeInWeatherChannel": true
+  },
+  "Desert": {
+    "Id": "Desert",
+    "DisplayName": "[LocalizedText Strings\\StringsFromCSFiles:Utility.cs.5861]",
+    "IncludeInWeatherChannel": true,
+    "WeatherChannelCondition": "PLAYER_HAS_MAIL Host ccVault Any",
+    "WeatherChannelBackgroundTexture": "LooseSprites\\map",
+    "WeatherChannelBackgroundSource": {"X": 0, "Y": 0},
+    "WeatherChannelBackgroundFrames": 1
+  },
+  "Island": {
+    "Id": "Island",
+    "DisplayName": "[LocalizedText Strings\\StringsFromCSFiles:IslandName]",
+    "IncludeInWeatherChannel": true,
+    "WeatherChannelCondition": "PLAYER_HAS_MAIL Current Visited_Island Any",
+    "WeatherForecastPrefix": "[LocalizedText Strings\\StringsFromCSFiles:TV_IslandWeatherIntro]",
+    "WeatherChannelOverlayTexture": "LooseSprites\\Cursors2",
+    "WeatherChannelOverlayIntroSource": {"X": 148, "Y": 62},
+    "WeatherChannelOverlayIntroFrames": 1,
+    "WeatherChannelOverlayWeatherSource": {"X": 148, "Y": 62},
+    "WeatherChannelOverlayWeatherFrames": 1
+  }
+}
 ```
 
 ## Commands
