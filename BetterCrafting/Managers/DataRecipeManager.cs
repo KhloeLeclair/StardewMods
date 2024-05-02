@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.BetterCrafting.DynamicRules;
 using Leclair.Stardew.BetterCrafting.Models;
@@ -60,7 +57,7 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
+		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(RECIPE_PATH))
 				DataRecipesById = null;
 			if (name.IsEquivalentTo(RULES_PATH)) {
@@ -122,7 +119,7 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 
 		var loaded = Mod.Helper.GameContent.Load<Dictionary<string, JsonDynamicRule>>(RULES_PATH);
 
-		foreach(var entry in loaded) {
+		foreach (var entry in loaded) {
 			// Create all new entries.
 			entry.Value.Id = entry.Key;
 
@@ -149,8 +146,8 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 	public IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking, GameStateQueryContext? context = null) {
 		LoadRecipes();
 
-		foreach(var recipe in DataRecipesById.Values) {
-			if ( ! string.IsNullOrEmpty(recipe.Data.Condition) ) {
+		foreach (var recipe in DataRecipesById.Values) {
+			if (!string.IsNullOrEmpty(recipe.Data.Condition)) {
 				bool valid = context is null
 					? GameStateQuery.CheckConditions(recipe.Data.Condition)
 					: GameStateQuery.CheckConditions(recipe.Data.Condition, context.Value);
@@ -186,7 +183,7 @@ public class InvalidRecipe : IRecipe {
 
 	public InvalidRecipe(string id) {
 		Name = id;
-		Ingredients = new IIngredient[] { new ErrorIngredient() };
+		Ingredients = [new ErrorIngredient()];
 	}
 
 	public string SortValue => "";

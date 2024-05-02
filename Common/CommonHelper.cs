@@ -6,10 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 
 using Microsoft.Xna.Framework;
 
+using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
 
 using SColor = System.Drawing.Color;
@@ -28,7 +29,7 @@ public static class CommonHelper {
 
 		comparer ??= EqualityComparer<TValue>.Default;
 
-		for(int i = 0; i < input.Length; i++) {
+		for (int i = 0; i < input.Length; i++) {
 			if (!comparer.Equals(input[i], other[i]))
 				return false;
 		}
@@ -43,7 +44,7 @@ public static class CommonHelper {
 
 		comparer ??= EqualityComparer<TValue>.Default;
 
-		for(int i = 0; i < input.Count; i++) {
+		for (int i = 0; i < input.Count; i++) {
 			if (!comparer.Equals(input[i], other[i]))
 				return false;
 		}
@@ -58,7 +59,7 @@ public static class CommonHelper {
 
 		comparer ??= EqualityComparer<TValue>.Default;
 
-		foreach(var entry in input) {
+		foreach (var entry in input) {
 			if (!other.TryGetValue(entry.Key, out TValue? value))
 				return false;
 			if (!comparer.Equals(entry.Value, value))
@@ -601,6 +602,50 @@ public static class CommonHelper {
 	}
 
 	#endregion
+
+	internal static IEnumerable<GameLocation> EnumerateLocations(bool includeInteriors = true, bool includeGenerated = false) {
+
+		GameLocation current = Game1.currentLocation;
+		string? currentName = current?.NameOrUniqueName;
+
+		foreach (var rawLocation in Game1.locations) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+
+			if (!includeInteriors)
+				continue;
+
+			foreach (var building in loc.buildings) {
+				if (building.GetIndoorsType() == StardewValley.Buildings.IndoorsType.Instanced) {
+					var indoors = building.GetIndoors();
+					if (indoors != null)
+						yield return indoors;
+				}
+			}
+		}
+
+		if (!includeGenerated)
+			yield break;
+
+		foreach (var rawLocation in MineShaft.activeMines) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+		}
+
+		foreach (var rawLocation in VolcanoDungeon.activeLevels) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+		}
+	}
 
 	internal static Vector2 GetNearestPoint(this Rectangle rectangle, Vector2 position) {
 		float minX = rectangle.X;

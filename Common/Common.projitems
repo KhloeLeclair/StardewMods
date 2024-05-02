@@ -14,7 +14,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)DynamicRecipeSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecyclable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\ConsoleCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)events\GSQCondition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\PintailModSubscriber.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)events\TriggerAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NameValueCollectionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\RandomExtensions.cs" />

@@ -2,14 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-
-using StardewModdingAPI;
+using System.Text;
 
 using Leclair.Stardew.Common.Types;
+
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using System.Text;
-using System.Linq;
 
 namespace Leclair.Stardew.Common.Events;
 
@@ -19,6 +19,7 @@ public abstract class ModSubscriber : Mod {
 
 	public override void Entry(IModHelper helper) {
 		RegisterEvents();
+
 		Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
 	}
 
@@ -111,14 +112,14 @@ public abstract class ModSubscriber : Mod {
 		}
 
 		foreach (string[] entry in entries) {
-			for(int i = 0; i < entry.Length; i++)
+			for (int i = 0; i < entry.Length; i++)
 				longest[i] = Math.Max(longest[i], entry[i].Length);
 		}
 
 		// Build a format string.
 		StringBuilder sb = new();
 
-		for(int i = 0; i < longest.Length; i++) {
+		for (int i = 0; i < longest.Length; i++) {
 			if (i > 0)
 				sb.Append(separator);
 			sb.Append($"{{{i},-{longest[i]}}}");
@@ -154,7 +155,7 @@ public abstract class ModSubscriber : Mod {
 	}
 
 	public void RegisterEvents(Action<string, LogLevel>? logger = null) {
-		Events = EventHelper.RegisterEvents(this, Helper.Events, Events, logger ?? ((msg, level) => Log(msg, level)));
+		Events = EventHelper.RegisterEvents(this, Helper.Events, Events, logger ?? Monitor.Log);
 	}
 
 	public void UnregisterEvents() {
@@ -165,8 +166,34 @@ public abstract class ModSubscriber : Mod {
 		Events = null;
 	}
 
+	protected virtual void RegisterTriggerActions() {
+		List<string> registered = EventHelper.RegisterTriggerActions(this, $"{ModManifest.UniqueID}_", Monitor.Log);
+		registered.AddRange(EventHelper.RegisterTriggerActions(GetType(), $"{ModManifest.UniqueID}_", Monitor.Log));
+
+		if (registered.Count > 0)
+			Log($"Registered trigger actions: {string.Join(", ", registered)}", LogLevel.Debug);
+	}
+
+	protected virtual void RegisterGameStateQueries() {
+		List<string> registered = EventHelper.RegisterGameStateQueries(this, [$"{ModManifest.UniqueID}_"], Monitor.Log);
+		registered.AddRange(EventHelper.RegisterGameStateQueries(GetType(), [$"{ModManifest.UniqueID}_"], Monitor.Log));
+
+		if (registered.Count > 0)
+			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Debug);
+	}
+
+	protected virtual void RegisterConsoleCommands() {
+		List<string> registered = EventHelper.RegisterConsoleCommands(this, Helper.ConsoleCommands, Monitor.Log);
+		registered.AddRange(EventHelper.RegisterConsoleCommands(GetType(), Helper.ConsoleCommands, Monitor.Log));
+
+		if (registered.Count > 0)
+			Log($"Registered console commands: {string.Join(", ", registered)}", LogLevel.Debug);
+	}
+
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
-		EventHelper.RegisterConsoleCommands(this, Helper.ConsoleCommands, (msg, level) => Log(msg, level));
+		RegisterTriggerActions();
+		RegisterGameStateQueries();
+		RegisterConsoleCommands();
 	}
 
 	public void CheckRecommendedIntegrations() {

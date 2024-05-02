@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.8.3
+Released May 2nd, 2024.
+
+### Added
+* New dynamic rule for matching recipes that a given character likes
+  or loves. By default, this only matches discovered gift tastes, but
+  you can enable the "Show Undiscovered Gift Tastes" setting to make
+  it match everything.
+
+### Changed
+* All the dynamic rules for buffs have been combined into one rule,
+  with a selection dialog for the specific buff you want. This allows
+  for a better user experience by de-cluttering the rule selection
+  dialog, as well as showing you how many recipes any particular
+  buff actually match.
+
+### Fixed
+* The cursor snapping when it shouldn't.
+* Issue where Better Crafting was loading `Data/Objects` and `Data/Buffs`
+  during GameStarted, which could cache the resources early and cause
+  other mods' edits to not apply.
+* When drawing the `NEW` label on recipes, use a larger rectangle
+  that supports all languages.
+* Attempt to fix a sporadic NRE with the temporary loading menu for
+  controller users.
+
+
 ## 2.8.2
 Released April 20th, 2024.
 

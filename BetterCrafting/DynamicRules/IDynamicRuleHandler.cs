@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common.Crafting;
@@ -98,7 +94,16 @@ public interface IDynamicRuleHandler {
 	#endregion
 }
 
-public abstract class DynamicTypeHandler<T> : IDynamicRuleHandler, IExtraInfoRuleHandler {
+
+public interface IDynamicIconRuleHandler {
+
+	Texture2D GetTexture(object? state);
+
+	Rectangle GetSource(object? state);
+
+}
+
+public abstract class DynamicTypeHandler<T> : IDynamicRuleHandler, IDynamicIconRuleHandler, IExtraInfoRuleHandler {
 
 	#region Display
 
@@ -109,6 +114,24 @@ public abstract class DynamicTypeHandler<T> : IDynamicRuleHandler, IExtraInfoRul
 	public abstract Texture2D Texture { get; }
 
 	public abstract Rectangle Source { get; }
+
+	public Texture2D GetTexture(object? state) {
+		T? tstate = state is T ts ? ts : default;
+		return GetTexture(tstate);
+	}
+
+	public Rectangle GetSource(object? state) {
+		T? tstate = state is T ts ? ts : default;
+		return GetSource(tstate);
+	}
+
+	public virtual Texture2D GetTexture(T? state) {
+		return Texture;
+	}
+
+	public virtual Rectangle GetSource(T? state) {
+		return Source;
+	}
 
 	public abstract bool AllowMultiple { get; }
 

@@ -362,8 +362,8 @@
 	"filter.everything": "Everything",
 	"filter.everything.about": "This rule matches every recipe.",
 
-	"filter.buff": "Buff: {{type}}",
-	"filter.buff.about": "This rule matches items that give a {{type}} buff when consumed.",
+	"filter.new-buff": "Buff",
+	"filter.new-buff.about": "This rule matches items that give a certain buff when consumed.",
 
 	"filter.uncrafted": "Not Yet Crafted",
 	"filter.uncrafted.about": "This rule matches items that you haven't crafted yet.",
@@ -373,6 +373,13 @@
 
 	"filter.mod": "Items From Mod",
 	"filter.mod.about": "This rule will attempt to match all recipes added by a specific mod.",
+
+	"filter.gift-taste": "Gift Taste: {{taste}}",
+	"filter.gift-taste.about": "This rule will attempt to match items that an NPC {{taste}}. This only displays known tastes unless you have \"Show Undiscovered Gift Tastes\" enabled.",
+	"filter.gift-taste.likes": "Likes",
+	"filter.gift-taste.loves": "Loves",
+	"filter.gift-taste.dislikes": "Dislikes",
+	"filter.gift-taste.hates": "Hates",
 
 	"filter.machine": "Machines",
 	"filter.machine.about": "This rule matches items that act as machines, processing items or performing some other function.",

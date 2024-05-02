@@ -72,6 +72,10 @@ public class TemporaryCraftingPage : CraftingPage {
 			x: gm.xPositionOnScreen,
 			y: gm.yPositionOnScreen
 		);
+
+		gm.AddTabsToClickableComponents(gm.pages[idx]);
+		if (Game1.options.SnappyMenus)
+			gm.snapToDefaultClickableComponent();
 	}
 
 	public override void RepositionElements() {
