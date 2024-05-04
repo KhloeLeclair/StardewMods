@@ -274,20 +274,24 @@ public static class Game1_Patches {
 	}
 
 	public static bool AssignOutdoorLight() {
-		var tint = PatchHelper.GetTintData(Game1.currentLocation);
-		if (!tint.HasValue || !tint.Value.HasAmbientColor)
+		var rawTint = PatchHelper.GetTintData(Game1.currentLocation);
+		if (!rawTint.HasValue || !rawTint.Value.HasAmbientColor)
 			return false;
 
+		var tint = rawTint.Value;
 		float opacity;
 
-		if (tint.Value.EndTime == int.MaxValue) {
-			opacity = tint.Value.StartAmbientOutdoorOpacity;
+		if (tint.AmbientEndTime == int.MaxValue || tint.EndAmbientOutdoorOpacity == tint.StartAmbientOutdoorOpacity)
+			// Same value? No end to today? Just return the starting opacity.
+			opacity = tint.StartAmbientOutdoorOpacity;
+		else if (Game1.timeOfDay >= tint.AmbientEndTime)
+			opacity = tint.EndAmbientOutdoorOpacity;
+		else {
+			// Both values? Lerp between them.
+			int minutes = Utility.CalculateMinutesBetweenTimes(tint.AmbientStartTime, Game1.timeOfDay) / 10;
+			float progress = (minutes + (Game1.gameTimeInterval / (float) Game1.realMilliSecondsPerGameTenMinutes)) / tint.AmbientDurationInTenMinutes;
 
-		} else {
-			int minutes = Utility.CalculateMinutesBetweenTimes(tint.Value.StartTime, Game1.timeOfDay) / 10;
-			float progress = (minutes + (Game1.gameTimeInterval / (float) Game1.realMilliSecondsPerGameTenMinutes)) / tint.Value.DurationInTenMinutes;
-
-			opacity = Utility.Lerp(tint.Value.StartAmbientOutdoorOpacity, tint.Value.EndAmbientOutdoorOpacity, progress);
+			opacity = Utility.Lerp(tint.StartAmbientOutdoorOpacity, tint.EndAmbientOutdoorOpacity, progress);
 		}
 
 		Game1.outdoorLight = Game1.ambientLight * opacity;

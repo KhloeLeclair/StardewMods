@@ -1,12 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Events;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewModdingAPI;
+
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.Delegates;
+using StardewValley.TerrainFeatures;
 using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies;
@@ -15,25 +23,23 @@ public partial class ModEntry {
 
 	#region Game State Queries
 
-	private void RegisterQueries() {
-		Dictionary<string, GameStateQueryDelegate> entries = new() {
-			{ "LOCATION_IGNORE_DEBRIS_WEATHER", LocationIgnoreDebrisWeather },
-			{ "WEATHER_IS_RAINING", WeatherRaining },
-			{ "WEATHER_IS_SNOWING", WeatherSnowing },
-			{ "WEATHER_IS_LIGHTNING", WeatherLightning },
-			{ "WEATHER_IS_DEBRIS", WeatherDebris },
-			{ "WEATHER_IS_GREEN_RAIN", WeatherGreenRain }
-		};
+	protected override void RegisterGameStateQueries() {
+		List<string> registered = EventHelper.RegisterGameStateQueries(this, [
+				$"{ModManifest.UniqueID}_",
+				$"CS_"
+			], Monitor.Log);
 
-		foreach (var pair in entries) {
-			string prefixed = $"leclair.cloudyskies_{pair.Key}";
-			GameStateQuery.Register(prefixed, pair.Value);
-			if (!GameStateQuery.Exists($"CS_{pair.Key}"))
-				GameStateQuery.RegisterAlias($"CS_{pair.Key}", prefixed);
-		}
+		registered.AddRange(EventHelper.RegisterGameStateQueries(GetType(), [
+				$"{ModManifest.UniqueID}_",
+				$"CS_"
+			], Monitor.Log));
+
+		if (registered.Count > 0)
+			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Debug);
 	}
 
-	public static bool WeatherRaining(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool WEATHER_IS_RAINING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
@@ -41,7 +47,8 @@ public partial class ModEntry {
 		return location?.GetWeather()?.IsRaining ?? false;
 	}
 
-	public static bool WeatherSnowing(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool WEATHER_IS_SNOWING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
@@ -49,7 +56,8 @@ public partial class ModEntry {
 		return location?.GetWeather()?.IsSnowing ?? false;
 	}
 
-	public static bool WeatherLightning(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool WEATHER_IS_LIGHTNING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
@@ -57,7 +65,8 @@ public partial class ModEntry {
 		return location?.GetWeather()?.IsLightning ?? false;
 	}
 
-	public static bool WeatherDebris(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool WEATHER_IS_DEBRIS(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
@@ -65,7 +74,8 @@ public partial class ModEntry {
 		return location?.GetWeather()?.IsDebrisWeather ?? false;
 	}
 
-	public static bool WeatherGreenRain(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool WEATHER_IS_GREEN_RAIN(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
@@ -73,12 +83,87 @@ public partial class ModEntry {
 		return location?.GetWeather()?.IsGreenRain ?? false;
 	}
 
-	public static bool LocationIgnoreDebrisWeather(string[] query, GameStateQueryContext context) {
+	[GSQCondition]
+	public static bool LOCATION_IGNORE_DEBRIS_WEATHER(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
 		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
 		return location?.ignoreDebrisWeather.Value ?? false;
+	}
+
+	#endregion
+
+	#region Trigger Actions
+
+	public enum LocationOrContext {
+		Location,
+		Context
+	};
+
+	[TriggerAction]
+	public static bool WaterCrops(string[] args, TriggerActionContext context, out string? error) {
+		if (!ArgUtility.TryGetEnum<LocationOrContext>(args, 1, out var target, out error))
+			return false;
+
+		if (!ArgUtility.TryGet(args, 2, out string? locationName, out error))
+			return false;
+
+		if (!ArgUtility.TryGetOptionalFloat(args, 3, out float chance, out error, defaultValue: 1f))
+			return false;
+
+		IEnumerable<GameLocation> locations;
+
+		// Abort early if we're looking for 'Here' and don't have one.
+		if (locationName == "Here" && Game1.currentLocation is null)
+			return true;
+
+		if (locationName == "Any")
+			locations = CommonHelper.EnumerateLocations(false, false);
+
+		else if (target == LocationOrContext.Location) {
+			if (locationName == "Here")
+				locations = [Game1.currentLocation];
+			else {
+				var loc = Game1.getLocationFromName(locationName);
+				if (loc is null) {
+					error = $"Could not find location: {locationName}";
+					return false;
+				}
+
+				locations = [loc];
+			}
+
+		} else {
+			if (locationName == "Here")
+				locationName = Game1.currentLocation.GetLocationContextId();
+
+			locations = CommonHelper.EnumerateLocations(false, false)
+				.Where(loc => loc.GetLocationContextId() == locationName);
+		}
+
+		// Now, loop through all the locations and water everything.
+		foreach (var loc in locations) {
+			if (loc is null || !loc.IsOutdoors)
+				continue;
+
+			foreach (var feature in loc.terrainFeatures.Values) {
+				// Water ALL the dirt! (Assuming random chance.)
+				if (feature is HoeDirt dirt && dirt.state.Value != 2 && (chance >= 1f || Game1.random.NextSingle() <= chance))
+					dirt.state.Value = 1;
+			}
+
+			foreach (var building in loc.buildings) {
+				// Water ALL the pet bowls! (Assuming random chance.)
+				if (building is PetBowl bowl && (chance >= 1f || Game1.random.NextSingle() <= chance))
+					bowl.watered.Value = true;
+			}
+
+		}
+
+		// Great success!
+		error = null;
+		return true;
 	}
 
 	#endregion

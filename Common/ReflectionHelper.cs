@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Reflection;
 using System;
-using Sickhead.Engine.Util;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Leclair.Stardew.Common;
 
@@ -169,6 +169,130 @@ internal static class ReflectionHelper {
 	}
 
 	#endregion
+
+	#endregion
+
+	#region Methods
+
+	private static readonly Dictionary<MethodInfo, Delegate> MethodCallers = new();
+
+	internal static Delegate CreateFuncInner(this MethodInfo method, Type ownerType, Type resultType, params Type[] types) {
+		if (method is null || method.DeclaringType is null)
+			throw new ArgumentNullException(nameof(method));
+		if (!resultType.IsAssignableFrom(method.ReturnType))
+			throw new InvalidCastException($"{resultType} is not assignable from return type {method.ReturnType}");
+		if (ownerType != typeof(object) && !method.DeclaringType.IsAssignableFrom(ownerType))
+			throw new InvalidCastException($"{ownerType} is not assignable to declaring type {method.DeclaringType}");
+		if (method.IsStatic)
+			throw new ArgumentException("method is static");
+
+		var parms = method.GetParameters();
+		if (parms.Length != types.Length)
+			throw new ArgumentException("incorrect parameter count");
+
+		for (int i = 0; i < types.Length; i++) {
+			if (!parms[i].ParameterType.IsAssignableFrom(types[i]))
+				throw new ArgumentException($"Parameter type mismatch at index {i}. Expected: {parms[i].ParameterType}, Actual: {types[i]}");
+		}
+
+		if (!MethodCallers.TryGetValue(method, out var caller)) {
+			Type[] finalTypes = [ownerType, .. types];
+			var delegateType = Expression.GetFuncType([.. finalTypes, resultType]);
+
+			DynamicMethod dm = new(MakeAccessorName("Call", method), resultType, finalTypes, true);
+
+			var generator = dm.GetILGenerator();
+
+			if (ownerType.IsValueType)
+				generator.Emit(OpCodes.Ldarga_S, (byte) 0);
+			else
+				generator.Emit(OpCodes.Ldarg_0);
+
+			for (byte i = 1; i <= parms.Length; i++)
+				generator.Emit(OpCodes.Ldarg_S, i);
+
+			generator.Emit(OpCodes.Call, method);
+			generator.Emit(OpCodes.Ret);
+
+			caller = dm.CreateDelegate(delegateType);
+			MethodCallers[method] = caller;
+		}
+
+		return caller;
+	}
+
+
+	internal static Func<TOwner, TResult> CreateFunc<TOwner, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult));
+	}
+
+	internal static Func<TOwner, TArg1, TResult> CreateFunc<TOwner, TArg1, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TResult> CreateFunc<TOwner, TArg1, TArg2, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2));
+	}
+
+	internal static Delegate CreateActionInner(this MethodInfo method, Type ownerType, params Type[] types) {
+		if (method is null || method.DeclaringType is null)
+			throw new ArgumentNullException(nameof(method));
+		if (ownerType != typeof(object) && !method.DeclaringType.IsAssignableFrom(ownerType))
+			throw new InvalidCastException($"{ownerType} is not same as parent type {method.ReflectedType}");
+		if (method.IsStatic)
+			throw new ArgumentException("method is static");
+
+		var parms = method.GetParameters();
+		if (parms.Length != types.Length)
+			throw new ArgumentException("incorrect parameter count");
+
+		for (int i = 0; i < types.Length; i++) {
+			if (!parms[i].ParameterType.IsAssignableFrom(types[i]))
+				throw new ArgumentException($"Parameter type mismatch at index {i}. Expected: {parms[i].ParameterType}, Actual: {types[i]}");
+		}
+
+		if (true || !MethodCallers.TryGetValue(method, out var caller)) {
+			Type[] finalTypes = [ownerType, .. types];
+			var delegateType = Expression.GetActionType(finalTypes);
+
+			DynamicMethod dm = new(MakeAccessorName("Call", method), null, finalTypes, true);
+
+			var generator = dm.GetILGenerator();
+
+			if (ownerType.IsValueType)
+				generator.Emit(OpCodes.Ldarga_S, (byte) 0);
+			else
+				generator.Emit(OpCodes.Ldarg_0);
+
+			for (byte i = 1; i <= parms.Length; i++)
+				generator.Emit(OpCodes.Ldarg_S, i);
+
+			generator.Emit(OpCodes.Call, method);
+			generator.Emit(OpCodes.Ret);
+
+			caller = dm.CreateDelegate(delegateType);
+			MethodCallers[method] = caller;
+		}
+
+		return caller;
+	}
+
+
+	internal static Action<TOwner> CreateAction<TOwner>(this MethodInfo method) {
+		return (Action<TOwner>) CreateActionInner(method, typeof(TOwner));
+	}
+
+	internal static Action<TOwner, TArg1> CreateAction<TOwner, TArg1>(this MethodInfo method) {
+		return (Action<TOwner, TArg1>) CreateActionInner(method, typeof(TOwner), typeof(TArg1));
+	}
+
+	internal static Action<TOwner, TArg1, TArg2> CreateAction<TOwner, TArg1, TArg2>(this MethodInfo method) {
+		return (Action<TOwner, TArg1, TArg2>) CreateActionInner(method, typeof(TOwner), typeof(TArg1), typeof(TArg2));
+	}
+
+	internal static Action<TOwner, TArg1, TArg2, TArg3> CreateAction<TOwner, TArg1, TArg2, TArg3>(this MethodInfo method) {
+		return (Action<TOwner, TArg1, TArg2, TArg3>) CreateActionInner(method, typeof(TOwner), typeof(TArg1), typeof(TArg2), typeof(TArg3));
+	}
 
 	#endregion
 

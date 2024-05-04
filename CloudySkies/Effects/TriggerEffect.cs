@@ -28,7 +28,7 @@ public record TriggerEffectData : BaseEffectData, ITriggerEffectData {
 
 }
 
-public class TriggerEffect : IEffect {
+public class TriggerEffect : IWeatherEffect {
 
 	private readonly ModEntry Mod;
 
@@ -50,7 +50,7 @@ public class TriggerEffect : IEffect {
 		return input.ToArray();
 	}
 
-	public TriggerEffect(ModEntry mod, ulong id, TriggerEffectData data) {
+	public TriggerEffect(ModEntry mod, ulong id, ITriggerEffectData data) {
 		Mod = mod;
 		Id = id;
 		_Rate = data.Rate;

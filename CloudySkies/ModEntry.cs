@@ -12,10 +12,13 @@ using Leclair.Stardew.CloudySkies.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.Common.Types;
 using Leclair.Stardew.Common.UI;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
+using Newtonsoft.Json.Linq;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -62,6 +65,9 @@ public partial class ModEntry : PintailModSubscriber {
 	internal Dictionary<string, WeatherData>? Data;
 	internal Dictionary<string, LocationContextExtensionData>? ContextData;
 
+	internal readonly Dictionary<string, Func<ulong, ILayerData, IWeatherLayer?>> LayerFactories = new();
+	internal readonly Dictionary<string, Func<ulong, IEffectData, IWeatherEffect?>> EffectFactories = new();
+
 	internal readonly PerScreen<double> UpdateTiming = new();
 	internal readonly PerScreen<double> DrawTiming = new();
 
@@ -69,6 +75,9 @@ public partial class ModEntry : PintailModSubscriber {
 		base.Entry(helper);
 
 		Instance = this;
+
+		RegisterBuiltinEffects();
+		RegisterBuiltinLayers();
 
 		// Harmony
 		Harmony = new Harmony(ModManifest.UniqueID);
@@ -88,15 +97,67 @@ public partial class ModEntry : PintailModSubscriber {
 
 		// Init
 		I18n.Init(Helper.Translation);
-
-		// Register some early stuff.
-		RegisterQueries();
-
 	}
 
 	public override object? GetApi(IModInfo mod) {
 		return new ModApi(this, mod.Manifest);
 	}
+
+	#region Effects and Layer Registration
+
+	public bool RegisterLayerType(string type, Func<ulong, ILayerData, IWeatherLayer?> factory) {
+		if (LayerFactories.TryAdd(type, factory)) {
+			UncacheLayers();
+			return true;
+		}
+
+		return false;
+	}
+
+	public bool UnregisterLayerType(string type) {
+		if (LayerFactories.Remove(type)) {
+			UncacheLayers();
+			return true;
+		}
+
+		return false;
+	}
+
+	public bool RegisterEffectType(string type, Func<ulong, IEffectData, IWeatherEffect?> factory) {
+		if (EffectFactories.TryAdd(type, factory)) {
+			UncacheEffects();
+			return true;
+		}
+
+		return false;
+	}
+
+	public bool UnregisterEffectType(string type) {
+		if (EffectFactories.Remove(type)) {
+			UncacheEffects();
+			return true;
+		}
+
+		return false;
+	}
+
+	internal void RegisterBuiltinLayers() {
+		RegisterLayerType("Color", (id, data) => data is IColorLayerData colorData ? new ColorLayer(id, colorData) : null);
+		RegisterLayerType("Debris", (id, data) => data is IDebrisLayerData debrisData ? new DebrisLayer(this, id, debrisData) : null);
+		RegisterLayerType("Particle", (id, data) => data is ParticleLayerData particleData ? new ParticleLayer(this, id, particleData) : null);
+		RegisterLayerType("Rain", (id, data) => data is IRainLayerData rainData ? new RainLayer(this, id, rainData) : null);
+		RegisterLayerType("Snow", (id, data) => data is ITextureScrollLayerData snowData ? new TextureScrollLayer(this, id, snowData) : null);
+		RegisterLayerType("TextureScroll", (id, data) => data is ITextureScrollLayerData snowData ? new TextureScrollLayer(this, id, snowData) : null);
+	}
+
+	internal void RegisterBuiltinEffects() {
+		RegisterEffectType("Buff", (id, data) => data is IBuffEffectData buffData ? new BuffEffect(this, id, buffData) : null);
+		RegisterEffectType("ModifyHealth", (id, data) => data is IModifyHealthEffectData healthData ? new ModifyHealthEffect(id, healthData) : null);
+		RegisterEffectType("ModifyStamina", (id, data) => data is IModifyStaminaEffectData staminaData ? new ModifyStaminaEffect(id, staminaData) : null);
+		RegisterEffectType("Trigger", (id, data) => data is ITriggerEffectData triggerData ? new TriggerEffect(this, id, triggerData) : null);
+	}
+
+	#endregion
 
 	#region Configuration
 
@@ -179,9 +240,7 @@ public partial class ModEntry : PintailModSubscriber {
 					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:Utility.cs.5861]",
 					IncludeInWeatherChannel = true,
 					WeatherChannelCondition = "PLAYER_HAS_MAIL Host ccVault Any",
-					WeatherChannelBackgroundTexture = "LooseSprites\\map",
-					WeatherChannelBackgroundSource = Point.Zero,
-					WeatherChannelBackgroundFrames = 1
+					WeatherChannelBackgroundTexture = "LooseSprites\\map"
 				} },
 				{ "Island", new() {
 					IncludeInWeatherChannel = true,
@@ -190,12 +249,9 @@ public partial class ModEntry : PintailModSubscriber {
 					WeatherForecastPrefix = "[LocalizedText Strings\\StringsFromCSFiles:TV_IslandWeatherIntro]",
 					WeatherChannelOverlayTexture = "LooseSprites\\Cursors2",
 					WeatherChannelOverlayIntroSource = new Point(148, 62),
-					WeatherChannelOverlayIntroFrames = 1,
 					WeatherChannelOverlayWeatherSource = new Point(148, 62),
-					WeatherChannelOverlayWeatherFrames = 1
 				} }
 			}, priority: AssetLoadPriority.Exclusive);
-
 	}
 
 	[Subscriber]
@@ -358,7 +414,12 @@ public partial class ModEntry : PintailModSubscriber {
 				for (int i = 0; i < entry.Value.Layers.Count; i++) {
 					var item = entry.Value.Layers[i];
 					if (item is not BaseLayerData && TryUnproxy(item, out object? obj) && obj is BaseLayerData ld)
-						entry.Value.Layers[i] = ld;
+						item = entry.Value.Layers[i] = ld;
+
+					// While we're unboxing, make sure any CustomLayerData is
+					// actually using ValueEqualityDictionary like we want.
+					if (item is CustomLayerData cd && cd.Fields is not ValueEqualityDictionary<string, JToken>)
+						cd.Fields = new ValueEqualityDictionary<string, JToken>(cd.Fields);
 				}
 			}
 
@@ -367,6 +428,11 @@ public partial class ModEntry : PintailModSubscriber {
 					var item = entry.Value.Effects[i];
 					if (item is not BaseEffectData && TryUnproxy(item, out object? obj) && obj is BaseEffectData ed)
 						entry.Value.Effects[i] = ed;
+
+					// While we're unboxing, make sure any CustomEffectData is
+					// actually using ValueEqualityDictionary like we want.
+					if (item is CustomEffectData cd && cd.Fields is not ValueEqualityDictionary<string, JToken>)
+						cd.Fields = new ValueEqualityDictionary<string, JToken>(cd.Fields);
 				}
 			}
 
@@ -533,7 +599,19 @@ public partial class ModEntry : PintailModSubscriber {
 				CachedLayers.SetValueForScreen(entry.Key, thing);
 			}
 		}
+	}
 
+	internal void UncacheTint() {
+		foreach (var entry in CachedTint.GetActiveValues()) {
+			if (entry.Value.HasValue) {
+				var thing = entry.Value.Value;
+				thing.EndTime = 0;
+				CachedTint.SetValueForScreen(entry.Key, thing);
+			}
+		}
+	}
+
+	internal void UncacheEffects(string? weatherId = null, bool force_reinstance = false) {
 		foreach (var entry in CachedEffects.GetActiveValues()) {
 			string? id = CachedWeatherName.GetValueForScreen(entry.Key);
 			if (weatherId != null && id != weatherId)
@@ -543,14 +621,6 @@ public partial class ModEntry : PintailModSubscriber {
 				var thing = entry.Value.Value;
 				thing.Hour = force_reinstance ? -2 : -1;
 				CachedEffects.SetValueForScreen(entry.Key, thing);
-			}
-		}
-
-		foreach (var entry in CachedTint.GetActiveValues()) {
-			if (entry.Value.HasValue) {
-				var thing = entry.Value.Value;
-				thing.EndTime = 0;
-				CachedTint.SetValueForScreen(entry.Key, thing);
 			}
 		}
 	}
@@ -571,7 +641,8 @@ public partial class ModEntry : PintailModSubscriber {
 			cache.Value.EventUp == Game1.eventUp &&
 			cache.Value.Location == location &&
 			time >= cache.Value.StartTime &&
-			time <= cache.Value.EndTime
+			time <= cache.Value.EndTime &&
+			(!cache.Value.HasAmbientColor || (time >= cache.Value.AmbientStartTime && (time <= cache.Value.AmbientEndTime || time >= cache.Value.FullyDarkTime)))
 		)
 			return cache;
 
@@ -590,7 +661,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 			int tod = tintData.TimeOfDay;
 			if (tod <= 0)
-				tod = darkTime - tod;
+				tod = darkTime + tod;
 
 			if (tod <= time)
 				start = tintData;
@@ -601,21 +672,23 @@ public partial class ModEntry : PintailModSubscriber {
 			}
 		}
 
+		int fullyDarkTime = darkTime + 300;
+
 		// If we have no data, return nothing basically.
-		if (start == null)
+		if (start == null) {
 			cache = new() {
 				Data = data,
 				Location = location,
 				EventUp = Game1.eventUp,
 				StartTime = int.MinValue,
 				EndTime = int.MaxValue,
+				FullyDarkTime = fullyDarkTime,
 				DurationInTenMinutes = 1,
 				HasAmbientColor = false,
 				HasLightingTint = false,
 				HasPostLightingTint = false,
 			};
-
-		else {
+		} else {
 			bool can_tween = start.TweenMode.HasFlag(LightingTweenMode.After) &&
 				end != null && end.TweenMode.HasFlag(LightingTweenMode.Before);
 
@@ -636,31 +709,69 @@ public partial class ModEntry : PintailModSubscriber {
 			if (end_time <= 0)
 				end_time = darkTime - end_time;
 
-			float start_opacity;
-			if (start.AmbientOutdoorOpacity.HasValue)
-				start_opacity = start.AmbientOutdoorOpacity.Value;
-			else {
-				int adjusted = (int) ((start_time - start_time % 100) + (start_time % 100 / 10) * 16.66f);
-				if (start_time >= darkTime)
-					start_opacity = Math.Min(0.93f, 0.75f + (adjusted - darkTime) * 0.000625f);
-				else if (start_time >= startDarkTime) {
-					start_opacity = Math.Min(0.93f, 0.3f + (adjusted - startDarkTime) * 0.00225f);
-				} else
-					start_opacity = 0.3f;
-			}
 
+			// Okay, we need to figure out our ambient opacity stuff.
+
+			bool has_ambient_color = start.AmbientColor.HasValue || end.AmbientColor.HasValue;
+
+			int ambientStartTime = start_time;
+			int ambientEndTime = end_time;
+
+			float start_opacity;
 			float end_opacity;
 
-			if (end.AmbientOutdoorOpacity.HasValue)
+			// So, if we have both values, then we just tween between
+			// those values and don't think about it.
+			if (start != end && start.AmbientOutdoorOpacity.HasValue && end.AmbientOutdoorOpacity.HasValue) {
+				// Both values? Easy mode!
+				start_opacity = start.AmbientOutdoorOpacity.Value;
 				end_opacity = end.AmbientOutdoorOpacity.Value;
-			else {
-				int adjusted = (int) ((end_time - end_time % 100) + (end_time % 100 / 10) * 16.66f);
-				if (start_time >= darkTime)
-					end_opacity = Math.Min(0.93f, 0.75f + (adjusted - darkTime) * 0.000625f);
-				else if (start_time >= startDarkTime) {
-					end_opacity = Math.Min(0.93f, 0.3f + (adjusted - startDarkTime) * 0.00225f);
-				} else
+
+			} else {
+				// If we *don't*, then we figure out what time of day we're
+				// in, mark its start and end times, calculate the start
+				// and end opacities for that segment of time, and then do
+				// some very minor logic to adjust the values based on
+				// the start time, end time, and either opacity we already
+				// happen to know.
+
+				if (time < startDarkTime) {
+					ambientStartTime = 0;
+					ambientEndTime = startDarkTime;
+
+					start_opacity = 0.3f;
 					end_opacity = 0.3f;
+
+				} else if (time < darkTime) {
+					ambientStartTime = startDarkTime;
+					ambientEndTime = darkTime;
+
+					start_opacity = 0.3f;
+					end_opacity = 0.75f;
+
+				} else if (time < fullyDarkTime) {
+					ambientStartTime = darkTime;
+					ambientEndTime = fullyDarkTime;
+
+					start_opacity = 0.75f;
+					end_opacity = 0.93f;
+
+				} else {
+					ambientStartTime = fullyDarkTime;
+					ambientEndTime = int.MaxValue;
+
+					start_opacity = 0.93f;
+					end_opacity = 0.93f;
+				}
+
+				if (start.AmbientOutdoorOpacity.HasValue)
+					start_opacity = Math.Max(start.AmbientOutdoorOpacity.Value, start_opacity);
+
+				if (end.AmbientOutdoorOpacity.HasValue)
+					end_opacity = Math.Max(end.AmbientOutdoorOpacity.Value, end_opacity);
+
+				if (end_opacity < start_opacity)
+					end_opacity = start_opacity;
 			}
 
 			cache = new() {
@@ -673,12 +784,20 @@ public partial class ModEntry : PintailModSubscriber {
 
 				DurationInTenMinutes = Utility.CalculateMinutesBetweenTimes(start_time, end_time) / 10,
 
-				HasAmbientColor = start.AmbientColor.HasValue || end.AmbientColor.HasValue,
+				FullyDarkTime = fullyDarkTime,
+
+				HasAmbientColor = has_ambient_color,
 				HasLightingTint = start.LightingTint.HasValue || end.LightingTint.HasValue,
 				HasPostLightingTint = start.PostLightingTint.HasValue || end.PostLightingTint.HasValue,
 
 				StartAmbientColor = start.AmbientColor ?? Color.White,
 				EndAmbientColor = end.AmbientColor ?? Color.White,
+
+				AmbientDurationInTenMinutes = has_ambient_color
+					? Utility.CalculateMinutesBetweenTimes(ambientStartTime, ambientEndTime) / 10
+					: 1,
+				AmbientStartTime = ambientStartTime,
+				AmbientEndTime = ambientEndTime,
 
 				StartAmbientOutdoorOpacity = start_opacity,
 				EndAmbientOutdoorOpacity = end_opacity,
@@ -702,7 +821,7 @@ public partial class ModEntry : PintailModSubscriber {
 	}
 
 
-	internal List<IEffect>? GetCachedWeatherEffects(GameLocation? location = null, int? timeOfDay = null) {
+	internal List<IWeatherEffect>? GetCachedWeatherEffects(GameLocation? location = null, int? timeOfDay = null) {
 		var data = CachedWeather.Value;
 		location ??= Game1.player?.currentLocation;
 		if (location is null || data?.Effects is null || data.Effects.Count == 0)
@@ -718,9 +837,9 @@ public partial class ModEntry : PintailModSubscriber {
 		var old_by_id = cache?.EffectsById;
 		var old_data_by_id = cache?.DataById;
 
-		Dictionary<string, IEffect> effectsById = new();
+		Dictionary<string, IWeatherEffect> effectsById = new();
 		Dictionary<string, IEffectData> dataById = new();
-		List<IEffect> result = new();
+		List<IWeatherEffect> result = new();
 		HashSet<string> groups = new();
 
 		GameStateQueryContext ctx = new(location, Game1.player, null, null, Game1.random);
@@ -738,7 +857,7 @@ public partial class ModEntry : PintailModSubscriber {
 			if (effect.Group != null)
 				groups.Add(effect.Group);
 
-			IEffect instance;
+			IWeatherEffect instance;
 
 			// We rely upon record value equality checks.
 			if (old_by_id is not null && old_data_by_id is not null &&
@@ -754,23 +873,19 @@ public partial class ModEntry : PintailModSubscriber {
 
 			} else
 				try {
-					// TODO: Better way of instantiating based on type.
-					if (effect is ModifyHealthEffectData healthData)
-						instance = new ModifyHealthEffect(lastLayerId, healthData);
-					else if (effect is ModifyStaminaEffectData staminaData)
-						instance = new ModifyStaminaEffect(lastLayerId, staminaData);
-					else if (effect is BuffEffectData buffData)
-						instance = new BuffEffect(this, lastLayerId, buffData);
-					else if (effect is TriggerEffectData triggerData)
-						instance = new TriggerEffect(this, lastLayerId, triggerData);
-					else
-						throw new ArgumentException($"unknown data type: {effect.Type}");
+					if (!EffectFactories.TryGetValue(effect.Type, out var factory))
+						throw new ArgumentException($"unknown effect type: {effect.Type}");
 
+					var created = factory(lastLayerId, effect);
+					if (created is null)
+						continue;
+
+					instance = created;
 					lastLayerId++;
 					instanced++;
 
 				} catch (Exception ex) {
-					Log($"Unable to instantiate weather layer '{effect.Id}': {ex}", LogLevel.Warn);
+					Log($"Unable to instantiate weather layer '{effect.Id}' with type '{effect.Type}': {ex}", LogLevel.Warn);
 					continue;
 				}
 
@@ -781,8 +896,10 @@ public partial class ModEntry : PintailModSubscriber {
 
 		// Clean up the old instances that weren't used.
 		if (old_by_id is not null)
-			foreach (var effect in old_by_id.Values)
+			foreach (var effect in old_by_id.Values) {
+				RemoveLoadsAsset(effect.Id);
 				effect.Remove();
+			}
 
 		int skipped = data.Effects.Count - (reused + instanced);
 #if DEBUG
@@ -852,30 +969,25 @@ public partial class ModEntry : PintailModSubscriber {
 				old_data_by_id.TryGetValue(layer.Id, out var existingData) &&
 				existingData == layer
 			) {
+				old_by_id.Remove(layer.Id);
 				instance = existing;
 				reused++;
 
 			} else
 				try {
-					// TODO: Better way of instantiating based on type.
-					if (layer is ColorLayerData colorData)
-						instance = new ColorLayer(lastLayerId, colorData);
-					else if (layer is TextureScrollLayerData texData)
-						instance = new TextureScrollLayer(this, lastLayerId, texData);
-					else if (layer is RainLayerData rainData)
-						instance = new RainLayer(this, lastLayerId, rainData);
-					else if (layer is DebrisLayerData debrisData)
-						instance = new DebrisLayer(this, lastLayerId, debrisData);
-					else if (layer is ParticleLayerData particleData)
-						instance = new ParticleLayer(this, lastLayerId, particleData);
-					else
-						throw new ArgumentException($"unknown data type: {layer.Type}");
+					if (!LayerFactories.TryGetValue(layer.Type, out var factory))
+						throw new ArgumentException($"unknown layer type: {layer.Type}");
 
+					var created = factory(lastLayerId, layer);
+					if (created is null)
+						continue;
+
+					instance = created;
 					lastLayerId++;
 					instanced++;
 
 				} catch (Exception ex) {
-					Log($"Unable to instantiate weather layer '{layer.Id}': {ex}", LogLevel.Warn);
+					Log($"Unable to instantiate weather layer '{layer.Id}' with type '{layer.Type}': {ex}", LogLevel.Warn);
 					continue;
 				}
 
@@ -883,6 +995,12 @@ public partial class ModEntry : PintailModSubscriber {
 			layersById[layer.Id] = instance;
 			result.Add(instance);
 		}
+
+		// Clean up the old instances that weren't used.
+		if (old_by_id is not null)
+			foreach (var layer in old_by_id.Values) {
+				RemoveLoadsAsset(layer.Id);
+			}
 
 		int skipped = data.Layers.Count - (reused + instanced);
 #if DEBUG

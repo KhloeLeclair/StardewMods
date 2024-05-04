@@ -46,7 +46,7 @@ public record BuffEffectData : BaseEffectData, IBuffEffectData {
 
 }
 
-public class BuffEffect : IEffect, IDisposable {
+public class BuffEffect : IWeatherEffect, IDisposable {
 
 	private readonly ModEntry Mod;
 
@@ -78,7 +78,7 @@ public class BuffEffect : IEffect, IDisposable {
 
 	#region Life Cycle
 
-	public BuffEffect(ModEntry mod, ulong id, BuffEffectData data) {
+	public BuffEffect(ModEntry mod, ulong id, IBuffEffectData data) {
 		Mod = mod;
 		Id = id;
 		Rate = data.Rate;

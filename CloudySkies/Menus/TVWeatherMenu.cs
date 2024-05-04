@@ -102,10 +102,23 @@ public class TVWeatherMenu : IClickableMenu {
 		else
 			ShowList();
 
+		Mod.Helper.Events.Display.RenderedWorld += DrawWorld;
+
 		if (Game1.options.SnappyMenus)
 			snapToDefaultClickableComponent();
 	}
 
+	private void DrawWorld(object? sender, StardewModdingAPI.Events.RenderedWorldEventArgs e) {
+		if (Game1.activeClickableMenu != this) {
+			Mod.Helper.Events.Display.RenderedWorld -= DrawWorld;
+			return;
+		}
+
+		ScreenBase?.draw(e.SpriteBatch);
+		ScreenOverlay?.draw(e.SpriteBatch);
+		WeatherOverlay?.draw(e.SpriteBatch);
+
+	}
 
 	private TemporaryAnimatedSprite MakeSprite(string texture, Point source, int frames) {
 		return new(
@@ -156,6 +169,9 @@ public class TVWeatherMenu : IClickableMenu {
 			frames = weather is null ? 2 : 1;
 		}
 
+		if (frames < 1)
+			frames = 1;
+
 		ScreenBase = MakeSprite(texture, source, frames);
 
 		if (data.WeatherChannelOverlayTexture == null && data.WeatherChannelBackgroundTexture == null) {
@@ -179,6 +195,9 @@ public class TVWeatherMenu : IClickableMenu {
 				}
 			}
 
+			if (frames < 1)
+				frames = 1;
+
 			ScreenOverlay = MakeSprite(
 				texture,
 				source,
@@ -194,16 +213,20 @@ public class TVWeatherMenu : IClickableMenu {
 				source = weatherData.TVSource;
 				frames = weatherData.TVFrames;
 
+				if (frames < 1)
+					frames = 1;
+
+				// Doesn't use MakeSprite because it has a different size + offset.
 				WeatherOverlay = new TemporaryAnimatedSprite(
 					texture,
 					new Rectangle(source.X, source.Y, 13, 13),
 					150f,
 					frames,
 					999999,
-					Television.getScreenPosition() + new Vector2(3f, 3f) * Television.getScreenSizeModifier(),
+					Television.getScreenPosition() + new Vector2(3, 3) * Television.getScreenSizeModifier(),
 					flicker: false,
 					flipped: false,
-					(Television.boundingBox.Bottom - 1) / 10000f + 2E-05f,
+					(Television.boundingBox.Bottom - 1) / 10000f + 1E-05f,
 					0f,
 					Color.White,
 					Television.getScreenSizeModifier(),
@@ -211,9 +234,8 @@ public class TVWeatherMenu : IClickableMenu {
 					0f,
 					0f
 				);
-
-				MakeSprite(texture, source, frames);
 			}
+
 		} else if (weather != null) {
 			// Reflect our way to vanilla weather.
 			AccessTools.Method(typeof(TV), "setWeatherOverlay", [typeof(string)])?.Invoke(Television, [weather]);
@@ -225,7 +247,8 @@ public class TVWeatherMenu : IClickableMenu {
 			WeatherOverlay = null;
 	}
 
-	private static TextStyle FADED = new TextStyle(TextStyle.FANCY, opacity: 0.5f);
+
+	private readonly static TextStyle FADED = new TextStyle(TextStyle.FANCY, opacity: 0.5f);
 
 	public SelectableNode BuildNode(LocationContextExtensionData entry, List<TextNode> nodeList) {
 		var text = new TextNode(Mod.TokenizeText(entry.DisplayName ?? entry.Id), FADED);
@@ -320,7 +343,6 @@ public class TVWeatherMenu : IClickableMenu {
 			else if (Utility.IsPassiveFestivalDay(tomorrow.DayOfMonth, tomorrow.Season, contextId)) {
 				// TODO: Passive festival weather???
 			}
-
 
 			return Game1.netWorldState.Value.GetWeatherForLocation(contextId)?.WeatherForTomorrow;
 		}
@@ -514,10 +536,6 @@ public class TVWeatherMenu : IClickableMenu {
 	}
 
 	public override void draw(SpriteBatch b) {
-
-		ScreenBase?.draw(b);
-		ScreenOverlay?.draw(b);
-		WeatherOverlay?.draw(b);
 
 		if (childMenu is not null) {
 			childMenu.draw(b);

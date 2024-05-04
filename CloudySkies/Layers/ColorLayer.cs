@@ -1,6 +1,5 @@
 using System;
 
-using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
 
 using Microsoft.Xna.Framework;
@@ -19,7 +18,7 @@ public class ColorLayer : IWeatherLayer {
 	private Color Color;
 	private float Opacity;
 
-	public ColorLayer(ulong id, ColorLayerData data) {
+	public ColorLayer(ulong id, IColorLayerData data) {
 
 		Id = id;
 		DrawType = data.Mode;

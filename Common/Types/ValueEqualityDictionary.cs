@@ -12,6 +12,15 @@ namespace Leclair.Stardew.Common.Types;
 /// </summary>
 public class ValueEqualityDictionary<TKey, TValue> : Dictionary<TKey, TValue> where TKey : notnull {
 
+	public ValueEqualityDictionary() : base() { }
+	public ValueEqualityDictionary(IEqualityComparer<TKey>? comparer) : base(comparer) { }
+	public ValueEqualityDictionary(int capacity) : base(capacity) { }
+	public ValueEqualityDictionary(int capacity, IEqualityComparer<TKey>? comparer) : base(capacity, comparer) { }
+	public ValueEqualityDictionary(IDictionary<TKey, TValue> dictionary) : base(dictionary) { }
+	public ValueEqualityDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer) : base(dictionary, comparer) { }
+	public ValueEqualityDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : base(collection) { }
+	public ValueEqualityDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer) : base(collection, comparer) { }
+
 	public override bool Equals(object? obj) {
 
 		if (obj is not IDictionary<TKey, TValue> odict || odict.Count != Count)

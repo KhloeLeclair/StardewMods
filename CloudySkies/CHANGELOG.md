@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.4.0
+Released May 4th, 2024.
+
+### Added
+* Added a new trigger action for watering crops / pet bowls that
+  could come in handy for doing interesting weather stuff.
+
+### Fixed
+* Ambient outdoor opacity not being calculated correctly when it is
+  time for it to get dark out in-game.
+* The in-game TV not displaying its screen in the correct position
+  when combined with our Weather channel replacement and using a
+  zoom other than 100%.
+
+### API
+* The API now supports letting other C# mods add custom layer and
+  effect types.
+
+
 ## 1.3.0
 Released April 29th, 2024.
 

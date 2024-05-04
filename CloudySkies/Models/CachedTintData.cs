@@ -19,6 +19,11 @@ internal record struct CachedTintData {
 
 	public int DurationInTenMinutes { get; set; }
 
+	public int FullyDarkTime { get; set; }
+	public int AmbientStartTime { get; set; }
+	public int AmbientEndTime { get; set; }
+	public int AmbientDurationInTenMinutes { get; set; }
+
 	public bool HasAmbientColor { get; set; }
 
 	public bool HasLightingTint { get; set; }

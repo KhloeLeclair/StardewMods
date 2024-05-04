@@ -26,6 +26,7 @@ types for your mod? You've come to the right place!
 * [Location Context Extension Data](#location-context-extension-data)
 * [Commands](#commands)
 * [Mod Data / Custom Fields](#mod-data-custom-fields)
+* [Trigger Actions](#trigger-actions)
 * [Game State Queries](#game-state-queries)
 * [Content Patcher Tokens](#content-patcher-tokens)
 
@@ -1991,6 +1992,35 @@ The value should be `true` or `false`
 
 > Note: This takes priority over the Location Context Extension Data
 > model, but is only provided as an alternative for ease of use.
+
+
+## Trigger Actions
+
+Cloudy Skies adds the following [trigger action actions](https://stardewvalleywiki.com/Modding:Trigger_actions#Actions)
+to the game:
+
+### `leclair.cloudyskies_WaterCrops <Location OR Context> <location> <chance=1>`
+
+Water the crops (and pet bowls) in a location or location context. The first
+argument can be either `Location` to target locations, or `Context` to target
+location contexts.
+
+> Targeting a location context will affect all locations within that location
+> context. Note also that this will only affect outdoor locations, no matter
+> how you specify the target location(s).
+
+The second argument can be either `Here` for the current location / context,
+`Any` for any location / context, or the name of a specific location / context.
+
+The third argument is optional, and is the percent chance that any given crop
+or pet bowl will be watered, where 0.0 is a 0% chance and 1.0 is a 100% chance.
+
+Here's an example that has a 50% chance of watering crops across all maps in
+the default context (where all the base game locations are, excepting those
+from Ginger Island or Calico Desert):
+```
+leclair.cloudyskies_WaterCrops Context Default 0.5
+```
 
 
 ## Game State Queries

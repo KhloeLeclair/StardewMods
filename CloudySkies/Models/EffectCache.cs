@@ -14,9 +14,9 @@ internal record struct EffectCache {
 
 	public bool EventUp { get; set; }
 
-	public Dictionary<string, IEffect> EffectsById { get; set; }
+	public Dictionary<string, IWeatherEffect> EffectsById { get; set; }
 	public Dictionary<string, IEffectData> DataById { get; set; }
 
-	public List<IEffect>? Effects { get; set; }
+	public List<IWeatherEffect>? Effects { get; set; }
 
 }

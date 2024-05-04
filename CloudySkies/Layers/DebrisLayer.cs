@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
 
 using Microsoft.Xna.Framework;
@@ -39,7 +38,7 @@ public class DebrisLayer : IWeatherLayer, IDisposable {
 
 	#region Life Cycle
 
-	public DebrisLayer(ModEntry mod, ulong id, DebrisLayerData data) {
+	public DebrisLayer(ModEntry mod, ulong id, IDebrisLayerData data) {
 		Mod = mod;
 		Id = id;
 		DrawType = LayerDrawType.Normal;

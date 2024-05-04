@@ -22,7 +22,7 @@ public record ModifyStaminaEffectData : BaseEffectData, IModifyStaminaEffectData
 
 }
 
-public class ModifyStaminaEffect : IEffect {
+public class ModifyStaminaEffect : IWeatherEffect {
 
 	public ulong Id { get; }
 
@@ -36,7 +36,7 @@ public class ModifyStaminaEffect : IEffect {
 
 	private readonly int MaxValue;
 
-	public ModifyStaminaEffect(ulong id, ModifyStaminaEffectData data) {
+	public ModifyStaminaEffect(ulong id, IModifyStaminaEffectData data) {
 		Id = id;
 		Rate = data.Rate;
 

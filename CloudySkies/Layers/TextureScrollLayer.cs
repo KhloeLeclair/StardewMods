@@ -1,6 +1,5 @@
 using System;
 
-using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Models;
 
 using Microsoft.Xna.Framework;
@@ -49,7 +48,7 @@ public class TextureScrollLayer : IWeatherLayer {
 
 	#region Life Cycle
 
-	public TextureScrollLayer(ModEntry mod, ulong id, TextureScrollLayerData data) {
+	public TextureScrollLayer(ModEntry mod, ulong id, ITextureScrollLayerData data) {
 		Mod = mod;
 		Id = id;
 		DrawType = data.Mode;

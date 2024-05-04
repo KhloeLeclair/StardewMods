@@ -13,8 +13,9 @@ using System;
 
 using StardewValley.GameData.Buffs;
 
+using Newtonsoft.Json.Linq;
 
-
+using Microsoft.Xna.Framework.Graphics;
 
 
 #if IS_CLOUDY_SKIES
@@ -72,7 +73,6 @@ public enum LightingTweenMode {
 	Both = 3
 
 }
-
 
 
 /// <summary>
@@ -148,6 +148,169 @@ public interface ICloudySkiesApi {
 	/// </summary>
 	/// <param name="weatherId">A specific weather to invalidate the layer cache for.</param>
 	void RegenerateLayers(string? weatherId = null);
+
+	/// <summary>
+	/// Force Cloudy Skies to re-evaluate its current effects. This can
+	/// be used in case a game state query has changed, and you expect
+	/// the layers to change somehow.
+	/// </summary>
+	/// <param name="weatherId">A specific weather to invalidate the effect cache for.</param>
+	void RegenerateEffects(string? weatherId = null);
+
+	#region Custom Things
+
+	delegate IWeatherLayer? WeatherLayerFactoryDelegate(ulong layerId, ICustomLayerData data);
+	delegate IWeatherEffect? WeatherEffectFactoryDelegate(ulong layerId, ICustomEffectData data);
+
+	/// <summary>
+	/// Let Cloudy Skies know that your <see cref="IWeatherLayer"/> or <see cref="IWeatherEffect"/>
+	/// uses the asset with the provided name. This will ensure that Cloudy Skies
+	/// calls the relevant <see cref="IWeatherLayer.ReloadAssets"/> method if
+	/// the asset is invalidated, so that you can update as necessary.
+	/// </summary>
+	/// <param name="id">The <see cref="IWeatherLayer.Id"/> or <see cref="IWeatherEffect.Id"/></param>
+	/// <param name="assetName">The name of the asset.</param>
+	void NotifyLoadsAsset(ulong id, string assetName);
+
+	/// <summary>
+	/// Register a custom <see cref="IWeatherLayer"/> type with Cloudy Skies.
+	/// </summary>
+	/// <param name="type">The type name. You should include your mod's Id in this value to ensure it's unique.</param>
+	/// <param name="factory">A factory for creating instances of your custom layer.</param>
+	/// <returns>Whether or not the layer was registered successfully. If this returns false, that type name was already in use.</returns>
+	bool RegisterLayerType(string type, WeatherLayerFactoryDelegate factory);
+
+	/// <summary>
+	/// Unregister an <see cref="IWeatherLayer"/> type from Cloudy Skies.
+	/// </summary>
+	/// <param name="type">The type name.</param>
+	/// <returns>Whether or not the layer type was removed successfully.</returns>
+	bool UnregisterLayerType(string type);
+
+	/// <summary>
+	/// Register a custom <see cref="IWeatherEffect"/> type with Cloudy Skies.
+	/// </summary>
+	/// <param name="type">The type name. You should include your mod's Id in this value to ensure it's unique.</param>
+	/// <param name="factory">A factory for creating instances of your custom effect.</param>
+	/// <returns>Whether or not the effect was registered successfully. If this returns false, that type name was already in use.</returns>
+	bool RegisterEffectType(string type, WeatherEffectFactoryDelegate factory);
+
+	/// <summary>
+	/// Unregister an <see cref="IWeatherEffect"/> type from Cloudy Skies.
+	/// </summary>
+	/// <param name="type">The type name.</param>
+	/// <returns>Whether or not the effect type was removed successfully.</returns>
+	bool UnregisterEffectType(string type);
+
+	#endregion
+
+}
+
+
+/// <summary>
+/// An <c>IWeatherLayer</c> represents an active layer that is being rendered
+/// by Cloudy Skies. Instances of <c>IWeatherLayer</c> are kept around so long
+/// as their underlying data doesn't change, at which point the layer is recreated
+/// with the new data.
+/// </summary>
+public interface IWeatherLayer {
+
+	/// <summary>
+	/// The layer's unique Id this session. This Id is used for tracking which
+	/// assets are used by which layers, for the purpose of dispatching <see cref="ReloadAssets"/>
+	/// calls when an asset is invalidated.
+	/// </summary>
+	ulong Id { get; }
+
+	/// <summary>
+	/// The draw type of this layer, to determine what mode the SpriteBatch
+	/// should be in when <see cref="Draw(SpriteBatch, GameTime, RenderTarget2D)"/>
+	/// is called.
+	/// </summary>
+	LayerDrawType DrawType { get; }
+
+	/// <summary>
+	/// This method is called whenever any of the assets this <see cref="IWeatherLayer"/>
+	/// has reported it uses are invalidated in the cache. You should reload
+	/// your assets (textures, etc.) when this is called, if possible and relevant.
+	/// </summary>
+	void ReloadAssets();
+
+	/// <summary>
+	/// This method is called whenever the viewport is resized.
+	/// </summary>
+	/// <param name="newSize">The new size.</param>
+	/// <param name="oldSize">The old size.</param>
+	void Resize(Point newSize, Point oldSize);
+
+	/// <summary>
+	/// This method is called whenever the viewport moves.
+	/// </summary>
+	/// <param name="offsetX">The distance moved on the X axis.</param>
+	/// <param name="offsetY">The distance moved on the Y axis.</param>
+	void MoveWithViewport(int offsetX, int offsetY);
+
+	/// <summary>
+	/// This method is called once per game tick to allow the layer
+	/// to perform any necessary updates, like moving+updating particles, etc.
+	/// </summary>
+	/// <param name="time">The current GameTime</param>
+	void Update(GameTime time);
+
+	/// <summary>
+	/// This method is called once per frame to draw the layer.
+	/// </summary>
+	/// <param name="batch">The SpriteBatch to draw with.</param>
+	/// <param name="time">The current GameTime</param>
+	/// <param name="targetScreen">An optional target to render to. Seems unused?</param>
+	void Draw(SpriteBatch batch, GameTime time, RenderTarget2D targetScreen);
+
+}
+
+/// <summary>
+/// An <c>IWeatherEffect</c> is an effect that is applied to each player
+/// in a location experiencing a weather condition with the effect. This
+/// code runs locally, so you should use <see cref="StardewValley.Game1.player">
+/// and keep in mind that this won't run in locations where the player isn't.
+///
+/// For general location effects, you should use triggers or custom C#
+/// that checks the current weather Id.
+/// </summary>
+public interface IWeatherEffect {
+
+	/// <summary>
+	/// The effect's unique Id this session. This Id is used for tracking which
+	/// assets are used by which effects, for the purpose of dispatching <see cref="ReloadAssets"/>
+	/// calls when an asset is invalidated.
+	/// </summary>
+	ulong Id { get; }
+
+	/// <summary>
+	/// How often should this effect's <see cref="Update(GameTime)"/> method
+	/// be called, in ticks.
+	/// </summary>
+	uint Rate { get; }
+
+	/// <summary>
+	/// This method is called whenever any of the assets this <see cref="IWeatherEffect"/>
+	/// has reported it uses are invalidated in the cache. You should reload
+	/// your assets (textures, etc.) when this is called, if possible and relevant.
+	/// </summary>
+	void ReloadAssets() { }
+
+	/// <summary>
+	/// This method is called once per <see cref="Rate"/> ticks, and should
+	/// be used to update your effect.
+	/// </summary>
+	/// <param name="time">The current GameTime</param>
+	void Update(GameTime time);
+
+	/// <summary>
+	/// This method is called when an <see cref="IWeatherEffect"/> instance is
+	/// about to be destroyed because it is no longer relevant and should be
+	/// used to undo any relevant state.
+	/// </summary>
+	void Remove() { }
 
 }
 
@@ -503,6 +666,17 @@ public interface IEffectData {
 }
 
 
+public interface ICustomEffectData : IEffectData {
+
+	/// <summary>
+	/// A dictionary of configuration data for this effect, as parsed
+	/// by the game's JSON serializer.
+	/// </summary>
+	IDictionary<string, JToken> Fields { get; }
+
+}
+
+
 public interface IBuffEffectData : IEffectData {
 
 	/// <summary>
@@ -692,6 +866,18 @@ public interface ILayerData {
 	#endregion
 
 }
+
+
+public interface ICustomLayerData : ILayerData {
+
+	/// <summary>
+	/// A dictionary of configuration data for this layer, as parsed
+	/// by the game's JSON serializer.
+	/// </summary>
+	IDictionary<string, JToken> Fields { get; }
+
+}
+
 
 public interface IColorLayerData : ILayerData {
 

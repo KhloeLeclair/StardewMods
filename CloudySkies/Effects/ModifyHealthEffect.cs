@@ -22,7 +22,7 @@ public record ModifyHealthEffectData : BaseEffectData, IModifyHealthEffectData {
 
 }
 
-public class ModifyHealthEffect : IEffect {
+public class ModifyHealthEffect : IWeatherEffect {
 
 	public ulong Id { get; }
 
@@ -36,7 +36,7 @@ public class ModifyHealthEffect : IEffect {
 
 	private readonly int MaxValue;
 
-	public ModifyHealthEffect(ulong id, ModifyHealthEffectData data) {
+	public ModifyHealthEffect(ulong id, IModifyHealthEffectData data) {
 		Id = id;
 		Rate = data.Rate;
 
