@@ -1,23 +1,23 @@
 #nullable enable
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+
+using Leclair.Stardew.BetterCrafting.DynamicRules;
+using Leclair.Stardew.BetterCrafting.Menus;
+using Leclair.Stardew.BetterCrafting.Models;
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Crafting;
+using Leclair.Stardew.Common.Inventory;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using Leclair.Stardew.Common;
-using Leclair.Stardew.Common.Inventory;
-using Leclair.Stardew.Common.Crafting;
+using StardewModdingAPI;
 
 using StardewValley;
-
-using Leclair.Stardew.BetterCrafting.Models;
-using Leclair.Stardew.BetterCrafting.Menus;
 using StardewValley.Menus;
-using Leclair.Stardew.BetterCrafting.DynamicRules;
-using StardewModdingAPI;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -51,7 +51,7 @@ public class ModAPI : IBetterCrafting {
 
 	private readonly ModEntry Mod;
 
-	private readonly IManifest Other;
+	internal readonly IManifest Other;
 
 
 	public ModAPI(ModEntry mod, IManifest other) {
@@ -156,7 +156,11 @@ public class ModAPI : IBetterCrafting {
 				DisableDiscovery = disable_discovery
 			};
 
-			MenuPopulateContainers.Invoke(evt);
+			try {
+				MenuPopulateContainers.Invoke(evt);
+			} catch (Exception ex) {
+				Mod.Log($"There was an error in the MenuPopulateContainers event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+			}
 
 			disable_discovery = evt.DisableDiscovery;
 
@@ -176,7 +180,7 @@ public class ModAPI : IBetterCrafting {
 		if (PerformCraft is null)
 			yield break;
 
-		foreach(Delegate del in PerformCraft.GetInvocationList()) {
+		foreach (Delegate del in PerformCraft.GetInvocationList()) {
 			yield return (Action<IGlobalPerformCraftEvent>) del;
 		}
 	}
@@ -185,7 +189,11 @@ public class ModAPI : IBetterCrafting {
 	public event Action<IPostCraftEvent>? PostCraft;
 
 	internal void EmitPostCraft(IPostCraftEvent evt) {
-		PostCraft?.Invoke(evt);
+		try {
+			PostCraft?.Invoke(evt);
+		} catch (Exception ex) {
+			Mod.Log($"There was an error in the PostCraft event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+		}
 	}
 
 	#endregion

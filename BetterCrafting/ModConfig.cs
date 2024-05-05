@@ -1,12 +1,11 @@
 #nullable enable
 
-using StardewModdingAPI.Utilities;
-
 using Leclair.Stardew.BetterCrafting.Models;
-
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
+
+using StardewModdingAPI.Utilities;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -63,6 +62,8 @@ public enum NewRecipeMode {
 public class ModConfig {
 
 	public string Theme { get; set; } = "automatic";
+
+	public bool ShowSourceModInTooltip { get; set; } = false;
 
 	public bool UseFullHeight { get; set; } = false;
 

@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using Leclair.Stardew.BetterCrafting.Menus;
 using Leclair.Stardew.Common.Crafting;
@@ -53,7 +52,7 @@ public class PerformCraftEvent : IGlobalPerformCraftEvent {
 
 public class ChainedPerformCraftHandler {
 
-	public readonly Action<IGlobalPerformCraftEvent>[] Handlers;
+	public readonly (IManifest?, Action<IGlobalPerformCraftEvent>)[] Handlers;
 
 	public readonly IRecipe Recipe;
 	public readonly Farmer Player;
@@ -70,12 +69,13 @@ public class ChainedPerformCraftHandler {
 
 	public ChainedPerformCraftHandler(ModEntry mod, IRecipe recipe, Farmer who, Item? item, BetterCraftingPage menu, Action<ChainedPerformCraftHandler> onDone) {
 
-		List<Action<IGlobalPerformCraftEvent>> handlers = new();
+		List<(IManifest?, Action<IGlobalPerformCraftEvent>)> handlers = new();
 
 		foreach (var api in mod.APIInstances.Values)
-			handlers.AddRange(api.GetPerformCraftHooks());
+			foreach (var hook in api.GetPerformCraftHooks())
+				handlers.Add((api.Other, hook));
 
-		handlers.Add(recipe.PerformCraft);
+		handlers.Add((null, recipe.PerformCraft));
 		Handlers = handlers.ToArray();
 
 		Recipe = recipe;
@@ -88,8 +88,11 @@ public class ChainedPerformCraftHandler {
 	}
 
 	// We're done when we've had a non-success, or we've run out of handlers.
-	public bool IsDone => ! success || current >= Handlers.Length;
+	public bool IsDone => !success || current >= Handlers.Length;
 	public bool Success => success;
+
+	public Exception? Exception { get; private set; }
+	public IManifest? ExceptionSource { get; private set; }
 
 	private void Finish() {
 		current++;
@@ -112,7 +115,18 @@ public class ChainedPerformCraftHandler {
 
 		currentEvent = new PerformCraftEvent(Recipe, Player, Item, Menu);
 
-		Handlers[current].Invoke(currentEvent);
+		try {
+			Handlers[current].Item2.Invoke(currentEvent);
+		} catch (Exception ex) {
+			// If there's an exception, stash it for later, mark that
+			// we're done, and leave.
+			Exception = ex;
+			ExceptionSource = Handlers[current].Item1;
+			success = false;
+			currentEvent = null;
+			Finish();
+			return;
+		}
 
 		if (currentEvent.IsDone)
 			Finish();

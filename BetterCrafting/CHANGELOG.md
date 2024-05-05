@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.9.0
+Released May 5th, 2024.
+
+### Added
+* New setting to display the mod that added an item on crafting tool-tips.
+
+### Changed
+* Improve integration with SpaceCore Vanilla Asset Extension crafting recipe
+  overrides, with support for our ingredient quality features as well as
+  item recycling. (Note: This will require an update from SpaceCore before
+  it will function correctly.)
+
+### Fixed
+* If an error happens in another mod's event handlers for one of our events,
+  capture the error properly and log it to minimize disruption to the user.
+
+
 ## 2.8.3
 Released May 2nd, 2024.
 

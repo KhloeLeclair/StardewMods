@@ -23,7 +23,7 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 
 public class SCIntegration : BaseAPIIntegration<IApi, ModEntry>, IRecipeProvider {
 
-	private readonly ProxyManager<Nothing>? ProxyMan;
+	internal readonly ProxyManager<Nothing>? ProxyMan;
 
 	private readonly AssemblyBuilder? Assembly;
 	private readonly ModuleBuilder? Module;
@@ -180,11 +180,14 @@ public class SCIntegration : BaseAPIIntegration<IApi, ModEntry>, IRecipeProvider
 					if (!string.IsNullOrEmpty(index))
 						result = new BaseIngredient(index, matcher.Quantity);
 
+				} else if (cls.Equals("SpaceCore.VanillaAssetExpansion.VAECustomCraftingIngredientMatcher")) {
+					result = new SCVAEIngredient(this, ing, matcher);
+
 				} else
 					result = new SCIngredient(matcher);
 
 			} catch (Exception ex) {
-				Log($"An error occurred while handling a SpaceCore IngredientMatcher for the recipe {recipe.name}. This recipe will not be craftable.", LogLevel.Warn, ex);
+				Log($"An error occurred while handling a SpaceCore IngredientMatcher for the recipe '{recipe.name}'. This recipe will not be craftable.", LogLevel.Warn, ex);
 				result = null;
 			}
 

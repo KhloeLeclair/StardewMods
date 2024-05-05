@@ -1,16 +1,17 @@
 #nullable enable
 
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Reflection;
 
 using HarmonyLib;
 
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-
+using Leclair.Stardew.BetterCrafting.Managers;
+using Leclair.Stardew.BetterCrafting.Menus;
+using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
@@ -19,27 +20,23 @@ using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
 using Leclair.Stardew.Common.UI;
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+using Newtonsoft.Json.Linq;
+
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 
-using Leclair.Stardew.BetterCrafting.Managers;
-using Leclair.Stardew.BetterCrafting.Models;
-using Newtonsoft.Json.Linq;
-
-using StardewValley.ItemTypeDefinitions;
-using StardewValley.Buildings;
-using Leclair.Stardew.BetterCrafting.Menus;
-using System.Diagnostics;
-
-
 using SMAPIJsonHelper = StardewModdingAPI.Toolkit.Serialization.JsonHelper;
-using System.Reflection;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -175,7 +172,7 @@ public class ModEntry : PintailModSubscriber {
 			if (ActivePriority == Config.MenuPriority)
 				return;
 
-			switch(ActivePriority) {
+			switch (ActivePriority) {
 				case MenuPriority.Low:
 					Helper.Events.Display.MenuChanged -= LowMenuChanged;
 					break;
@@ -188,7 +185,7 @@ public class ModEntry : PintailModSubscriber {
 			}
 		}
 
-		switch(Config.MenuPriority) {
+		switch (Config.MenuPriority) {
 			case MenuPriority.Low:
 				Helper.Events.Display.MenuChanged += LowMenuChanged;
 				ActivePriority = MenuPriority.Low;
@@ -205,7 +202,7 @@ public class ModEntry : PintailModSubscriber {
 
 	private static void UpdateTextures(Texture2D? oldTex, Texture2D newTex, IClickableMenu menu) {
 		if (menu.allClickableComponents != null)
-			foreach(var cmp in menu.allClickableComponents) {
+			foreach (var cmp in menu.allClickableComponents) {
 				if (cmp is ClickableTextureComponent tp && tp.texture == oldTex)
 					tp.texture = newTex;
 			}
@@ -216,7 +213,7 @@ public class ModEntry : PintailModSubscriber {
 		Sprites.Buttons._TexCache = null;
 
 		if (Game1.activeClickableMenu is GameMenu gm) {
-			foreach(var gmp in gm.pages) {
+			foreach (var gmp in gm.pages) {
 				if (gmp is Menus.BetterCraftingPage bcp) {
 					UpdateTextures(oldTex, Sprites.Buttons.Texture!, gmp);
 					bcp.LoadTextures();
@@ -290,7 +287,7 @@ public class ModEntry : PintailModSubscriber {
 					);
 
 					if (game != null) {
-						for(int i =0; i < game.pages.Count; i++) {
+						for (int i = 0; i < game.pages.Count; i++) {
 							if (game.pages[i] is CraftingPage cp) {
 								CommonHelper.YeetMenu(cp);
 
@@ -315,7 +312,7 @@ public class ModEntry : PintailModSubscriber {
 			// Did we *used* to have a GameMenu
 			if (CurrentMenu.Value is GameMenu gm1) {
 				if (gm1.GetCurrentPage() is not BetterCraftingPage) {
-					foreach(var page1 in gm1.pages) {
+					foreach (var page1 in gm1.pages) {
 						if (page1 is BetterCraftingPage bcp1)
 							bcp1.emergencyShutDown();
 					}
@@ -327,7 +324,7 @@ public class ModEntry : PintailModSubscriber {
 		}
 
 		// Replace crafting pages.
-		if (Config.SuppressBC?.IsDown() ?? false) { 
+		if (Config.SuppressBC?.IsDown() ?? false) {
 			CurrentMenu.Value = menu;
 			return;
 		}
@@ -479,7 +476,7 @@ public class ModEntry : PintailModSubscriber {
 		});
 
 		Helper.ConsoleCommands.Add("bc_stations", "List all custom crafting stations, or open one if you provide a name.", (name, args) => {
-			if ( args.Length > 0 && !string.IsNullOrEmpty(args[0]) ) {
+			if (args.Length > 0 && !string.IsNullOrEmpty(args[0])) {
 				string key = args[0].Trim();
 
 				if (key.Equals("reload", StringComparison.OrdinalIgnoreCase)) {
@@ -500,7 +497,7 @@ public class ModEntry : PintailModSubscriber {
 			}
 
 			Log($"Available Crafting Stations:", LogLevel.Info);
-			foreach(var station in Stations.GetStations())
+			foreach (var station in Stations.GetStations())
 				Log($" [{station.Id}]: {station.DisplayName} (Recipes: {station.Recipes?.Length ?? 0}, Exclusive: {station.AreRecipesExclusive})", LogLevel.Info);
 		});
 
@@ -569,7 +566,7 @@ public class ModEntry : PintailModSubscriber {
 
 		// Disable the destroyOvernight flag on Cookout Kits when they're placed.
 		if (e.Added is not null)
-			foreach(var pair in e.Added) {
+			foreach (var pair in e.Added) {
 				var obj = pair.Value;
 				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278) {
 					torch.destroyOvernight = false;
@@ -578,7 +575,7 @@ public class ModEntry : PintailModSubscriber {
 
 		// When a Cookout Kit is removed, drop the Cookout Kit item at its location.
 		if (e.Removed is not null)
-			foreach(var pair in e.Removed) {
+			foreach (var pair in e.Removed) {
 				var obj = pair.Value;
 				if (obj is Torch torch && torch.bigCraftable.Value && torch.ParentSheetIndex == 278 && torch.Fragility != 2) {
 					e.Location.debris.Add(new Debris(ItemRegistry.Create("(O)926", 1), new Vector2(pair.Key.X * 64 + 32, pair.Key.Y * 64 + 32)));
@@ -609,7 +606,7 @@ public class ModEntry : PintailModSubscriber {
 					heads = Helper.Data.ReadJsonFile<Dictionary<string, HeadSize>>(path);
 					if (heads is null)
 						Log($"The {path} file is missing or invalid.", LogLevel.Error);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"The {path} file is invalid.", LogLevel.Error, ex);
 				}
 
@@ -737,7 +734,7 @@ public class ModEntry : PintailModSubscriber {
 			if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is Menus.BetterCraftingPage p) {
 				OldCraftingPage.Value = p;
 				OldCraftingGameMenu.Value = true;
-			} 
+			}
 
 			if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
 				OldCraftingPage.Value = page;
@@ -775,8 +772,8 @@ public class ModEntry : PintailModSubscriber {
 				.Add(
 					I18n.Setting_UsePerSave,
 					I18n.Setting_UsePerSave_Tip,
-					c => ! UseGlobalSave,
-					(c, v) => UseGlobalSave = ! v
+					c => !UseGlobalSave,
+					(c, v) => UseGlobalSave = !v
 				);
 
 		GMCMIntegration
@@ -826,6 +823,12 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_EnableCategories_Tip,
 				c => c.UseCategories,
 				(c, val) => c.UseCategories = val
+			)
+			.Add(
+				I18n.Setting_SourceMod,
+				I18n.Setting_SourceMod_Tip,
+				c => c.ShowSourceModInTooltip,
+				(c, v) => c.ShowSourceModInTooltip = v
 			)
 			.AddChoice(
 				name: I18n.Setting_GiftTaste,
@@ -898,7 +901,7 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_Alphabetic,
 				I18n.Setting_Alphabetic_Tip,
 				c => c.CraftingAlphabetic,
-				(c,v) => c.CraftingAlphabetic = v
+				(c, v) => c.CraftingAlphabetic = v
 			)
 			.Add(
 				I18n.Setting_BigCraftablesLast,
@@ -1137,7 +1140,7 @@ public class ModEntry : PintailModSubscriber {
 			GMCMIntegration.AddLabel(I18n.Setting_Nearby_Fences);
 
 			var fences = FenceMap.Values.ToList();
-			fences.Sort((a,b) => a.Item2.CompareTo(b.Item2));
+			fences.Sort((a, b) => a.Item2.CompareTo(b.Item2));
 
 			foreach (var pair in fences) {
 				string connector = pair.Item1;
@@ -1165,7 +1168,7 @@ public class ModEntry : PintailModSubscriber {
 			sorted.Sort(StringComparer.InvariantCultureIgnoreCase);
 
 			foreach (string connector in sorted)
-				if ( ! string.IsNullOrEmpty(connector) )
+				if (!string.IsNullOrEmpty(connector))
 					GMCMIntegration.Add(
 						connector,
 						null,
@@ -1284,7 +1287,7 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_Key_Modifier,
 				I18n.Setting_Key_Modifier_Tip,
 				c => c.ModiferKey,
-				(c,v) => c.ModiferKey = v
+				(c, v) => c.ModiferKey = v
 			)
 
 			.AddLabel(""); // Spacer
@@ -1326,7 +1329,7 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_Transfer_Quantity,
 				I18n.Setting_Transfer_Quantity_Tip,
 				c => accessor(c).Quantity,
-				(c,v) => accessor(c).Quantity = v,
+				(c, v) => accessor(c).Quantity = v,
 				min: 1,
 				max: 999
 			);
@@ -1394,7 +1397,7 @@ public class ModEntry : PintailModSubscriber {
 		var data = DataLoader.FloorsAndPaths(Game1.content);
 		FloorMap = new();
 
-		foreach(var pair in data) {
+		foreach (var pair in data) {
 			if (string.IsNullOrEmpty(pair.Value.ItemId) || ItemRegistry.GetData(pair.Value.ItemId) is not ParsedItemData itemData)
 				continue;
 
@@ -1435,14 +1438,14 @@ public class ModEntry : PintailModSubscriber {
 		examples ??= new();
 
 		// Read any extra data files
-		foreach(var cp in Helper.ContentPacks.GetOwned()) {
+		foreach (var cp in Helper.ContentPacks.GetOwned()) {
 			if (!cp.HasFile("connector_examples.json"))
 				continue;
 
 			List<string>? extra = null;
 			try {
 				extra = cp.ReadJsonFile<List<string>>("connector_examples.json");
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				Log($"The connector_examples.json file of {cp.Manifest.Name} is invalid.", LogLevel.Error, ex);
 			}
 
@@ -1468,7 +1471,7 @@ public class ModEntry : PintailModSubscriber {
 
 		(string, string) names;
 
-		switch(obj) {
+		switch (obj) {
 			case Fence fence:
 				// Just accept the raw value.
 				if (Config.ValidConnectors.Contains(fence.ItemId))
@@ -1535,7 +1538,7 @@ public class ModEntry : PintailModSubscriber {
 		if (type is null)
 			return null;
 
-		if (! invProviders.ContainsKey(type)) {
+		if (!invProviders.ContainsKey(type)) {
 			// Try less specific.
 			if (obj is Chest)
 				type = typeof(Chest);

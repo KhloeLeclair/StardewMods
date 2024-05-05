@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using Leclair.Stardew.BetterCrafting;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 
-using Leclair.Stardew.BetterCrafting;
+using Newtonsoft.Json.Linq;
 
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 using StardewValley;
-using StardewModdingAPI;
-using Newtonsoft.Json.Linq;
 
 namespace Leclair.Stardew.BCBuildings;
 
@@ -57,6 +57,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
+
 	}
 
 	#region Events
@@ -84,12 +85,11 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		BCAPI.ReportRecipeType(typeof(BuildingRecipe));
 		BCAPI.ReportRecipeType(typeof(ActionRecipe));
-
 	}
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
+		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(@"Data/Buildings"))
 				RecipesById = null;
 		}
@@ -103,11 +103,13 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		Helper.WriteConfig(Config);
 		BCAPI?.InvalidateRecipeCache();
 		HasCachedAdditionalCost = false;
+		RecipesById = null;
 	}
 
 	public void ResetConfig() {
 		Config = new();
 		HasCachedAdditionalCost = false;
+		RecipesById = null;
 	}
 
 	[MemberNotNullWhen(true, nameof(GMCMIntegration))]
@@ -224,9 +226,9 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		List<IIngredient> ingredients = new();
 		CachedAdditionalCost = ingredients;
 
-		foreach(string part in parts) {
+		foreach (string part in parts) {
 			int idx = part.IndexOf(':');
-			if ( idx == -1 ) {
+			if (idx == -1) {
 				Log($"Invalid additional cost entry. No delimiter for quantity in: \"{part}\"", LogLevel.Warn);
 				ingredients.Add(BCAPI.CreateErrorIngredient());
 				continue;
@@ -269,12 +271,12 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		var buildings = DataLoader.Buildings(Game1.content);
 		RecipesById = new();
 
-		foreach(var building in buildings) {
+		foreach (var building in buildings) {
 			RecipesById[building.Key] = new BuildingRecipe(this, building.Key, null, building.Value);
 
 			if (building.Value.Skins != null)
-				foreach(var skin in building.Value.Skins) {
-					if ( skin.ShowAsSeparateConstructionEntry )
+				foreach (var skin in building.Value.Skins) {
+					if (skin.ShowAsSeparateConstructionEntry)
 						RecipesById[$"{building.Key}/{skin.Id}"] = new BuildingRecipe(this, building.Key, skin.Id, building.Value);
 				}
 		}
@@ -308,7 +310,7 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 		//RecipesById = null;
 		LoadRecipes();
 
-		foreach(var recipe in RecipesById.Values) {
+		foreach (var recipe in RecipesById.Values) {
 			string builder = recipe.Builder;
 			bool okay = builder == "Robin";
 			if (builder == "Wizard")

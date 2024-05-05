@@ -2448,6 +2448,17 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		bool used_additional, ChainedPerformCraftHandler pce
 	) {
 		if (!pce.Success) {
+			if (pce.Exception is not null) {
+				var source = pce.ExceptionSource;
+				if (source is null) {
+					Log($"Encountered exception in recipe '{recipe.Name}' PerformCraft event: {pce.Exception}", LogLevel.Error);
+					Game1.addHUDMessage(new HUDMessage(I18n.Error_Crafting(), HUDMessage.error_type));
+				} else {
+					Log($"Encountered exception in PerformCraft event from mod '{source.Name}' ({source.UniqueID}): {pce.Exception}", LogLevel.Error);
+					Game1.addHUDMessage(new HUDMessage(I18n.Error_Crafting_Source(source.Name), HUDMessage.error_type));
+				}
+			}
+
 			onDone(successes, used_additional);
 			return;
 		}
@@ -2538,7 +2549,11 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		// Now run the PostCraftEvent.
 		PostCraftEvent postce = new(recipe, Game1.player, obj, this, consumedItems);
 		if (recipe is IPostCraftEventRecipe pcer)
-			pcer.PostCraft(postce);
+			try {
+				pcer.PostCraft(postce);
+			} catch (Exception ex) {
+				Log($"Encountered exception in PostCraft event of recipe '{recipe.Name}': {ex}", LogLevel.Error);
+			}
 
 		// And the API post craft events.
 		foreach (var api in Mod.APIInstances.Values)
@@ -5717,6 +5732,30 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			if (tastes is not null) {
 				builder.Divider(false);
 				builder.AddRange(tastes);
+			}
+		}
+
+		// Source Mod
+		if (Mod.Config.ShowSourceModInTooltip) {
+			IModInfo? info = null;
+
+			string name = hoverRecipe.Name;
+			if (name.StartsWith("bcbuildings:"))
+				name = name[12..];
+
+			int idx = name.IndexOf('_');
+			if (idx > 0)
+				info = Mod.Helper.ModRegistry.Get(name[..idx]);
+
+			if (info == null && recipeItem != null) {
+				idx = recipeItem.ItemId.IndexOf('_');
+				if (idx != -1)
+					info = Mod.Helper.ModRegistry.Get(recipeItem.ItemId[..idx]);
+			}
+
+			if (info != null) {
+				builder.Divider(false);
+				builder.Text(info.Manifest.Name, color: (Theme.TooltipTextColor ?? Theme.TextColor ?? Game1.textColor) * 0.5f, shadow: false);
 			}
 		}
 

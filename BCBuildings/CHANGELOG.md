@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.5.2
+Released on May 2nd, 2024.
+
+* Fixed: Material / currency costs not being calculated correctly when
+  using the settings to adjust them.
+
+
 ## 2.5.1
 Released on April 13th, 2024.
 

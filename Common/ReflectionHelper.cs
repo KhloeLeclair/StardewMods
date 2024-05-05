@@ -25,32 +25,32 @@ internal static class ReflectionHelper {
 	/// for reading the value of a static field. This is much more efficient
 	/// than calling <see cref="FieldInfo.GetValue(object?)"/>.
 	/// </summary>
-	/// <typeparam name="T">The return type of the field.</typeparam>
+	/// <typeparam name="TValue">The return type of the field.</typeparam>
 	/// <param name="field">The <see cref="FieldInfo"/> to access.</param>
 	/// <returns>A function for reading the value.</returns>
 	/// <exception cref="ArgumentNullException">If the field is null</exception>
 	/// <exception cref="ArgumentException">If the field is not static</exception>
-	/// <exception cref="InvalidCastException">If the provided <typeparamref name="T"/> is not the field's type</exception>
-	internal static Func<T> CreateGetter<T>(this FieldInfo field) {
+	/// <exception cref="InvalidCastException">If the provided <typeparamref name="TValue"/> is not the field's type</exception>
+	internal static Func<TValue> CreateGetter<TValue>(this FieldInfo field) {
 		if (field is null)
 			throw new ArgumentNullException(nameof(field));
-		if (typeof(T) != field.FieldType)
-			throw new InvalidCastException($"{typeof(T)} is not same as field type {field.FieldType}");
+		if (!field.FieldType.IsAssignableTo(typeof(TValue)))
+			throw new InvalidCastException($"{typeof(TValue)} is not assignable from field type {field.FieldType}");
 		if (!field.IsStatic)
 			throw new ArgumentException("field is not static");
 
 		if (!FieldGetters.TryGetValue(field, out var getter)) {
-			DynamicMethod dm = new(MakeAccessorName("Get", field), typeof(T), null, true);
+			DynamicMethod dm = new(MakeAccessorName("Get", field), typeof(TValue), null, true);
 
 			var generator = dm.GetILGenerator();
 			generator.Emit(OpCodes.Ldsfld, field);
 			generator.Emit(OpCodes.Ret);
 
-			getter = dm.CreateDelegate(typeof(Func<T>));
+			getter = dm.CreateDelegate(typeof(Func<TValue>));
 			FieldGetters[field] = getter;
 		}
 
-		return (Func<T>) getter;
+		return (Func<TValue>) getter;
 	}
 
 	/// <summary>
@@ -58,33 +58,33 @@ internal static class ReflectionHelper {
 	/// for writing a value to a static field. This is much more efficient
 	/// than calling <see cref="FieldInfo.SetValue(object?, object?)"/>.
 	/// </summary>
-	/// <typeparam name="T">The type of the field.</typeparam>
+	/// <typeparam name="TValue">The type of the field.</typeparam>
 	/// <param name="field">The <see cref="FieldInfo"/> to access.</param>
 	/// <returns>A function for writing the value.</returns>
 	/// <exception cref="ArgumentNullException">If either argument is null</exception>
 	/// <exception cref="ArgumentException">If the field is not static</exception>
-	/// <exception cref="InvalidCastException">If the provided <typeparamref name="T"/> is not the field's type</exception>
-	internal static Action<T> CreateSetter<T>(this FieldInfo field) {
+	/// <exception cref="InvalidCastException">If the provided <typeparamref name="TValue"/> is not the field's type</exception>
+	internal static Action<TValue> CreateSetter<TValue>(this FieldInfo field) {
 		if (field is null)
 			throw new ArgumentNullException(nameof(field));
-		if (typeof(T) != field.FieldType)
-			throw new InvalidCastException($"{typeof(T)} is not same as field type {field.FieldType}");
+		if (!field.FieldType.IsAssignableTo(typeof(TValue)))
+			throw new InvalidCastException($"{typeof(TValue)} is not assignable from field type {field.FieldType}");
 		if (!field.IsStatic)
 			throw new ArgumentException("field is not static");
 
 		if (!FieldSetters.TryGetValue(field, out var setter)) {
-			DynamicMethod dm = new(MakeAccessorName("Set", field), null, [typeof(T)], true);
+			DynamicMethod dm = new(MakeAccessorName("Set", field), null, [typeof(TValue)], true);
 
 			var generator = dm.GetILGenerator();
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Stsfld, field);
 			generator.Emit(OpCodes.Ret);
 
-			setter = dm.CreateDelegate(typeof(Action<T>));
+			setter = dm.CreateDelegate(typeof(Action<TValue>));
 			FieldSetters[field] = setter;
 		}
 
-		return (Action<T>) setter;
+		return (Action<TValue>) setter;
 	}
 
 	#endregion
@@ -105,12 +105,12 @@ internal static class ReflectionHelper {
 	/// <exception cref="InvalidCastException">If the provided <typeparamref name="TOwner"/>
 	/// or <typeparamref name="TValue"/> do not match the field.</exception>
 	internal static Func<TOwner, TValue> CreateGetter<TOwner, TValue>(this FieldInfo field) {
-		if (field is null)
+		if (field is null || field.DeclaringType is null)
 			throw new ArgumentNullException(nameof(field));
-		if (typeof(TOwner) != field.DeclaringType)
-			throw new InvalidCastException($"{typeof(TOwner)} is not same as declaring type {field.DeclaringType}");
-		if (typeof(TValue) != field.FieldType)
-			throw new InvalidCastException($"{typeof(TValue)} is not same as field type {field.FieldType}");
+		if (typeof(TOwner) != typeof(object) && !field.DeclaringType.IsAssignableFrom(typeof(TOwner)))
+			throw new InvalidCastException($"{typeof(TOwner)} is not assignable to declaring type {field.DeclaringType}");
+		if (!field.FieldType.IsAssignableTo(typeof(TValue)))
+			throw new InvalidCastException($"{typeof(TValue)} is not assignable from field type {field.FieldType}");
 		if (field.IsStatic)
 			throw new ArgumentException("field is static");
 
@@ -143,12 +143,12 @@ internal static class ReflectionHelper {
 	/// <exception cref="InvalidCastException">If the provided <typeparamref name="TOwner"/>
 	/// or <typeparamref name="TValue"/> do not match the field.</exception>
 	internal static Action<TOwner, TValue> CreateSetter<TOwner, TValue>(this FieldInfo field) {
-		if (field is null)
+		if (field is null || field.DeclaringType is null)
 			throw new ArgumentNullException(nameof(field));
-		if (typeof(TOwner) != field.DeclaringType)
-			throw new InvalidCastException($"{typeof(TOwner)} is not same as declaring type {field.DeclaringType}");
-		if (typeof(TValue) != field.FieldType)
-			throw new InvalidCastException($"{typeof(TValue)} is not same as field type {field.FieldType}");
+		if (typeof(TOwner) != typeof(object) && !field.DeclaringType.IsAssignableFrom(typeof(TOwner)))
+			throw new InvalidCastException($"{typeof(TOwner)} is not assignable to declaring type {field.DeclaringType}");
+		if (!field.FieldType.IsAssignableTo(typeof(TValue)))
+			throw new InvalidCastException($"{typeof(TValue)} is not assignable from field type {field.FieldType}");
 		if (field.IsStatic)
 			throw new ArgumentException("field is static");
 
@@ -191,6 +191,8 @@ internal static class ReflectionHelper {
 			throw new ArgumentException("incorrect parameter count");
 
 		for (int i = 0; i < types.Length; i++) {
+			if (!parms[i].ParameterType.IsValueType && types[i] == typeof(object))
+				continue;
 			if (!parms[i].ParameterType.IsAssignableFrom(types[i]))
 				throw new ArgumentException($"Parameter type mismatch at index {i}. Expected: {parms[i].ParameterType}, Actual: {types[i]}");
 		}
@@ -247,6 +249,8 @@ internal static class ReflectionHelper {
 			throw new ArgumentException("incorrect parameter count");
 
 		for (int i = 0; i < types.Length; i++) {
+			if (!parms[i].ParameterType.IsValueType && types[i] == typeof(object))
+				continue;
 			if (!parms[i].ParameterType.IsAssignableFrom(types[i]))
 				throw new ArgumentException($"Parameter type mismatch at index {i}. Expected: {parms[i].ParameterType}, Actual: {types[i]}");
 		}

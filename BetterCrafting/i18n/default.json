@@ -91,6 +91,9 @@
 	"setting.key.tooltip": "Show Hotkeys in Tool-tips",
 	"setting.key.tooltip.tip": "When enabled, hotkeys will be displayed at the bottom of Better Crafting's tool-tips.",
 
+	"setting.source-mod": "Show Source Mod in Tool-tips",
+	"setting.source-mod.tip": "When enabled, the mod that added any given item will be displayed at the bottom of Better Crafting's tool-tips.",
+
 	"setting.ttwhen.Never": "Never",
 	"setting.ttwhen.ForController": "When Using Controller",
 	"setting.ttwhen.Always": "Always",
@@ -307,6 +310,8 @@
 	"ingredient.error": "Invalid Ingredient",
 
 	"error.locking": "Unable to access some inventories.",
+	"error.crafting": "An error happened while trying to craft.",
+	"error.crafting.source": "The mod '{{source}}' errored while we were trying to craft.",
 	"error.pasting": "Unable to paste category.",
 
 	// Bulk Crafting
