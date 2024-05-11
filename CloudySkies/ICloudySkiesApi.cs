@@ -486,6 +486,13 @@ public interface IWeatherData {
 	#region Behavior - Other
 
 	/// <summary>
+	/// Whether or not crops and pet bowls should be watered at the start of
+	/// the day when this weather is active. If this is not set, the behavior
+	/// will default based on the value of <see cref="IsRaining"/>.
+	/// </summary>
+	bool? WaterCropsAndPets { get; set; }
+
+	/// <summary>
 	/// If this is set to true, this weather will cause maps to use night
 	/// tiles and to have darkened windows, similar to how rain functions.
 	/// </summary>

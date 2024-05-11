@@ -19,6 +19,60 @@ public partial class ModEntry {
 		Log($"Invalidated weather cache.", LogLevel.Info);
 	}
 
+	[ConsoleCommand("cs_history", "View the recorded weather history.")]
+	public void HistoryCommand(string name, string[] args) {
+
+		LoadWeatherHistory();
+
+		List<string[]> table = new();
+
+		int minDay = int.MaxValue;
+		int maxDay = int.MinValue;
+
+		string[] headers = new string[1 + WeatherHistory.Count];
+		headers[0] = "Date";
+		int j = 1;
+
+		foreach (var pair in WeatherHistory) {
+			headers[j] = pair.Key;
+			j++;
+			foreach (int day in pair.Value.Keys) {
+				if (minDay > day)
+					minDay = day;
+				if (maxDay < day)
+					maxDay = day;
+			}
+		}
+
+		for (int i = minDay; i <= maxDay; i++) {
+			string[] row = new string[1 + WeatherHistory.Count];
+			table.Add(row);
+
+			var date = new WorldDate {
+				TotalDays = i
+			};
+			row[0] = date.Localize();
+
+			j = 1;
+			foreach (var pair in WeatherHistory) {
+
+				if (!pair.Value.TryGetValue(i, out string? weather))
+					weather = "---";
+
+				row[j] = weather;
+				j++;
+			}
+		}
+
+		StringBuilder sb = new();
+		sb.AppendLine("Recorded Weather History:");
+
+		LogTable(sb, headers, table);
+
+		Log(sb.ToString(), LogLevel.Info);
+	}
+
+
 	[ConsoleCommand("cs_list", "List the available weather Ids.")]
 	public void ListCommand(string name, string[] args) {
 		LoadWeatherData();

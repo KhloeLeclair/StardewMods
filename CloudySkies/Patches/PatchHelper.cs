@@ -224,4 +224,12 @@ internal static class PatchHelper {
 
 	#endregion
 
+	internal static bool ShouldWaterCropsAndBowls(GameLocation? location) {
+		var wd = GetWeatherData(location);
+		if (wd != null)
+			return wd.WaterCropsAndPets ?? wd.IsRaining;
+
+		return Game1.IsRainingHere(location);
+	}
+
 }

@@ -14,12 +14,37 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Delegates;
+using StardewValley.Extensions;
+using StardewValley.GameData.Locations;
+using StardewValley.Internal;
+using StardewValley.Network;
+using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies;
 
 public partial class ModEntry {
+
+	private static IEnumerable<TFeature> EnumerateTerrainFeatures<TFeature>(GameLocation location, Vector2? position = null, int radius = 1) where TFeature : TerrainFeature {
+		int radSquared = radius * radius;
+		foreach (var feature in location.terrainFeatures.Values) {
+			if (feature is TFeature val && (!position.HasValue || Vector2.DistanceSquared(position.Value, feature.Tile) <= radSquared))
+				yield return val;
+		}
+	}
+
+	private static IEnumerable<(HoeDirt, IndoorPot?)> EnumerateHoeDirtAndPots(GameLocation location, Vector2? position = null, int radius = 1) {
+		int radSquared = radius * radius;
+		foreach (var feature in location.terrainFeatures.Values)
+			if (feature is HoeDirt dirt && (!position.HasValue || Vector2.DistanceSquared(position.Value, dirt.Tile) <= radSquared))
+				yield return (dirt, null);
+
+		foreach (var sobj in location.Objects.Values)
+			if (sobj is IndoorPot pot && pot.hoeDirt.Value != null && (!position.HasValue || Vector2.DistanceSquared(position.Value, pot.TileLocation) <= radSquared))
+				yield return (pot.hoeDirt.Value, pot);
+	}
+
 
 	#region Game State Queries
 
@@ -35,52 +60,141 @@ public partial class ModEntry {
 			], Monitor.Log));
 
 		if (registered.Count > 0)
-			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Debug);
+			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Trace);
+	}
+
+	[GSQCondition]
+	public static bool WEATHER(string[] query, GameStateQueryContext context) {
+		GameLocation location = context.Location;
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetInt(query, 2, out int offset, out error) ||
+			!ArgUtility.TryGet(query, 3, out string? weatherId, out error, allowBlank: false)
+		)
+			return GameStateQuery.Helpers.ErrorResult(query, error);
+
+		if (offset > 0)
+			return GameStateQuery.Helpers.ErrorResult(query, "Cannot get historic data about the future");
+		else if (offset < -7)
+			return GameStateQuery.Helpers.ErrorResult(query, "Historic data only extends up to 7 days");
+
+		if (Instance.TryGetWeatherHistory(location, Game1.Date.TotalDays + offset, out string? historicId)) {
+			if (historicId == weatherId)
+				return true;
+
+			int i = 4;
+			while (i < query.Length) {
+				if (query[i] == historicId)
+					return true;
+				i++;
+			}
+		}
+
+		return false;
+	}
+
+	private bool TryGetWeatherForGSQ(GameLocation? location, int offset, [NotNullWhen(false)] out string? error, out LocationWeather? weather) {
+		if (offset > 0) {
+			error = "Cannot get historic data about the future.";
+			weather = null;
+			return false;
+		} else if (offset < -7) {
+			error = "Historic data only extends up to 7 days.";
+			weather = null;
+			return false;
+		}
+
+		if (location is null) {
+			error = null;
+			weather = null;
+			return true;
+		}
+
+		weather = location.GetWeather();
+
+		if (offset != 0) {
+			if (TryGetWeatherHistory(location, Game1.Date.TotalDays + offset, out string? weatherId)) {
+				if (weather.Weather != weatherId) {
+					// We need to make a new weather object with this data.
+					// Unfortunately this is slightly more involved than we'd like.
+
+					if (!Game1.locationContextData.TryGetValue(location.GetLocationContextId(), out var ctxData))
+						ctxData = new() {
+							WeatherConditions = new()
+						};
+
+					weather = new LocationWeather {
+						WeatherForTomorrow = weatherId
+					};
+
+					weather.UpdateDailyWeather(location.GetLocationContextId(), ctxData, Game1.random);
+				}
+
+			} else
+				weather = null;
+		}
+
+		error = null;
+		return true;
 	}
 
 	[GSQCondition]
 	public static bool WEATHER_IS_RAINING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetOptionalInt(query, 2, out int offset, out error) ||
+			!Instance.TryGetWeatherForGSQ(location, offset, out error, out var weather)
+		)
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
-		return location?.GetWeather()?.IsRaining ?? false;
+		return weather?.IsRaining ?? false;
 	}
 
 	[GSQCondition]
 	public static bool WEATHER_IS_SNOWING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetOptionalInt(query, 2, out int offset, out error) ||
+			!Instance.TryGetWeatherForGSQ(location, offset, out error, out var weather)
+		)
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
-		return location?.GetWeather()?.IsSnowing ?? false;
+		return weather?.IsSnowing ?? false;
 	}
 
 	[GSQCondition]
 	public static bool WEATHER_IS_LIGHTNING(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetOptionalInt(query, 2, out int offset, out error) ||
+			!Instance.TryGetWeatherForGSQ(location, offset, out error, out var weather)
+		)
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
-		return location?.GetWeather()?.IsLightning ?? false;
+		return weather?.IsLightning ?? false;
 	}
 
 	[GSQCondition]
 	public static bool WEATHER_IS_DEBRIS(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetOptionalInt(query, 2, out int offset, out error) ||
+			!Instance.TryGetWeatherForGSQ(location, offset, out error, out var weather)
+		)
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
-		return location?.GetWeather()?.IsDebrisWeather ?? false;
+		return weather?.IsDebrisWeather ?? false;
 	}
 
 	[GSQCondition]
 	public static bool WEATHER_IS_GREEN_RAIN(string[] query, GameStateQueryContext context) {
 		GameLocation location = context.Location;
-		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error))
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGetOptionalInt(query, 2, out int offset, out error) ||
+			!Instance.TryGetWeatherForGSQ(location, offset, out error, out var weather)
+		)
 			return GameStateQuery.Helpers.ErrorResult(query, error);
 
-		return location?.GetWeather()?.IsGreenRain ?? false;
+		return weather?.IsGreenRain ?? false;
 	}
 
 	[GSQCondition]
@@ -101,70 +215,1470 @@ public partial class ModEntry {
 		Context
 	};
 
+	private static readonly Dictionary<string, Item?> CachedItems = new();
+
+	private static Item? GetOrCreateInstance(string? itemId) {
+		// TODO: Empty the cache periodically
+		if (string.IsNullOrEmpty(itemId))
+			return null;
+
+		if (CachedItems.TryGetValue(itemId, out Item? item))
+			return item;
+
+		item = ItemRegistry.Create(itemId, allowNull: true);
+		CachedItems[itemId] = item;
+		return item;
+	}
+
 	[TriggerAction]
 	public static bool WaterCrops(string[] args, TriggerActionContext context, out string? error) {
-		if (!ArgUtility.TryGetEnum<LocationOrContext>(args, 1, out var target, out error))
+		Instance.Log($"Please migrate from WaterCrops to WaterDirt.", LogLevel.Warn, once: true);
+
+		string target = string.Empty;
+		string name = string.Empty;
+		float chance = 1f;
+
+		var parser = ArgumentParser.New()
+			.AddPositional<string>("Target", val => target = val).IsRequired()
+			.AddPositional<string>("TargetName", val => name = val).IsRequired()
+			.AddPositional<float>("Chance", val => chance = val)
+				.WithDescription("The percent chance that any given tile will be changed.")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0");
+
+		if (!parser.TryParse(args[1..], out error)) {
+			Instance.Monitor.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Warn);
+			return false;
+		}
+
+		string[] newArgs = [
+			args[0],
+			"--chance",
+			$"{chance}",
+			target,
+			name
+			];
+
+		return WaterDirt(newArgs, context, out error);
+	}
+
+	[TriggerAction]
+	public static bool WaterDirt(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of dirt tiles to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tile will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
 			return false;
 
-		if (!ArgUtility.TryGet(args, 2, out string? locationName, out error))
-			return false;
-
-		if (!ArgUtility.TryGetOptionalFloat(args, 3, out float chance, out error, defaultValue: 1f))
-			return false;
-
-		IEnumerable<GameLocation> locations;
-
-		// Abort early if we're looking for 'Here' and don't have one.
-		if (locationName == "Here" && Game1.currentLocation is null)
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
 			return true;
-
-		if (locationName == "Any")
-			locations = CommonHelper.EnumerateLocations(false, false);
-
-		else if (target == LocationOrContext.Location) {
-			if (locationName == "Here")
-				locations = [Game1.currentLocation];
-			else {
-				var loc = Game1.getLocationFromName(locationName);
-				if (loc is null) {
-					error = $"Could not find location: {locationName}";
-					return false;
-				}
-
-				locations = [loc];
-			}
-
-		} else {
-			if (locationName == "Here")
-				locationName = Game1.currentLocation.GetLocationContextId();
-
-			locations = CommonHelper.EnumerateLocations(false, false)
-				.Where(loc => loc.GetLocationContextId() == locationName);
 		}
 
 		// Now, loop through all the locations and water everything.
-		foreach (var loc in locations) {
-			if (loc is null || !loc.IsOutdoors)
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!loc.IsOutdoors && !includeIndoors))
 				continue;
 
-			foreach (var feature in loc.terrainFeatures.Values) {
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (dirt.state.Value != 0 || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+					if (!GameStateQuery.CheckConditions(query, loc, null, inputItem: target))
+						continue;
+				}
+
 				// Water ALL the dirt! (Assuming random chance.)
-				if (feature is HoeDirt dirt && dirt.state.Value != 2 && (chance >= 1f || Game1.random.NextSingle() <= chance))
+				if (pot is not null)
+					pot.Water();
+				else
 					dirt.state.Value = 1;
+
+				max--;
+				if (max <= 0)
+					break;
 			}
 
-			foreach (var building in loc.buildings) {
-				// Water ALL the pet bowls! (Assuming random chance.)
-				if (building is PetBowl bowl && (chance >= 1f || Game1.random.NextSingle() <= chance))
-					bowl.watered.Value = true;
-			}
-
+			if (max <= 0)
+				break;
 		}
 
 		// Great success!
 		error = null;
 		return true;
 	}
+
+	[TriggerAction]
+	public static bool WaterPets(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of pet bowls to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given pet bowl will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var building in loc.buildings) {
+				// Distance check.
+				if (entry.Position.HasValue) {
+					var pos = building.GetBoundingBox().GetNearestPoint(entry.Position.Value);
+					if (Vector2.Distance(entry.Position.Value, pos) > entry.Radius)
+						continue;
+				}
+
+				// Water ALL the pet bowls! (Assuming random chance.)
+				if (building is PetBowl bowl && !bowl.watered.Value && (chance >= 1f || Game1.random.NextSingle() <= chance)) {
+					bowl.watered.Value = true;
+
+					max--;
+					if (max <= 0)
+						break;
+				}
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool UnWaterDirt(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of dirt tiles to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tile will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and un-water everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (dirt.state.Value != 1 || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+					if (!GameStateQuery.CheckConditions(fertilizerQuery, loc, null, inputItem: target))
+						continue;
+				}
+
+				// Desiccate ALL the dirt! (Assuming random chance.)
+				dirt.state.Value = 0;
+				if (pot is not null)
+					pot.showNextIndex.Value = dirt.isWatered();
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool UnWaterPets(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of pet bowls to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given pet bowl will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and un-water everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var building in loc.buildings) {
+				// Distance check.
+				if (entry.Position.HasValue) {
+					var pos = building.GetBoundingBox().GetNearestPoint(entry.Position.Value);
+					if (Vector2.Distance(entry.Position.Value, pos) > entry.Radius)
+						continue;
+				}
+
+				// Drain ALL the pet bowls! (Assuming random chance.)
+				if (building is PetBowl bowl && bowl.watered.Value && (chance >= 1f || Game1.random.NextSingle() <= chance)) {
+					bowl.watered.Value = false;
+
+					max--;
+					if (max <= 0)
+						break;
+				}
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool GrowCrops(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int steps = 1;
+		int maxSteps = -1;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of crops to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("-d", "--days", val => steps = val)
+				.WithDescription("How many days of growth should each crop experience. Default: 1")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("--max-days", val => maxSteps = val)
+				.WithDescription("Maximum number of days of growth for each crop. If greater than --days, each crop grows a random number of days within the range.")
+				.WithValidation<int>(val => val >= steps, "must be greater than or equal to --days")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given crop will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (dirt.crop is null || dirt.crop.dead.Value || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+
+					if (!GameStateQuery.CheckConditions(fertilizerQuery, loc, null, inputItem: target))
+						continue;
+				}
+
+				int days = steps;
+				if (maxSteps > days)
+					days = Game1.random.Next(days, maxSteps + 1);
+
+				while (days-- > 0 && dirt.crop != null && !dirt.crop.dead.Value)
+					dirt.crop.newDay(dirt.state.Value == 2 ? 2 : 1);
+
+				max--;
+
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool GrowGiantCrops(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+		bool allowImmature = false;
+		bool ignoreSize = false;
+		bool ignoreLocationRequirement = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of crops to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.AddFlag("--allow-immature", () => allowImmature = true)
+				.WithDescription("Allow crops that aren't yet fully grown to become giant.")
+			.AddFlag("--ignore-size", () => ignoreSize = true)
+				.WithDescription("Ignore size requirements when growing giant crops.")
+			.AddFlag("--allow-anywhere", () => ignoreLocationRequirement = true)
+				.WithDescription("Ignore location-specific AllowGiantCrop flags.")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given crop will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			if (!ignoreLocationRequirement && !(loc is Farm || loc.HasMapPropertyWithValue("AllowGiantCrops")))
+				continue;
+
+			foreach (var dirt in EnumerateTerrainFeatures<HoeDirt>(loc, entry.Position, entry.Radius)) {
+				if (dirt.crop is null || dirt.crop.dead.Value || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!allowImmature && (dirt.crop.currentPhase.Value != dirt.crop.phaseDays.Count - 1))
+					continue;
+
+				if (!dirt.crop.TryGetGiantCrops(out var crops))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+
+					if (!GameStateQuery.CheckConditions(fertilizerQuery, loc, null, inputItem: target))
+						continue;
+				}
+
+				// Find a matching crop.
+				foreach (var pair in crops) {
+					var giantCrop = pair.Value;
+					if (!string.IsNullOrEmpty(giantCrop.Condition) && !GameStateQuery.CheckConditions(giantCrop.Condition, loc))
+						continue;
+
+					bool valid = true;
+					for (int yOffset = 0; yOffset < giantCrop.TileSize.Y; yOffset++) {
+						for (int xOffset = 0; xOffset < giantCrop.TileSize.X; xOffset++) {
+							Vector2 pos = new(dirt.Tile.X + xOffset, dirt.Tile.Y + yOffset);
+							if (loc.terrainFeatures.TryGetValue(pos, out var feature)) {
+								// TODO: Better check so empty HoeDirt won't block with --ignore-size
+								if (feature is not HoeDirt dirt2) {
+									valid = false;
+									break;
+								}
+
+								if (dirt2.crop?.indexOfHarvest?.Value == dirt.crop.indexOfHarvest.Value)
+									continue;
+								else if (dirt2.crop != null || !ignoreSize || loc.IsTileBlockedBy(pos, ~(CollisionMask.Characters | CollisionMask.Farmers | CollisionMask.TerrainFeatures))) {
+									valid = false;
+									break;
+								}
+
+								foreach (var clump in loc.resourceClumps) {
+									if (clump.occupiesTile((int) pos.X, (int) pos.Y)) {
+										valid = false;
+										break;
+									}
+								}
+
+								if (!valid)
+									break;
+
+								if (loc.largeTerrainFeatures is not null)
+									foreach (var feat in loc.largeTerrainFeatures) {
+										if (feat.getBoundingBox().Contains(pos)) {
+											valid = false;
+											break;
+										}
+									}
+
+								if (!valid)
+									break;
+
+							} else if (ignoreSize) {
+								if (loc.doesTileHaveProperty((int) pos.X, (int) pos.Y, "Diggable", "Back") == null || loc.IsTileBlockedBy(pos, ~(CollisionMask.Characters | CollisionMask.Farmers))) {
+									valid = false;
+									break;
+								}
+
+							} else {
+								valid = false;
+								break;
+							}
+						}
+
+						if (!valid)
+							break;
+					}
+
+					if (!valid)
+						continue;
+
+					for (int yOffset = 0; yOffset < giantCrop.TileSize.Y; yOffset++) {
+						for (int xOffset = 0; xOffset < giantCrop.TileSize.X; xOffset++) {
+							Vector2 pos = new Vector2(dirt.Tile.X + xOffset, dirt.Tile.Y + yOffset);
+							if (loc.terrainFeatures.TryGetValue(pos, out var feature) && feature is HoeDirt dirt2)
+								dirt2.crop = null;
+						}
+					}
+
+					loc.resourceClumps.Add(new GiantCrop(pair.Key, dirt.Tile));
+					max--;
+					break;
+				}
+
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool GrowTrees(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		float chance = 1f;
+		int steps = 1;
+		int max = int.MaxValue;
+		int maxStage = Tree.treeStage;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("-s", "--stages", val => steps = val)
+				.WithDescription("How many stages of growth should each tree experience. Default: 1")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("--max-stage", val => maxStage = val)
+				.WithDescription("The maximum stage a tree is allowed to reach. Default: 5")
+				.WithValidation<int>(val => val >= 0, "must be greater than or equal to 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var tree in EnumerateTerrainFeatures<Tree>(loc, entry.Position, entry.Radius)) {
+				int maxSize = Math.Min(tree.GetMaxSizeHere(), maxStage);
+				if (maxSize <= tree.growthStage.Value)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var data = tree.GetData();
+					var input = GetOrCreateInstance(data?.SeedItemId);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: null, inputItem: input))
+						continue;
+				}
+
+				int newStage = tree.growthStage.Value + steps;
+				if (newStage > maxSize)
+					newStage = maxSize;
+
+				if (newStage != tree.growthStage.Value) {
+					tree.growthStage.Value = newStage;
+					max--;
+					if (max <= 0)
+						break;
+				}
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool UnGrowTrees(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		float chance = 1f;
+		int steps = 1;
+		int max = int.MaxValue;
+		int minStage = Tree.seedStage;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("-s", "--stages", val => steps = val)
+				.WithDescription("How many stages of growth should each tree lose. Default: 1")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("--min-stage", val => minStage = val)
+				.WithDescription("The minimum stage a tree is allowed to reach. Default: 0")
+				.WithValidation<int>(val => val >= 0, "must be greater than or equal to 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var tree in EnumerateTerrainFeatures<Tree>(loc, entry.Position, entry.Radius)) {
+				if (tree.growthStage.Value <= minStage || tree.isTemporaryGreenRainTree.Value)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var data = tree.GetData();
+					var input = GetOrCreateInstance(data?.SeedItemId);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: null, inputItem: input))
+						continue;
+				}
+
+				// TODO: Figure out what to do about tappers.
+
+				int stages = steps;
+				while (stages-- > 0 && tree.growthStage.Value > minStage)
+					tree.growthStage.Value--;
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool GrowFruitTrees(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		float chance = 1f;
+		int steps = 1;
+		int max = int.MaxValue;
+		int maxFruit = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of fruit trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("-day", "--days", val => steps = val)
+				.WithDescription("How many days of growth should each fruit tree experience. Default: 1")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<int>("--max-fruit", val => maxFruit = val)
+				.WithDescription("The maximum number of fruit to grow on any given fruit tree. Default: 3")
+				.WithValidation<int>(val => val >= 0 && val <= 3, "must be in range 0 to 3")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given fruit tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which fruit trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var fruitTree in EnumerateTerrainFeatures<FruitTree>(loc, entry.Position, entry.Radius)) {
+				if (fruitTree.stump.Value)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					Item? target = fruitTree.fruit.FirstOrDefault();
+					Item? input = GetOrCreateInstance(fruitTree.treeId.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				int days = steps;
+				bool blocked = FruitTree.IsGrowthBlocked(fruitTree.Tile, fruitTree.Location);
+				bool changed = false;
+
+				while (days-- > 0) {
+					bool updated = false;
+					if (!blocked && fruitTree!.daysUntilMature.Value > 0) {
+						fruitTree.daysUntilMature.Value -= fruitTree.growthRate.Value;
+						fruitTree.growthStage.Value = FruitTree.DaysUntilMatureToGrowthStage(fruitTree.daysUntilMature.Value);
+						updated = true;
+					}
+
+					int fruit = fruitTree.fruit.Count;
+					if (!fruitTree.stump.Value && fruit < maxFruit) {
+						fruitTree.TryAddFruit();
+						if (fruitTree.fruit.Count != fruit)
+							updated = true;
+					}
+
+					if (!updated)
+						break;
+					else
+						changed = true;
+				}
+
+				if (changed)
+					max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool ConvertTrees(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string treeId = string.Empty;
+		string? query = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<string>("TreeId", val => treeId = val)
+				.IsRequired()
+				.WithDescription("The Id to convert the matching tree(s) to. Must match an entry in Data/WildTrees")
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		if (!DataLoader.WildTrees(Game1.content).TryGetValue(treeId, out var treeData)) {
+			error = $"Invalid tree Id: {treeId}";
+			return false;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var tree in EnumerateTerrainFeatures<Tree>(loc, entry.Position, entry.Radius)) {
+				if (tree.treeType.Value == treeId || tree.tapped.Value || tree.isTemporaryGreenRainTree.Value || tree.growthStage.Value < Tree.treeStage)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var data = tree.GetData();
+					Item? input = GetOrCreateInstance(data?.SeedItemId);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: null, inputItem: input))
+						continue;
+				}
+
+				tree.treeType.Value = treeId;
+				tree.loadSprite();
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool GrowMoss(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var tree in EnumerateTerrainFeatures<Tree>(loc, entry.Position, entry.Radius)) {
+				if (tree.growthStage.Value < Tree.treeStage || tree.hasMoss.Value)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var data = tree.GetData();
+					Item? input = GetOrCreateInstance(data?.SeedItemId);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: null, inputItem: input))
+						continue;
+				}
+
+				tree.hasMoss.Value = true;
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool KillMoss(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of trees to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tree will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which trees are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and grow everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var tree in EnumerateTerrainFeatures<Tree>(loc, entry.Position, entry.Radius)) {
+				if (!tree.hasMoss.Value)
+					continue;
+
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var data = tree.GetData();
+					Item? input = GetOrCreateInstance(data?.SeedItemId);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: null, inputItem: input))
+						continue;
+				}
+
+				tree.hasMoss.Value = false;
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool KillCrops(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of crops to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given crops will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which crops are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and un-alive everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (dirt.crop is null || dirt.crop.dead.Value || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+					if (!GameStateQuery.CheckConditions(fertilizerQuery, loc, null, inputItem: target))
+						continue;
+				}
+
+				dirt.crop.Kill();
+				dirt.crop.updateDrawMath(dirt.Tile);
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool FertilizeDirt(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? fertilizerId = null;
+		string? query = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<string>("FertilizerId", val => fertilizerId = val)
+				.IsRequired()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of dirt tiles to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given dirt tiles will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		fertilizerId = ItemRegistry.QualifyItemId(fertilizerId);
+		if (ItemRegistry.GetData(fertilizerId) is null) {
+			error = $"Invalid item Id for fertilizer: {fertilizerId}";
+			return false;
+		}
+
+		// Now, loop through all the locations and fertilize everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!dirt.CanApplyFertilizer(fertilizerId))
+					continue;
+
+				// TODO: Support for mods that allow you to use
+				// multiple fertilizers.
+				//
+				// Currently, that means Ultimate Fertilizer. For now,
+				// we just abort if there is an existing fertilizer.
+				if (dirt.fertilizer.Value != null)
+					continue;
+
+				// Fertilize ALL the crops!
+				dirt.fertilizer.Value = fertilizerId;
+				dirt.applySpeedIncreases(Game1.player);
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	public static bool UnFertilizeDirt(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		string? query = null;
+		string? fertilizerQuery = null;
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of dirt tiles to change.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given dirt tiles will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.Add<string>("-q", "--query", val => query = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected.")
+			.Add<string>("--fertilizer-query", val => fertilizerQuery = val)
+				.WithDescription("An optional Game State Query for filtering which dirt tiles are affected based on fertilizer.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		// Now, loop through all the locations and un-fertilize everything.
+		foreach (var entry in targets.SelectMany(x => x)) {
+			var loc = entry.Location;
+			if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+				continue;
+
+			foreach (var (dirt, pot) in EnumerateHoeDirtAndPots(loc, entry.Position, entry.Radius)) {
+				if (dirt.fertilizer.Value == null || !(chance >= 1f || Game1.random.NextSingle() <= chance))
+					continue;
+
+				if (!string.IsNullOrEmpty(query)) {
+					var target = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.indexOfHarvest.Value);
+					var input = dirt.crop is null ? null : GetOrCreateInstance(dirt.crop.netSeedIndex.Value);
+
+					if (!GameStateQuery.CheckConditions(query, loc, null, targetItem: target, inputItem: input))
+						continue;
+				}
+
+				if (!string.IsNullOrEmpty(fertilizerQuery)) {
+					var target = GetOrCreateInstance(dirt.fertilizer.Value);
+					if (!GameStateQuery.CheckConditions(fertilizerQuery, loc, null, inputItem: target))
+						continue;
+				}
+
+				// Remove the fertilizer.
+				dirt.fertilizer.Value = null;
+				dirt.applySpeedIncreases(Game1.player);
+
+				max--;
+				if (max <= 0)
+					break;
+			}
+
+			if (max <= 0)
+				break;
+		}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	[TriggerAction]
+	private static bool SpawnForage(string[] args, TriggerActionContext context, out string? error) {
+		List<IEnumerable<TargetPosition>> targets = [];
+		float chance = 1f;
+		int max = int.MaxValue;
+		bool includeIndoors = false;
+		bool includeDefault = false;
+		bool ignoreSpawnable = false;
+
+		List<SpawnForageData> spawns = [];
+
+		var parser = ArgumentParser.New()
+			.AddHelpFlag()
+			.AddPositional<IEnumerable<TargetPosition>>("Target", targets.Add)
+				.IsRequired()
+				.AllowMultiple()
+			.Add<int>("--max", null, val => max = val)
+				.WithDescription("The maximum number of forage to spawn.")
+				.WithValidation<int>(val => val > 0, "must be greater than 0")
+			.Add<float>("-c", "--chance", val => chance = val)
+				.WithDescription("The percent chance that any given tile spawn forage will be changed. Default: 1.0")
+				.WithValidation<float>(val => val >= 0 && val <= 1, "must be value in range 0.0 to 1.0")
+			.AddFlag("--include-default", () => includeDefault = true)
+				.WithDescription("If this flag is set, include the location's default forage items in the list of potential spawns.")
+			.AddFlag("--indoors", () => includeIndoors = true)
+				.WithDescription("If this flag is set, indoor locations will not be skipped.")
+			.AddFlag("--ignore-spawnable", () => ignoreSpawnable = true)
+				.WithDescription("If this flag is set, we will ignore the Spawnable flag of tiles and allow spawning anywhere.")
+			.Add<string>("-i", "--item", val => {
+				var added = new SpawnForageData() {
+					ItemId = val
+				};
+				spawns.Add(added);
+			})
+				.WithDescription("Add a new item to the list of forage to spawn. Supports item queries.")
+			.Add<string>("-iq", "--item-query", val => spawns.Last().PerItemCondition = val)
+				.WithDescription("Adds a per-item condition to the previously added item.")
+			.Add<int>("-q", "--item-quality", val => spawns.Last().Quality = val)
+				.WithDescription("Adds a quality to the previously added item.");
+
+		if (!parser.TryParse(args[1..], out error))
+			return false;
+
+		if (parser.WantsHelp) {
+			Instance.Log($"Usage: {args[0]} {parser.Usage}", LogLevel.Info);
+			return true;
+		}
+
+		Dictionary<GameLocation, List<SpawnForageData>>? availableSpawns = includeDefault ? [] : null;
+
+		List<SpawnForageData> GetAvailableSpawns(GameLocation location) {
+			if (!includeDefault)
+				return spawns;
+
+			if (availableSpawns!.TryGetValue(location, out var result))
+				return result;
+
+			result = new(spawns);
+
+			var data = location.GetData();
+			if (data != null) {
+				Season season = location.GetSeason();
+				foreach (var spawn in GameLocation.GetData("Default").Forage.Concat(data.Forage)) {
+					if (spawn.Season.HasValue && spawn.Season != season)
+						continue;
+					if (spawn.Condition is null || GameStateQuery.CheckConditions(spawn.Condition, location))
+						result.Add(spawn);
+				}
+			}
+
+			availableSpawns[location] = result;
+			return result;
+		}
+
+		if (includeDefault || spawns.Count > 0)
+			foreach (var entry in targets.SelectMany(x => x)) {
+				var loc = entry.Location;
+				if (loc is null || (!includeIndoors && !loc.IsOutdoors))
+					continue;
+
+				var forage = GetAvailableSpawns(loc);
+				if (forage is null || forage.Count == 0)
+					continue;
+
+				IEnumerable<Vector2> tiles;
+				if (entry.Position.HasValue)
+					tiles = entry.Position.Value.IterArea(entry.Radius, false);
+				else
+					tiles = EnumerateAllTiles(loc);
+
+				ItemQueryContext ctx = new(loc, Game1.player, Game1.random);
+				Dictionary<SpawnForageData, IList<ItemQueryResult>> cachedQueryResults = [];
+
+				foreach (var pos in tiles) {
+					int x = (int) pos.X;
+					int y = (int) pos.Y;
+
+					if (!(chance >= 1f || Game1.random.NextSingle() <= chance))
+						continue;
+
+					if (loc.Objects.ContainsKey(pos) ||
+						loc.IsNoSpawnTile(pos) ||
+						(!ignoreSpawnable && loc.doesTileHaveProperty(x, y, "Spawnable", "Back") == null) ||
+						loc.doesEitherTileOrTileIndexPropertyEqual(x, y, "Spawnable", "Back", "F") ||
+						!loc.CanItemBePlacedHere(pos) ||
+						loc.getTileIndexAt(x, y, "AlwaysFront") != -1 ||
+						loc.getTileIndexAt(x, y, "AlwaysFront2") != -1 ||
+						loc.getTileIndexAt(x, y, "AlwaysFront3") != -1 ||
+						loc.getTileIndexAt(x, y, "Front") != -1 ||
+						loc.isBehindBush(pos)
+					)
+						continue;
+
+					// TODO: Maybe determine some way of respecting an entry's
+					// chance to spawn while also ensuring something spawns?
+
+					var toSpawn = Game1.random.ChooseFrom(forage);
+
+					if (!cachedQueryResults.TryGetValue(toSpawn, out var result)) {
+						result = ItemQueryResolver.TryResolve(toSpawn, ctx, ItemQuerySearchMode.AllOfTypeItem, avoidRepeat: false, logError: (query, error) => {
+							Instance.Log($"Failed parsing item query '{query}' for forage: {error}", LogLevel.Error);
+						});
+						cachedQueryResults[toSpawn] = result;
+					}
+
+					var itemToSpawn = Game1.random.ChooseFrom(result);
+					if (itemToSpawn.Item is not SObject sobj || sobj.getOne() is not SObject copy)
+						continue;
+
+					copy.IsSpawnedObject = true;
+					if (loc.dropObject(copy, pos * 64f, Game1.viewport, initialPlacement: true)) {
+						max--;
+						if (max <= 0)
+							break;
+					}
+				}
+
+				if (max <= 0)
+					break;
+			}
+
+		// Great success!
+		error = null;
+		return true;
+	}
+
+	private static IEnumerable<Vector2> EnumerateAllTiles(GameLocation location) {
+		int width = location.map.DisplayWidth / 64;
+		int height = location.map.DisplayHeight / 64;
+
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				yield return new Vector2(x, y);
+			}
+		}
+	}
+
 
 	#endregion
 

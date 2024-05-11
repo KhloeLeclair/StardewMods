@@ -171,7 +171,7 @@ public abstract class ModSubscriber : Mod {
 		registered.AddRange(EventHelper.RegisterTriggerActions(GetType(), $"{ModManifest.UniqueID}_", Monitor.Log));
 
 		if (registered.Count > 0)
-			Log($"Registered trigger actions: {string.Join(", ", registered)}", LogLevel.Debug);
+			Log($"Registered trigger actions: {string.Join(", ", registered)}", LogLevel.Trace);
 	}
 
 	protected virtual void RegisterGameStateQueries() {
@@ -179,7 +179,7 @@ public abstract class ModSubscriber : Mod {
 		registered.AddRange(EventHelper.RegisterGameStateQueries(GetType(), [$"{ModManifest.UniqueID}_"], Monitor.Log));
 
 		if (registered.Count > 0)
-			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Debug);
+			Log($"Registered Game State Query conditions: {string.Join(", ", registered)}", LogLevel.Trace);
 	}
 
 	protected virtual void RegisterConsoleCommands() {
@@ -187,7 +187,7 @@ public abstract class ModSubscriber : Mod {
 		registered.AddRange(EventHelper.RegisterConsoleCommands(GetType(), Helper.ConsoleCommands, Monitor.Log));
 
 		if (registered.Count > 0)
-			Log($"Registered console commands: {string.Join(", ", registered)}", LogLevel.Debug);
+			Log($"Registered console commands: {string.Join(", ", registered)}", LogLevel.Trace);
 	}
 
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {

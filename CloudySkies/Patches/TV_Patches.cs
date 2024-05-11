@@ -21,6 +21,8 @@ public static class TV_Patches {
 	private static Func<TV, int>? GetCurrentChannel;
 	private static Action<TV, TemporaryAnimatedSprite>? SetAnimatedSprite;
 
+	private static bool DidPatch = false;
+
 	public static void Patch(ModEntry mod) {
 		Mod = mod;
 
@@ -32,13 +34,13 @@ public static class TV_Patches {
 				.CreateSetter<TV, TemporaryAnimatedSprite>();
 
 			mod.Harmony.Patch(
-				original: AccessTools.Method(typeof(TV), nameof(TV.proceedToNextScene)),
-				prefix: new HarmonyMethod(typeof(TV_Patches), nameof(TV_proceedToNextScene__Prefix))
+				original: AccessTools.Method(typeof(TV), "getWeatherForecast", [typeof(string)]),
+				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(GetWeatherForecast__Postfix))
 			);
 
 			mod.Harmony.Patch(
-				original: AccessTools.Method(typeof(TV), "getWeatherForecast", [typeof(string)]),
-				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(GetWeatherForecast__Postfix))
+				original: AccessTools.Method(typeof(TV), nameof(TV.proceedToNextScene)),
+				prefix: new HarmonyMethod(typeof(TV_Patches), nameof(TV_proceedToNextScene__Prefix))
 			);
 
 			mod.Harmony.Patch(
@@ -51,8 +53,10 @@ public static class TV_Patches {
 				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(SetWeatherOverlay__Postfix))
 			);
 
+			DidPatch = true;
+
 		} catch (Exception ex) {
-			mod.Log($"Error patching TV.", StardewModdingAPI.LogLevel.Error, ex);
+			mod.Log($"Error patching TV. Is the game version pre-1.6.6?", StardewModdingAPI.LogLevel.Error, ex);
 		}
 
 	}
@@ -61,7 +65,7 @@ public static class TV_Patches {
 	private static bool TV_proceedToNextScene__Prefix(TV __instance) {
 
 		try {
-			if (Mod is null || !Mod.Config.ReplaceTVMenu || GetCurrentChannel?.Invoke(__instance) != 2)
+			if (!DidPatch || Mod is null || !Mod.Config.ReplaceTVMenu || GetCurrentChannel?.Invoke(__instance) != 2)
 				return true;
 
 			CommonHelper.YeetMenu(Game1.activeClickableMenu);
@@ -99,6 +103,9 @@ public static class TV_Patches {
 					corner = weatherData.TVSource;
 					frames = weatherData.TVFrames;
 				}
+
+				if (frames < 1)
+					frames = 1;
 
 				sprite = new TemporaryAnimatedSprite(
 					textureName,

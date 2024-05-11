@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Objects;
 
 namespace Leclair.Stardew.CloudySkies.Patches;
 
@@ -70,6 +71,45 @@ public static class Game1_Patches {
 				original: AccessTools.Method(typeof(Game1), nameof(Game1.updateRainDropPositionForPlayerMovement)),
 				prefix: new HarmonyMethod(typeof(Game1_Patches), nameof(updateRaindropPositionForPlayerMovement__Prefix))
 			);
+
+			mod.Harmony.Patch(
+				original: AccessTools.Method(typeof(IndoorPot), nameof(IndoorPot.DayUpdate)),
+				transpiler: new HarmonyMethod(typeof(Game1_Patches), nameof(IndoorPot_DayUpdate__Transpiler))
+			);
+
+			// Weather nonsense that we can't target by name.
+			var newDayRainFix = new HarmonyMethod(typeof(Game1_Patches), nameof(NewDayRain__Transpiler));
+
+			foreach (var type in typeof(Game1).GetNestedTypes(AccessTools.all)) {
+				if (type != null && type.IsClass) {
+					foreach (var method in AccessTools.GetDeclaredMethods(type)) {
+						// We know we want a non-static method, with _newDayAfterFade
+						// in its name. The method needs to return a bool, and
+						// have one parameter: a GameLocation.
+
+						// Sadly, this does match more than one method, but our
+						// transpiler will detect the proper method by inspecting
+						// the IL and just not do anything to the methods we
+						// don't care about.
+
+						if (method?.Name == null ||
+							method.IsStatic ||
+							method.ReturnType != typeof(bool) ||
+							!method.Name.Contains("_newDayAfterFade")
+						)
+							continue;
+
+						var parms = method.GetParameters();
+						if (parms.Length != 1 || parms[0].ParameterType != typeof(GameLocation))
+							continue;
+
+						mod.Harmony.Patch(
+							original: method,
+							transpiler: newDayRainFix
+						);
+					}
+				}
+			}
 
 		} catch (Exception ex) {
 			mod.Log($"Error patching Game1. Weather will not work correctly.", StardewModdingAPI.LogLevel.Error, ex);
@@ -235,6 +275,53 @@ public static class Game1_Patches {
 	#endregion
 
 	#region Updates
+
+	private static IEnumerable<CodeInstruction> IndoorPot_DayUpdate__Transpiler(IEnumerable<CodeInstruction> instructions) {
+
+		var GameLocation_IsRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
+		var ShouldWaterCropsAndBowls = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.ShouldWaterCropsAndBowls));
+
+		foreach (var in0 in instructions) {
+			if (in0.Calls(GameLocation_IsRainingHere))
+				// Old Code: if ((bool)location.isOutdoors && location.IsRainingHere())
+				// New Code: if ((bool)location.isOutdoors && PatchHelper.ShouldWaterCropsAndBowls(location))
+				yield return new CodeInstruction(in0) {
+					opcode = OpCodes.Call,
+					operand = ShouldWaterCropsAndBowls
+				};
+
+			else
+				yield return in0;
+		}
+	}
+
+	private static IEnumerable<CodeInstruction> NewDayRain__Transpiler(IEnumerable<CodeInstruction> instructions) {
+
+		var GameLocation_IsOutdoors = AccessTools.PropertyGetter(typeof(GameLocation), nameof(GameLocation.IsOutdoors));
+		var GameLocation_IsRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
+
+		var ShouldWaterCropsAndBowls = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.ShouldWaterCropsAndBowls));
+
+		var matcher = new CodeMatcher(instructions)
+			.MatchEndForward(
+				new CodeMatch(OpCodes.Ldarg_1),
+				new CodeMatch(in0 => in0.Calls(GameLocation_IsOutdoors)),
+				new CodeMatch(OpCodes.Brfalse),
+				new CodeMatch(OpCodes.Ldarg_1),
+				new CodeMatch(in0 => in0.Calls(GameLocation_IsRainingHere))
+			);
+
+		if (matcher.IsValid)
+			// We found the expected sequence. Let's replace it!
+			// Old Code: if (location.IsOutdoors && location.IsRainingHere())
+			// New Code: if (location.IsOutdoors && PatchHelper.ShouldWaterCropsAndBowls(location))
+			matcher.SetInstruction(new CodeInstruction(matcher.Instruction) {
+				opcode = OpCodes.Call,
+				operand = ShouldWaterCropsAndBowls
+			});
+
+		return matcher.InstructionEnumeration();
+	}
 
 	private static IEnumerable<CodeInstruction> performTenMinuteClockUpdate__Transpiler(IEnumerable<CodeInstruction> instructions) {
 

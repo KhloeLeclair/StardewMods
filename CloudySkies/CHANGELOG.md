@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.5.0
+Released May 10th, 2024.
+
+### Added
+* System for tracking the previous week's weather in all locations,
+  which can be queried using game state queries.
+* New trigger actions for: converting trees to other tree types,
+  fertilizing dirt, growing crops, growing giant crops, growing
+  fruit trees, growing trees, killing crops, spawning forage,
+  un-fertilizing dirt, un-growing trees, un-watering dirt,
+  un-watering pet bowls, watering dirt, and watering pet bowls.
+* New game state query for checking the current weather type
+  that supports matching multiple types, as well as matching
+  the weather up to one week in the past.
+* Whether or not a given water condition performs the standard
+  logic to water crops and pet bowls is now a separate flag in
+  weather data.
+* Added a new `cs_history` command for viewing the stored
+  historical weather data, which will have at most 8 entries.
+
+### Changed
+* The various game state queries for checking weather flags
+  now have an optional argument for checking the weather up
+  to one week in the past.
+* Deprecated the action to water crops. Use the new, better
+  action please.
+* Reduce the severity of some debugging message from Debug to Trace.
+
+### Fixed
+* If the TV patches can't apply cleanly, then don't replace the
+  TV with our custom menu. (Assuming we un-patch cleanly.)
+
+
 ## 1.4.0
 Released May 4th, 2024.
 

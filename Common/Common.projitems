@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AdvancedMultipleMutexRequest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ArgumentParser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IPostCraftEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DynamicRecipeSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecyclable.cs" />
@@ -29,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)serialization\AbstractConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\DiscriminatingConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SmokedFishSpriteInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SynchronizedDataHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureColorWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ModAssetEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityDictionary.cs" />

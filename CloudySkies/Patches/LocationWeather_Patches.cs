@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using HarmonyLib;
 
@@ -24,7 +20,7 @@ public static class LocationWeather_Patches {
 				postfix: new HarmonyMethod(typeof(LocationWeather_Patches), nameof(UpdateDailyWeather__Postfix))
 			);
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			mod.Log($"Error patching LocationWeather. Weather may not work correctly.", StardewModdingAPI.LogLevel.Error, ex);
 		}
 
@@ -46,6 +42,6 @@ public static class LocationWeather_Patches {
 		__instance.IsGreenRain = weatherData.IsGreenRain;
 
 	}
-	
+
 
 }

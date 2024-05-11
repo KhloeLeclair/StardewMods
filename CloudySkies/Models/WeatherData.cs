@@ -70,6 +70,8 @@ public class WeatherData : IWeatherData {
 
 	#region Behavior Modifications
 
+	public bool? WaterCropsAndPets { get; set; }
+
 	public bool UseNightTiles { get; set; } = false;
 
 	public bool SpawnCritters { get; set; } = true;

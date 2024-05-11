@@ -1999,28 +1999,1388 @@ The value should be `true` or `false`
 Cloudy Skies adds the following [trigger action actions](https://stardewvalleywiki.com/Modding:Trigger_actions#Actions)
 to the game:
 
+> Note: If using the `debug action` command to test commands, you should be
+> aware of a bug in the game causing quotation marks to not be handled
+> correctly by `debug action`. You may need to escape your quotation marks.
+
+
+### `leclair.cloudyskies_ConvertTrees [options] <treeId> <target> +`
+
+Convert the trees within the provided [target area(s)](#action-targets)
+into another type of tree. As an example, here's a command that
+will instantly convert any trees within 5 tiles of the player
+into mushroom trees (which have an Id of `7`):
+```
+leclair.cloudyskies_ConvertTrees 7 Player Current 5
+```
+
+> Note: This command only affects wild trees, and not fruit trees.
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which trees are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of trees.
+
+The `Input` item is the seed item that you plant to get this type of tree,
+if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_FertilizeDirt [options] <fertilizerId> <target> +`
+
+Apply fertilizer to dirt tiles and Garden Pots within the provided [target area(s)](#action-targets).
+As an example, here's a command that applies Speed-Gro to all tilled
+dirt and pots in the current location:
+```
+leclair.cloudyskies_FertilizeDirt (O)465 Location Here
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_GrowCrops [options] <target> +`
+
+Advance crop growth within the provided [target area(s)](#action-targets).
+As an example, here's a command that will instantly grow any pumpkins within
+5 tiles of the player to maximum growth:
+```
+leclair.cloudyskies_GrowCrops -q "ITEM_ID Input (O)490" --days 13 Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-d &lt;number&gt;</code>, <code>--days &lt;number&gt;</code></td>
+<td>
+
+The number of days of growth each crop should experience. Must be a
+positive integer.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>--max-days &lt;number&gt;</code></td>
+<td>
+
+The maximum number of days of growth each crop should experience. If this
+is set, each crop will grow a random number of days between `--days` and
+this value.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_GrowFruitTrees [options] <target> +`
+
+Advance the growth of fruit trees within the provided [target area(s)](#action-targets).
+As an example, here's a command that will instantly grow any
+fruit trees within 5 tiles of the player into their fully grown state,
+but does not cause fruit to grow:
+```
+leclair.cloudyskies_GrowFruitTrees --days 112 --max-fruit 0 5 Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>--days &lt;number&gt;</code></td>
+<td>
+
+The number of days of growth each fruit tree should experience.
+
+Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>--max-fruit &lt;number&gt;</code></td>
+<td>
+
+The maximum number of fruit we should attempt to grow on any given fruit
+tree. If the tree already has at least this many fruit, we won't try
+to grow any additional fruit. This also respects the individual tree's
+fruit limit, and won't cause a tree to spawn more fruit than it should.
+
+> Note: This does not override the in-season checks, so if a tree is
+> not in season, it will not gain fruit from this no matter what.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which fruit trees are affected. For performance reasons, you
+should avoid using `RANDOM` queries here and rely on the `--chance` option
+if you want to affect less than 100% of fruit trees.
+
+The `Target` item is the first fruit on the tree, if the tree currently
+has any fruit.
+
+The `Input` item is the seed or sapling item that you plant to get this
+type of fruit tree, if there is a valid seed/sapling item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_GrowGiantCrops [options] <target> +`
+
+Make giant crops grow within the provided [target area(s)](#action-targets)
+if it's possible. As an example, here's a command that will instantly grow
+any pumpkins within 5 tiles of the player into giant crops:
+```
+leclair.cloudyskies_GrowGiantCrops -q "ITEM_ID Input (O)490" --allow-immature Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>--allow-immature</code></td>
+<td>
+
+If this flag is set, we will allows crops that aren't yet mature to grow into
+giant crops.
+
+</td>
+</tr>
+<tr>
+<td><code>--ignore-size</code></td>
+<td>
+
+If this flag is set, we will ignore size requirements for giant crops and
+allow any crop to grow into a giant crop, even if it doesn't have the
+necessary other crops next to it, as long as there is open space to grow.
+
+</td>
+</tr>
+<tr>
+<td><code>--allow-anywhere</code></td>
+<td>
+
+If this flag is set, we will ignore locations that are not flagged with
+`AllowGiantCrops` and always let them grow.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_GrowMoss [options] <target> +`
+
+Grow moss on the trees within the provided [target area(s)](#action-targets).
+As an example, here's a command that will has a 50% chance to grow moss on
+each tree within 5 tiles of the player:
+```
+leclair.cloudyskies_GrowMoss -c 0.5 Player Current 5
+```
+
+> Note: This command only affects wild trees, and not fruit trees.
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which trees are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of trees.
+
+The `Input` item is the seed item that you plant to get this type of tree,
+if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_GrowTrees [options] <target> +`
+
+Advance the growth stage of trees within the provided [target area(s)](#action-targets).
+As an example, here's a command that will instantly grow any
+trees within 5 tiles of the player into their fully grown state:
+```
+leclair.cloudyskies_GrowTrees --stages 5 Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-s &lt;number&gt;</code>, <code>--stages &lt;number&gt;</code></td>
+<td>
+
+The number of stages of growth each tree should experience. Trees generally
+have 6 total stages, where `0` is a seed and `5` is fully grown.
+
+</td>
+</tr>
+<tr>
+<td><code>--max-stage &lt;number&gt;</code></td>
+<td>
+
+The maximum growth stage any given tree should be allowed to reach as a
+result of this action.
+
+Default: `5` (fully grown)
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which trees are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of trees.
+
+The `Input` item is the seed item that you plant to get this type of tree,
+if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_KillCrops [options] <target> +`
+
+Kill the crops growing within the provided [target area(s)](#action-targets).
+As an example, here's a command that kills any pumpkins growing
+on Ginger Island:
+```
+leclair.cloudyskies_KillCrops -q "ITEM_ID Input (O)490" Context Island
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_KillMoss [options] <target> +`
+
+Remove moss from the trees within the provided [target area(s)](#action-targets).
+As an example, here's a command that will remove all moss on trees
+in either the `Farm` or `Town` maps:
+```
+leclair.cloudyskies_KillMoss Location Farm Location Town
+```
+
+> Note: This command only affects wild trees, and not fruit trees.
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which trees are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of trees.
+
+The `Input` item is the seed item that you plant to get this type of tree,
+if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_SpawnForage [options] <target> +`
+
+Spawns forage within the provided [target area(s)](#action-targets). As an
+example, here's a command that will spawn random fish in all valid
+forage locations within 5 tiles of the player:
+```
+leclair.cloudyskies_SpawnForage -i ALL_ITEMS -iq "ITEM_CATEGORY Target -4" Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of forage to spawn. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will spawn a forage, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>--include-default</code></td>
+<td>
+
+If this flag is set, the location's default forage items will be added to
+the list of possible forage to spawn. By default, we only spawn the items
+you provide to the action as arguments.
+
+</td>
+</tr>
+<tr>
+<td><code>--ignore-spawnable</code></td>
+<td>
+
+If this flag is set, we will not skip tiles without a `Spawnable` flag like
+the base game does. We will still skip tiles based on all other criteria,
+including having a `Spawnable` field that is set to `F`.
+
+</td>
+</tr>
+<tr>
+<td><code>-i &lt;string&gt;</code>, <code>--item &lt;string&gt;</code></td>
+<td>
+
+Add an item to the list of potential forage to spawn. This supports
+[item queries](https://stardewvalleywiki.com/Modding:Item_queries).
+
+</td>
+</tr>
+<tr>
+<td><code>-iq &lt;string&gt;</code>, <code>--item-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+to apply to the last added `--item` as a per-item condition. See the
+documentation on [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+for more information.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;number&gt;</code>, <code>--item-quality &lt;number&gt;</code></td>
+<td>
+
+An optional quality to apply to the last added `--item`. See the documentation
+on [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
+for more information.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_UnFertilizeDirt [options] <target> +`
+
+Remove fertilizer from dirt tiles and Garden Pots within the provided [target area(s)](#action-targets).
+As an example, here's a command that removes fertilizer from any
+dirt and pots that have Speed-Gro in the current location:
+```
+leclair.cloudyskies_UnFertilizeDirt --fertilizer-query "ITEM_ID Input (O)465" Location Here
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_UnGrowTrees [options] <target> +`
+
+Rewind the growth stage of trees within the provided [target area(s)](#action-targets).
+As an example, here's a command that will instantly revert any
+trees within 5 tiles of the player into saplings:
+```
+leclair.cloudyskies_UnGrowTrees --min-stage 2 --stages 100 Player Current 5
+```
+
+Note the use of an arbitrarily large number for `--stages`
+in this example, in case any mods have added trees with
+more growth stages.
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-s &lt;number&gt;</code>, <code>--stages &lt;number&gt;</code></td>
+<td>
+
+The number of stages of growth each tree should experience. Trees generally
+have 6 total stages, where `0` is a seed and `5` is fully grown.
+
+</td>
+</tr>
+<tr>
+<td><code>--min-stage &lt;number&gt;</code></td>
+<td>
+
+The minimum growth stage any given tree should be allowed to reach as a
+result of this action.
+
+Default: `0` (seed)
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which trees are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of trees.
+
+The `Input` item is the seed item that you plant to get this type of tree,
+if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_UnWaterDirt [options] <target> +`
+
+Un-water watered dirt tiles and Garden Pots within the provided [target area(s)](#action-targets).
+As an example, here's a command that will un-water any pumpkins within 5 tiles
+of the player:
+```
+leclair.cloudyskies_UnWaterDirt -q "ITEM_ID Input (O)490" Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_UnWaterPets [options] <target> +`
+
+Un-water watered pet bowls within the provided [target area(s)](#action-targets).
+As an example, here's a command that will un-water any pet bowls within 5 tiles
+of the player:
+```
+leclair.cloudyskies_UnWaterPets Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of pet bowls to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given pet bowl will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+</table>
+
+
 ### `leclair.cloudyskies_WaterCrops <Location OR Context> <location> <chance=1>`
 
-Water the crops (and pet bowls) in a location or location context. The first
-argument can be either `Location` to target locations, or `Context` to target
-location contexts.
+**Deprecated.** Please use `leclair.cloudyskies_WaterDirt` instead.
 
-> Targeting a location context will affect all locations within that location
-> context. Note also that this will only affect outdoor locations, no matter
-> how you specify the target location(s).
 
-The second argument can be either `Here` for the current location / context,
-`Any` for any location / context, or the name of a specific location / context.
+### `leclair.cloudyskies_WaterDirt [options] <target> +`
 
-The third argument is optional, and is the percent chance that any given crop
-or pet bowl will be watered, where 0.0 is a 0% chance and 1.0 is a 100% chance.
-
-Here's an example that has a 50% chance of watering crops across all maps in
-the default context (where all the base game locations are, excepting those
-from Ginger Island or Calico Desert):
+Water un-watered dirt tiles and Garden Pots within the provided [target area(s)](#action-targets).
+As an example, here's a command that will water any pumpkins within 5 tiles
+of the player:
 ```
-leclair.cloudyskies_WaterCrops Context Default 0.5
+leclair.cloudyskies_WaterDirt -q "ITEM_ID Input (O)490" Player Current 5
 ```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of tiles to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given tile will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has a crop planted, the `Input` item will be set to the seed
+item for the crop, and the `Target` item will be set to the harvest item.
+
+</td>
+</tr>
+<tr>
+<td><code>--fertilizer-query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which tiles are affected. For performance reasons, you should
+avoid using `RANDOM` queries here and rely on the `--chance` option if you
+want to affect less than 100% of tiles.
+
+If the tile has been fertilized, the `Input` item will be the fertilizer item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_WaterPets [options] <target> +`
+
+Water un-watered pet bowls within the provided [target area(s)](#action-targets).
+As an example, here's a command that will water any pet bowls within 5 tiles
+of the player:
+```
+leclair.cloudyskies_WaterPets Player Current 5
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of pet bowls to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given pet bowl will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+</table>
+
+
+### Action Targets
+
+Most of Cloudy Skies' custom trigger actions use a flexible `<target>` argument
+that accepts several different forms, making it easy to target entire regions
+or specific tiles. The following forms are permitted:
+
+#### `Context <All/Here/ID>`
+
+Target the full map of each location within the provided location context(s).
+You can use `All` to match all contexts, `Here` to match the context of the
+current location, or provide the Id of a specific context to target.
+
+
+#### `Location <All/Here/ID>`
+
+Target the full map of the provided location(s). You can use `All` to match
+all locations, `Here` to match the current location, or provide the name
+of a specific location to target.
+
+
+#### `Tile <All/Here/ID> <x> <y> <radius>`
+
+Target a specific tile of the provided location(s). You can use `All` to match
+all locations, `Here` to match the current location, or provide the name
+of a specific location to target.
+
+`x` and `y` are the X and Y tile coordinates to target, and `radius` is the
+radius to extend from the targeted tile. Use `1` to only target one
+specific tile.
+
+
+#### `RandomTile <All/Here/ID> <minCount> <maxCount> <minX> <maxX> <minY> <maxY> <minRadius> <maxRadius>`
+
+Target a number of random tiles of the provided location(s). You can use `All`
+to match all locations, `Here` to match the current location, or provide the
+name of a specific location to target.
+
+`minCount` and `maxCount` are used to determine how many random tiles should
+be selected. The system will pick at least `minCount` and at most `maxCount`
+tiles. Please note that these tiles are not checked for uniqueness.
+
+`minX` and `maxX` define the bounds of the X coordinate to target. Please note
+that if you provide a `minX` less than zero, it will be set to zero. If you
+provide a `maxX` greater than the target map's width, it will be reduced to
+the target map's width.
+
+`minY` and `maxY` define the bounds of the Y coordinate to target. Please note
+that if you provide a `minY` less than zero, it will be set to zero. If you
+provide a `maxY` greater than the target map's height, it will be reduced to
+the target map's height.
+
+`minRadius` and `maxRadius` define the bounds of the radius to target around
+the target tile.
+
+As an example, here's a target that will pick 5 to 10 random locations on the
+`Farm` map with a small radius:
+```
+RandomTile Farm 5 10 0 1000 0 1000 2 4
+```
+
+Here, we've used `1000` as an arbitrarily large value for `maxX` and `maxY`.
+It doesn't matter that they're that big, because they'll be reduced to fit
+the actual map's size.
+
+
+#### `Player <All/Current/Host/ID> <radius>`
+
+Target the current position of the specified player. You can use `All` to
+match all online players, `Current` to match the current player, `Host`
+to match the hosting player, or provide the unique multiplayer ID of a
+player to target them specifically.
+
+`radius` is the radius to extend from the targeted player. Use `1` to only
+target the one specific tile they're standing on.
+
+
+#### `NPC <All/NAME> <radius>`
+
+Target the current position of the specified NPC. You can use `All` to
+match all NPCs, or provide the internal name of an NPC to target
+them specifically.
+
+`radius` is the radius to extend from the targeted NPC. Use `1` to only
+target the one specific tile they're standing on.
 
 
 ## Game State Queries
@@ -2035,34 +3395,73 @@ is flagged to ignore debris weather. You can use this query to hide your
 `Debris` layers in such locations.
 
 
-### `CS_WEATHER_IS_RAINING <location>`
+### `CS_WEATHER <location> <offset> <weatherId>+`
+
+The weather Id in the given location. This allows you to check the weather
+up to one week in the past by setting offset to a non-zero value. You can also
+provide more than one weatherId to match multiple possible weather types.
+For example, using `CS_WEATHER Here -1 Rain Storm` will check if the weather
+yesterday was either `Rain` or `Storm`.
+
+
+### `CS_WEATHER_IS_RAINING <location> [offset=0]`
 
 Whether the weather at the [given location](https://stardewvalleywiki.com/Modding:Game_state_queries#Target_location)
 has the `IsRaining` weather flag.
 
+If you set `offset` to a non-zero value, it will check the weather on that
+day instead. For example, you can check if it was raining yesterday by
+using `CS_WEATHER_IS_RAINING Here -1`.
 
-### `CS_WEATHER_IS_SNOWING <location>`
+Cloudy Skies records a full week of historical weather data.
+
+
+### `CS_WEATHER_IS_SNOWING <location> [offset=0]`
 
 Whether the weather at the [given location](https://stardewvalleywiki.com/Modding:Game_state_queries#Target_location)
 has the `IsSnowing` weather flag.
 
+If you set `offset` to a non-zero value, it will check the weather on that
+day instead. For example, you can check if it was snowing two days ago by
+using `CS_WEATHER_IS_SNOWING Here -2`.
 
-### `CS_WEATHER_IS_LIGHTNING <location>`
+Cloudy Skies records a full week of historical weather data.
+
+
+### `CS_WEATHER_IS_LIGHTNING <location> [offset=0]`
 
 Whether the weather at the [given location](https://stardewvalleywiki.com/Modding:Game_state_queries#Target_location)
 has the `IsLightning` weather flag.
 
+If you set `offset` to a non-zero value, it will check the weather on that
+day instead. For example, you can check if it was lightning yesterday by
+using `CS_WEATHER_IS_LIGHTNING Here -1`.
 
-### `CS_WEATHER_IS_DEBRIS <location>`
+Cloudy Skies records a full week of historical weather data.
+
+
+### `CS_WEATHER_IS_DEBRIS <location> [offset=0]`
 
 Whether the weather at the [given location](https://stardewvalleywiki.com/Modding:Game_state_queries#Target_location)
 has the `IsDebrisWeather` weather flag.
 
+If you set `offset` to a non-zero value, it will check the weather on that
+day instead. For example, you can check if it was debris weather yesterday by
+using `CS_WEATHER_IS_DEBRIS Here -1`.
 
-### `CS_WEATHER_IS_GREEN_RAIN <location>`
+Cloudy Skies records a full week of historical weather data.
+
+
+### `CS_WEATHER_IS_GREEN_RAIN <location> [offset=0]`
 
 Whether the weather at the [given location](https://stardewvalleywiki.com/Modding:Game_state_queries#Target_location)
 has the `IsGreenRain` weather flag.
+
+If you set `offset` to a non-zero value, it will check the weather on that
+day instead. For example, you can check if it was green raining yesterday by
+using `CS_WEATHER_IS_GREEN_RAINING Here -1`.
+
+Cloudy Skies records a full week of historical weather data.
 
 
 ## Content Patcher Tokens

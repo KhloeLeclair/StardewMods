@@ -174,6 +174,16 @@ internal static class ReflectionHelper {
 
 	#region Methods
 
+	internal static Func<TOwner, TResult> CreateGenericFunc<TOwner, TResult>(this MethodInfo method, params Type[] typeArguments) {
+		var generic = method.MakeGenericMethod(typeArguments);
+		return generic.CreateFunc<TOwner, TResult>();
+	}
+
+	internal static Func<TOwner, T1, TResult> CreateGenericFunc<TOwner, T1, TResult>(this MethodInfo method, params Type[] typeArguments) {
+		var generic = method.MakeGenericMethod(typeArguments);
+		return generic.CreateFunc<TOwner, T1, TResult>();
+	}
+
 	private static readonly Dictionary<MethodInfo, Delegate> MethodCallers = new();
 
 	internal static Delegate CreateFuncInner(this MethodInfo method, Type ownerType, Type resultType, params Type[] types) {

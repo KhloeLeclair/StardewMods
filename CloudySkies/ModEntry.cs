@@ -18,6 +18,7 @@ using Leclair.Stardew.Common.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using StardewModdingAPI;
@@ -26,6 +27,7 @@ using StardewModdingAPI.Utilities;
 
 using StardewValley;
 using StardewValley.Delegates;
+using StardewValley.Extensions;
 using StardewValley.Mods;
 
 namespace Leclair.Stardew.CloudySkies;
@@ -39,6 +41,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 	public const string ALLOW_TOTEM_DATA = @"leclair.cloudyskies/AllowTotem:";
 
+	public const string HISTORY_DATA = @"Mods/leclair.cloudyskies/History";
 	public const string DATA_ASSET = @"Mods/leclair.cloudyskies/WeatherData";
 	public const string EXTENSION_DATA_ASSET = @"Mods/leclair.cloudyskies/LocationContextExtensionData";
 
@@ -102,6 +105,122 @@ public partial class ModEntry : PintailModSubscriber {
 	public override object? GetApi(IModInfo mod) {
 		return new ModApi(this, mod.Manifest);
 	}
+
+	#region Weather History
+
+	private string? WeatherHistorySource;
+	internal Dictionary<string, Dictionary<int, string>>? WeatherHistory;
+
+	[MemberNotNull(nameof(WeatherHistory))]
+	internal void LoadWeatherHistory() {
+		if (!Context.IsWorldReady)
+			throw new Exception("Tried loading history before world is ready.");
+
+		Game1.MasterPlayer.modData.TryGetValue(HISTORY_DATA, out string? source);
+		if (WeatherHistory != null && WeatherHistorySource == source)
+			return;
+
+		WeatherHistorySource = source;
+
+		if (source != null)
+			try {
+				WeatherHistory = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<int, string>>>(source);
+			} catch (Exception ex) {
+				Log($"Unable to read weather history data: {ex}", LogLevel.Error);
+			}
+
+		WeatherHistory ??= new();
+	}
+
+	internal void SaveWeatherHistory() {
+		if (!Game1.IsMasterGame) {
+			Log($"Attempted to save weather history from non-master game. Ignoring.", LogLevel.Warn);
+			return;
+		}
+
+		if (WeatherHistory != null && WeatherHistory.Count > 0) {
+			WeatherHistorySource = JsonConvert.SerializeObject(WeatherHistory);
+			Game1.MasterPlayer.modData[HISTORY_DATA] = WeatherHistorySource;
+		} else {
+			WeatherHistorySource = null;
+			Game1.MasterPlayer.modData.Remove(HISTORY_DATA);
+		}
+	}
+
+	internal void RecordWeatherToday(string contextId, string weather) {
+		// Do not record history when setting up the world.
+		if (!Context.IsWorldReady)
+			return;
+
+		// Do not record history from contexts that copy their weather.
+		if (Game1.locationContextData.TryGetValue(contextId, out var data) && data.CopyWeatherFromLocation != null)
+			return;
+
+		LoadWeatherHistory();
+
+		int today = Game1.Date.TotalDays;
+
+		if (!WeatherHistory.TryGetValue(contextId, out var ctxHistory)) {
+			ctxHistory = [];
+			WeatherHistory[contextId] = ctxHistory;
+		}
+
+		// If we already recorded it, no need to re-record it.
+		if (ctxHistory.TryGetValue(today, out string? recorded) && recorded == weather)
+			return;
+
+		ctxHistory[today] = weather;
+
+		// Record a full week and nothing more.
+		ctxHistory.RemoveWhere(pair => today - pair.Key > 7);
+
+		Log($"Recorded Weather for {contextId}. On {today} ({Game1.Date}), the weather is: {weather}", LogLevel.Trace);
+	}
+
+	internal bool TryGetWeatherHistory(GameLocation location, WorldDate date, [NotNullWhen(true)] out string? weatherId) {
+		return TryGetWeatherHistory(location.GetLocationContextId(), date.TotalDays, out weatherId);
+	}
+
+	internal bool TryGetWeatherHistory(GameLocation location, int date, [NotNullWhen(true)] out string? weatherId) {
+		return TryGetWeatherHistory(location.GetLocationContextId(), date, out weatherId);
+	}
+
+	internal bool TryGetWeatherHistory(string? contextId, WorldDate date, [NotNullWhen(true)] out string? weatherId) {
+		return TryGetWeatherHistory(contextId, date.TotalDays, out weatherId);
+	}
+
+	[return: NotNullIfNotNull(nameof(contextId))]
+	internal static string? GetSourceContext(string? contextId) {
+		if (contextId == null || Game1.locationContextData is null)
+			return contextId;
+
+		int i = 0;
+		string target = contextId;
+
+		while (i < 100) {
+			if (Game1.locationContextData.TryGetValue(target, out var data) && data.CopyWeatherFromLocation != null)
+				target = data.CopyWeatherFromLocation;
+			else
+				break;
+
+			i++;
+		}
+
+		return target;
+	}
+
+	internal bool TryGetWeatherHistory(string? contextId, int day, [NotNullWhen(true)] out string? weatherId) {
+		if (Context.IsWorldReady && !string.IsNullOrEmpty(contextId)) {
+			LoadWeatherHistory();
+			if (WeatherHistory.TryGetValue(GetSourceContext(contextId), out var ctxHistory) && ctxHistory.TryGetValue(day, out weatherId))
+				return true;
+		}
+
+		weatherId = null;
+		return false;
+	}
+
+	#endregion
 
 	#region Effects and Layer Registration
 
@@ -341,7 +460,27 @@ public partial class ModEntry : PintailModSubscriber {
 	}
 
 	[Subscriber]
+	private void OnDayStarted(object? sender, DayStartedEventArgs e) {
+
+		foreach (var pair in Game1.locationContextData) {
+			if (pair.Value.CopyWeatherFromLocation != null)
+				continue;
+
+			string? weather = Game1.netWorldState.Value?.GetWeatherForLocation(pair.Key)?.Weather;
+			if (weather is not null)
+				RecordWeatherToday(pair.Key, weather);
+		}
+
+		if (Game1.IsMasterGame)
+			SaveWeatherHistory();
+
+	}
+
+	[Subscriber]
 	private void OnUpdating(object? sender, UpdateTickingEventArgs e) {
+
+		// Clear the cache every tick to keep stale items from sticking around.
+		CachedItems.Clear();
 
 		// Do not process effects when time is not passing. We need a special
 		// check for when the process is out of focus, since this event still
