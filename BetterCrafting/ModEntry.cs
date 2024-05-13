@@ -908,6 +908,12 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_BigCraftablesLast_Tip,
 				c => c.SortBigLast,
 				(c, val) => c.SortBigLast = val
+			)
+			.Add(
+				I18n.Setting_ShowUnknown,
+				I18n.Setting_ShowUnknown_Tip,
+				c => c.DisplayUnknownCrafting,
+				(c, v) => c.DisplayUnknownCrafting = v
 			);
 
 		GMCMIntegration
@@ -951,6 +957,18 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_SortQuality_Tip,
 				c => c.LowQualityFirst,
 				(c, v) => c.LowQualityFirst = v
+			)
+			.AddChoice(
+				I18n.Setting_ShowMatchingItems,
+				I18n.Setting_ShowMatchingItems_Tip,
+				c => c.ShowMatchingItem,
+				(c, v) => c.ShowMatchingItem = v,
+				choices: new Dictionary<ShowMatchingItemMode, Func<string>> {
+					{ ShowMatchingItemMode.Disabled, I18n.Setting_ShowMatchingItems_Never },
+					{ ShowMatchingItemMode.Always, I18n.Setting_ShowMatchingItems_Always },
+					{ ShowMatchingItemMode.Fuzzy, I18n.Setting_ShowMatchingItems_Fuzzy },
+					{ ShowMatchingItemMode.FuzzyQuality, I18n.Setting_ShowMatchingItems_FuzzyQuality }
+				}
 			)
 			.Add(
 				I18n.Setting_Nearby_Nearby,

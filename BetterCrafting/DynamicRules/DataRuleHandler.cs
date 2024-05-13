@@ -68,7 +68,8 @@ public class DataRuleHandler : IDynamicRuleHandler {
 					return new SpriteInfo(
 						texture,
 						rect,
-						baseScale: icon.Scale
+						baseScale: icon.Scale,
+						baseFrames: icon.Frames
 					);
 				}
 
@@ -85,7 +86,7 @@ public class DataRuleHandler : IDynamicRuleHandler {
 	private IEnumerable<Item> GetItems() {
 		SearchIds ??= Data.Rules.Select(_ => Mod.ItemCache.GetNextCachedQueryId()).ToArray();
 
-		for(int i = 0; i < Data.Rules.Length; i++) {
+		for (int i = 0; i < Data.Rules.Length; i++) {
 			long id = SearchIds[i];
 			var rule = Data.Rules[i];
 			if (rule is null)
@@ -101,7 +102,7 @@ public class DataRuleHandler : IDynamicRuleHandler {
 			return false;
 
 		foreach (var match in GetItems())
-			if ( ItemEqualityComparer.Instance.Equals(item, match) )
+			if (ItemEqualityComparer.Instance.Equals(item, match))
 				return true;
 
 		return false;

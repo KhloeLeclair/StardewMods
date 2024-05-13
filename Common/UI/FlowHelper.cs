@@ -1,12 +1,12 @@
 #nullable enable
 
 using System;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 using Leclair.Stardew.Common.UI.FlowNode;
@@ -125,7 +125,8 @@ public class FlowBuilder {
 		float size = 16,
 		int frame = -1,
 		object? extra = null,
-		string? id = null
+		string? id = null,
+		int quantity = 0
 	) {
 		AssertState();
 		Nodes.Add(new SpriteNode(
@@ -139,7 +140,8 @@ public class FlowBuilder {
 			size: size,
 			frame: frame,
 			extra: extra,
-			id: id
+			id: id,
+			quantity: quantity
 		));
 		return this;
 	}
@@ -465,7 +467,7 @@ public static class FlowHelper {
 	) {
 		List<IFlowNode> result = new();
 
-		foreach(object obj in objs) {
+		foreach (object obj in objs) {
 			IFlowNode? node = GetNode(obj, align, style, format);
 			if (node is NestedNode nn && nn.Nodes != null)
 				result.AddRange(nn.Nodes);
@@ -993,7 +995,7 @@ public static class FlowHelper {
 		bool can_center = true;
 		bool can_right = true;
 
-		foreach(var s in line.Slices) {
+		foreach (var s in line.Slices) {
 			if (slice == s)
 				found = true;
 
@@ -1048,7 +1050,7 @@ public static class FlowHelper {
 		if (nodes is not IFlowNode[] nodesArray)
 			nodesArray = nodes.ToArray();
 
-		for(int i = 0; i < nodesArray.Length; i++) {
+		for (int i = 0; i < nodesArray.Length; i++) {
 			// Make sure the segment has content, or skip it.
 			IFlowNode node = nodesArray[i];
 			if (node == null || node.IsEmpty())
@@ -1267,7 +1269,7 @@ public static class FlowHelper {
 		if (string.IsNullOrEmpty(id))
 			return -1;
 
-		foreach(CachedFlowLine line in flow.Lines) {
+		foreach (CachedFlowLine line in flow.Lines) {
 			float lHeight = line.Height * scale;
 
 			foreach (IFlowNodeSlice slice in line.Slices) {
@@ -1345,7 +1347,7 @@ public static class FlowHelper {
 		foreach (CachedFlowLine line in flow.Lines) {
 			float lHeight = line.Height * scale;
 
-			if (lHeight < scrollOffset) { 
+			if (lHeight < scrollOffset) {
 				foreach (IFlowNodeSlice slice in line.Slices) {
 					if (slice == null || slice.IsEmpty())
 						continue;
@@ -1386,7 +1388,7 @@ public static class FlowHelper {
 
 				float offX = GetXOffset(node.Alignment, slice, line, scale, x, Math.Max(flow.Width * scale, flow.MaxWidth));
 
-				if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) { 
+				if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) {
 					float offY = GetYOffset(node.Alignment, sHeight, lHeight);
 
 					// Get a component.
@@ -1461,7 +1463,7 @@ public static class FlowHelper {
 
 #if DEBUG
 				if (debugDraw) {
-					foreach(IFlowNodeSlice slice in line.Slices) {
+					foreach (IFlowNodeSlice slice in line.Slices) {
 						if (slice == null || slice.IsEmpty())
 							continue;
 
@@ -1588,7 +1590,7 @@ public static class FlowHelper {
 
 		foreach (CachedFlowLine line in flow.Lines) {
 			if (lineOffset > 0) {
-				foreach(IFlowNodeSlice slice in line.Slices) {
+				foreach (IFlowNodeSlice slice in line.Slices) {
 					if (slice == null || slice.IsEmpty())
 						continue;
 
@@ -1625,12 +1627,12 @@ public static class FlowHelper {
 
 				float offX = GetXOffset(node.Alignment, slice, line, scale, x, Math.Max(flow.Width * scale, flow.MaxWidth));
 
-				if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) { 
+				if (node.WantComponent(slice) ?? (node.OnHover != null || node.OnClick != null || node.OnRightClick != null)) {
 					float offY = GetYOffset(node.Alignment, sHeight, lHeight);
 
 					// Get a component.
 					ClickableComponent? cmp = node.UseComponent(slice);
-					if (cmp != null) { 
+					if (cmp != null) {
 						cmp.visible = true;
 					} else {
 						i++;

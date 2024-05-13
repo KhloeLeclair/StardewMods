@@ -1,6 +1,5 @@
 #nullable enable
 
-using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
@@ -32,14 +31,6 @@ public enum MenuPriority {
 	High
 };
 
-public enum MaxQuality {
-	Disabled,
-	None,
-	Silver,
-	Gold,
-	Iridium
-};
-
 public enum ButtonAction {
 	None,
 	Craft,
@@ -59,11 +50,20 @@ public enum NewRecipeMode {
 	Unseen
 };
 
-public class ModConfig {
+public enum ShowMatchingItemMode {
+	Disabled,
+	Always,
+	Fuzzy,
+	FuzzyQuality
+};
+
+public class ModConfig : IBetterCraftingConfig {
 
 	public string Theme { get; set; } = "automatic";
 
 	public bool ShowSourceModInTooltip { get; set; } = false;
+
+	public ShowMatchingItemMode ShowMatchingItem { get; set; } = ShowMatchingItemMode.Disabled;
 
 	public bool UseFullHeight { get; set; } = false;
 
@@ -117,6 +117,7 @@ public class ModConfig {
 	public bool UseUniformGrid { get; set; } = false;
 	public bool SortBigLast { get; set; } = false;
 	public bool CraftingAlphabetic { get; set; } = false;
+	public bool DisplayUnknownCrafting { get; set; } = false;
 
 	// Cooking
 	public SeasoningMode UseSeasoning { get; set; } = SeasoningMode.Enabled;

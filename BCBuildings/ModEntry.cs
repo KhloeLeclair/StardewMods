@@ -78,13 +78,15 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			Name: I18n.Category_Name,
 			iconRecipe: "bcbuildings:Barn",
 			useRules: true,
-			rules: new IDynamicRuleData[] {
+			rules: [
 				new RuleData(BCAPI.GetAbsoluteRuleId("Building"))
-			}
+			]
 		);
 
 		BCAPI.ReportRecipeType(typeof(BuildingRecipe));
 		BCAPI.ReportRecipeType(typeof(ActionRecipe));
+		BCAPI.ReportRecipeType(typeof(RenovateFarmhouseRecipe));
+		BCAPI.ReportRecipeType(typeof(UpgradeFarmhouseRecipe));
 	}
 
 	[Subscriber]
@@ -129,12 +131,25 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 
 		GMCMIntegration.Register(true);
 
-		GMCMIntegration.Add(
-			I18n.Setting_GreenhouseMove,
-			I18n.Setting_GreenhouseMove_Tip,
-			c => c.AllowMovingUnfinishedGreenhouse,
-			(c, v) => c.AllowMovingUnfinishedGreenhouse = v
-		);
+		GMCMIntegration
+			.Add(
+				I18n.Setting_GreenhouseMove,
+				I18n.Setting_GreenhouseMove_Tip,
+				c => c.AllowMovingUnfinishedGreenhouse,
+				(c, v) => c.AllowMovingUnfinishedGreenhouse = v
+			)
+			.Add(
+				I18n.Setting_AllowHouseUpgrades,
+				I18n.Setting_AllowHouseUpgrades_Tip,
+				c => c.AllowHouseUpgrades,
+				(c, v) => c.AllowHouseUpgrades = v
+			)
+			.Add(
+				I18n.Setting_AllowHouseRenovation,
+				I18n.Setting_AllowHouseRenovation_Tip,
+				c => c.AllowHouseRenovation,
+				(c, v) => c.AllowHouseRenovation = v
+			);
 
 		GMCMIntegration
 			.AddLabel("")
@@ -325,9 +340,18 @@ public class ModEntry : ModSubscriber, IRecipeProvider {
 			yield return recipe;
 		}
 
+		if (Config.AllowHouseUpgrades)
+			yield return new UpgradeFarmhouseRecipe(this);
+
 		yield return new ActionRecipe(ActionType.Move, this);
 		yield return new ActionRecipe(ActionType.Paint, this);
 		yield return new ActionRecipe(ActionType.Demolish, this);
+
+		if (Config.AllowHouseRenovation)
+			foreach (var renovation in HouseRenovation.GetAvailableRenovations())
+				if (renovation is HouseRenovation hr)
+					yield return new RenovateFarmhouseRecipe(this, hr);
+
 	}
 
 	#endregion

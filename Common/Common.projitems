@@ -68,6 +68,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\KMargins.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\KSize.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\ComponentSNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\EmptyNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\IKLayoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KObject.cs" />

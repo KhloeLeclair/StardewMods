@@ -526,6 +526,7 @@ public class RecipeManager : BaseManager {
 					Path = cat.Icon.Path,
 					Rect = cat.Icon.Rect,
 					Scale = cat.Icon.Scale,
+					Frames = cat.Icon.Frames
 				},
 				UseRules = cat.UseRules,
 				DynamicRules = cat.DynamicRules?.

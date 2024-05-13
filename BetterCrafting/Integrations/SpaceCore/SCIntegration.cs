@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common.Crafting;
@@ -52,6 +53,11 @@ public class SCIntegration : BaseAPIIntegration<IApi, ModEntry>, IRecipeProvider
 			SkillsByName = mod.Helper.Reflection.GetField<IDictionary>(CustomSkills!, "SkillsByName", true).GetValue();
 
 			var builder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName($"Leclair.Stardew.BetterCrafting.Proxies, Version={GetType().Assembly.GetName().Version}, Culture=neutral"), AssemblyBuilderAccess.Run);
+			builder.SetCustomAttribute(new CustomAttributeBuilder(
+				typeof(IgnoresAccessChecksToAttribute).GetConstructor([typeof(string)])!,
+				[CustomSkills!.Assembly.GetName().Name!]
+			));
+
 			var module = builder.DefineDynamicModule($"Proxies");
 
 			Assembly = builder;

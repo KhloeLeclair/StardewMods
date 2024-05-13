@@ -20,7 +20,7 @@ using StardewValley;
 
 namespace Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 
-public class SCVAEIngredient : IOptimizedIngredient, IConsumptionTrackingIngredient, IIngredient, IRecyclable {
+public class SCVAEIngredient : IOptimizedIngredient, IConsumptionPreTrackingIngredient, IIngredient, IRecyclable {
 
 	private static Func<object, Item, bool>? CallMatchDelegate;
 	private static Func<object, object>? GetIngredientDataDelegate;
@@ -53,6 +53,7 @@ public class SCVAEIngredient : IOptimizedIngredient, IConsumptionTrackingIngredi
 
 		Data = integration.ProxyMan!.ObtainProxy<IVAEIngredientData>(GetIngredientDataDelegate(unwrapped));
 		IsFuzzyRecycle = Data.Type != VAEIngredientType.Item;
+		IsFuzzyIngredient = IsFuzzyRecycle;
 	}
 
 	private bool Matches(Item item) {
@@ -60,6 +61,8 @@ public class SCVAEIngredient : IOptimizedIngredient, IConsumptionTrackingIngredi
 	}
 
 	#region IIngredient
+
+	public bool IsFuzzyIngredient { get; }
 
 	public bool SupportsQuality => true;
 
@@ -75,20 +78,28 @@ public class SCVAEIngredient : IOptimizedIngredient, IConsumptionTrackingIngredi
 		return InventoryHelper.CountItem(Matches, who, items, out bool _, max_quality: maxQuality);
 	}
 
+	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality, IList<Item>? matchingItems) {
+		return InventoryHelper.CountItem(Matches, who, items, out bool _, max_quality: maxQuality, matchingItems: matchingItems);
+	}
+
 	public bool HasAvailableQuantity(int quantity, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality) {
 		return InventoryHelper.CountItem(Matches, who, items, out bool _, max_quality: maxQuality, limit: quantity) >= quantity;
 	}
 
 	public void Consume(Farmer who, IList<IBCInventory>? inventories, int max_quality, bool low_quality_first) {
-		Consume(who, inventories, max_quality, low_quality_first, null);
+		Consume(who, inventories, max_quality, low_quality_first, null, null);
 	}
 
 	public void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
+		Consume(who, inventories, maxQuality, lowQualityFirst, null, consumedItems);
+	}
+
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? matchedItems, IList<Item>? consumedItems) {
 		(Func<Item, bool>, int)[] ingredients = [
 			(Matches, Quantity)
 		];
 
-		InventoryHelper.ConsumeItems(ingredients, who, inventories, maxQuality, lowQualityFirst, consumedItems);
+		InventoryHelper.ConsumeItems(ingredients, who, inventories, maxQuality, lowQualityFirst, matchedItems, consumedItems);
 	}
 
 	#endregion

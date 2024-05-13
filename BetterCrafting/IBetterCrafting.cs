@@ -1255,9 +1255,77 @@ public interface IDiscoverIconsEvent {
 
 }
 
+public enum MaxQuality {
+	Disabled,
+	None,
+	Silver,
+	Gold,
+	Iridium
+};
+
+public enum SeasoningMode {
+	Disabled,
+	Enabled,
+	InventoryOnly
+}
+
+public interface IBetterCraftingConfig {
+
+	bool ShowSourceModInTooltip { get; }
+
+	bool UseFullHeight { get; }
+
+	bool ReplaceCooking { get; }
+
+	bool ReplaceCrafting { get; }
+
+	bool UseCategories { get; }
+
+	bool LowQualityFirst { get; }
+
+	MaxQuality MaxQuality { get; }
+
+	bool UseUniformGrid { get; }
+
+	bool SortBigLast { get; }
+
+	bool HideUnknown { get; }
+
+	SeasoningMode UseSeasoning { get; }
+
+	bool UseDiscovery { get; }
+
+	int MaxInventories { get; }
+
+	int MaxDistance { get; }
+
+	int MaxCheckedTiles { get; }
+
+	int MaxWorkbenchGap { get; }
+
+	int NearbyRadius { get; }
+
+	bool UseDiagonalConnections { get; }
+
+	bool EnableCookoutWorkbench { get; }
+
+	bool EnableCookoutLongevity { get; }
+
+	bool EnableCookoutExpensive { get; }
+
+	bool UseTransfer { get; }
+
+}
 
 
 public interface IBetterCrafting {
+
+	/// <summary>
+	/// This allows you to read some configuration values from
+	/// Better Crafting, which may be useful when interacting
+	/// with the API.
+	/// </summary>
+	IBetterCraftingConfig Config { get; }
 
 	#region GUI
 
@@ -1517,6 +1585,12 @@ public interface IBetterCrafting {
 	/// items first.</param>
 	/// <param name="consumedItems">An optional list that will contain copies
 	/// of the consumed Items.</param>
+	/// <param name="matchedItems">An optional list of item instances that,
+	/// if provided, will prevent any item instances not in the list from
+	/// being consumed.</param>
+	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null, IList<Item>? matchedItems = null);
+
+	[Obsolete("Use the version with an optional parameter for matchedItems.")]
 	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null);
 
 	[Obsolete("Use the version with an optional parameter for consumedItems.")]
@@ -1534,7 +1608,12 @@ public interface IBetterCrafting {
 	/// <param name="who">An optional player, to include that player's inventory in the search.</param>
 	/// <param name="items">An optional enumeration of <see cref="Item"/>s to include in the search.</param>
 	/// <param name="maxQuality">The maximum quality of item to count.</param>
+	/// <param name="matchingItems">An optional list of item instances. If set,
+	/// we will add every counted item instance to the list.</param>
 	/// <returns>The number of matching items.</returns>
+	int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue, IList<Item>? matchingItems = null);
+
+	[Obsolete("Use the version with an optional matchingItems parameter.")]
 	int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue);
 
 	#endregion

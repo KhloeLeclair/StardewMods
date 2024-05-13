@@ -91,6 +91,13 @@
 	"setting.key.tooltip": "Show Hotkeys in Tool-tips",
 	"setting.key.tooltip.tip": "When enabled, hotkeys will be displayed at the bottom of Better Crafting's tool-tips.",
 
+	"setting.show-matching-items": "Show Matching Items",
+	"setting.show-matching-items.never": "Never",
+	"setting.show-matching-items.always": "Always",
+	"setting.show-matching-items.fuzzy": "Fuzzy Ingredients",
+	"setting.show-matching-items.fuzzy-quality": "Fuzzy / High Quality Ingredients",
+	"setting.show-matching-items.tip": "Whether or not to display the list of items to be consumed when crafting an item in Better Crafting's tool-tips. 'Fuzzy' here means an ingredient that can match more than one item, such as 'Egg (Any)'. High Quality means any item with a quality higher than base quality.",
+
 	"setting.source-mod": "Show Source Mod in Tool-tips",
 	"setting.source-mod.tip": "When enabled, the mod that added any given item will be displayed at the bottom of Better Crafting's tool-tips.",
 
@@ -225,6 +232,9 @@
 	"seasoning.disabled": "Never",
 	"seasoning.enabled": "Always",
 	"seasoning.inventory": "Inventory Only",
+
+	"setting.show-unknown": "Show Unknown Recipes",
+	"setting.show-unknown.tip": "When enabled, recipes you haven't learned yet will be displayed in the menu similarly to how unknown cooking recipes are.",
 
 	"setting.hide-unknown": "Hide Unknown Recipes",
 	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",

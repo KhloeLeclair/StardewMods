@@ -59,6 +59,8 @@ public class ModAPI : IBetterCrafting {
 		Other = other;
 	}
 
+	public IBetterCraftingConfig Config => Mod.Config;
+
 	#region GUI
 
 	/// <inheritdoc />
@@ -327,9 +329,14 @@ public class ModAPI : IBetterCrafting {
 		}), true);
 	}
 
-	/// <inheritdoc />
+	[Obsolete("Use the one with the optional consumedItems parameter.")]
 	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null) {
-		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst, consumedItems);
+		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst, null, consumedItems);
+	}
+
+	/// <inheritdoc />
+	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null, IList<Item>? matchedItems = null) {
+		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst, matchedItems, consumedItems);
 	}
 
 	[Obsolete("Use the one with the optional consumedItems parameter.")]
@@ -338,6 +345,11 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
+	public int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue, IList<Item>? matchingItems = null) {
+		return InventoryHelper.CountItem(predicate, who, items, out bool _, max_quality: maxQuality, matchingItems: matchingItems);
+	}
+
+	[Obsolete("Use the one with the optional matchingItems parameter.")]
 	public int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue) {
 		return InventoryHelper.CountItem(predicate, who, items, out bool _, max_quality: maxQuality);
 	}

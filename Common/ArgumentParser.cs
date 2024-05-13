@@ -11,6 +11,8 @@ using StardewValley;
 
 namespace Leclair.Stardew.Common;
 
+public record TargetTileFilter(string Property, string? Value);
+
 public record TargetPosition(GameLocation Location, Vector2? Position, int Radius);
 
 public class ArgumentParser {
@@ -104,9 +106,39 @@ public class ArgumentParser {
 		RegisterConverter<ParsedFarmers>(ParseFarmers, "<Any/All/Current/Host/Target/ID>");
 		RegisterConverter<Color>(ParseColor, "<color>");
 		RegisterConverter<IEnumerable<TargetPosition>>(ParseTargetPosition, "<target>");
+		RegisterConverter<TargetTileFilter>(ParseTargetTileFilter, "<target-filter>");
 	}
 
 	#region Converters
+
+	private enum TargetTileFilterType {
+		HasProperty,
+		PropertyValue
+	}
+
+	private static bool ParseTargetTileFilter(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out TargetTileFilter? value) {
+
+		if (!TryConvert<TargetTileFilterType>(input, index, out consumed, out error, out var type)) {
+			value = default;
+			return false;
+		}
+
+		if (type == TargetTileFilterType.HasProperty) {
+			consumed = 2;
+
+			if (!TryConvert(input, index + 1, out _, out error, out string? propertyName)) {
+				value = default;
+				return false;
+			}
+
+			value = new(propertyName, null);
+			return true;
+		}
+
+		error = "Unsupported type";
+		value = default;
+		return false;
+	}
 
 	private enum TargetType {
 		Location,

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using Leclair.Stardew.Common.Crafting;
 
@@ -9,8 +7,6 @@ using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
 
-using static StardewValley.Menus.CharacterCustomization;
-
 namespace Leclair.Stardew.Common;
 
 
@@ -18,7 +14,7 @@ public class DynamicRecipeSpriteInfo : SpriteInfo {
 
 	public readonly IDynamicDrawingRecipe Recipe;
 
-	public DynamicRecipeSpriteInfo(IDynamicDrawingRecipe recipe) : base(recipe.Texture, recipe.SourceRectangle) {
+	public DynamicRecipeSpriteInfo(IDynamicDrawingRecipe recipe, int quality = 0) : base(recipe.Texture, recipe.SourceRectangle, quality: quality) {
 		Recipe = recipe;
 	}
 
@@ -73,6 +69,34 @@ public class DynamicRecipeSpriteInfo : SpriteInfo {
 			SpriteEffects.None,
 			1f
 		);
+
+		if (Quality != 0) {
+			Rectangle qualityRect = Quality < 4
+				? new Rectangle(338 + (Quality - 1) * 8, 400, 8, 8)
+				: new Rectangle(346, 392, 8, 8);
+
+			float qualityYOffset = (Quality < 4)
+				? 0f :
+				(((float) Math.Cos(Game1.currentGameTime.TotalGameTime.Milliseconds * Math.PI / 512.0) + 1f) * 0.05f);
+
+			float qualityScale = 0.75f * s; // * (1f - qualityYOffset);
+			int qHeight = (int) (qualityRect.Height * qualityScale);
+
+			batch.Draw(
+				Game1.mouseCursors,
+				new Vector2(
+					location.X,
+					location.Y + (targetHeight - qHeight) + qualityYOffset
+			),
+				qualityRect,
+				Color.White * alpha,
+				0f,
+				Vector2.Zero,
+				qualityScale,
+				SpriteEffects.None,
+				1f
+			);
+		}
 
 	}
 }

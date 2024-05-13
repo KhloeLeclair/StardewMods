@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Inventory;
 
-using StardewValley;
 using StardewModdingAPI;
+
+using StardewValley;
 using StardewValley.Delegates;
 
 namespace Leclair.Stardew.Common;
@@ -20,18 +21,25 @@ public static class CraftingHelper {
 			GameStateQuery.CheckConditions(cing.Condition, ctx);
 	}
 
-	public static bool HasIngredients(IIngredient[]? ingredients, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality) {
+	public static bool HasIngredients(IIngredient[]? ingredients, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality, Dictionary<IIngredient, List<Item>>? matchingItems = null) {
 		if (ingredients == null || ingredients.Length == 0)
 			return true;
 
 		GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
 
 		foreach (var entry in ingredients)
-			if (entry.Quantity < 1 || ! entry.PassesConditionQuery(ctx))
+			if (entry.Quantity < 1 || !entry.PassesConditionQuery(ctx))
 				continue;
-			else if (entry is IOptimizedIngredient opti) {
+			else if (matchingItems is not null && entry is IConsumptionPreTrackingIngredient cpt) {
+				List<Item> matching = [];
+				matchingItems[entry] = matching;
+				if (cpt.GetAvailableQuantity(who, items, inventories, maxQuality, matching) < entry.Quantity)
+					return false;
+
+			} else if (entry is IOptimizedIngredient opti) {
 				if (!opti.HasAvailableQuantity(entry.Quantity, who, items, inventories, maxQuality))
 					return false;
+
 			} else {
 				if (entry.GetAvailableQuantity(who, items, inventories, maxQuality) < entry.Quantity)
 					return false;
@@ -40,22 +48,26 @@ public static class CraftingHelper {
 		return true;
 	}
 
-	public static bool HasIngredients(this IRecipe recipe, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality) {
+	public static bool HasIngredients(this IRecipe recipe, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality, Dictionary<IIngredient, List<Item>>? matchingItems = null) {
 		if (recipe.Ingredients == null)
 			return true;
 
-		return HasIngredients(recipe.Ingredients, who, items, inventories, maxQuality);
+		return HasIngredients(recipe.Ingredients, who, items, inventories, maxQuality, matchingItems);
 	}
 
-	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
+	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems) {
 		if (ingredients != null) {
 			GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
 
 			foreach (var entry in ingredients) {
-				if (entry.Quantity < 1 || ! entry.PassesConditionQuery(ctx))
+				if (entry.Quantity < 1 || !entry.PassesConditionQuery(ctx))
 					continue;
 
-				if (entry is IConsumptionTrackingIngredient cst)
+				if (entry is IConsumptionPreTrackingIngredient cpt) {
+					var matched = matchingItems?.GetValueOrDefault(entry);
+					cpt.Consume(who, inventories, maxQuality, lowQualityFirst, matched, consumedItems);
+
+				} else if (entry is IConsumptionTrackingIngredient cst)
 					cst.Consume(who, inventories, maxQuality, lowQualityFirst, consumedItems);
 				else
 					entry.Consume(who, inventories, maxQuality, lowQualityFirst);
@@ -63,9 +75,9 @@ public static class CraftingHelper {
 		}
 	}
 
-	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
+	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems) {
 		if (recipe.Ingredients != null)
-			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst, consumedItems);
+			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst, matchingItems, consumedItems);
 	}
 
 

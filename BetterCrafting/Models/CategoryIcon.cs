@@ -35,4 +35,8 @@ public class CategoryIcon {
 
 	[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 	public float Scale { get; set; } = 1;
+
+	[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+	public int Frames { get; set; } = 1;
+
 }

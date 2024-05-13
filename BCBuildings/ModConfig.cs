@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Leclair.Stardew.BCBuildings;
 
 public class ModConfig {
@@ -19,5 +13,9 @@ public class ModConfig {
 	public int RefundCurrency { get; set; } = 0;
 
 	public bool AllowMovingUnfinishedGreenhouse { get; set; } = false;
+
+	public bool AllowHouseUpgrades { get; set; } = false;
+
+	public bool AllowHouseRenovation { get; set; } = false;
 
 }

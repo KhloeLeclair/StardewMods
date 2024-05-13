@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.0
+Released on May 13th, 2024.
+
+* Added: The ability to upgrade and/or renovate your farm house from
+  the crafting menu. Please note that this is disabled by default,
+  so you need to enable the relevant settings.
+
+
 ## 2.5.2
 Released on May 2nd, 2024.
 

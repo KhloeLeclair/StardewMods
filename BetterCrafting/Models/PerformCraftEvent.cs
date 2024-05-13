@@ -13,11 +13,12 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
-public class PerformCraftEvent : IGlobalPerformCraftEvent {
+public class PerformCraftEvent : IGlobalPerformCraftEventV2 {
 
 	public IRecipe Recipe { get; }
 	public Farmer Player { get; }
 	public Item? Item { get; set; }
+	public IReadOnlyDictionary<IIngredient, List<Item>> MatchingItems { get; }
 	public IClickableMenu Menu { get; }
 
 	public bool IsDone { get; private set; }
@@ -25,10 +26,11 @@ public class PerformCraftEvent : IGlobalPerformCraftEvent {
 
 	public Action? OnDone { get; internal set; }
 
-	public PerformCraftEvent(IRecipe recipe, Farmer who, Item? item, IClickableMenu menu) {
+	public PerformCraftEvent(IRecipe recipe, Farmer who, Item? item, IReadOnlyDictionary<IIngredient, List<Item>> matchingItems, IClickableMenu menu) {
 		Recipe = recipe;
 		Player = who;
 		Item = item;
+		MatchingItems = matchingItems;
 		Menu = menu;
 	}
 
@@ -59,6 +61,7 @@ public class ChainedPerformCraftHandler {
 	public readonly BetterCraftingPage Menu;
 
 	public Item? Item;
+	public IReadOnlyDictionary<IIngredient, List<Item>> MatchingItems;
 
 	public readonly Action<ChainedPerformCraftHandler> OnDone;
 
@@ -67,7 +70,7 @@ public class ChainedPerformCraftHandler {
 	private int current = 0;
 	private PerformCraftEvent? currentEvent;
 
-	public ChainedPerformCraftHandler(ModEntry mod, IRecipe recipe, Farmer who, Item? item, BetterCraftingPage menu, Action<ChainedPerformCraftHandler> onDone) {
+	public ChainedPerformCraftHandler(ModEntry mod, IRecipe recipe, Farmer who, Item? item, IReadOnlyDictionary<IIngredient, List<Item>> matchingItems, BetterCraftingPage menu, Action<ChainedPerformCraftHandler> onDone) {
 
 		List<(IManifest?, Action<IGlobalPerformCraftEvent>)> handlers = new();
 
@@ -81,6 +84,7 @@ public class ChainedPerformCraftHandler {
 		Recipe = recipe;
 		Player = who;
 		Item = item;
+		MatchingItems = matchingItems;
 		Menu = menu;
 		OnDone = onDone;
 
@@ -113,7 +117,7 @@ public class ChainedPerformCraftHandler {
 			return;
 		}
 
-		currentEvent = new PerformCraftEvent(Recipe, Player, Item, Menu);
+		currentEvent = new PerformCraftEvent(Recipe, Player, Item, MatchingItems, Menu);
 
 		try {
 			Handlers[current].Item2.Invoke(currentEvent);
