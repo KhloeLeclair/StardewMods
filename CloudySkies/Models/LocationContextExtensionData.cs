@@ -22,15 +22,21 @@ public class LocationContextExtensionData : ILocationContextExtensionData {
 
 	public Point WeatherChannelBackgroundSource { get; set; } = Point.Zero;
 
-	public int WeatherChannelBackgroundFrames { get; set; }
+	public int WeatherChannelBackgroundFrames { get; set; } = 1;
+
+	public float WeatherChannelBackgroundSpeed { get; set; } = 150f;
 
 	public string? WeatherChannelOverlayTexture { get; set; }
 
 	public Point WeatherChannelOverlayIntroSource { get; set; } = Point.Zero;
 
-	public int WeatherChannelOverlayIntroFrames { get; set; }
+	public int WeatherChannelOverlayIntroFrames { get; set; } = 1;
+
+	public float WeatherChannelOverlayIntroSpeed { get; set; } = 150f;
 
 	public Point? WeatherChannelOverlayWeatherSource { get; set; }
 
-	public int WeatherChannelOverlayWeatherFrames { get; set; }
+	public int WeatherChannelOverlayWeatherFrames { get; set; } = 1;
+
+	public float WeatherChannelOverlayWeatherSpeed { get; set; } = 150f;
 }

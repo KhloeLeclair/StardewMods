@@ -1,4 +1,3 @@
-using Leclair.Stardew.CloudySkies.Models;
 using Leclair.Stardew.CloudySkies.Serialization;
 
 using Newtonsoft.Json;
@@ -17,6 +16,8 @@ public record BaseLayerData : ILayerData {
 	public string? Condition { get; set; }
 
 	public string? Group { get; set; }
+
+	public TargetMapType TargetMapType { get; set; } = TargetMapType.Outdoors;
 
 	#endregion
 

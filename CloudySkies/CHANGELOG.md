@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.6.0
+Released May 17th, 2024.
+
+### Added
+* `Shader` layers have arrived! Do fancier rendering for weather,
+  if you dare.
+* All effects and layers now have a `TargetMapType` for letting
+  you specify if they should be active on indoor maps, outdoor
+  maps, or both. Outdoor by default, of course.
+* Custom art for Ginger Isle based on the original game assets to
+  make it fit in a bit more when you're on the region selection menu.
+* Support for the Ultimate Fertilizer mod with our trigger actions.
+* Added a new trigger action for spawning custom artifact spots.
+
+### Fixed
+* The TV weather channel rendering on top of the world.
+* Equality checks not working correctly for some layer/effect types.
+* Do not render the timing overlay when taking a screenshot.
+* The `SpawnForage` command not properly accepting more than one
+  spawnable.
+
+## Translation
+* Added a localization entry for Calico Desert.
+* Added Chinese translation courtesy of EtaMyosotis on NexusMods.
+  Thank you!
+* Added French translation courtesy of Caranud on NexusMods.
+  Thank you!
+
+
 ## 1.5.0
 Released May 10th, 2024.
 

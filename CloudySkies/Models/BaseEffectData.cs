@@ -19,6 +19,24 @@ public record BaseEffectData : IEffectData {
 
 	public string? Group { get; set; }
 
+	private TargetMapType? _TargetMapType;
+
+	public TargetMapType TargetMapType {
+		get {
+			if (!_TargetMapType.HasValue) {
+				if (!string.IsNullOrEmpty(Condition) && (Condition.Contains("LOCATION_IS_INDOORS") || Condition.Contains("LOCATION_IS_OUTDOORS")))
+					_TargetMapType = TargetMapType.Outdoors | TargetMapType.Indoors;
+				else
+					_TargetMapType = TargetMapType.Outdoors;
+			}
+
+			return _TargetMapType.Value;
+		}
+		set {
+			_TargetMapType = value;
+		}
+	}
+
 	#endregion
 
 }

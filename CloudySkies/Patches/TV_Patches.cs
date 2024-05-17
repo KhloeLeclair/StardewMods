@@ -6,12 +6,12 @@ using Leclair.Stardew.CloudySkies.Menus;
 using Leclair.Stardew.Common;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
 
 using StardewValley;
 using StardewValley.Objects;
-using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies.Patches;
 
@@ -53,12 +53,27 @@ public static class TV_Patches {
 				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(SetWeatherOverlay__Postfix))
 			);
 
+			mod.Harmony.Patch(
+				original: AccessTools.Method(typeof(TV), nameof(TV.draw), [typeof(SpriteBatch), typeof(int), typeof(int), typeof(float)]),
+				postfix: new HarmonyMethod(typeof(TV_Patches), nameof(Draw__Postfix))
+			);
+
 			DidPatch = true;
 
 		} catch (Exception ex) {
 			mod.Log($"Error patching TV. Is the game version pre-1.6.6?", StardewModdingAPI.LogLevel.Error, ex);
 		}
 
+	}
+
+	private static void Draw__Postfix(TV __instance, SpriteBatch spriteBatch) {
+		try {
+			if (Game1.activeClickableMenu is TVWeatherMenu menu && menu.Television == __instance)
+				menu.DrawWorld(spriteBatch);
+
+		} catch (Exception ex) {
+			Mod?.Log($"Error in TV Draw postfix: {ex}", LogLevel.Error, once: true);
+		}
 	}
 
 
@@ -92,16 +107,19 @@ public static class TV_Patches {
 				string textureName;
 				Point corner;
 				int frames;
+				float speed;
 
 				if (string.IsNullOrEmpty(weatherData.TVTexture)) {
 					textureName = "LooseSprites\\Cursors_1_6";
 					corner = new(178, 363);
 					frames = 6;
+					speed = 80f;
 
 				} else {
 					textureName = weatherData.TVTexture;
 					corner = weatherData.TVSource;
 					frames = weatherData.TVFrames;
+					speed = weatherData.TVSpeed;
 				}
 
 				if (frames < 1)
@@ -110,7 +128,7 @@ public static class TV_Patches {
 				sprite = new TemporaryAnimatedSprite(
 					textureName,
 					new Rectangle(corner.X, corner.Y, 13, 13),
-					100f,
+					speed,
 					frames,
 					999999,
 					__instance.getScreenPosition() + new Vector2(3f, 3f) * __instance.getScreenSizeModifier(),
@@ -152,7 +170,7 @@ public static class TV_Patches {
 				if (string.IsNullOrEmpty(result))
 					__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV.cs.13164");
 				else
-					__result = TokenParser.ParseText(result);
+					__result = Mod.TokenizeText(result);
 
 				__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV_IslandWeatherIntro") + __result;
 
@@ -172,7 +190,7 @@ public static class TV_Patches {
 				if (string.IsNullOrEmpty(result))
 					__result = Game1.content.LoadString("Strings\\StringsFromCSFiles:TV.cs.13164");
 				else
-					__result = TokenParser.ParseText(result);
+					__result = Mod.TokenizeText(result);
 			}
 
 		} catch (Exception ex) {

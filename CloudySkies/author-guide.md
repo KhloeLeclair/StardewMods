@@ -20,6 +20,7 @@ types for your mod? You've come to the right place!
   * [Color](#color)
   * [Debris](#debris)
   * [Rain](#rain)
+  * [Shader](#shader)
   * [Snow / Texture Scroll](#snow--texturescroll)
 * [How Do I Make My Weather Happen?](#how-do-i-make-my-weather-happen)
   * [Custom Weather Totems](#custom-weather-totems)
@@ -194,6 +195,16 @@ Default: `{"X": 0, "Y": 0}`
 *Optional.* The number of frames your weather type's TV animation has.
 
 Default: `4`
+
+</td>
+</tr>
+<tr>
+<td><code>TVSpeed</code></td>
+<td>
+
+*Optional.* How long should each frame of your weather type's TV animation be displayed, in milliseconds?
+
+Default: `150.0`
 
 </td>
 </tr>
@@ -713,6 +724,22 @@ skipped.
 
 </td>
 </tr>
+<tr>
+<td><code>TargetMapType</code></td>
+<td>
+
+*Optional.* What type of map should this effect be active for? This can be
+`Outdoors`, `Indoors`, or `Indoors,Outdoors`.
+
+Default: `Outdoors`
+
+> Note: For compatibility, this will default to `Indoors,Outdoors` if you
+> have a Condition set including `LOCATION_IS_INDOORS` or `LOCATION_IS_OUTDOORS`.
+> You should migrate from using a Condition to this field for slightly
+> improved performance.
+
+</td>
+</tr>
 </table>
 
 All other effect values are specific to their individual `Type`s, as follows:
@@ -1056,6 +1083,7 @@ weather type containing it.
 * [`Color`](#color)
 * [`Debris`](#debris)
 * [`Rain`](#rain)
+* [`Shader`](#shader)
 * [`Snow`](#snow-texturescroll)
 * [`TextureScroll`](#snow--texturescroll)
 
@@ -1069,6 +1097,8 @@ More types may be added in the future, or by C# mods (in the future).
 
 *Optional.* The blending mode for this layer. There are two choices, and
 they significantly change how the layer is drawn to the screen:
+
+> Note: This is not supported for Shader layers.
 
 * `Normal`
 
@@ -1130,6 +1160,17 @@ or the in-game hour changing.
 be visible at a time. Specifically: the first layer in the `Layers` list that
 passes its `Condition` will be visible and all others in the group will be
 skipped.
+
+</td>
+</tr>
+<tr>
+<td><code>TargetMapType</code></td>
+<td>
+
+*Optional.* What type of map should this layer be displayed with? This can be
+`Outdoors`, `Indoors`, or `Indoors,Outdoors`.
+
+Default: `Outdoors`
 
 </td>
 </tr>
@@ -1523,6 +1564,65 @@ Default: `-16, 32`
 </table>
 
 
+### `Shader`
+
+A `Shader` layer is used to apply a shader effect to the rendered game world.
+This can be used for more advanced effects, like applying a distortion or
+using a look-up table to adjust colors. Here's an example using the built-in
+`Palettize` shader to limit the game:
+```json
+{
+	"Id": "first",
+	"Type": "Shader",
+	"Shader": "Palettize",
+	"Palette": "Mods/MyMod/MyPalette",
+	"ColorCount": 46
+}
+```
+
+![](docs/ShaderSample.png)
+
+For reference, this is the palette used for that sample image:
+![](docs/ShaderPalette.png)
+
+You can use one of the built-in shaders, or provide your own shader. See
+the [Shaders](#shaders) section of the documentation for more.
+
+> Note: You *cannot* use `Mode` for a `Shader` layer. It just won't have
+> any effect at all.
+
+<table>
+<tr>
+<th>Field</th>
+<th>Description>
+</tr>
+<tr><th colspan=2>Appearance</th></tr>
+<tr>
+<td><code>Shader</code></td>
+<td>
+
+**Required.** The name of the shader to use. This should be either the
+name of one of the built-in shaders, or the absolute file path to one
+of your own compiled shader files.
+
+Using Content Patcher, you can use the `{{AbsoluteFilePath: [path]}}`
+token to provide a valid path.
+
+</td>
+</tr>
+<tr>
+<td>???</td>
+<td>
+
+The other properties are entirely dependent on what `Shader` you're
+using. See the [Shaders](#shaders) section of the documentation for
+details on the built-in shaders.
+
+</td>
+</tr>
+</table>
+
+
 ### `Snow` / `TextureScroll`
 
 A `Snow` or `TextureScroll` layer can be used to draw an animated texture
@@ -1826,6 +1926,18 @@ Default: `1`
 </td>
 </tr>
 <tr>
+<td><code>WeatherChannelBackgroundSpeed</code></td>
+<td>
+
+*Optional.* How long should each frame of the TV's Weather channel background
+animation be displayed, in milliseconds? This is ignored if
+`WeatherChannelBackgroundTexture` is not set.
+
+Default: `150.0`
+
+</td>
+</tr>
+<tr>
 <td><code>WeatherChannelOverlayTexture</code></td>
 <td>
 
@@ -1867,6 +1979,18 @@ Default: `1`
 </td>
 </tr>
 <tr>
+<td><code>WeatherChannelOverlayIntroSpeed</code></td>
+<td>
+
+*Optional.* How long should each frame of the TV's Weather channel intro
+foreground animation be displayed, in milliseconds? This is ignored if
+`WeatherChannelOverlayTexture` is not set.
+
+Default: `150.0`
+
+</td>
+</tr>
+<tr>
 <td><code>WeatherChannelOverlayWeatherSource</code></td>
 <td>
 
@@ -1895,6 +2019,18 @@ weather foreground have. This is ignored if `WeatherChannelOverlayTexture`
 is not set.
 
 Default: `1`
+
+</td>
+</tr>
+<tr>
+<td><code>WeatherChannelOverlayWeatherSpeed</code></td>
+<td>
+
+*Optional.* How long should each frame of the TV's Weather channel weather
+foreground animation be displayed, in milliseconds? This is ignored if
+`WeatherChannelOverlayTexture` is not set.
+
+Default: `150.0`
 
 </td>
 </tr>

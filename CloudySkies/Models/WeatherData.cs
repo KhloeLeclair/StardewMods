@@ -42,6 +42,8 @@ public class WeatherData : IWeatherData {
 	public Point TVSource { get; set; } = Point.Zero;
 	public int TVFrames { get; set; } = 4;
 
+	public float TVSpeed { get; set; } = 150f;
+
 	#endregion
 
 	#region Music

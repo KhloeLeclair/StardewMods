@@ -371,6 +371,12 @@ public interface IWeatherData {
 	int TVFrames { get; set; }
 
 	/// <summary>
+	/// How long should each frame of the TV animation be displayed?
+	/// Default is 150.
+	/// </summary>
+	float TVSpeed { get; set; }
+
+	/// <summary>
 	/// A forecast string that will be displayed when the player checks
 	/// tomorrow's forecast using a television. This is a
 	/// tokenizable string. May be null.
@@ -668,6 +674,15 @@ public interface IEffectData {
 	/// </summary>
 	string? Group { get; set; }
 
+	/// <summary>
+	/// The type(s) of maps that this effect should be active on. Defaults to Outdoors,
+	/// unless you have a Condition checking "LOCATION_IS_INDOORS" or
+	/// "LOCATION_IS_OUTDOORS" in order to maintain support for effects added
+	/// before this property was added. You should remove those conditions in favor
+	/// of setting this value, for performance reasons.
+	/// </summary>
+	public TargetMapType TargetMapType { get; set; }
+
 	#endregion
 
 }
@@ -828,6 +843,13 @@ public interface ITriggerEffectData : IEffectData {
 
 #region Layers
 
+[Flags]
+public enum TargetMapType {
+	Outdoors = 1,
+	Indoors = 2
+}
+
+
 public enum LayerDrawType {
 	Normal,
 	Lighting
@@ -863,6 +885,11 @@ public interface ILayerData {
 	/// display in some situations, with fall-back layers in other situations.
 	/// </summary>
 	public string? Group { get; set; }
+
+	/// <summary>
+	/// The type(s) of maps that this layer should render on. Defaults to Outdoors.
+	/// </summary>
+	public TargetMapType TargetMapType { get; set; }
 
 	#endregion
 
@@ -994,6 +1021,23 @@ public interface IDebrisLayerData : ILayerData {
 	/// be drawn.
 	/// </summary>
 	bool ShouldAnimate { get; set; }
+
+}
+
+
+public interface IShaderLayerData : ILayerData {
+
+	/// <summary>
+	/// The name of a shader to use. This should either be the Id of
+	/// a built-in shader, or the absolute file path of a shader file.
+	/// </summary>
+	string? Shader { get; set; }
+
+	/// <summary>
+	/// A dictionary of configuration data for this shader, as parsed
+	/// by the game's JSON serializer.
+	/// </summary>
+	IDictionary<string, JToken> Fields { get; }
 
 }
 
@@ -1229,6 +1273,13 @@ public interface ILocationContextExtensionData {
 	int WeatherChannelBackgroundFrames { get; set; }
 
 	/// <summary>
+	/// Optional. How long should each frame of the background be displayed?
+	/// Default is 150f. Ignored if <see cref="WeatherChannelBackgroundTexture"/>
+	/// is not set.
+	/// </summary>
+	float WeatherChannelBackgroundSpeed { get; set; }
+
+	/// <summary>
 	/// Optional. An asset name for a texture that should be displayed
 	/// as the foreground of the weather channel when viewing the weather
 	/// for this location context. This can be used to change the appearance
@@ -1257,6 +1308,13 @@ public interface ILocationContextExtensionData {
 	int WeatherChannelOverlayIntroFrames { get; set; }
 
 	/// <summary>
+	/// Optional. How long should each frame of the intro overlay be
+	/// displayed? Default is 150f. Ignored if
+	/// <see cref="WeatherChannelOverlayTexture"/> is not set.
+	/// </summary>
+	float WeatherChannelOverlayIntroSpeed { get; set; }
+
+	/// <summary>
 	/// Optional. The position of the top-left corner of the first
 	/// frame of the weather channel overlay that is displayed
 	/// when the actual weather is being displayed. Each overlay
@@ -1276,6 +1334,13 @@ public interface ILocationContextExtensionData {
 	/// <see cref="WeatherChannelOverlayTexture"/> is not set.
 	/// </summary>
 	int WeatherChannelOverlayWeatherFrames { get; set; }
+
+	/// <summary>
+	/// Optional. How long should each frame of the weather overlay
+	/// be displayed? Default is 150f. Ignored if
+	/// <see cref="WeatherChannelOverlayTexture"/> is not set.
+	/// </summary>
+	float WeatherChannelOverlayWeatherSpeed { get; set; }
 
 	#endregion
 

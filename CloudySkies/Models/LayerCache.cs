@@ -14,6 +14,8 @@ internal record struct LayerCache {
 
 	public bool EventUp { get; set; }
 
+	public bool HasShaders { get; set; }
+
 	public Dictionary<string, IWeatherLayer> LayersById { get; set; }
 	public Dictionary<string, ILayerData> DataById { get; set; }
 

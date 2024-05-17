@@ -5,6 +5,10 @@ namespace Leclair.Stardew.Common.Types;
 
 public class ValueEqualityList<TValue> : List<TValue> {
 
+	private readonly IEqualityComparer<TValue>? equalityComparer;
+
+	public IEqualityComparer<TValue> Comparer => equalityComparer ?? EqualityComparer<TValue>.Default;
+
 	public ValueEqualityList() : base() { }
 
 	public ValueEqualityList(int capacity) : base(capacity) { }
@@ -15,8 +19,10 @@ public class ValueEqualityList<TValue> : List<TValue> {
 		if (obj is not IList<TValue> olist || olist.Count != Count)
 			return false;
 
+		IEqualityComparer<TValue> comparer = Comparer;
+
 		for (int i = 0; i < Count; i++) {
-			if (!EqualityComparer<TValue>.Default.Equals(this[i], olist[i]))
+			if (!comparer.Equals(this[i], olist[i]))
 				return false;
 		}
 
@@ -26,7 +32,7 @@ public class ValueEqualityList<TValue> : List<TValue> {
 	public override int GetHashCode() {
 		var hash = new HashCode();
 		foreach (var item in this)
-			hash.Add(item);
+			hash.Add(item, Comparer);
 		return hash.ToHashCode();
 	}
 

@@ -12,6 +12,6 @@ namespace Leclair.Stardew.CloudySkies.LayerData;
 public record CustomLayerData : BaseLayerData, ICustomLayerData {
 
 	[JsonExtensionData]
-	public IDictionary<string, JToken> Fields { get; set; } = new ValueEqualityDictionary<string, JToken>();
+	public IDictionary<string, JToken> Fields { get; init; } = new FieldsEqualityDictionary();
 
 }

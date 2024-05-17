@@ -26,6 +26,11 @@ public static class Game1_Patches {
 			// Drawing
 
 			mod.Harmony.Patch(
+				original: AccessTools.Method(typeof(Game1), nameof(Game1.ShouldDrawOnBuffer)),
+				postfix: new HarmonyMethod(typeof(Game1_Patches), nameof(Game1_ShouldDrawOnBuffer__Postfix))
+			);
+
+			mod.Harmony.Patch(
 				original: AccessTools.Method(typeof(Game1), nameof(Game1.drawWeather)),
 				prefix: new HarmonyMethod(typeof(Game1_Patches), nameof(drawWeather__Prefix))
 			);
@@ -118,6 +123,11 @@ public static class Game1_Patches {
 	}
 
 	#region Drawing
+
+	private static void Game1_ShouldDrawOnBuffer__Postfix(Game1 __instance, ref bool __result) {
+		if (Mod?.HasShaderLayer?.Value ?? false)
+			__result = true;
+	}
 
 	private static IEnumerable<CodeInstruction> DrawLighting__Transpiler(IEnumerable<CodeInstruction> instructions) {
 

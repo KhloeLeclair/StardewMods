@@ -23,7 +23,7 @@ namespace Leclair.Stardew.CloudySkies.Menus;
 public class TVWeatherMenu : IClickableMenu {
 
 	private readonly ModEntry Mod;
-	private readonly TV Television;
+	public readonly TV Television;
 
 	private IClickableMenu? childMenu;
 
@@ -102,35 +102,37 @@ public class TVWeatherMenu : IClickableMenu {
 		else
 			ShowList();
 
-		Mod.Helper.Events.Display.RenderedWorld += DrawWorld;
-
 		if (Game1.options.SnappyMenus)
 			snapToDefaultClickableComponent();
 	}
 
-	private void DrawWorld(object? sender, StardewModdingAPI.Events.RenderedWorldEventArgs e) {
-		if (Game1.activeClickableMenu != this) {
-			Mod.Helper.Events.Display.RenderedWorld -= DrawWorld;
-			return;
-		}
-
-		ScreenBase?.draw(e.SpriteBatch);
-		ScreenOverlay?.draw(e.SpriteBatch);
-		WeatherOverlay?.draw(e.SpriteBatch);
-
+	public void DrawWorld(SpriteBatch batch) {
+		ScreenBase?.draw(batch);
+		ScreenOverlay?.draw(batch);
+		WeatherOverlay?.draw(batch);
 	}
 
-	private TemporaryAnimatedSprite MakeSprite(string texture, Point source, int frames) {
+	private TemporaryAnimatedSprite MakeSprite(string texture, Point source, int frames, float speed = 150f, bool isSmall = false, int layerOffset = 0) {
+		float layerDepth = (Television.boundingBox.Bottom - 1f) / 10000f + 1E-05f;
+		while (layerOffset-- > 0)
+			layerDepth = MathF.BitIncrement(layerDepth);
+
+		Rectangle sourceRect;
+		if (isSmall)
+			sourceRect = new Rectangle(source.X, source.Y, 13, 13);
+		else
+			sourceRect = new Rectangle(source.X, source.Y, 42, 28);
+
 		return new(
 			texture,
-			new Rectangle(source.X, source.Y, 42, 28),
-			150f,
+			sourceRect,
+			speed,
 			frames,
 			999999,
-			Television.getScreenPosition(),
+			Television.getScreenPosition() + (isSmall ? new Vector2(3f, 3f) * Television.getScreenSizeModifier() : Vector2.Zero),
 			flicker: false,
 			flipped: false,
-			(Television.boundingBox.Bottom - 1) / 10000f + 1E-05f,
+			layerDepth,
 			0f,
 			Color.White,
 			Television.getScreenSizeModifier(),
@@ -158,21 +160,25 @@ public class TVWeatherMenu : IClickableMenu {
 		string texture;
 		Point source;
 		int frames;
+		float speed;
 
 		if (data.WeatherChannelBackgroundTexture != null) {
 			texture = data.WeatherChannelBackgroundTexture;
 			source = data.WeatherChannelBackgroundSource;
 			frames = data.WeatherChannelBackgroundFrames;
+			speed = data.WeatherChannelBackgroundSpeed;
+
 		} else {
 			texture = Game1.mouseCursorsName;
 			source = new Point(413 + (weather is null ? 0 : (42 * 2)), 305);
 			frames = weather is null ? 2 : 1;
+			speed = 150f;
 		}
 
 		if (frames < 1)
 			frames = 1;
 
-		ScreenBase = MakeSprite(texture, source, frames);
+		ScreenBase = MakeSprite(texture, source, frames, speed, false, 0);
 
 		if (data.WeatherChannelOverlayTexture == null && data.WeatherChannelBackgroundTexture == null) {
 			ScreenOverlay = null;
@@ -182,16 +188,19 @@ public class TVWeatherMenu : IClickableMenu {
 				texture = ModEntry.WEATHER_OVERLAY_DEFAULT_ASSET;
 				source = weather is null ? Point.Zero : new Point(42 * 2, 0);
 				frames = weather is null ? 2 : 1;
+				speed = 150f;
 
 			} else {
 				texture = data.WeatherChannelOverlayTexture;
 				if (weather is null) {
 					source = data.WeatherChannelOverlayIntroSource;
 					frames = data.WeatherChannelOverlayIntroFrames;
+					speed = data.WeatherChannelOverlayIntroSpeed;
 				} else {
 					source = data.WeatherChannelOverlayWeatherSource
 						?? new Point(data.WeatherChannelOverlayIntroSource.X + (42 * 2), data.WeatherChannelOverlayIntroSource.Y);
 					frames = data.WeatherChannelOverlayWeatherFrames;
+					speed = data.WeatherChannelOverlayWeatherSpeed;
 				}
 			}
 
@@ -201,7 +210,10 @@ public class TVWeatherMenu : IClickableMenu {
 			ScreenOverlay = MakeSprite(
 				texture,
 				source,
-				frames
+				frames,
+				speed,
+				false,
+				1
 			);
 		}
 
@@ -212,27 +224,19 @@ public class TVWeatherMenu : IClickableMenu {
 				texture = weatherData.TVTexture;
 				source = weatherData.TVSource;
 				frames = weatherData.TVFrames;
+				speed = weatherData.TVSpeed;
 
 				if (frames < 1)
 					frames = 1;
 
 				// Doesn't use MakeSprite because it has a different size + offset.
-				WeatherOverlay = new TemporaryAnimatedSprite(
+				WeatherOverlay = MakeSprite(
 					texture,
-					new Rectangle(source.X, source.Y, 13, 13),
-					150f,
+					source,
 					frames,
-					999999,
-					Television.getScreenPosition() + new Vector2(3, 3) * Television.getScreenSizeModifier(),
-					flicker: false,
-					flipped: false,
-					(Television.boundingBox.Bottom - 1) / 10000f + 1E-05f,
-					0f,
-					Color.White,
-					Television.getScreenSizeModifier(),
-					0f,
-					0f,
-					0f
+					speed,
+					true,
+					2
 				);
 			}
 

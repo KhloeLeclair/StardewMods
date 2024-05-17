@@ -6,6 +6,7 @@ using HarmonyLib;
 
 using Leclair.Stardew.CloudySkies.Effects;
 using Leclair.Stardew.CloudySkies.Integrations.ContentPatcher;
+using Leclair.Stardew.CloudySkies.Integrations.UltimateFertilizer;
 using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Layers;
 using Leclair.Stardew.CloudySkies.Models;
@@ -46,6 +47,7 @@ public partial class ModEntry : PintailModSubscriber {
 	public const string EXTENSION_DATA_ASSET = @"Mods/leclair.cloudyskies/LocationContextExtensionData";
 
 	public const string WEATHER_OVERLAY_DEFAULT_ASSET = @"Mods/leclair.cloudyskies/Textures/WeatherOverlay";
+	public const string GINGER_ISLE_BASE_ASSET = @"Mods/leclair.cloudyskies/Textures/GingerIsleBase";
 
 	private static readonly Func<ModHooks> HookDelegate = AccessTools.Field(typeof(Game1), "hooks").CreateGetter<ModHooks>();
 
@@ -59,6 +61,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 	internal GMCMIntegration<ModConfig, ModEntry>? intGMCM;
 	internal CPIntegration? intCP;
+	internal UFIntegration? intUF;
 
 	private ulong lastLayerId = 0;
 
@@ -267,6 +270,7 @@ public partial class ModEntry : PintailModSubscriber {
 		RegisterLayerType("Rain", (id, data) => data is IRainLayerData rainData ? new RainLayer(this, id, rainData) : null);
 		RegisterLayerType("Snow", (id, data) => data is ITextureScrollLayerData snowData ? new TextureScrollLayer(this, id, snowData) : null);
 		RegisterLayerType("TextureScroll", (id, data) => data is ITextureScrollLayerData snowData ? new TextureScrollLayer(this, id, snowData) : null);
+		RegisterLayerType("Shader", (id, data) => data is IShaderLayerData shaderData ? new ShaderLayer(this, id, shaderData) : null);
 	}
 
 	internal void RegisterBuiltinEffects() {
@@ -294,6 +298,12 @@ public partial class ModEntry : PintailModSubscriber {
 				(c, v) => c.ReplaceTVMenu = v
 			)
 			.Add(
+				I18n.Setting_CustomGingerIsle,
+				I18n.Setting_CustomGingerIsle_About,
+				c => c.UseCustomGingerIsleArt,
+				(c, v) => c.UseCustomGingerIsleArt = v
+			)
+			.Add(
 				I18n.Setting_WeatherTooltip,
 				I18n.Setting_WeatherTooltip_About,
 				c => c.ShowWeatherTooltip,
@@ -305,12 +315,22 @@ public partial class ModEntry : PintailModSubscriber {
 				I18n.Setting_Debug_About,
 				c => c.ShowDebugTiming,
 				(c, v) => c.ShowDebugTiming = v
+			)
+			.Add(
+				I18n.Setting_Debug_Shaders,
+				I18n.Setting_Debug_Shaders_About,
+				c => c.RecompileShaders,
+				(c, v) => c.RecompileShaders = v
 			);
-
 	}
 
 	private void ResetConfig() {
+		bool use_custom_ginger_isle = Config.UseCustomGingerIsleArt;
+
 		Config = new();
+
+		if (use_custom_ginger_isle != Config.UseCustomGingerIsleArt)
+			Helper.GameContent.InvalidateCache(EXTENSION_DATA_ASSET);
 	}
 
 	private void SaveConfig() {
@@ -326,6 +346,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 		intGMCM = new(this, () => Config, ResetConfig, SaveConfig);
 		intCP = new(this);
+		intUF = new(this);
 
 		RegisterSettings();
 
@@ -349,28 +370,52 @@ public partial class ModEntry : PintailModSubscriber {
 		else if (e.Name.IsEquivalentTo(WEATHER_OVERLAY_DEFAULT_ASSET))
 			e.LoadFromModFile<Texture2D>("assets/WeatherChannelOverlay.png", AssetLoadPriority.Low);
 
-		else if (e.Name.IsEquivalentTo(EXTENSION_DATA_ASSET))
-			e.LoadFrom(() => new Dictionary<string, LocationContextExtensionData>() {
+		else if (e.Name.IsEquivalentTo(GINGER_ISLE_BASE_ASSET))
+			e.LoadFromModFile<Texture2D>("assets/GingerIsleBase.png", AssetLoadPriority.Low);
+
+		else if (e.Name.IsEquivalentTo(EXTENSION_DATA_ASSET)) {
+			var data = new Dictionary<string, LocationContextExtensionData>() {
 				{ "Default", new() {
 					DisplayName = "[LocalizedText location.stardew-valley]",
 					IncludeInWeatherChannel = true,
 				} },
 				{ "Desert", new() {
-					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:Utility.cs.5861]",
+					DisplayName = "[LocalizedText location.calico-desert]",
 					IncludeInWeatherChannel = true,
 					WeatherChannelCondition = "PLAYER_HAS_MAIL Host ccVault Any",
 					WeatherChannelBackgroundTexture = "LooseSprites\\map"
-				} },
-				{ "Island", new() {
+				} }
+			};
+
+			if (Config.UseCustomGingerIsleArt)
+				data["Island"] = new() {
+					IncludeInWeatherChannel = true,
+					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:IslandName]",
+					WeatherChannelCondition = "PLAYER_HAS_MAIL Current Visited_Island Any",
+					WeatherForecastPrefix = "[LocalizedText Strings\\StringsFromCSFiles:TV_IslandWeatherIntro]",
+					WeatherChannelBackgroundTexture = GINGER_ISLE_BASE_ASSET,
+					WeatherChannelBackgroundFrames = 4,
+					WeatherChannelBackgroundSpeed = 120f,
+					WeatherChannelOverlayTexture = GINGER_ISLE_BASE_ASSET,
+					WeatherChannelOverlayIntroSource = new Point(0, 28),
+					WeatherChannelOverlayIntroFrames = 1,
+					WeatherChannelOverlayWeatherSource = new Point(42, 28),
+					WeatherChannelOverlayWeatherFrames = 1
+				};
+
+			else
+				data["Island"] = new() {
 					IncludeInWeatherChannel = true,
 					DisplayName = "[LocalizedText Strings\\StringsFromCSFiles:IslandName]",
 					WeatherChannelCondition = "PLAYER_HAS_MAIL Current Visited_Island Any",
 					WeatherForecastPrefix = "[LocalizedText Strings\\StringsFromCSFiles:TV_IslandWeatherIntro]",
 					WeatherChannelOverlayTexture = "LooseSprites\\Cursors2",
 					WeatherChannelOverlayIntroSource = new Point(148, 62),
-					WeatherChannelOverlayWeatherSource = new Point(148, 62),
-				} }
-			}, priority: AssetLoadPriority.Exclusive);
+					WeatherChannelOverlayWeatherSource = new Point(148, 62)
+				};
+
+			e.LoadFrom(() => data, priority: AssetLoadPriority.Exclusive);
+		}
 	}
 
 	[Subscriber]
@@ -427,7 +472,7 @@ public partial class ModEntry : PintailModSubscriber {
 		DrawTiming.Value = 0;
 		UpdateTiming.Value = 0;
 
-		if (!Config.ShowDebugTiming || (drawing <= 0 && updating <= 0))
+		if (!Config.ShowDebugTiming || Game1.game1.takingMapScreenshot || (drawing <= 0 && updating <= 0))
 			return;
 
 		var builder = SimpleHelper.Builder()
@@ -480,7 +525,7 @@ public partial class ModEntry : PintailModSubscriber {
 	private void OnUpdating(object? sender, UpdateTickingEventArgs e) {
 
 		// Clear the cache every tick to keep stale items from sticking around.
-		CachedItems.Clear();
+		Triggers.CachedItems.Clear();
 
 		// Do not process effects when time is not passing. We need a special
 		// check for when the process is out of focus, since this event still
@@ -557,8 +602,12 @@ public partial class ModEntry : PintailModSubscriber {
 
 					// While we're unboxing, make sure any CustomLayerData is
 					// actually using ValueEqualityDictionary like we want.
-					if (item is CustomLayerData cd && cd.Fields is not ValueEqualityDictionary<string, JToken>)
-						cd.Fields = new ValueEqualityDictionary<string, JToken>(cd.Fields);
+					//if (item is CustomLayerData cd && cd.Fields is not FieldsEqualityDictionary)
+					//cd.Fields = new FieldsEqualityDictionary(cd.Fields);
+
+					// Same with ShaderData.
+					//if (item is ShaderData sd && sd.Fields is not FieldsEqualityDictionary)
+					//sd.Fields = new FieldsEqualityDictionary(sd.Fields);
 				}
 			}
 
@@ -723,6 +772,7 @@ public partial class ModEntry : PintailModSubscriber {
 	private readonly PerScreen<string?> CachedWeatherName = new();
 	private readonly PerScreen<WeatherData?> CachedWeather = new();
 	private readonly PerScreen<LayerCache?> CachedLayers = new();
+	internal readonly PerScreen<bool> HasShaderLayer = new();
 	private readonly PerScreen<EffectCache?> CachedEffects = new();
 	private readonly PerScreen<CachedTintData?> CachedTint = new();
 
@@ -986,8 +1036,13 @@ public partial class ModEntry : PintailModSubscriber {
 		int reused = 0;
 		int instanced = 0;
 
+		TargetMapType targetMapType = location.IsOutdoors ? TargetMapType.Outdoors : TargetMapType.Indoors;
+
 		foreach (var effect in data.Effects) {
 			if (effect.Group != null && groups.Contains(effect.Group))
+				continue;
+
+			if (!effect.TargetMapType.HasFlag(targetMapType))
 				continue;
 
 			if (!string.IsNullOrEmpty(effect.Condition) && !GameStateQuery.CheckConditions(effect.Condition, ctx))
@@ -1001,9 +1056,9 @@ public partial class ModEntry : PintailModSubscriber {
 			// We rely upon record value equality checks.
 			if (old_by_id is not null && old_data_by_id is not null &&
 				!force_reinstance &&
-				old_by_id.TryGetValue(effect.Id, out var existing) &&
 				old_data_by_id.TryGetValue(effect.Id, out var existingData) &&
-				existingData == effect
+				EqualityComparer<IEffectData>.Default.Equals(existingData, effect) &&
+				old_by_id.TryGetValue(effect.Id, out var existing)
 			) {
 				// Remove the old instance.
 				old_by_id.Remove(effect.Id);
@@ -1066,8 +1121,10 @@ public partial class ModEntry : PintailModSubscriber {
 	internal List<IWeatherLayer>? GetCachedWeatherLayers(GameLocation? location = null, int? timeOfDay = null) {
 		var data = CachedWeather.Value;
 		location ??= Game1.currentLocation;
-		if (location is null || data?.Layers is null || data.Layers.Count == 0)
+		if (location is null || data?.Layers is null || data.Layers.Count == 0) {
+			HasShaderLayer.Value = false;
 			return null;
+		}
 
 		int hour = (timeOfDay ?? Game1.timeOfDay) / 100;
 
@@ -1089,8 +1146,15 @@ public partial class ModEntry : PintailModSubscriber {
 		int reused = 0;
 		int instanced = 0;
 
+		bool has_shader_layer = false;
+
+		TargetMapType targetMapType = location.IsOutdoors ? TargetMapType.Outdoors : TargetMapType.Indoors;
+
 		foreach (var layer in data.Layers) {
 			if (layer.Group != null && groups.Contains(layer.Group))
+				continue;
+
+			if (!layer.TargetMapType.HasFlag(targetMapType))
 				continue;
 
 			if (!string.IsNullOrEmpty(layer.Condition) && !GameStateQuery.CheckConditions(layer.Condition, ctx))
@@ -1104,9 +1168,9 @@ public partial class ModEntry : PintailModSubscriber {
 			// We rely upon record value equality checks.
 			if (old_by_id is not null && old_data_by_id is not null &&
 				!force_reinstance &&
-				old_by_id.TryGetValue(layer.Id, out var existing) &&
 				old_data_by_id.TryGetValue(layer.Id, out var existingData) &&
-				existingData == layer
+				EqualityComparer<ILayerData>.Default.Equals(existingData, layer) &&
+				old_by_id.TryGetValue(layer.Id, out var existing)
 			) {
 				old_by_id.Remove(layer.Id);
 				instance = existing;
@@ -1130,6 +1194,9 @@ public partial class ModEntry : PintailModSubscriber {
 					continue;
 				}
 
+			if (!has_shader_layer)
+				has_shader_layer = instance is ShaderLayer;
+
 			dataById[layer.Id] = layer;
 			layersById[layer.Id] = instance;
 			result.Add(instance);
@@ -1149,6 +1216,8 @@ public partial class ModEntry : PintailModSubscriber {
 #endif
 
 		Log($"Regenerated weather layers for: {Game1.player.displayName}\n\tReused {reused} layer instances.\n\tCreated {instanced} new layer instances.\n\tSkipped {skipped} layers.", level);
+
+		HasShaderLayer.Value = has_shader_layer;
 
 		CachedLayers.Value = new() {
 			Data = data,

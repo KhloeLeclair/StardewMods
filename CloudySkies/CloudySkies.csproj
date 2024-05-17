@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CloudySkies</AssemblyName>
-    <Version>1.5.0</Version>
+    <Version>1.6.0</Version>
     <RootNamespace>Leclair.Stardew.CloudySkies</RootNamespace>
 
     <Name>Cloudy Skies</Name>
@@ -21,6 +21,11 @@
   </PropertyGroup>
   <ItemGroup>
     <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="LICENSE.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Import Project="..\Common\Common.projitems" Label="Shared" />
