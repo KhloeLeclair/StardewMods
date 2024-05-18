@@ -194,13 +194,13 @@ public partial class ModEntry {
 
 	#region Custom Weather Totems
 
-	public bool UseWeatherTotem(Farmer who, string weatherId, SObject? item = null) {
+	public bool UseWeatherTotem(Farmer who, string weatherId, SObject? item = null, bool bypassChecks = false) {
 		var location = who.currentLocation;
 
 		string contextId = location.GetLocationContextId();
 		var context = location.GetLocationContext();
 
-		if (context.RainTotemAffectsContext != null) {
+		if (!bypassChecks && context.RainTotemAffectsContext != null) {
 			contextId = context.RainTotemAffectsContext;
 			context = LocationContexts.Require(contextId);
 		}
@@ -214,7 +214,7 @@ public partial class ModEntry {
 				allowed = !string.IsNullOrWhiteSpace(val);
 		}
 
-		if (!allowed) {
+		if (!allowed && !bypassChecks) {
 			Game1.showRedMessageUsingLoadString("Strings\\UI:Item_CantBeUsedHere");
 			return false;
 		}

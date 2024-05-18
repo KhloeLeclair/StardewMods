@@ -3,13 +3,13 @@
 //#define PRE_314
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-using StardewModdingAPI;
-
 using Leclair.Stardew.Common.Types;
+
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.Common;
 
@@ -130,7 +130,7 @@ public static class LoadingHelper {
 
 			try {
 				return helper.Load<T>(path);
-			} catch(Exception e) {
+			} catch (Exception e) {
 				if (!e.Message.Contains("path doesn't exist"))
 					throw;
 			}

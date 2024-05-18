@@ -190,7 +190,15 @@ public class ArgumentParser {
 			}
 
 			IEnumerable<GameLocation> locations;
-			if (locationName.Equals("Here", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Current", StringComparison.OrdinalIgnoreCase)) {
+			if (locationName.Equals("Indoors", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Inside", StringComparison.OrdinalIgnoreCase)) {
+				locations = CommonHelper.EnumerateLocations(true)
+					.Where(loc => !loc.IsOutdoors);
+
+			} else if (locationName.Equals("Outdoors", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Outside", StringComparison.OrdinalIgnoreCase)) {
+				locations = CommonHelper.EnumerateLocations()
+					.Where(loc => loc.IsOutdoors);
+
+			} else if (locationName.Equals("Here", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Current", StringComparison.OrdinalIgnoreCase)) {
 				if (Game1.currentLocation is null) {
 					value = [];
 					return true;
@@ -306,6 +314,19 @@ public class ArgumentParser {
 					.Select(farmer => new TargetPosition(farmer.currentLocation, farmer.Tile, radius));
 				return true;
 
+				// TODO: Figure out a better way to make this useful.
+				/*} else if (targetName.Equals("Indoors", StringComparison.OrdinalIgnoreCase) || targetName.Equals("Inside", StringComparison.OrdinalIgnoreCase)) {
+					value = Game1.getOnlineFarmers()
+						.Where(farmer => !(farmer?.currentLocation?.IsOutdoors ?? true))
+						.Select(farmer => new TargetPosition(farmer.currentLocation, farmer.Tile, radius));
+					return true;
+
+				} else if (targetName.Equals("Outdoors", StringComparison.OrdinalIgnoreCase) || targetName.Equals("Outside", StringComparison.OrdinalIgnoreCase)) {
+					value = Game1.getOnlineFarmers()
+						.Where(farmer => farmer?.currentLocation?.IsOutdoors ?? false)
+						.Select(farmer => new TargetPosition(farmer.currentLocation, farmer.Tile, radius));
+					return true;*/
+
 			} else if (targetName.Equals("Current", StringComparison.OrdinalIgnoreCase)) {
 				if (Game1.player?.currentLocation is null)
 					value = [];
@@ -382,7 +403,15 @@ public class ArgumentParser {
 			return true;
 		}
 
-		if (locationName.Equals("All", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Any", StringComparison.OrdinalIgnoreCase))
+		if (locationName.Equals("Indoors", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Inside", StringComparison.OrdinalIgnoreCase))
+			value = CommonHelper.EnumerateLocations(true)
+				.Where(loc => !loc.IsOutdoors);
+
+		else if (locationName.Equals("Outdoors", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Outside", StringComparison.OrdinalIgnoreCase))
+			value = CommonHelper.EnumerateLocations()
+				.Where(loc => loc.IsOutdoors);
+
+		else if (locationName.Equals("All", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Any", StringComparison.OrdinalIgnoreCase))
 			value = CommonHelper.EnumerateLocations();
 
 		else if (target == LocationOrContext.Location) {

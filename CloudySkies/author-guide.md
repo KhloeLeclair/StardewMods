@@ -22,6 +22,13 @@ types for your mod? You've come to the right place!
   * [Rain](#rain)
   * [Shader](#shader)
   * [Snow / Texture Scroll](#snow--texturescroll)
+* [Shaders]
+  * [Blur](#blur)
+  * [Colorize](#colorize)
+  * [Distortion](#distortion)
+  * [Palettize](#palettize)
+  * [Pixelate](#pixelate)
+  * [Custom Shaders](#custom-shaders)
 * [How Do I Make My Weather Happen?](#how-do-i-make-my-weather-happen)
   * [Custom Weather Totems](#custom-weather-totems)
 * [Location Context Extension Data](#location-context-extension-data)
@@ -333,6 +340,25 @@ base game's raining weather flag uses this with a value of `15` to change
 the pitch of the rain sound when you are indoors.
 
 Default: `100`
+
+</td>
+</tr>
+<tr>
+<td><code>SoftMusicOverrides</code></td>
+<td>
+
+*Optional.* A list of music overrides that function like the
+[`Music` entry in Location data](https://stardewvalleywiki.com/Modding:Location_data#Music),
+rather than like the default raining music.
+
+This is in effect a list of [audio cues](https://stardewvalleywiki.com/Modding:Audio)
+and game state conditions. The first entry with a matching condition
+will be used. You can use game state conditions to better control when
+any given condition should be matched.
+
+> Note: These will override `MusicOverride` if set and one matches,
+> but it is possible to fall back to `MusicOverride` if there are
+> no matching tracks.
 
 </td>
 </tr>
@@ -1611,6 +1637,18 @@ token to provide a valid path.
 </td>
 </tr>
 <tr>
+<td><code>Color</code></td>
+<td>
+
+*Optional.* A color to use when rendering with the shader. This is
+passed into the shader, so how it's used (and if it's used at all)
+may vary depending on which shader you're using.
+
+Default: `White`
+
+</td>
+</tr>
+<tr>
 <td>???</td>
 <td>
 
@@ -1765,6 +1803,398 @@ position changes the exact opposite amount as the viewport, effectively
 locking the texture in place against the world.
 
 Default: `-1, -1`
+
+</td>
+</tr>
+</table>
+
+
+## Shaders
+
+This section details how to use [`Shader`](#shader) layers. You'll find
+sections for each of the built-in shaders, along with instructions on how
+to develop custom shaders.
+
+
+### `Blur`
+
+The `Blur` shader is more accurately a convolution shader that operates on a 5 by 5
+sample grid. Using the default settings, it performs a very basic blur, but you can
+tweak the kernel weights to achieve different effects.
+
+<table>
+<tr>
+<th>Field</th><th>Description</th>
+</tr>
+<tr>
+<td><code>Distance</code></td>
+<td>
+
+**Required>** This field multiplies the distance from the target pixel that each
+sample will be taken. If, for example, you use this with a value of `1.0` then each
+sample will be 1 pixel away from the target pixel.
+
+Since we're dealing with a 5x5 sample grid, that means a 5x5 area of pixels will
+be sampled.
+
+Setting this to `2.0`, to provide another example, would end up end up sampling
+pixels within a 9x9 area, though not all pixels would be sampled in that situation.
+
+</td>
+</tr>
+<tr>
+<td><code>UseWeights</code></td>
+<td>
+
+*Optional.* Whether or not the `Weights` array should be used. If this is not
+set to true, `1.0` will be used for all weights.
+
+Default: `false`
+
+</td>
+</tr>
+<tr>
+<td><code>Weights</code></td>
+<td>
+
+*Optional.* A list of kernel weights. This should be a list of 25 floating point
+numbers, representing the 5 by 5 sample area.
+
+As an example, here is a set of weights for a Gaussian blur:
+
+    "Weights": [
+        0.003765, 0.015019, 0.023792, 0.015019, 0.003765,
+        0.015019, 0.059912, 0.094907, 0.059912, 0.015019,
+        0.023792, 0.094907, 0.150342, 0.094907, 0.023792,
+        0.015019, 0.059912, 0.094907, 0.059912, 0.015019,
+        0.003765, 0.015019, 0.023792, 0.015019, 0.003765
+    ]
+
+</td>
+</tr>
+</table>
+
+
+### `Colorize`
+
+The `Colorize` shader, reused with permission from the Nightshade project (see
+[LICENSE.md](license.md) for details), uses color math to adjust the saturation,
+lightness, and contrast of each pixel as well as having color balance inputs.
+
+<table>
+<tr>
+<th>Field</th><th>Description</th>
+</tr>
+<tr>
+<td><code>Contrast</code></td>
+<td>
+
+*Optional.* Adjust the contrast by this amount.
+
+* Range: `-1.0` to `1.0`
+* Default: `0.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Lightness</code></td>
+<td>
+
+*Optional.* Adjust the lightness by this amount.
+
+* Range: `-1.0` to `1.0`
+* Default: `0.0`
+
+</td>
+</tr>
+<tr>
+<td><code>Saturation</code></td>
+<td>
+
+*Optional.* Adjust the saturation by this amount.
+
+* Range: `-1.0` to `1.0`
+* Default: `0.0`
+
+</td>
+</tr>
+<tr>
+<td><code>LumaType</code></td>
+<td>
+
+*Optional.* Select which graypoint to use. Valid choices:
+
+* `0` = ITU BT.709
+* `1` = ITU BT.601
+
+Default: `0`
+
+</td>
+</tr>
+<tr>
+<td><code>ShadowRgb</code></td>
+<td>
+
+*Optional.* An array representing how to
+shift colors in the shadow range. The
+first entry is for red, the second entry
+is for green, and the third entry is for blue.
+
+Each value should be in the range `-1.0` to `1.0`.
+
+Default: `[0.0, 0.0, 0.0]`
+
+</td>
+</tr>
+<tr>
+<td><code>MidtoneRgb</code></td>
+<td>
+
+*Optional.* An array representing how to
+shift colors in the midtone range. The
+first entry is for red, the second entry
+is for green, and the third entry is for blue.
+
+Each value should be in the range `-1.0` to `1.0`.
+
+Default: `[0.0, 0.0, 0.0]`
+
+</td>
+</tr>
+<tr>
+<td><code>HighlightRgb</code></td>
+<td>
+
+*Optional.* An array representing how to
+shift colors in the highlight range. The
+first entry is for red, the second entry
+is for green, and the third entry is for blue.
+
+Each value should be in the range `-1.0` to `1.0`.
+
+Default: `[0.0, 0.0, 0.0]`
+
+</td>
+</tr>
+</table>
+
+
+### `Distortion`
+
+The `Distortion` shader uses a very simple noise algorithm to distort the
+texture coordinates when drawing.
+
+<table>
+<tr>
+<th>Field</th><th>Description</th>
+</tr>
+<tr>
+<td><code>Strength</code></td>
+<td>
+
+**Required.** The strength of the distortion effect. This value should be
+very small. I recommend starting with something like `0.002` and changing
+it from there.
+
+</td>
+</tr>
+<tr>
+<td><code>Frequency</code></td>
+<td>
+
+**Required.** The frequency of the distortion effect. This value changes
+the scale of the distortions, with the distortions getting smaller the
+larger this is. I recommend starting with something like `100` and
+changing it from there.
+
+</td>
+</tr>
+</table>
+
+
+### `Palettize`
+
+The `Palettize` shader reduces the visible colors of the resulting image to
+those found in the supplied `Palette`. See the [`Shader` layer](#shader)
+description for an example screenshot of this in action.
+
+<table>
+<tr>
+<th>Field</th><th>Description</th>
+</tr>
+<tr>
+<td><code>Palette</code></td>
+<td>
+
+**Required.** The asset name of a palette texture to reference. A palette
+should be a 1 or 2 pixel tall horizontal strip of colors, where each color
+in the palette has a single column. A palette of 256 colors, for example,
+should be either a `256x1` or `256x2` pixel image.
+
+If you provide a 2 pixel tall image, the top pixel will be used for finding
+similar colors, while the bottom pixel will be used to actually draw the
+color to the output.
+
+</td>
+<tr>
+<td><code>ColorCount</code></td>
+<td>
+
+**Required.** The number of colors in the palette texture.
+
+</td>
+</tr>
+<tr>
+<td><code>Monochrome</code></td>
+<td>
+
+*Optional.* Is the provided palette a monochrome palette? If this is set to
+true, the input color will be converted to grayscale before being compared
+to the palette. This may result in a higher quality image, but is not suitable
+for use if the palette is not monochromatic.
+
+</td>
+</tr>
+<tr>
+<td><code>Dither</code></td>
+<td>
+
+*Optional.* If this is set to true, the output will use dithering to create
+the appearance of additional colors. This can be very effective at increasing
+the apparent color count, but as a result it leaves the image feeling grainy,
+soft, and can potentially ruin the aesthetic.
+
+</td>
+</tr>
+</table>
+
+
+### `Pixelate`
+
+The `Pixelate` shader effectively lowers the resolution of the screen in a
+very simple way. This is not intended for serious use, and was really just
+the result of me messing around. Still, it's here.
+
+<table>
+<tr>
+<th>Field</th><th>Description</th>
+</tr>
+<tr>
+<td><code>ScaleX</code></td>
+<td>
+
+**Required.** The horizontal pixel size. Setting this to `4` would make each
+output pixel 4 pixels wide.
+
+</td>
+</tr>
+<tr>
+<td><code>ScaleY</code></td>
+<td>
+
+**Required.** The vertical pixel size. Setting this to `4` would make each
+output pixel 4 pixels tall.
+
+</td>
+</tr>
+</table>
+
+
+### Custom Shaders
+
+Want to write your own shaders? Awesome! Cloudy Skies is here to help.
+You'll need to make sure you're using the absolute file path to your shader
+file, as directed in [`Shader`](#shader). Beyond that, how do you *compile*
+a shader?
+
+I'm glad you asked!
+
+You're going to need an old version of the `dotnet-mgfxc` package installed
+on your computer. Specifically, [version 3.8.0.1641](https://www.nuget.org/packages/dotnet-mgfxc/3.8.0.1641).
+Newer versions are not compatible with the version of MonoGame that
+Stardew Valley uses.
+
+But wait, there's more! That version of `dotnet-mgfxc` will not work with the
+latest version of .NET Core, so you'll need to install an older version of
+that as well.
+
+Specifically, you'll want to install [.NET Core 3.1.32](https://versionsof.net/core/3.1/3.1.32/).
+
+> Note: You should NOT leave this version of .NET installed after you're
+> done, as it has security issues. Install it, get your work done, then
+> remove it again.
+
+Alright. Got all that? Then you'll want to enable `Debug: Re-Compile Shaders`
+in Cloudy Skies' settings. Once you've done that, Cloudy Skies will
+automatically recompile any shaders as long as the `.fx` file is in the same
+folder as the `.mgfx` file.
+
+This recompilation happens:
+1. The first time the shader is used.
+2. Any subsequent times the current weather layers are reloaded,
+   if the `.fx` file has changed.
+3. When the `cs_reload` command is used, if the `.fx` file has changed.
+
+Take a look at one of the built-in shaders to get an idea of what a `.fx`
+file should look at, and go for it! You'll also want to be aware of the
+following properties. If you include them in your shaders, Cloudy Skies
+will automatically update them with relevant game data:
+
+<table>
+<tr>
+<th>Parameter</th><th>Type</th><th>Description</th>
+</tr>
+<tr>
+<td><code>ElapsedTime</code></td>
+<td><code>float</code></td>
+<td>
+
+The amount of time, in milliseconds, that has passed since the previous
+frame was rendered. This may be zero if the game has been paused for
+any reason.
+
+</td>
+</tr>
+<tr>
+<td><code>TotalTime</code></td>
+<td><code>float</code></td>
+<td>
+
+The total amount of time, in milliseconds, that has passed since the game
+started rendering. This is not guaranteed to change between frames if the
+game has been paused for any reason.
+
+</td>
+</tr>
+<tr>
+<td><code>TimeOfDay</code></td>
+<td><code>float</code></td>
+<td>
+
+The in-game time of day, in partial hours. As an example, `7:30` would be
+represented as `7.5`.
+
+</td>
+</tr>
+<tr>
+<td><code>ViewportPosition</code></td>
+<td><code>float2</code></td>
+<td>
+
+The position of the top-left corner of the current viewport in the current
+map. This changes as the viewport moves around, and can be used to ensure
+that effects stay locked in the same place relative to the world.
+
+</td>
+</tr>
+<tr>
+<td><code>ScreenSize</code></td>
+<td><code>float2</code></td>
+<td>
+
+The size of the current viewport. In single-player, this is the same as
+the size of the game window. In split-screen multiplayer, this is the size
+of one of the split areas.
 
 </td>
 </tr>
@@ -2138,6 +2568,107 @@ to the game:
 > Note: If using the `debug action` command to test commands, you should be
 > aware of a bug in the game causing quotation marks to not be handled
 > correctly by `debug action`. You may need to escape your quotation marks.
+
+
+### `leclair.cloudyskies_ConvertFruitTrees [options] <fruitTreeId> <target> +`
+
+Convert the fruit trees within the provided [target area(s)](#action-targets)
+into another type of fruit tree. As an example, here's a command that
+will instantly convert any fruit trees within 5 tiles of the player
+into apple trees (which have an Id of `633`):
+```
+leclair.cloudyskies_ConvertFruitTrees 633 Player Current 5
+```
+
+> Note: This command only affects fruit trees, and not wild trees.
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>--max &lt;number&gt;</code></td>
+<td>
+
+The maximum number of fruit trees to change. Must be a positive integer.
+
+Default: `2147483647`
+
+</td>
+</tr>
+<tr>
+<td><code>-c &lt;number&gt;</code>, <code>--chance &lt;number&gt;</code></td>
+<td>
+
+The percent chance that any given fruit tree will be changed, from `0.0` to `1.0`.
+
+Default: `1.0`
+
+</td>
+</tr>
+<tr>
+<td><code>--indoors</code></td>
+<td>
+
+If this flag is set, indoor locations will not be skipped. They are skipped
+by default.
+
+</td>
+</tr>
+<tr>
+<td><code>--change-fruit</code></td>
+<td>
+
+If this flag is set, any existing fruit will be changed to match the new
+tree type. This may result in fruit being removed if the new tree is not
+in season and fruit cannot grow.
+
+</td>
+</tr>
+<tr>
+<td><code>--only-mature</code></td>
+<td>
+
+If this flag is set, only mature fruit trees will be converted. All other
+trees will be skipped.
+
+</td>
+</tr>
+<tr>
+<td><code>--set-days &lt;days&gt;</code></td>
+<td>
+
+Set the 'days until mature' field of any changed fruit trees to this value.
+Setting this to `0` will result in all changed trees being fully grown.
+
+</td>
+</tr>
+<tr>
+<td><code>-q &lt;string&gt;</code>, <code>--query &lt;string&gt;</code></td>
+<td>
+
+An optional [game state query](https://stardewvalleywiki.com/Modding:Game_state_queries)
+for filtering which fruit trees are affected. For performance reasons, you
+should avoid using `RANDOM` queries here and rely on the `--chance` option
+if you want to affect less than 100% of fruit trees.
+
+The `Target` item is the first fruit on the tree, if the tree currently
+has any fruit.
+
+The `Input` item is the seed or sapling item that you plant to get this
+type of fruit tree, if there is a valid seed/sapling item.
+
+</td>
+</tr>
+</table>
 
 
 ### `leclair.cloudyskies_ConvertTrees [options] <treeId> <target> +`
@@ -3446,11 +3977,12 @@ You can use `All` to match all contexts, `Here` to match the context of the
 current location, or provide the Id of a specific context to target.
 
 
-#### `Location <All/Here/ID>`
+#### `Location <All/Here/Indoors/Outdoors/ID>`
 
 Target the full map of the provided location(s). You can use `All` to match
-all locations, `Here` to match the current location, or provide the name
-of a specific location to target.
+all locations, `Here` to match the current location, `Indoors` or `Outdoors`
+to match all thus described locations, or provide the name of a specific
+location to target.
 
 
 #### `Tile <All/Here/ID> <x> <y> <radius>`
@@ -3467,8 +3999,9 @@ specific tile.
 #### `RandomTile <All/Here/ID> <minCount> <maxCount> <minX> <maxX> <minY> <maxY> <minRadius> <maxRadius>`
 
 Target a number of random tiles of the provided location(s). You can use `All`
-to match all locations, `Here` to match the current location, or provide the
-name of a specific location to target.
+to match all locations, `Here` to match the current location, `Indoors` or
+`Outdoors` to match all thus described locations, or provide the name of a
+specific location to target.
 
 `minCount` and `maxCount` are used to determine how many random tiles should
 be selected. The system will pick at least `minCount` and at most `maxCount`
@@ -3498,7 +4031,7 @@ It doesn't matter that they're that big, because they'll be reduced to fit
 the actual map's size.
 
 
-#### `Player <All/Current/Host/ID> <radius>`
+#### `Player <All/Current/Host/Inside/Outside/ID> <radius>`
 
 Target the current position of the specified player. You can use `All` to
 match all online players, `Current` to match the current player, `Host`
@@ -3612,6 +4145,7 @@ Possible values:
 * `Lightning`
 * `Debris`
 * `GreenRain`
-* `Sunny` (present is none of the previous value are present)
-* `Music` (present is `MusicOverride` is set)
+* `Sunny` (present if none of the previous value are present)
+* `Music` (present if `MusicOverride` is set)
 * `NightTiles` (present if `UseNightTiles` is set)
+* `WaterCrops` (present if `WaterCropsAndPets` is true (or not set and `Raining` is true))

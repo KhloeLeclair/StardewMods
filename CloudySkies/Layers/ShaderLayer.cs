@@ -26,6 +26,9 @@ public record ShaderData : BaseLayerData, IShaderLayerData {
 
 	public string? Shader { get; set; }
 
+	[JsonConverter(typeof(ColorConverter))]
+	public Color? Color { get; set; }
+
 	[JsonExtensionData]
 	public IDictionary<string, JToken> Fields { get; init; } = new FieldsEqualityDictionary();
 
@@ -178,7 +181,6 @@ public class ShaderLayer : IWeatherLayer, IDisposable {
 	private EffectParameter? ParamScreenSize;
 	private EffectParameter? ParamViewportPosition;
 	private EffectParameter? ParamTimeOfDay;
-	private Dictionary<string, EffectParameter>? TextureEffectParams;
 
 	protected RenderTarget2D? WorkingTarget;
 
@@ -203,7 +205,6 @@ public class ShaderLayer : IWeatherLayer, IDisposable {
 			Effect?.Dispose();
 			WorkingTarget?.Dispose();
 
-			TextureEffectParams = null;
 			ParamTotalTime = null;
 			ParamElapsedTime = null;
 			ParamScreenSize = null;
@@ -375,7 +376,20 @@ public class ShaderLayer : IWeatherLayer, IDisposable {
 						break;
 
 					case JTokenType.Array:
-						if (cls == EffectParameterClass.Vector && type == EffectParameterType.Single) {
+						if (cls == EffectParameterClass.Scalar && type == EffectParameterType.Single) {
+							var array = (JArray) value;
+							if (array.Count != param.Elements.Count)
+								throw new ArgumentException($"invalid row count for scalar array; expected {param.Elements.Count} but got {array.Count}");
+
+							float[] floats = new float[param.Elements.Count];
+
+							for (int i = 0; i < array.Count; i++)
+								floats[i] = (float) array[i];
+
+
+							param.SetValue(floats);
+
+						} else if (cls == EffectParameterClass.Vector && type == EffectParameterType.Single) {
 							var array = (JArray) value;
 							if (array.Count != param.ColumnCount)
 								throw new ArgumentException($"invalid column count for vector; expected {param.ColumnCount} but got {array.Count}");
@@ -465,7 +479,7 @@ public class ShaderLayer : IWeatherLayer, IDisposable {
 		nextLayer?.CreateOrUpdateBuffer(targetScreen);
 		Game1.SetRenderTarget(nextLayer is null ? targetScreen : nextLayer.WorkingTarget);
 		Batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, effect: Effect);
-		Batch.Draw(WorkingTarget, Vector2.Zero, Color.White);
+		Batch.Draw(WorkingTarget, Vector2.Zero, Data.Color ?? Color.White);
 		Batch.End();
 
 		// Don't worry about setting the render target back

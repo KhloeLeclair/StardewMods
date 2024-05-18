@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.7.0
+Released May 18th, 2024.
+
+### Added
+* There are now settings for enabling / disabling shaders.
+* Custom weather types have more control over music with their new
+  `SoftMusicOverrides` property.
+* Shader layers now have an optional `Color` that can be passed
+  to the underlying shader for drawing.
+* Console command for resetting locations if you happen to make
+  a mistake when messing with the new Stardew 1.6 weather type.
+* New trigger action for converting fruit trees from one type to another.
+* New built-in `Blur` shader.
+
+### Fixed
+* Effects and layers not being properly disposed of when entering
+  a location without an active custom weather type.
+* The shader layer now understands how to send an array of float
+  values to a shader.
+
+### Translation
+* Added Japanese translation courtesy of mitekano23 on NexusMods.
+  Thank you!
+* Updated French translation courtesy of Caranud on NexusMods.
+  Thank you!
+
+
 ## 1.6.0
 Released May 17th, 2024.
 

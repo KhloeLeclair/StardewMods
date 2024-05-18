@@ -1,7 +1,12 @@
+using System.Collections.Generic;
+
 namespace Leclair.Stardew.CloudySkies;
 
 public class ModConfig {
 
+	public bool AllowShaders { get; set; } = true;
+
+	public HashSet<string> DisabledShaders { get; set; } = new();
 
 	public bool ReplaceTVMenu { get; set; } = true;
 

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ContentPatcher;
 
@@ -17,8 +15,7 @@ namespace Leclair.Stardew.CloudySkies.Integrations.ContentPatcher;
 
 public class CPIntegration : BaseAPIIntegration<IContentPatcherAPI, ModEntry> {
 	public CPIntegration(ModEntry self)
-		: base(self, "Pathoschild.ContentPatcher", "2.0.0")
-	{
+		: base(self, "Pathoschild.ContentPatcher", "2.0.0") {
 
 		if (!IsLoaded)
 			return;
@@ -28,7 +25,7 @@ public class CPIntegration : BaseAPIIntegration<IContentPatcherAPI, ModEntry> {
 			LocationWeather? weather;
 
 			if (Context.IsWorldReady)
-				 weather = Game1.currentLocation?.GetWeather();
+				weather = Game1.currentLocation?.GetWeather();
 			else
 				weather = SaveGame.loaded?.player?.currentLocation?.GetWeather();
 
@@ -58,11 +55,15 @@ public class CPIntegration : BaseAPIIntegration<IContentPatcherAPI, ModEntry> {
 				if (weatherData.UseNightTiles)
 					flags.Add("NightTiles");
 
+				if (weatherData.WaterCropsAndPets ?? weatherData.IsRaining)
+					flags.Add("WaterCrops");
+
 			} else {
 				// Vanilla Behaviors
 				if (weather.IsRaining) {
 					flags.Add("Music");
 					flags.Add("NightTiles");
+					flags.Add("WaterCrops");
 				}
 			}
 

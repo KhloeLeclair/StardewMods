@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 using HarmonyLib;
 
@@ -288,6 +289,7 @@ public partial class ModEntry : PintailModSubscriber {
 		if (intGMCM is null || !intGMCM.IsLoaded)
 			return;
 
+		intGMCM.Unregister();
 		intGMCM.Register(true);
 
 		intGMCM
@@ -310,6 +312,10 @@ public partial class ModEntry : PintailModSubscriber {
 				(c, v) => c.ShowWeatherTooltip = v
 			)
 			.AddLabel("")
+			.AddLabel(I18n.Setting_Shaders, I18n.Setting_Shaders_Description, shortcut: "shaders")
+			.AddLabel(I18n.Setting_Development, shortcut: "dev");
+
+		intGMCM.StartPage("dev", I18n.Setting_Development)
 			.Add(
 				I18n.Setting_Debug,
 				I18n.Setting_Debug_About,
@@ -322,6 +328,50 @@ public partial class ModEntry : PintailModSubscriber {
 				c => c.RecompileShaders,
 				(c, v) => c.RecompileShaders = v
 			);
+
+		intGMCM.StartPage("shaders", I18n.Setting_Shaders)
+			.AddParagraph(I18n.Setting_Shaders_Description)
+			.Add(
+				I18n.Setting_Shaders_Enable,
+				I18n.Setting_Shaders_Enable_About,
+				c => c.AllowShaders,
+				(c, v) => {
+					c.AllowShaders = v;
+					UncacheLayers();
+				}
+			)
+			.AddLabel(I18n.Setting_Shaders_Specific);
+
+		LoadWeatherData();
+
+		HashSet<string> shaders = [];
+
+		foreach (var entry in Data.Values) {
+			if (entry.Layers is not null)
+				foreach (var layer in entry.Layers)
+					if (layer is IShaderLayerData sld && !string.IsNullOrEmpty(sld.Shader))
+						shaders.Add(Path.GetFileNameWithoutExtension(sld.Shader));
+		}
+
+		foreach (string shader in shaders) {
+			Func<string> name;
+			var tl = Helper.Translation.Get($"setting.shader.{shader}");
+			if (tl.HasValue())
+				name = tl.ToString;
+			else
+				name = () => shader;
+
+			intGMCM.Add(
+				name,
+				null,
+				c => !c.DisabledShaders.Contains(shader),
+				(c, v) => {
+					if (!v ? c.DisabledShaders.Add(shader) : c.DisabledShaders.Remove(shader))
+						UncacheLayers();
+				}
+			);
+		}
+
 	}
 
 	private void ResetConfig() {
@@ -342,8 +392,15 @@ public partial class ModEntry : PintailModSubscriber {
 	#region Events
 
 	[Subscriber]
-	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+	[EventPriority((EventPriority) int.MinValue)]
+	private void AfterGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
+		if (builder is not null)
+			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+	}
 
+	[Subscriber]
+	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		intGMCM = new(this, () => Config, ResetConfig, SaveConfig);
 		intCP = new(this);
 		intUF = new(this);
@@ -1013,12 +1070,22 @@ public partial class ModEntry : PintailModSubscriber {
 	internal List<IWeatherEffect>? GetCachedWeatherEffects(GameLocation? location = null, int? timeOfDay = null) {
 		var data = CachedWeather.Value;
 		location ??= Game1.player?.currentLocation;
-		if (location is null || data?.Effects is null || data.Effects.Count == 0)
+		EffectCache? cache = CachedEffects.Value;
+
+		if (location is null || data?.Effects is null || data.Effects.Count == 0) {
+			if (cache.HasValue) {
+				CachedEffects.Value = null;
+				if (cache.Value.Effects is not null)
+					foreach (var effect in cache.Value.Effects) {
+						RemoveLoadsAsset(effect.Id);
+						effect.Remove();
+					}
+			}
 			return null;
+		}
 
 		int hour = (timeOfDay ?? Game1.timeOfDay) / 100;
 
-		EffectCache? cache = CachedEffects.Value;
 		if (cache.HasValue && cache.Value.Data == data && cache.Value.EventUp == Game1.eventUp && cache.Value.Hour == hour && cache.Value.Location == location)
 			return cache.Value.Effects;
 
@@ -1121,14 +1188,20 @@ public partial class ModEntry : PintailModSubscriber {
 	internal List<IWeatherLayer>? GetCachedWeatherLayers(GameLocation? location = null, int? timeOfDay = null) {
 		var data = CachedWeather.Value;
 		location ??= Game1.currentLocation;
+		LayerCache? cache = CachedLayers.Value;
 		if (location is null || data?.Layers is null || data.Layers.Count == 0) {
 			HasShaderLayer.Value = false;
+			if (cache.HasValue) {
+				CachedLayers.Value = null;
+				if (cache.Value.Layers is not null)
+					foreach (var layer in cache.Value.Layers)
+						RemoveLoadsAsset(layer.Id);
+			}
 			return null;
 		}
 
 		int hour = (timeOfDay ?? Game1.timeOfDay) / 100;
 
-		LayerCache? cache = CachedLayers.Value;
 		if (cache.HasValue && cache.Value.Data == data && cache.Value.EventUp == Game1.eventUp && cache.Value.Hour == hour && cache.Value.Location == location)
 			return cache.Value.Layers;
 
@@ -1158,6 +1231,9 @@ public partial class ModEntry : PintailModSubscriber {
 				continue;
 
 			if (!string.IsNullOrEmpty(layer.Condition) && !GameStateQuery.CheckConditions(layer.Condition, ctx))
+				continue;
+
+			if (layer is IShaderLayerData sld && (!Config.AllowShaders || (sld.Shader != null && Config.DisabledShaders.Contains(sld.Shader))))
 				continue;
 
 			if (layer.Group != null)

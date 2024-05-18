@@ -64,6 +64,7 @@ public static class Music_Patches {
 
 			mod.Harmony.Patch(
 				original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.GetLocationSpecificMusic)),
+				prefix: new HarmonyMethod(typeof(Music_Patches), nameof(GameLocation_GetLocationSpecificMusic__Prefix)),
 				transpiler: new HarmonyMethod(typeof(Music_Patches), nameof(GameLocation_GetLocationSpecificMusic__Transpiler))
 			);
 
@@ -410,6 +411,24 @@ public static class Music_Patches {
 				yield return instr;
 		}
 
+	}
+
+	private static bool GameLocation_GetLocationSpecificMusic__Prefix(GameLocation __instance, ref string? __result) {
+		try {
+			var wd = PatchHelper.GetWeatherData(__instance);
+			if (wd?.SoftMusicOverrides != null)
+				foreach (var entry in wd.SoftMusicOverrides) {
+					if (string.IsNullOrEmpty(entry.Condition) || GameStateQuery.CheckConditions(entry.Condition, __instance)) {
+						__result = entry.Track;
+						return false;
+					}
+				}
+
+		} catch (Exception ex) {
+			Mod?.Log($"Error in GetLocationSpecificMusic__Prefix: {ex}", StardewModdingAPI.LogLevel.Error);
+		}
+
+		return true;
 	}
 
 	private static IEnumerable<CodeInstruction> GameLocation_GetLocationSpecificMusic__Transpiler(IEnumerable<CodeInstruction> instructions) {

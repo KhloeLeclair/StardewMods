@@ -17,6 +17,9 @@ using Newtonsoft.Json.Linq;
 
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewValley.GameData.Locations;
+
+
 
 #if IS_CLOUDY_SKIES
 using Leclair.Stardew.Common.Types;
@@ -457,6 +460,15 @@ public interface IWeatherData {
 	/// This does not affect all sound cues. Default is 100.
 	/// </summary>
 	float MusicFrequencyInside { get; set; }
+
+	/// <summary>
+	/// An optional list of <see cref="LocationMusicData"/> entries. If
+	/// this is set, these will be used when <see cref="StardewValley.GameLocation.GetLocationSpecificMusic"/>
+	/// is called in order to override music selection with more nuance than
+	/// <see cref="MusicOverride"/> offers. This will override the behavior
+	/// of <see cref="MusicOverride"/> if there is a matching entry.
+	/// </summary>
+	List<LocationMusicData>? SoftMusicOverrides { get; set; }
 
 	#endregion
 
@@ -1032,6 +1044,12 @@ public interface IShaderLayerData : ILayerData {
 	/// a built-in shader, or the absolute file path of a shader file.
 	/// </summary>
 	string? Shader { get; set; }
+
+	/// <summary>
+	/// An optional color to draw the shader with. This may be unsupported
+	/// depending on the shader.
+	/// </summary>
+	Color? Color { get; set; }
 
 	/// <summary>
 	/// A dictionary of configuration data for this shader, as parsed

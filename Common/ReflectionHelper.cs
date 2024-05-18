@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text;
+
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.Common;
 
@@ -12,6 +16,267 @@ internal static class ReflectionHelper {
 		string assembly = Assembly.GetExecutingAssembly().GetName().Name ?? "Unknown";
 		return $"{assembly}_{prefix}_{field.DeclaringType?.Name}_{field.Name}";
 	}
+
+	#region GetWhatIsPatchingMe
+
+#if HARMONY
+
+	public static void UnpatchMyStuff(Mod mod, HarmonyLib.Harmony harmony, Func<string, bool> shouldUnpatch) {
+
+		Assembly assembly = mod.GetType().Assembly;
+
+		foreach (var method in HarmonyLib.PatchProcessor.GetAllPatchedMethods()) {
+			if (method.DeclaringType?.Assembly != assembly)
+				continue;
+
+			var patches = HarmonyLib.PatchProcessor.GetPatchInfo(method);
+			foreach (string owner in patches.Owners) {
+				if (shouldUnpatch(owner)) {
+					harmony.Unpatch(method, HarmonyLib.HarmonyPatchType.All, owner);
+				}
+			}
+		}
+	}
+
+	public static void UnpatchMe(Mod mod, HarmonyLib.Harmony harmony, Func<string, bool> shouldUnpatch) {
+
+		UnpatchMyStuff(mod, harmony, shouldUnpatch);
+
+		var patches = GetPatchedMethodsInAssembly(mod.GetType().Assembly);
+
+		Dictionary<string, List<string>> ByOwner = new();
+
+		foreach (var entry in patches) {
+			foreach (string owner in entry.Value.Owners) {
+				if (shouldUnpatch(owner)) {
+					string name = ToTargetString(entry.Key, false) ?? entry.Key.Name;
+					if (!ByOwner.TryGetValue(owner, out var list)) {
+						list = [];
+						ByOwner[owner] = list;
+					}
+
+					list.Add(name);
+					harmony.Unpatch(entry.Key, HarmonyLib.HarmonyPatchType.All, owner);
+				}
+			}
+		}
+
+		foreach (var entry in ByOwner) {
+			var info = mod.Helper.ModRegistry.Get(entry.Key);
+			string name = info is null ? entry.Key : $"{info.Manifest.Name} ({entry.Key})";
+			string list = string.Join("\n  ", entry.Value);
+
+			mod.Monitor.Log($"Forcibly removed Harmony patches from {name}:\n  {list}", LogLevel.Warn);
+		}
+
+	}
+#endif
+
+	public static StringBuilder? WhatPatchesMe(Mod mod, string? indentation = null, bool brief = false) {
+#if HARMONY
+		if (indentation is null)
+			indentation = string.Empty;
+
+		var patches = GetPatchedMethodsInAssembly(mod.GetType().Assembly);
+
+		StringBuilder builder = new();
+
+		foreach (var entry in patches) {
+			string name = ToTargetString(entry.Key) ?? entry.Key.Name;
+			builder.AppendLine($"{indentation}{name}");
+
+			Dictionary<string, List<string>> ByOwner = new();
+
+			foreach (var patch in entry.Value.Prefixes) {
+				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
+					list = [];
+					ByOwner[patch.owner] = list;
+				}
+
+				if (brief)
+					list.Add($"prefix({patch.priority})");
+				else
+					list.Add($"prefix: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
+			}
+
+			foreach (var patch in entry.Value.Transpilers) {
+				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
+					list = [];
+					ByOwner[patch.owner] = list;
+				}
+
+				if (brief)
+					list.Add($"transpiler({patch.priority})");
+				else
+					list.Add($"transpiler: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
+			}
+
+			foreach (var patch in entry.Value.Postfixes) {
+				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
+					list = [];
+					ByOwner[patch.owner] = list;
+				}
+
+				if (brief)
+					list.Add($"postfix({patch.priority})");
+				else
+					list.Add($"postfix: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
+			}
+
+			foreach (var patch in entry.Value.Finalizers) {
+				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
+					list = [];
+					ByOwner[patch.owner] = list;
+				}
+
+				if (brief)
+					list.Add($"finalizer({patch.priority})");
+				else
+					list.Add($"finalizer: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
+			}
+
+			foreach (var pair in ByOwner) {
+				if (brief)
+					builder.AppendLine($"{indentation}- {pair.Key} : {string.Join(", ", pair.Value)}");
+				else {
+					builder.AppendLine($"{indentation}- {pair.Key}");
+					foreach (string le in pair.Value) {
+						builder.AppendLine($"{indentation}  - {le}");
+					}
+				}
+			}
+
+			builder.AppendLine("");
+		}
+
+		return builder;
+#else
+		return null;
+#endif
+	}
+
+#if HARMONY
+
+	/// <summary>
+	/// Generate a string for targeting a member of a type.
+	/// </summary>
+	/// <param name="member">The member we want a string for.</param>
+	/// <param name="replaceMenuWithHash">When true, if a type name starts with
+	/// <c>StardewValley.Menus.</c> it will be replaced with a <c>#</c> for
+	/// the sake of brevity.</param>
+	/// <param name="includeTypes">Whether or not a type list should be
+	/// included. By default, this is null and a list will be included only
+	/// if the member is a constructor or method AND there is potential
+	/// ambiguity in selecting the correct method.</param>
+	/// <param name="fullTypes">Whether or not the type list should include
+	/// the full types, or just the minimum necessary to uniquely match
+	/// the method.</param>
+	public static string? ToTargetString(this MemberInfo member, bool replaceMenuWithHash = true, bool? includeTypes = null, bool fullTypes = true) {
+		string? type = member.DeclaringType?.FullName;
+		if (type is null)
+			return null;
+
+		if (type.StartsWith("StardewValley.Menus.") && replaceMenuWithHash)
+			type = $"#{type[20..]}";
+
+		bool[]? differingTypes = null;
+		int min_types = 0;
+
+		if (!includeTypes.HasValue || !fullTypes) {
+			IEnumerable<MethodBase>? methods = null;
+
+			if (member is ConstructorInfo) {
+				var ctors = member.DeclaringType is not null ?
+					HarmonyLib.AccessTools.GetDeclaredConstructors(member.DeclaringType)
+					: null;
+
+				if (!includeTypes.HasValue)
+					includeTypes = ctors is null || ctors.Count > 1 || ctors[0] != member;
+
+				if (ctors is not null && ctors.Count > 1)
+					methods = ctors;
+
+			} else if (member is MethodBase) {
+				var meths = member.DeclaringType is not null ?
+					HarmonyLib.AccessTools.GetDeclaredMethods(member.DeclaringType).Where(x => x.Name.Equals(member.Name)).ToArray()
+					: null;
+
+				if (!includeTypes.HasValue)
+					includeTypes = meths is null || meths.Length > 1 || meths[0] != member;
+
+				if (meths is not null && meths.Length > 1)
+					methods = meths;
+
+			} else if (!includeTypes.HasValue)
+				includeTypes = false;
+
+			// If we have methods, work on the types.
+			if (methods is not null && member is MethodBase meth) {
+				var parameters = meth.GetParameters();
+				differingTypes = new bool[parameters.Length];
+
+				// TODO: This.
+			}
+		}
+
+		string? argumentList;
+
+		if (includeTypes.Value) {
+			string[] args;
+
+			if (member is MethodBase method) {
+				var parms = method.GetParameters();
+				args = new string[parms.Length];
+
+				for (int i = 0; i < parms.Length; i++)
+					args[i] = parms[i].ParameterType?.Name ?? string.Empty;
+
+			} else if (member is PropertyInfo prop)
+				args = [prop.PropertyType?.Name ?? string.Empty];
+
+			else if (member is FieldInfo field)
+				args = [field.FieldType?.Name ?? string.Empty];
+
+			else
+				args = [];
+
+			argumentList = $"({string.Join(',', args)})";
+		} else
+			argumentList = string.Empty;
+
+		string? assembly = member.DeclaringType?.Assembly.GetName().Name;
+		if (assembly is null || assembly == "Stardew Valley")
+			assembly = string.Empty;
+		else
+			assembly = $"{assembly}!";
+
+		string memberName = member.Name;
+		/*if (member is ConstructorInfo) {
+			memberName = "";
+			if (string.IsNullOrEmpty(argumentList))
+				argumentList = "()";
+		}*/
+
+		return $"{assembly}{type}:{memberName}{argumentList}";
+	}
+
+	public static Dictionary<MethodBase, HarmonyLib.Patches> GetPatchedMethodsInAssembly(Assembly? assembly = null) {
+		assembly ??= Assembly.GetExecutingAssembly();
+		Dictionary<MethodBase, HarmonyLib.Patches> result = [];
+
+		foreach (var method in HarmonyLib.PatchProcessor.GetAllPatchedMethods()) {
+			if (method.DeclaringType is null || method.DeclaringType.Assembly != assembly)
+				continue;
+
+			result[method] = HarmonyLib.PatchProcessor.GetPatchInfo(method);
+		}
+
+		return result;
+	}
+
+#endif
+
+	#endregion
 
 	#region Fields
 

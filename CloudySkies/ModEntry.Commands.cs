@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 
 using StardewModdingAPI;
@@ -162,7 +163,41 @@ public partial class ModEntry {
 		// Have a little fun.
 		SObject? item = ItemRegistry.Create("(O)789") as SObject; // ItemQueryResolver.TryResolveRandomItem("ALL_ITEMS", new ItemQueryContext()) as SObject;
 
-		UseWeatherTotem(Game1.player, input, item);
+		UseWeatherTotem(Game1.player, input, item, bypassChecks: true);
+	}
+
+	[ConsoleCommand("cs_fix_green_rain", "Remove lingering green rain effects from maps.")]
+	public void FixGreenRainCommand(string name, string[] args) {
+		if (!Context.IsWorldReady) {
+			Log($"Load the game first.", LogLevel.Error);
+			return;
+		}
+
+		if (!Game1.IsMasterGame) {
+			Log($"Only the host can do this.", LogLevel.Error);
+			return;
+		}
+
+		IEnumerable<GameLocation>? locations = null;
+
+		var parser = ArgumentParser.New()
+			.AddPositional<IEnumerable<GameLocation>>("Locations", val => locations = val);
+
+		if (!parser.TryParse(args, out string? error)) {
+			Log(error, LogLevel.Error);
+			return;
+		}
+
+		locations ??= CommonHelper.EnumerateLocations();
+
+		int count = 0;
+		if (locations is not null)
+			foreach (var location in locations) {
+				location.performDayAfterGreenRainUpdate();
+				count++;
+			}
+
+		Log($"Updated {count} locations.", LogLevel.Info);
 	}
 
 }

@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework;
 
 using Newtonsoft.Json;
 
+using StardewValley.GameData.Locations;
+
 namespace Leclair.Stardew.CloudySkies.Models;
 
 public class WeatherData : IWeatherData {
@@ -53,6 +55,8 @@ public class WeatherData : IWeatherData {
 	public float MusicFrequencyOutside { get; set; } = 100f;
 
 	public float MusicFrequencyInside { get; set; } = 100f;
+
+	public List<LocationMusicData>? SoftMusicOverrides { get; set; }
 
 	#endregion
 
