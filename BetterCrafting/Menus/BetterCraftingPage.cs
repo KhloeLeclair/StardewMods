@@ -921,8 +921,6 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		CurrentTab.Category.UseRules = !CurrentTab.Category.UseRules;
 
-		// TODO: Initialize selected recipes based on filters, maybe?
-
 		if (btnCategoryFilter is not null)
 			btnCategoryFilter.sourceRect = SourceCatFilter;
 
@@ -1244,7 +1242,16 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				if (scale >= 1)
 					scale = MathF.Round(scale);
 
+				int index = i;
+
 				var sb = FlowHelper.Builder()
+					.Texture(
+						Game1.mouseCursors,
+						new Rectangle(227 + (data.Inverted ? 0 : 9), 425, 9, 9),
+						scale: 2,
+						align: Alignment.VCenter
+					)
+					.Text(" ")
 					.Texture(
 						texture,
 						source,
@@ -1257,8 +1264,6 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				var extra = handler is IExtraInfoRuleHandler info ? info.GetExtraInfo(state) : null;
 				if (extra is not null)
 					sb.Text("\n").AddRange(extra);
-
-				int index = i;
 
 				var node = new Common.UI.FlowNode.SelectableNode(
 					sb.Build(),
@@ -1598,10 +1603,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (cat is null)
 			return false;
 
-		if (cat.UseRules && cat.CachedRecipes is not null && cat.CachedRecipes.Contains(recipe))
-			return true;
+		if (cat.UseRules) {
+			if (cat.CachedHiddenRecipes is not null && cat.CachedHiddenRecipes.Contains(recipe))
+				return false;
 
-		return /*!cat.UseRules &&*/ cat.Recipes is not null && cat.Recipes.Contains(recipe.Name);
+			if (cat.CachedRecipes is not null && cat.CachedRecipes.Contains(recipe))
+				return true;
+		}
+
+		return cat.Recipes is not null && cat.Recipes.Contains(recipe.Name);
 	}
 
 	#endregion
@@ -1768,11 +1778,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 							Lazy<Item?> result = new(() => recipe.CreateItemSafe(CreateLog));
 
 							bool matched = false;
+
 							foreach (var handler in cat.CachedRules) {
-								if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
+								if (handler.Item3.Inverted) {
+									if (matched && handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2))
+										matched = false;
+
+								} else if (!matched && handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2))
 									matched = true;
-									break;
-								}
 							}
 
 							if (matched) {
@@ -4131,11 +4144,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				Lazy<Item?> result = new(() => recipe.CreateItemSafe(CreateLog));
 
 				bool matched = false;
+
 				foreach (var handler in category.CachedRules) {
-					if (handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2)) {
+					if (handler.Item3.Inverted) {
+						if (matched && handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2))
+							matched = false;
+
+					} else if (!matched && handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2))
 						matched = true;
-						break;
-					}
 				}
 
 				if (matched)
@@ -4185,6 +4201,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		SetChildMenu(menu);
 		performHoverAction(0, 0);
 		return true;
+	}
+
+	public void ToggleRuleInverted(Category category, int index) {
+		if (!Editing || category is null || category.DynamicRules is null || category.DynamicRules.Count <= index || index < 0)
+			return;
+
+		DynamicRuleData data = category.DynamicRules[index];
+
+		data.Inverted = !data.Inverted;
+
+		category.DynamicRules[index] = data;
+		RefreshCategoryFilters(category);
+		PositionTabMoveButtons();
+		UpdateFlow();
 	}
 
 	public bool OpenRuleEditor(Category category, int index) {

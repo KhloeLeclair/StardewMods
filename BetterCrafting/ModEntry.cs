@@ -31,6 +31,7 @@ using StardewModdingAPI.Utilities;
 
 using StardewValley;
 using StardewValley.Buildings;
+using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 using StardewValley.Objects;
@@ -62,6 +63,8 @@ public class ModEntry : PintailModSubscriber {
 	private readonly PerScreen<IClickableMenu?> CurrentMenu = new();
 	private readonly PerScreen<Menus.BetterCraftingPage?> OldCraftingPage = new();
 	private readonly PerScreen<bool> OldCraftingGameMenu = new();
+
+	internal readonly PerScreen<Inventory> TrashedItems = new(() => new());
 
 	private bool? hasBiggerBackpacks;
 	private bool? hasLoveOfCooking;
@@ -131,6 +134,7 @@ public class ModEntry : PintailModSubscriber {
 		Patches.Item_Patches.Patch(this);
 		Patches.GameLocation_Patches.Patch(this);
 		Patches.Torch_Patches.Patch(this);
+		Patches.Utility_Patches.Patch(this);
 		Patches.Workbench_Patches.Patch(this);
 
 		// Read Config
@@ -239,6 +243,50 @@ public class ModEntry : PintailModSubscriber {
 	[EventPriority(EventPriority.High)]
 	private void HighMenuChanged(object? sender, MenuChangedEventArgs e) {
 		HandleMenuChanged(e);
+	}
+
+	[Subscriber]
+	private void OnClickRecycle(object? sender, ButtonPressedEventArgs e) {
+		if (!Config.AllowRecoverTrash ||
+			!e.Button.IsActionButton() ||
+			(Game1.activeClickableMenu is not null && !Game1.activeClickableMenu.readyToClose())
+		)
+			return;
+
+		var page = Game1.activeClickableMenu;
+		if (page is GameMenu gm)
+			page = gm.GetCurrentPage();
+
+		int x = Game1.getOldMouseX();
+		int y = Game1.getOldMouseY();
+
+		if (page is TrashGrabMenu)
+			return;
+
+		else if (page is ItemGrabMenu igm) {
+			if (!igm.trashCan.containsPoint(x, y))
+				return;
+
+		} else if (page is InventoryPage inv) {
+			if (!inv.trashCan.containsPoint(x, y))
+				return;
+
+		} else if (page is CraftingPage cp) {
+			if (!cp.trashCan.containsPoint(x, y))
+				return;
+
+		} else if (page is BetterCraftingPage bcp) {
+			if (!bcp.trashCan.containsPoint(x, y))
+				return;
+
+		} else
+			return;
+
+		Helper.Input.Suppress(e.Button);
+
+		Game1.nextClickableMenu.Insert(0, Game1.activeClickableMenu);
+		Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
+		Game1.playSound("trashcan");
 	}
 
 	private void HandleMenuChanged(MenuChangedEventArgs e) {
@@ -419,6 +467,21 @@ public class ModEntry : PintailModSubscriber {
 	}
 
 	[Subscriber]
+	[EventPriority((EventPriority) int.MinValue)]
+	private void AfterGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
+		if (builder is not null)
+			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+
+		ReflectionHelper.UnpatchMe(this, Harmony!, source => {
+			if (source == "FlyingTNT.ResourceStorage")
+				return true;
+
+			return false;
+		});
+	}
+
+	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		TextureWatcher = new(this, "Mods/leclair.bettercrafting/DynamicTextures/", (name, e) => {
 			return () => Helper.ModContent.Load<IRawTextureData>($"assets/{name}");
@@ -475,6 +538,13 @@ public class ModEntry : PintailModSubscriber {
 			}
 		});
 
+		Helper.ConsoleCommands.Add("bc_trash", "Open the trash reclaimation menu.", (name, args) => {
+			if (!Context.IsWorldReady || Game1.activeClickableMenu is not null)
+				return;
+
+			Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
+		});
+
 		Helper.ConsoleCommands.Add("bc_stations", "List all custom crafting stations, or open one if you provide a name.", (name, args) => {
 			if (args.Length > 0 && !string.IsNullOrEmpty(args[0])) {
 				string key = args[0].Trim();
@@ -507,6 +577,7 @@ public class ModEntry : PintailModSubscriber {
 	private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e) {
 		_UseGlobalSave = null;
 		AtTitle = false;
+		TrashedItems.ResetAllScreens();
 		RegisterSettings();
 
 		// Touch this to load our texture ahead of time.
@@ -518,6 +589,7 @@ public class ModEntry : PintailModSubscriber {
 	private void OnReturnToTitle(object? sender, ReturnedToTitleEventArgs e) {
 		_UseGlobalSave = null;
 		AtTitle = true;
+		TrashedItems.ResetAllScreens();
 		RegisterSettings();
 	}
 
@@ -857,6 +929,12 @@ public class ModEntry : PintailModSubscriber {
 				get: c => c.ShowAllTastes,
 				set: (c, v) => c.ShowAllTastes = v
 			)
+			.Add(
+				name: I18n.Setting_RecoverTrash,
+				tooltip: I18n.Setting_RecoverTrash_About,
+				get: c => c.AllowRecoverTrash,
+				set: (c, v) => c.AllowRecoverTrash = v
+			)
 			.AddChoice(
 				name: I18n.Setting_Priority,
 				tooltip: I18n.Setting_Priority_Tip,
@@ -884,12 +962,10 @@ public class ModEntry : PintailModSubscriber {
 				tooltip: I18n.Setting_NewRecipes_Prismatic_Tip,
 				get: c => c.NewRecipesPrismatic,
 				set: (c, v) => c.NewRecipesPrismatic = v
-			);
+			)
 
-		GMCMIntegration
-			.AddLabel(I18n.Setting_Bindings, I18n.Setting_Bindings_Tip, "page:bindings");
+			.AddLabel(I18n.Setting_Bindings, I18n.Setting_Bindings_Tip, "page:bindings")
 
-		GMCMIntegration
 			.AddLabel(I18n.Setting_Crafting, I18n.Setting_Crafting_Tip)
 			.Add(
 				I18n.Setting_UniformGrid,
@@ -914,9 +990,8 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_ShowUnknown_Tip,
 				c => c.DisplayUnknownCrafting,
 				(c, v) => c.DisplayUnknownCrafting = v
-			);
+			)
 
-		GMCMIntegration
 			.AddLabel(I18n.Setting_Cooking, I18n.Setting_Cooking_Tip)
 			.Add(
 				I18n.Setting_Alphabetic,
@@ -936,9 +1011,8 @@ public class ModEntry : PintailModSubscriber {
 				I18n.Setting_HideUnknown_Tip,
 				c => c.HideUnknown,
 				(c, val) => c.HideUnknown = val
-			);
+			)
 
-		GMCMIntegration
 			.AddLabel(I18n.Setting_Quality)
 			.AddParagraph(I18n.Setting_Quality_Tip)
 			.Add(
@@ -992,9 +1066,8 @@ public class ModEntry : PintailModSubscriber {
 					0 => I18n.Setting_Nearby_Nearby_Off(),
 					_ => I18n.Setting_Nearby_Nearby_Tiles($"{Math.Pow(2, val + 1)}")
 				}
-			);
+			)
 
-		GMCMIntegration
 			.AddLabel(
 				I18n.Setting_Recycle,
 				I18n.Setting_Recycle_About,

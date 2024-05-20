@@ -146,6 +146,9 @@
 	"setting.nearby.fences": "Fences",
 	"setting.nearby.other": "Other Examples",
 
+	"setting.recover-trash": "Recover Trash",
+	"setting.recover-trash.about": "When this is enabled, you can right-click on your trash can to open a menu for recovering trashed items. Please note that the menu will only remember up to 36 items at a time.",
+
 	"setting.recycle": "Recycling",
 	"setting.recycle.about": "When this is enabled, you can use the crafting menu to recycle items and get back the items that were used to craft it.",
 
@@ -370,6 +373,9 @@
 	// Dynamic Filters
 	"filter.add-new": "Add New Rule",
 	"filter.from-rule": "Enabled By Rule",
+
+	"filter.include-toggle": "Include in Category",
+	"filter.include-toggle.about": "Whether recipes matching this rule should be included in or excluded from the category.",
 
 	"filter.storage": "Storage",
 	"filter.storage.about": "This rule matches items that act as storage, like chests or hoppers.",

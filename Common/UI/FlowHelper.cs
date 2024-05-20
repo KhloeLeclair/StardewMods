@@ -630,7 +630,8 @@ public static class FlowHelper {
 						scale = sp;
 					if (ns.Scale == scale)
 						continue;
-					ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: scale);
+					ns = new(ns, scale: scale);
+					//ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: scale);
 					break;
 
 				case 'b':
@@ -650,7 +651,7 @@ public static class FlowHelper {
 					i = ni;
 					if (ns.ShadowColor == color)
 						continue;
-					ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: color, scale: ns.Scale);
+					ns = new(ns, ns.Font, ns.Color, ns.BackgroundColor, color);
 					break;
 
 				case 'C':
@@ -658,7 +659,7 @@ public static class FlowHelper {
 					i = ni;
 					if (ns.Color == color)
 						continue;
-					ns = new(ns, font: ns.Font, color: color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: ns.Scale);
+					ns = new(ns, ns.Font, color, ns.BackgroundColor, ns.ShadowColor);
 					break;
 
 				case 'f':
@@ -740,7 +741,7 @@ public static class FlowHelper {
 					i = ni;
 					if (ns.BackgroundColor == color)
 						continue;
-					ns = new(ns, font: ns.Font, color: ns.Color, backgroundColor: color, shadowColor: ns.ShadowColor, scale: ns.Scale);
+					ns = new(ns, ns.Font, ns.Color, color, ns.ShadowColor);
 					break;
 
 				case 's':
@@ -770,7 +771,7 @@ public static class FlowHelper {
 					}
 					if (ns.Font == font)
 						continue;
-					ns = new(ns, font: font, color: ns.Color, backgroundColor: ns.BackgroundColor, shadowColor: ns.ShadowColor, scale: ns.Scale);
+					ns = new(ns, font, ns.Color, ns.BackgroundColor, ns.ShadowColor);
 					break;
 
 				case 'u':

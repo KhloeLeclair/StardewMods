@@ -65,6 +65,8 @@ public class ModConfig : IBetterCraftingConfig {
 
 	public ShowMatchingItemMode ShowMatchingItem { get; set; } = ShowMatchingItemMode.Disabled;
 
+	public bool AllowRecoverTrash { get; set; } = true;
+
 	public bool UseFullHeight { get; set; } = false;
 
 	public bool ReplaceCooking { get; set; } = true;

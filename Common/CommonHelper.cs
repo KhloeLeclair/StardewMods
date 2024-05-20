@@ -1,11 +1,14 @@
 #nullable enable
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+
+using Leclair.Stardew.Common.Types;
 
 using Microsoft.Xna.Framework;
 
@@ -560,6 +563,72 @@ public static class CommonHelper {
 	#endregion
 
 	#region Strings
+
+	/// <summary>
+	/// A more efficient version of the game's <see cref="ArgUtility.SplitQuoteAware(string, char, StringSplitOptions, bool)"/> method.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="delimiter"></param>
+	/// <param name="splitOptions"></param>
+	/// <param name="keepQuotesAndEscapes"></param>
+	/// <returns></returns>
+	internal static string[] SplitQuoteAware(string input, char delimiter, StringSplitOptions splitOptions = StringSplitOptions.None, bool keepQuotesAndEscapes = false) {
+		if (string.IsNullOrEmpty(input))
+			return [];
+
+		if (!input.Contains('"'))
+			return input.Split(delimiter, splitOptions);
+
+		bool trimEntries = splitOptions.HasFlag(StringSplitOptions.TrimEntries);
+		bool removeEmpty = splitOptions.HasFlag(StringSplitOptions.RemoveEmptyEntries);
+
+		var span = input.AsSpan();
+		if (trimEntries)
+			span = span.Trim();
+
+		List<string> values = [];
+
+		bool inQuotes = false;
+		bool escapeNext = false;
+
+		ValueStringBuilder vsb = new(stackalloc char[256]);
+
+		foreach (char c in span) {
+			if (escapeNext)
+				escapeNext = false;
+			else if (c == '\\') {
+				escapeNext = true;
+				if (!keepQuotesAndEscapes)
+					continue;
+
+			} else if (c == '"') {
+				inQuotes = !inQuotes;
+				if (!keepQuotesAndEscapes)
+					continue;
+			} else if (c == delimiter && !inQuotes) {
+				var segment = vsb.AsSpan();
+				if (trimEntries)
+					segment = segment.Trim();
+				if (!(removeEmpty && segment.IsEmpty))
+					values.Add(segment.ToString());
+				vsb.Clear();
+				continue;
+			}
+
+			vsb.Append(c);
+		}
+
+		if (vsb.Length > 0) {
+			var segment = vsb.AsSpan();
+			if (trimEntries)
+				segment = segment.Trim();
+			if (!(removeEmpty && segment.IsEmpty))
+				values.Add(segment.ToString());
+		}
+
+		return values.ToArray();
+	}
+
 
 	internal static int IndexOfWhitespace(this string text, int startIndex = 0) {
 		int i = startIndex;

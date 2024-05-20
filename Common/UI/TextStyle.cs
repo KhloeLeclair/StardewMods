@@ -56,7 +56,7 @@ public struct TextStyle {
 	/// <param name="font"></param>
 	/// <param name="color"></param>
 	/// <param name="shadowColor"></param>
-	public TextStyle(TextStyle existing, SpriteFont? font, Color? color, Color? backgroundColor, Color? shadowColor, float? scale, float? opacity) {
+	public TextStyle(TextStyle existing, SpriteFont? font, Color? color, Color? backgroundColor, Color? shadowColor) {
 		Fancy = existing.Fancy;
 		Junimo = existing.Junimo;
 		Bold = existing.Bold;
@@ -66,7 +66,7 @@ public struct TextStyle {
 		BackgroundColor = backgroundColor;
 		Prismatic = existing.Prismatic;
 		Font = font;
-		Scale = scale;
+		Scale = existing.Scale;
 		Strikethrough = existing.Strikethrough;
 		Underline = existing.Underline;
 		Invert = existing.Invert;
@@ -89,6 +89,7 @@ public struct TextStyle {
 		Invert = invert ?? existing.Invert;
 		Opacity = opacity ?? existing.Opacity;
 	}
+
 
 	public bool HasShadow() {
 		return Shadow ?? true;

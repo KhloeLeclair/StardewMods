@@ -1,5 +1,63 @@
 # Changelog
 
+## 2.11.0
+Released May 20th, 2024.
+
+### Added
+* Feature to recover trashed items. Just right-click on the trash can
+  in your menu (not all menus supported) to open a menu containing items
+  you've recently thrown in the trash. Up to 36 items are remembered at
+  any given time.
+* Ability to invert dynamic rules to exclude recipes from a category,
+  rather than including them.
+
+### Compatibility
+* Introduced a feature to block harmful Harmony patches from other mods.
+  I do not block other mods by default, but I reserve the right to do so
+  if another mod causes Better Crafting to break.
+* Start logging any mods that have applied Harmony patches to Better Crafting
+  at the end of the Game Started event.
+* Added `Resource Storage` to the list of mods that are not allowed to
+  Harmony patch Better Crafting. This is because Resource Storage attempts
+  to apply patches to modify how Better Crafting consumes items, but it
+  does so inconsistently and players will be presented with a confusing
+  situation where it seems as though they have enough items to perform
+  a craft but actually trying to do the craft does nothing.
+
+### Fixed
+* Minor text rendering issue where a color would leak outside of a colored
+  text segment.
+
+
+## 2.10.0
+Released May 13th, 2024.
+
+### Added
+* `Show Unknown Recipes` setting to display unknown recipes in the
+  crafting menu, similarly to how they're displayed in the cooking
+  menu. That is to say: greyed out.
+* `Show Matching Items` setting to display exactly which items should
+  be consumed when performing a craft. This *may* be inaccurate but it
+  is unlikely. This is disabled by default.
+
+### Changed
+* Recipes that create items with a quality greater than low quality
+  will now display a quality icon on the crafting menu.
+
+### Fixed
+* Integration with SpaceCore Vanilla Asset Expansion crafting recipe
+  overrides. I found a way to fix it without needing to wait for Casey
+  to merge my pull request.
+* Tool-tip caching not working correctly when the crafting menu
+  is in category editing mode.
+
+### API
+* Much of our configuration is now exposed via our API.
+* `CategoryIcon` now has a `Frames` property that can be used to set how
+  many frames of animation should be displayed. Note that this is largely
+  untested, but it should allow for animated station icons.
+
+
 ## 2.9.0
 Released May 5th, 2024.
 

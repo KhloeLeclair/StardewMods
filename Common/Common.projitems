@@ -35,6 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)types\ModAssetEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)types\ValueStringBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\AttachmentSlotsNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\DynamicDrawingNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpookyActionAtADistance.cs" />
