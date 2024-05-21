@@ -42,17 +42,17 @@
 	"setting.alphabetic.tip": "有効にすると、デフォルトの順序ではなく、アルファベット順にレシピが並べ替えられます。",
 
 	"setting.replace-crafting": "クラフトメニューを置き換える",
-	"setting.replace-crafting.tip": "有効にすると、クラフトメニューがBetter Craftingの実装に置き換えられます。",
+	"setting.replace-crafting.tip": "有効にすると、クラフトメニューがBetter Craftingのものに置き換えられます。",
 
 	"setting.replace-cooking": "調理メニューを置き換える",
-	"setting.replace-cooking.tip": "有効にすると、調理メニューがBetter Craftingの実装に置き換えられます。",
+	"setting.replace-cooking.tip": "有効にすると、調理メニューがBetter Craftingのものに置き換えられます。",
 
 	"setting.enable-categories": "カテゴリを有効にする",
 	"setting.enable-categories.tip": "クラフトメニューにカテゴリタブを表示し、すべてを1つのリストとして表示するのではなく、分類して表示します。",
 
 	"setting.new-recipes": "新レシピを強調表示",
 	"setting.new-recipes.tip": "これを有効にすると、新しいレシピには「NEW」ラベルが表示されます。",
-	"setting.new-recipes.uncrafted": "未製作",
+	"setting.new-recipes.uncrafted": "未クラフト",
 	"setting.new-recipes.unseen": "未発見",
 	"setting.new-recipes.disabled": "無効",
 
@@ -96,7 +96,7 @@
 	"setting.show-matching-items.always": "常に表示",
 	"setting.show-matching-items.fuzzy": "曖昧表示",
 	"setting.show-matching-items.fuzzy-quality": "曖昧・高品質表示",
-	"setting.show-matching-items.tip": "Better Craftingのツールチップに、アイテムのクラフト時に消費されるアイテムのリストを表示するかどうか。ここでいう「あいまい」とは、「タマゴ（任意）」のように、複数のアイテムにマッチする食材を意味する。高品質とは、基本品質よりも高い品質を持つ品目を意味します。",
+	"setting.show-matching-items.tip": "Better Craftingのツールチップに、アイテムのクラフト時に消費されるアイテムのリストを表示するかどうか。ここでいう「曖昧」とは、「タマゴ（任意）」のように、複数のアイテムにマッチする食材を意味する。高品質とは、基本品質よりも高い品質を持つ品目を意味します。",
 
 	"setting.source-mod": "ツールチップにMOD情報を表示する",
 	"setting.source-mod.tip": "有効にすると、MOD追加アイテムがBetter Craftingのツールチップの下に表示される。",
@@ -166,7 +166,7 @@
 
 	"setting.recycle-mode.enabled": "常に",
 	"setting.recycle-mode.disabled": "しない",
-	"setting.recycle-mode.automatic": "自動 (リサイクル可能なアイテムを持っている時のみ)",
+	"setting.recycle-mode.automatic": "自動 (リサイクル可能な場合)",
 
 	"setting.recycle.click-toggle": "クリックで切り替え",
 	"setting.recycle.click-toggle.tip": "有効にすると、クラフトメニューのゴミ箱をクリックしてリサイクルの ON/OFF を切り替えられます。アイテムを持っていない時のみ動作します。",
@@ -195,8 +195,8 @@
 	"setting.cookout": "野外料理キットの調整",
 	"setting.cookout.about": "これらの設定では、野外料理キットの動作を作業台に似たものに変更します。",
 
-	"setting.cookout.workbench": "Workbenchのような接続性",
-	"setting.cookout.workbench.tip": "有効にすると、野外料理キットもWorkbenchと同様に近くの箱から素材を引き出すようになります。",
+	"setting.cookout.workbench": "作業台のような接続性",
+	"setting.cookout.workbench.tip": "有効にすると、野外料理キットも作業台と同様に近くの箱から素材を引き出すようになります。",
 
 	"setting.cookout.durable": "持続性の高いキット",
 	"setting.cookout.durable.tip": "有効にすると、野外料理キットは一晩経っても消えず、壊しても消えなくなります。",
@@ -212,8 +212,8 @@
 	"setting.enable-quality": "品質制限を有効にする",
 	"setting.enable-quality.tip": "有効にすると、クラフト時に使用する品質の上限を選択できるボタンが表示されます。",
 
-	"setting.sort-quality": "低品質のものを先に使う",
-	"setting.sort-quality.tip": "有効にすると、低品質のアイテムから優先的に使われます。",
+	"setting.sort-quality": "普通品質のものを先に使う",
+	"setting.sort-quality.tip": "有効にすると、普通品質のアイテムから優先的に使われます。",
 
 	// Crafting
 	"setting.crafting": "クラフト",
@@ -296,9 +296,9 @@
 	"tooltip.filter.disabled": "ダイナミックルール: 無効",
 	"tooltip.filter.about": "これにより、個別のレシピを選択するのではなく、ルールに基づいてカテゴリを作成できます。",
 
-	"tooltip.include-in-misc": "雑多なカテゴリに含める: 有効",
-	"tooltip.include-in-misc.disabled": "雑多なカテゴリに含める: 無効",
-	"tooltip.include-in-misc.about": "通常、他のカテゴリにあるレシピは雑多なカテゴリに表示されません。有効にすると、このカテゴリのレシピも雑多なカテゴリに表示されるようになります。",
+	"tooltip.include-in-misc": "その他カテゴリに含める: 有効",
+	"tooltip.include-in-misc.disabled": "その他カテゴリに含める: 無効",
+	"tooltip.include-in-misc.about": "通常、他のカテゴリにあるレシピはその他カテゴリに表示されません。有効にすると、このカテゴリのレシピもその他カテゴリに表示されるようになります。",
 
 	"tooltip.search": "レシピを検索",
 	"tooltip.search.old-tip": "ヒント: 検索を「@B{{prefix}}@b」から始めると、素材でも検索できます。「@B{{likes}}@b」から始めると好きなキャラクター、「@B{{loves}}@b」から始めると大好きなキャラクターでも検索できます。",
@@ -313,9 +313,9 @@
 
 	"tooltip.select-icon": "アイコンを選択",
 
-	"tooltip.quality.none": "低品質のアイテムのみ使用する",
-	"tooltip.quality.silver": "低品質と銀品質のアイテムを使用する",
-	"tooltip.quality.gold": "低品質、銀品質、金品質のアイテムを使用する",
+	"tooltip.quality.none": "普通品質のアイテムのみ使用する",
+	"tooltip.quality.silver": "普通品質とシルバー品質のアイテムを使用する",
+	"tooltip.quality.gold": "普通品質、シルバー品質、ゴールド品質のアイテムを使用する",
 	"tooltip.quality.iridium": "どの品質のアイテムでも使用する",
 
 	"tooltip.quality-unsupported": "このレシピは品質設定をサポートしていません。",
@@ -338,13 +338,13 @@
 	// Categories
 	"category.new": "新しいカテゴリ",
 	"category.favorites": "お気に入り",
-	"category.combat_rings": "戦闘とリング",
+	"category.combat_rings": "戦闘と指輪",
 	"category.consumables": "消耗品",
-	"category.decoration": "装飾",
-	"category.fertilizer_seeds": "肥料と種",
+	"category.decoration": "装飾品",
+	"category.fertilizer_seeds": "肥料とタネ",
 	"category.fishing": "釣り",
-	"category.machinery": "機械",
-	"category.misc": "雑多",
+	"category.machinery": "設備",
+	"category.misc": "その他",
 
 	"category.food.farming": "農業と採取",
 	"category.food.mining": "採掘と磁力",
@@ -378,59 +378,59 @@
 	"filter.include-toggle.about": "このルールに一致するレシピをカテゴリーに含めるか除外するか。",
 
 	"filter.storage": "ストレージ",
-	"filter.storage.about": "このルールは、箱やホッパーといったストレージアイテムに一致します。",
+	"filter.storage.about": "このルールは、箱やホッパーといったストレージアイテムに一致させる。",
 
 	"filter.everything": "すべて",
-	"filter.everything.about": "このルールはすべてのレシピに一致します。",
+	"filter.everything.about": "このルールはすべてのレシピに一致させる。",
 
 	"filter.new-buff": "バフ",
-	"filter.new-buff.about": "このルールは、消費すると特定のバフを与えるアイテムに一致します。",
+	"filter.new-buff.about": "このルールは、消費すると特定のバフを与えるアイテムに一致させる。",
 
 	"filter.uncrafted": "未クラフト",
-	"filter.uncrafted.about": "このルールは、まだクラフトしたことがないアイテムに一致します。",
+	"filter.uncrafted.about": "このルールは、まだクラフトしたことがないアイテムに一致させる。",
 
 	"filter.search": "検索",
-	"filter.search.about": "このルールは、製造メニューの検索と同じルールでアイテムに一致します。",
+	"filter.search.about": "このルールは、クラフトメニューの検索と同じルールでアイテムに一致させる。",
 
 	"filter.mod": "MOD追加アイテム",
-	"filter.mod.about": "このルールは特定のmodによって追加されたすべてのレシピにマッチしようとします。",
+	"filter.mod.about": "このルールは特定のmodによって追加されたすべてのレシピに一致させる。",
 
 	"filter.gift-taste": "贈り物の好み：{{taste}}",
-	"filter.gift-taste.about": "このルールはNPCが{{taste}}なアイテムにマッチしようとします。「未発見の贈り物の好みを表示」を有効にしていない限り、既知の好みしか表示されません。",
+	"filter.gift-taste.about": "このルールはNPCが{{taste}}なアイテムに一致させる。「未発見の贈り物の好みを表示」を有効にしていない限り、既知の好みしか表示されません。",
 	"filter.gift-taste.likes": "好き",
 	"filter.gift-taste.loves": "大好き",
 	"filter.gift-taste.dislikes": "嫌い",
 	"filter.gift-taste.hates": "大嫌い",
 
-	"filter.machine": "マシン",
-	"filter.machine.about": "このルールは、アイテムを処理したり何らかの機能を持つマシンアイテムに一致します。",
+	"filter.machine": "設備",
+	"filter.machine.about": "このルールは、アイテムを処理したり何らかの機能を持つ設備系アイテムに一致させる。",
 
 	"filter.sprinkler": "スプリンクラー",
-	"filter.sprinkler.about": "このルールはスプリンクラーに一致します。",
+	"filter.sprinkler.about": "このルールはスプリンクラーに一致させる。",
 
 	"filter.floors": "床と小道",
-	"filter.floors.about": "このルールはすべての床と小道に一致します。",
+	"filter.floors.about": "このルールはすべての床と小道に一致させる。",
 
 	"filter.fences": "柵",
-	"filter.fences.about": "このルールはすべての柵に一致します。",
+	"filter.fences.about": "このルールはすべての柵に一致させる。",
 
 	"filter.furniture": "家具",
-	"filter.furniture.about": "このルールはすべての家具に一致します。",
+	"filter.furniture.about": "このルールはすべての家具に一致させる。",
 
 	"filter.light": "ライト",
-	"filter.light.about": "このルールは設置型のライトに一致します。",
+	"filter.light.about": "このルールは設置型のライトに一致させる。",
 
 	"filter.error": "無効なルール",
 	"filter.error.about": "このルールIDは無効か登録されていません。恐らく、削除されたMODから来たものです。",
 
 	"filter.category": "カテゴリー",
-	"filter.category.about": "このルールは特定のカテゴリー内のアイテムに一致します。",
+	"filter.category.about": "このルールは特定のカテゴリー内のアイテムに一致させる。",
 
 	"filter.context-tag": "コンテキストタグ",
-	"filter.context-tag.about": "このルールは、特定のコンテキストタグを持つアイテムに一致します。",
+	"filter.context-tag.about": "このルールは、特定のコンテキストタグを持つアイテムに一致させる。",
 
 	"filter.edible": "食材",
-	"filter.edible.about": "このルールは食べられるものに一致します。",
+	"filter.edible.about": "このルールは食べられるものに一致させる。",
 
 	"filter.recipe-count": "レシピ数：{{count}}",
 
