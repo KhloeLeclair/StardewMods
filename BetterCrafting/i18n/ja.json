@@ -146,6 +146,9 @@
 	"setting.nearby.fences": "柵",
 	"setting.nearby.other": "その他",
 
+	"setting.recover-trash": "ゴミ箱からの復元",
+	"setting.recover-trash.about": "有効にすると、ゴミ箱を右クリックして、ゴミ箱に入れたアイテムを復元するメニューを開くことができます。メニューは一度に36項目までしか記憶されませんのでご注意ください。",
+
 	"setting.recycle": "リサイクル",
 	"setting.recycle.about": "有効にするとクラフトメニューでアイテムをリサイクルして、\nそれを作るのに使った素材を取り戻すことができます。",
 
@@ -371,14 +374,17 @@
 	"filter.add-new": "新しいルールを追加",
 	"filter.from-rule": "ルールで有効",
 
+	"filter.include-toggle": "カテゴリに含める",
+	"filter.include-toggle.about": "このルールに一致するレシピをカテゴリーに含めるか除外するか。",
+
 	"filter.storage": "ストレージ",
 	"filter.storage.about": "このルールは、箱やホッパーといったストレージアイテムに一致します。",
 
 	"filter.everything": "すべて",
 	"filter.everything.about": "このルールはすべてのレシピに一致します。",
 
-	"filter.buff": "Buff: {{type}}",
-	"filter.buff.about": "このルールは、消費すると{{type}}のBuffを付与するアイテムに一致します。",
+	"filter.new-buff": "バフ",
+	"filter.new-buff.about": "このルールは、消費すると特定のバフを与えるアイテムに一致します。",
 
 	"filter.uncrafted": "未クラフト",
 	"filter.uncrafted.about": "このルールは、まだクラフトしたことがないアイテムに一致します。",
@@ -430,4 +436,5 @@
 
 	// Kitchen
 	"station.kitchen": "キッチン"
+
 }
