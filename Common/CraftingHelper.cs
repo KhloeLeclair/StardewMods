@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_CRAFTING
 
 using System;
 using System.Collections.Generic;
@@ -55,9 +55,11 @@ public static class CraftingHelper {
 		return HasIngredients(recipe.Ingredients, who, items, inventories, maxQuality, matchingItems);
 	}
 
-	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems) {
+	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems, bool[]? modifiedInventories) {
 		if (ingredients != null) {
 			GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
+
+			InventoryHelper.GlobalModified = inventories != null && modifiedInventories != null ? (inventories, modifiedInventories) : null;
 
 			foreach (var entry in ingredients) {
 				if (entry.Quantity < 1 || !entry.PassesConditionQuery(ctx))
@@ -72,12 +74,14 @@ public static class CraftingHelper {
 				else
 					entry.Consume(who, inventories, maxQuality, lowQualityFirst);
 			}
+
+			InventoryHelper.GlobalModified = null;
 		}
 	}
 
-	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems) {
+	public static void Consume(this IRecipe recipe, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems, bool[]? modifiedInventories) {
 		if (recipe.Ingredients != null)
-			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst, matchingItems, consumedItems);
+			ConsumeIngredients(recipe.Ingredients, who, inventories, maxQuality, lowQualityFirst, matchingItems, consumedItems, modifiedInventories);
 	}
 
 
@@ -94,3 +98,5 @@ public static class CraftingHelper {
 	}
 
 }
+
+#endif

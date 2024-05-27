@@ -81,6 +81,8 @@ public class GiftTasteRuleHandler : DynamicTypeHandler<NPC?>, IOptionInputRuleHa
 
 		Dictionary<NPC, int> chars = [];
 
+		bool show_all = Mod.Config.EffectiveShowAllTastes;
+
 		Utility.ForEachCharacter(npc => {
 			if (npc.CanSocialize) {
 				// Check that the NPC should appear.
@@ -91,7 +93,7 @@ public class GiftTasteRuleHandler : DynamicTypeHandler<NPC?>, IOptionInputRuleHa
 				int count = 0;
 
 				foreach (var sobj in craftables) {
-					if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, sobj.ItemId))
+					if (!show_all && !Game1.player.hasGiftTasteBeenRevealed(npc, sobj.ItemId))
 						continue;
 
 					int taste;
@@ -130,7 +132,7 @@ public class GiftTasteRuleHandler : DynamicTypeHandler<NPC?>, IOptionInputRuleHa
 		if (npc is null || item.Value is not SObject sobj || sobj.bigCraftable.Value)
 			return false;
 
-		if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, sobj.ItemId))
+		if (!Mod.Config.EffectiveShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, sobj.ItemId))
 			return false;
 
 		int taste;

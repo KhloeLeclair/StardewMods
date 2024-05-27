@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Collections;
@@ -1732,3 +1732,5 @@ public static class FlowHelper {
 		return result;
 	}
 }
+
+#endif

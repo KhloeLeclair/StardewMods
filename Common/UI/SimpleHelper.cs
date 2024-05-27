@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using Leclair.Stardew.Common.UI.SimpleLayout;
 
@@ -142,3 +142,5 @@ public static class SimpleHelper {
 	}
 
 }
+
+#endif

@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using System;
 
@@ -43,7 +43,7 @@ public class SpriteNode : ISimpleNode {
 
 		if (Quantity > 0) {
 			float qScale = (float) Math.Round(Scale * 0.75f);
-			float qX = (16*Scale) - Utility.getWidthOfTinyDigitString(Quantity, qScale) + qScale;
+			float qX = (16 * Scale) - Utility.getWidthOfTinyDigitString(Quantity, qScale) + qScale;
 			if (qX < 0)
 				width -= qX;
 		}
@@ -116,3 +116,5 @@ public class SpriteNode : ISimpleNode {
 		}
 	}
 }
+
+#endif

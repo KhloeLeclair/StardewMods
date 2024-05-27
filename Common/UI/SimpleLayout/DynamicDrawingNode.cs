@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using System;
 
@@ -37,3 +37,5 @@ public class DynamicDrawingNode : ISimpleNode {
 
 	}
 }
+
+#endif

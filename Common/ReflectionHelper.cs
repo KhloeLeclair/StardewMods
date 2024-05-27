@@ -74,8 +74,7 @@ internal static class ReflectionHelper {
 
 	public static StringBuilder? WhatPatchesMe(Mod mod, string? indentation = null, bool brief = false) {
 #if HARMONY
-		if (indentation is null)
-			indentation = string.Empty;
+		indentation ??= string.Empty;
 
 		var patches = GetPatchedMethodsInAssembly(mod.GetType().Assembly);
 

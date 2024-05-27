@@ -1,3 +1,5 @@
+#if COMMON_MUTEX
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +18,7 @@ namespace Leclair.Stardew.Common;
 
 public class AdvancedMultipleMutexRequest {
 
-	public static ModSubscriber? Mod;
+	public static ModSubscriber? Mod { get; internal set; }
 
 	private readonly IModHelper? Helper;
 	private readonly int Timeout;
@@ -295,3 +297,5 @@ public class AdvancedMultipleMutexRequest {
 	}
 
 }
+
+#endif

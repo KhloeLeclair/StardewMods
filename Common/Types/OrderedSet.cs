@@ -433,7 +433,7 @@ public class OrderedSet<TValue> : ICollection<TValue>, IEnumerable<TValue>, IRea
 			Clear();
 
 		else {
-			HashSet<TValue> removed = new HashSet<TValue>(_Comparer);
+			HashSet<TValue> removed = new(_Comparer);
 
 			foreach (TValue item in other) {
 				if (Remove(item))
@@ -462,7 +462,7 @@ public class OrderedSet<TValue> : ICollection<TValue>, IEnumerable<TValue>, IRea
 		int count = _Dictionary.Count;
 		int length = BitHelper.ToIntArrayLength(count);
 		Span<int> data = length <= 100 ? stackalloc int[length] : GC.AllocateUninitializedArray<int>(length);
-		BitHelper helper = new BitHelper(data, clear: true);
+		BitHelper helper = new(data, clear: true);
 
 		foreach (TValue item in other) {
 			int idx = IndexOf(item);

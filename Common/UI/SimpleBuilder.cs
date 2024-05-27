@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using System;
 using System.Collections.Generic;
@@ -85,6 +85,7 @@ public interface ISimpleBuilder {
 	/// <param name="size">The minimum size of this space.</param>
 	ISimpleBuilder Space(bool expand = true, float size = 16);
 
+#if COMMON_FLOW
 	/// <summary>
 	/// Add a Flow layout to the builder. Flow is the name of the
 	/// rich text layout system, which incorporated word wrapping
@@ -99,7 +100,7 @@ public interface ISimpleBuilder {
 	/// <param name="align">How this node should be aligned
 	/// within its parent node.</param>
 	ISimpleBuilder Flow(IEnumerable<FlowNode.IFlowNode> nodes, bool wrapText = true, float minWidth = -1, Alignment align = Alignment.None);
-
+#endif
 
 	ISimpleBuilder Texture(Texture2D texture, Rectangle? source = null, float scale = 1f, bool drawShadow = false, Alignment align = Alignment.None);
 
@@ -109,7 +110,9 @@ public interface ISimpleBuilder {
 
 	ISimpleBuilder Attachments(Item item, Alignment align = Alignment.None);
 
+#if COMMON_FLOW
 	ISimpleBuilder FormatText(string text, Color? color = null, bool? prismatic = null, SpriteFont? font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, bool wrapText = false, float minWidth = -1, Alignment align = Alignment.None);
+#endif
 
 	ISimpleBuilder Text(string? text, Color? color = null, bool? prismatic = null, SpriteFont? font = null, bool? fancy = null, bool? bold = null, bool? shadow = null, Color? shadowColor = null, bool? strikethrough = null, bool? underline = null, float? scale = null, Alignment align = Alignment.None);
 
@@ -147,7 +150,7 @@ public class SimpleBuilder : ISimpleBuilder {
 	[MemberNotNull(nameof(Nodes))]
 	private void AssertState() {
 		if (Built != null) throw new ArgumentException("cannot modify built layout");
-		if (Nodes == null) Nodes = new();
+		Nodes ??= new();
 	}
 
 	public ISimpleBuilder Add(ISimpleNode node) {
@@ -193,11 +196,13 @@ public class SimpleBuilder : ISimpleBuilder {
 		return this;
 	}
 
+#if COMMON_FLOW
 	public ISimpleBuilder Flow(IEnumerable<FlowNode.IFlowNode> nodes, bool wrapText = true, float minWidth = -1, Alignment align = Alignment.None) {
 		AssertState();
 		Nodes.Add(new SimpleLayout.FlowNode(nodes, wrapText, minWidth, align));
 		return this;
 	}
+#endif
 
 	public ISimpleBuilder Texture(Texture2D texture, Rectangle? source = null, float scale = 1f, bool drawShadow = false, Alignment align = Alignment.None) {
 		AssertState();
@@ -223,6 +228,7 @@ public class SimpleBuilder : ISimpleBuilder {
 		return this;
 	}
 
+#if COMMON_FLOW
 	public ISimpleBuilder FormatText(string text, TextStyle style, bool wrapText = false, float minWidth = -1, Alignment align = Alignment.None) {
 		AssertState();
 		Nodes.Add(new SimpleLayout.FlowNode(
@@ -250,6 +256,7 @@ public class SimpleBuilder : ISimpleBuilder {
 
 		return FormatText(text, style, wrapText, minWidth, align);
 	}
+#endif
 
 	public ISimpleBuilder Text(string? text, TextStyle style, Alignment align = Alignment.None) {
 		AssertState();
@@ -296,7 +303,7 @@ public class SimpleBuilder : ISimpleBuilder {
 	[MemberNotNull(nameof(Built))]
 	public ISimpleNode[] BuildThis() {
 		if (Built != null) return Built;
-		Built = Nodes?.ToArray() ?? Array.Empty<ISimpleNode>();
+		Built = Nodes?.ToArray() ?? [];
 		Layout.Children = Built;
 		Nodes = null;
 		return Built;
@@ -307,3 +314,5 @@ public class SimpleBuilder : ISimpleBuilder {
 		return Layout;
 	}
 }
+
+#endif

@@ -1219,13 +1219,20 @@ public interface IBetterCraftingMenu {
 /// Better Crafting menu is opened, and serves to allow other mods to add
 /// or remove specific containers from a menu.
 /// </summary>
-public interface IPopulateContainersEvent {
+public interface IPopulateContainersEvent : ISimplePopulateContainersEvent {
 
 	/// <summary>
 	/// The relevant Better Crafting menu.
 	/// </summary>
 	IBetterCraftingMenu Menu { get; }
 
+}
+
+/// <summary>
+/// A simplified interface for the PopulateContainers event that allows
+/// you to remove the IBetterCraftingMenu interface.
+/// </summary>
+public interface ISimplePopulateContainersEvent {
 	/// <summary>
 	/// A list of all the containers this menu should draw items from.
 	/// </summary>
@@ -1236,8 +1243,9 @@ public interface IPopulateContainersEvent {
 	/// own container discovery logic, if you so desire.
 	/// </summary>
 	bool DisableDiscovery { get; set; }
-
 }
+
+
 
 /// <summary>
 /// This event is emitted by <see cref="IBetterCrafting"/> whenever the
@@ -1383,6 +1391,13 @@ public interface IBetterCrafting {
 	/// </summary>
 	IBetterCraftingMenu? GetActiveMenu();
 
+	/// <summary>
+	/// Cast an <see cref="IClickableMenu"/> to a <see cref="IBetterCraftingMenu"/>
+	/// if it's an instance of our menu, or return <c>null</c> otherwise.
+	/// </summary>
+	/// <param name="menu">The menu to cast.</param>
+	IBetterCraftingMenu? GetMenu(IClickableMenu menu);
+
 	#endregion
 
 	#region Events
@@ -1398,6 +1413,20 @@ public interface IBetterCrafting {
 	/// allowing other mods to manipulate the list of containers.
 	/// </summary>
 	event Action<IPopulateContainersEvent>? MenuPopulateContainers;
+
+	/// <summary>
+	/// This event is fired whenever a new Better Crafting menu is opened,
+	/// allowing other mods to manipulate the list of containers. This
+	/// version of the event doesn't include a reference to the menu, which
+	/// makes it possible to reduce the amount of the API file you're
+	/// using by quite a bit.
+	/// </summary>
+	event Action<ISimplePopulateContainersEvent>? MenuSimplePopulateContainers;
+
+	/// <summary>
+	/// This event is fired whenever a Better Crafting menu is closed.
+	/// </summary>
+	event Action<IClickableMenu>? MenuClosing;
 
 	/// <summary>
 	/// This event is fired whenever a player crafts an item using
@@ -1715,6 +1744,14 @@ public interface IBetterCrafting {
 	/// </summary>
 	/// <param name="type"></param>
 	void UnregisterInventoryProvider(Type type);
+
+	/// <summary>
+	/// Get an inventory provider for the provided thing. If there are no
+	/// inventory providers capable of handling the thing, returns
+	/// <c>null</c> instead.
+	/// </summary>
+	/// <param name="thing">The instance to get an inventory provider for.</param>
+	IInventoryProvider? GetProvider(object thing);
 
 	#endregion
 

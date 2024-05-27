@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Collections.Generic;
@@ -755,3 +755,5 @@ public class ScrollableFlow {
 	#endregion
 
 }
+
+#endif

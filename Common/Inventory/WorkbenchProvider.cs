@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_BCINVENTORY
 
 using System.Collections.Generic;
 
@@ -22,7 +22,7 @@ public class WorkbenchProvider : BaseInventoryProvider<Workbench> {
 	}
 
 	public override void CleanInventory(Workbench obj, GameLocation? location, Farmer? who) {
-		
+
 	}
 
 	public override int GetActualCapacity(Workbench obj, GameLocation? location, Farmer? who) {
@@ -61,3 +61,5 @@ public class WorkbenchProvider : BaseInventoryProvider<Workbench> {
 		return null;
 	}
 }
+
+#endif

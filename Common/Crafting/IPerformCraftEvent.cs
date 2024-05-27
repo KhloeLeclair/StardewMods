@@ -1,5 +1,7 @@
 #nullable enable
 
+#if COMMON_CRAFTING
+
 using System.Collections.Generic;
 
 using StardewValley;
@@ -81,3 +83,6 @@ public interface IGlobalPerformCraftEventV2 : IGlobalPerformCraftEvent {
 	IReadOnlyDictionary<IIngredient, List<Item>> MatchingItems { get; }
 
 }
+
+
+#endif

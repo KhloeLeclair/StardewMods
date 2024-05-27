@@ -1,4 +1,4 @@
-#nullable enable
+#if (COMMON_SIMPLELAYOUT || COMMON_FLOW)
 
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Leclair.Stardew.Common.UI;
 
-public struct TextStyle {
+public readonly struct TextStyle {
 
 	public readonly static TextStyle EMPTY = new();
 	public readonly static TextStyle BOLD = new(bold: true);
@@ -176,3 +176,5 @@ public struct TextStyle {
 
 	#endregion
 }
+
+#endif

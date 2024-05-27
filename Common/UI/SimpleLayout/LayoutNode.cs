@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using System;
 using System.Linq;
@@ -331,3 +331,5 @@ public class LayoutNode : ILayoutNode {
 		}
 	}
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if COMMON_CRAFTING
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -47,3 +49,6 @@ public interface IPostCraftEvent {
 	List<Item> ConsumedItems { get; }
 
 }
+
+
+#endif

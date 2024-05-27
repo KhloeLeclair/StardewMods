@@ -11,9 +11,21 @@ public class ValueEqualityList<TValue> : List<TValue> {
 
 	public ValueEqualityList() : base() { }
 
+	public ValueEqualityList(IEqualityComparer<TValue> comparer) : base() {
+		equalityComparer = comparer;
+	}
+
 	public ValueEqualityList(int capacity) : base(capacity) { }
 
+	public ValueEqualityList(int capacity, IEqualityComparer<TValue> comparer) : base(capacity) {
+		equalityComparer = comparer;
+	}
+
 	public ValueEqualityList(IEnumerable<TValue> values) : base(values) { }
+
+	public ValueEqualityList(IEnumerable<TValue> values, IEqualityComparer<TValue> comparer) : base(values) {
+		equalityComparer = comparer;
+	}
 
 	public override bool Equals(object? obj) {
 		if (obj is not IList<TValue> olist || olist.Count != Count)

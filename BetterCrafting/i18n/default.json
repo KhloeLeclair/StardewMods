@@ -101,6 +101,9 @@
 	"setting.source-mod": "Show Source Mod in Tool-tips",
 	"setting.source-mod.tip": "When enabled, the mod that added any given item will be displayed at the bottom of Better Crafting's tool-tips.",
 
+	"setting.enforce-multiplayer": "Enforce Multiplayer Balance",
+	"setting.enforce-multiplayer.tip": "When enabled, some settings that may be 'cheaty' can only be controlled by the multiplayer host. This applies to 'Recover Trash', recycling, and showing gift tastes.",
+
 	"setting.ttwhen.Never": "Never",
 	"setting.ttwhen.ForController": "When Using Controller",
 	"setting.ttwhen.Always": "Always",
@@ -110,6 +113,9 @@
 	"setting.action.Favorite": "Toggle Favorite",
 	"setting.action.BulkCraft": "Bulk Craft",
 	"setting.action.BulkCook": "Bulk Cook",
+
+	"setting.invalid-storage-types": "Disallowed Storage Types",
+	"setting.invalid-storage-types.tip": "This allows you to disable certain types of storage objects (Chests, Hoppers, etc.) from being used.",
 
 	"setting.nearby": "Extended Workbench",
 	"setting.nearby.tip": "This feature allows Workbenches and your kitchen to connect to more chests at once, improving on the game's default range of one block. You can create chains of connected chests, or use allowed connectors to bridge gaps.",
@@ -151,6 +157,9 @@
 
 	"setting.recycle": "Recycling",
 	"setting.recycle.about": "When this is enabled, you can use the crafting menu to recycle items and get back the items that were used to craft it.",
+
+	"setting.recycle.higher-quality": "Allow Higher Quality",
+	"setting.recycle.higher-quality.tip": "When this is enabled, you can recycle an item if it's of a higher quality than the recipe produces. You can never recycle an item of a lower quality than the recipe produces.",
 
 	"setting.recycle.fuzzy": "Fuzzy Item Matching",
 	"setting.recycle.fuzzy.tip": "Some crafting recipes don't require specific items, instead matching things like \"Egg (Any)\". By default, these aren't returned. Enabling this will return the cheapest matching item in such cases.",

@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.12.0
+Released May 27th, 2024.
+
+### Added
+* Setting to enforce some feature flags in multiplayer. Notably, this can
+  be used by the multiplayer host to disable the recover trash feature, to
+  disable the setting to reveal all gift tastes, to disable recycling items
+  with unknown recipes, and to disable recycling recipes with fuzzy items.
+* Setting to recycle items of higher-quality than any known recipe produces,
+  which is now enabled by default.
+* Setting to mark specific storage items as invalid for the purpose of acting
+  as sources of items. You can use this to, for example, stop Better Crafting
+  from using items that are in Hoppers.
+
+### Changed
+* Inventories are now cleaned only once per crafting operation, once the
+  crafting has finished, to avoid doing a lot of redundant work.
+
+### Fixed
+* Issue where crafting too many items would crash due to a stack exception.
+* The crafting menu now protects any items that are in its list of inventories
+  from use in crafting, as well as being trashed or removed from the player's
+  inventory.
+
+### API
+* Added new, simpler event for populating menu containers to allow mods to
+  listen to the event while also avoiding needing to include `IBetterCraftingMenu`,
+  `IRecipe`, etc. in their copy of the API file.
+* Added new event for when a menu closes.
+* Added method for casting an `IClickableMenu` to an `IBetterCraftingMenu`,
+  if the provided menu is one of our menus.
+
+
 ## 2.11.0
 Released May 20th, 2024.
 

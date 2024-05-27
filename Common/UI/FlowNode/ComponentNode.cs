@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Collections.Generic;
@@ -133,3 +133,5 @@ public struct ComponentNode : IFlowNode {
 		return !(left == right);
 	}
 }
+
+#endif

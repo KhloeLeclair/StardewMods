@@ -45,9 +45,9 @@ public class BaseIngredient : IOptimizedIngredient, IConsumptionPreTrackingIngre
 		if (NumericId >= 0)
 			Data = ItemRegistry.GetDataOrErrorItem(ItemId);
 
-		IngList = new KeyValuePair<string, int>[] {
+		IngList = [
 			new(ItemId, Quantity)
-		};
+		];
 	}
 
 	#region IConditionalIngredient

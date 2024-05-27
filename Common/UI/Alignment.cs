@@ -1,4 +1,4 @@
-#nullable enable
+#if (COMMON_SIMPLELAYOUT || COMMON_FLOW)
 
 using System;
 
@@ -38,3 +38,5 @@ public static class AlignmentHelper {
 	}
 
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if COMMON_WIDGETS
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -191,3 +193,5 @@ public class KObject {
 	#endregion
 
 }
+
+#endif

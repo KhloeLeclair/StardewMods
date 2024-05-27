@@ -285,11 +285,13 @@ public class RecipeManager : BaseManager {
 		List<NPC> loves = new();
 		List<NPC> likes = new();
 
+		bool show_all = Mod.Config.EffectiveShowAllTastes;
+
 		foreach (NPC npc in chars) {
 			if (!npc.CanSocialize)
 				continue;
 
-			if (!Mod.Config.ShowAllTastes && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ItemId))
+			if (!show_all && !Game1.player.hasGiftTasteBeenRevealed(npc, item.ItemId))
 				continue;
 
 			int taste;
@@ -455,7 +457,7 @@ public class RecipeManager : BaseManager {
 			LoadCategories();
 
 		long id = who.UniqueMultiplayerID;
-		Category[]? result = null;
+		Category[]? result;
 		AppliedStuff? applied = null;
 
 		if (cooking) {
@@ -468,7 +470,7 @@ public class RecipeManager : BaseManager {
 				applied = defs.Crafting;
 		}
 
-		result ??= (cooking ? DefaultCookingCategories : DefaultCraftingCategories) ?? Array.Empty<Category>();
+		result ??= (cooking ? DefaultCookingCategories : DefaultCraftingCategories) ?? [];
 
 		if (ApplyCategoryChanges(ref result, ref applied, cooking ? API_Cooking : API_Crafting)) {
 			// If we've made changes, store them.
@@ -563,8 +565,7 @@ public class RecipeManager : BaseManager {
 					appliedRecipes.Add(recipe);
 					changed = true;
 
-					if (cat.Recipes is null)
-						cat.Recipes = new();
+					cat.Recipes ??= new();
 					if (!cat.Recipes.Contains(recipe))
 						cat.Recipes.Add(recipe);
 				}

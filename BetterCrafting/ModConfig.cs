@@ -1,10 +1,17 @@
 #nullable enable
 
+using System;
+
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Inventory;
 using Leclair.Stardew.Common.Types;
 
+using Newtonsoft.Json;
+
+using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
+
+using StardewValley;
 
 namespace Leclair.Stardew.BetterCrafting;
 
@@ -57,7 +64,50 @@ public enum ShowMatchingItemMode {
 	FuzzyQuality
 };
 
+[AttributeUsage(AttributeTargets.Property)]
+public class MultiplayerSyncSetting : Attribute { }
+
+
 public class ModConfig : IBetterCraftingConfig {
+
+	internal bool? GetSyncedBool(string key, bool defaultIfMultiplayer = false) {
+		return Context.IsMultiplayer ?
+			(Game1.MasterPlayer?.modData != null &&
+			Game1.MasterPlayer.modData.TryGetValue($"leclair.bettercrafting/{key}", out string? stored) &&
+			bool.TryParse(stored, out bool val)
+				? val
+				: defaultIfMultiplayer)
+			: null;
+	}
+
+	internal int? GetSyncedInt(string key, int defaultIfMultiplayer = 0) {
+		return Context.IsMultiplayer ?
+			(Game1.MasterPlayer?.modData != null &&
+			Game1.MasterPlayer.modData.TryGetValue($"leclair.bettercrafting/{key}", out string? stored) &&
+			int.TryParse(stored, out int val)
+				? val
+				: defaultIfMultiplayer)
+			: null;
+	}
+
+	[JsonIgnore]
+	internal bool EffectiveEnforceSettings => Context.IsMultiplayer && (GetSyncedBool(nameof(EnforceSettings)) ?? EnforceSettings);
+
+	[JsonIgnore]
+	internal bool EffectiveAllowRecoverTrash => AllowRecoverTrash && (!EffectiveEnforceSettings
+		|| (GetSyncedBool(nameof(AllowRecoverTrash)) ?? false));
+
+	[JsonIgnore]
+	internal bool EffectiveShowAllTastes => ShowAllTastes && (!EffectiveEnforceSettings
+		|| (GetSyncedBool(nameof(ShowAllTastes)) ?? false));
+
+	[JsonIgnore]
+	internal bool EffectiveRecycleUnknownRecipes => RecycleUnknownRecipes && (!EffectiveEnforceSettings
+		|| (GetSyncedBool(nameof(RecycleUnknownRecipes)) ?? false));
+
+	[JsonIgnore]
+	internal bool EffectiveRecycleFuzzyItems => RecycleFuzzyItems && (!EffectiveEnforceSettings
+		|| (GetSyncedBool(nameof(RecycleFuzzyItems)) ?? false));
 
 	public string Theme { get; set; } = "automatic";
 
@@ -65,6 +115,10 @@ public class ModConfig : IBetterCraftingConfig {
 
 	public ShowMatchingItemMode ShowMatchingItem { get; set; } = ShowMatchingItemMode.Disabled;
 
+	[MultiplayerSyncSetting]
+	public bool EnforceSettings { get; set; } = false;
+
+	[MultiplayerSyncSetting]
 	public bool AllowRecoverTrash { get; set; } = true;
 
 	public bool UseFullHeight { get; set; } = false;
@@ -81,7 +135,10 @@ public class ModConfig : IBetterCraftingConfig {
 	public MenuPriority MenuPriority { get; set; } = MenuPriority.Normal;
 
 	public GiftMode ShowTastes { get; set; } = GiftMode.Shift;
+
+	[MultiplayerSyncSetting]
 	public bool ShowAllTastes { get; set; } = false;
+
 	public GiftStyle TasteStyle { get; set; } = GiftStyle.Heads;
 
 	public NewRecipeMode NewRecipes { get; set; } = NewRecipeMode.Disabled;
@@ -111,8 +168,13 @@ public class ModConfig : IBetterCraftingConfig {
 	public RecyclingMode RecycleCrafting { get; set; } = RecyclingMode.Disabled;
 	public RecyclingMode RecycleCooking { get; set; } = RecyclingMode.Disabled;
 
+	[MultiplayerSyncSetting]
 	public bool RecycleUnknownRecipes { get; set; } = false;
+
+	[MultiplayerSyncSetting]
 	public bool RecycleFuzzyItems { get; set; } = false;
+
+	public bool RecycleHigherQuality { get; set; } = true;
 
 
 	// Standard Crafting
@@ -134,10 +196,15 @@ public class ModConfig : IBetterCraftingConfig {
 	public int MaxCheckedTiles { get; set; } = 500;
 	public int MaxWorkbenchGap { get; set; } = 0;
 
+
+
 	// Nearby Chests
+	[MultiplayerSyncSetting]
 	public int NearbyRadius { get; set; } = 0;
 
 	public bool UseDiagonalConnections { get; set; } = true;
+
+	public CaseInsensitiveHashSet InvalidStorages { get; set; } = new();
 
 	public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();
 

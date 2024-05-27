@@ -1,13 +1,13 @@
-
-using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.UI.SimpleLayout;
+#if COMMON_SIMPLELAYOUT
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+namespace Leclair.Stardew.Common.UI.SimpleLayout;
+
 public class EmptyNode : ISimpleNode {
 
-	public static EmptyNode Instance = new EmptyNode();
+	public static readonly EmptyNode Instance = new();
 
 	public Alignment Alignment => Alignment.None;
 
@@ -21,3 +21,5 @@ public class EmptyNode : ISimpleNode {
 		return Vector2.Zero;
 	}
 }
+
+#endif

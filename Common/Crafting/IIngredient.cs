@@ -1,5 +1,7 @@
 #nullable enable
 
+#if COMMON_CRAFTING
+
 using System.Collections.Generic;
 
 using Leclair.Stardew.Common.Inventory;
@@ -207,3 +209,5 @@ public interface IOptimizedIngredient : IIngredient {
 	}
 
 }
+
+#endif

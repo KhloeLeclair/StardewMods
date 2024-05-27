@@ -1,3 +1,5 @@
+#if COMMON_CRAFTING
+
 using System;
 
 using Leclair.Stardew.Common.Crafting;
@@ -100,3 +102,5 @@ public class DynamicRecipeSpriteInfo : SpriteInfo {
 
 	}
 }
+
+#endif

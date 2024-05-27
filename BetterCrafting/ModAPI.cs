@@ -127,6 +127,11 @@ public class ModAPI : IBetterCrafting {
 		return null;
 	}
 
+	/// <inheritdoc />
+	public IBetterCraftingMenu? GetMenu(IClickableMenu menu) {
+		return menu is BetterCraftingPage bcp ? bcp : null;
+	}
+
 	#endregion
 
 	#region Events
@@ -147,10 +152,13 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;
 
+	/// <inheritdoc />
+	public event Action<ISimplePopulateContainersEvent>? MenuSimplePopulateContainers;
+
 	internal bool EmitMenuPopulate(BetterCraftingPage menu, ref IList<LocatedInventory>? containers) {
 		bool disable_discovery = false;
 
-		if (MenuPopulateContainers is not null) {
+		if (MenuPopulateContainers is not null || MenuSimplePopulateContainers is not null) {
 			List<Tuple<object, GameLocation?>> values = containers == null ? new() :
 				containers.Select(x => new Tuple<object, GameLocation?>(x.Source, x.Location)).ToList();
 
@@ -159,7 +167,8 @@ public class ModAPI : IBetterCrafting {
 			};
 
 			try {
-				MenuPopulateContainers.Invoke(evt);
+				MenuPopulateContainers?.Invoke(evt);
+				MenuSimplePopulateContainers?.Invoke(evt);
 			} catch (Exception ex) {
 				Mod.Log($"There was an error in the MenuPopulateContainers event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
 			}
@@ -173,6 +182,19 @@ public class ModAPI : IBetterCrafting {
 		}
 
 		return disable_discovery;
+	}
+
+	/// <inheritdoc />
+	public event Action<IClickableMenu>? MenuClosing;
+
+	internal void EmitMenuClosing(BetterCraftingPage menu) {
+		if (MenuClosing != null) {
+			try {
+				MenuClosing.Invoke(menu);
+			} catch (Exception ex) {
+				Mod.Log($"There was an error in the MenuClosing event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+			}
+		}
 	}
 
 	/// <inheritdoc />
@@ -412,6 +434,11 @@ public class ModAPI : IBetterCrafting {
 	/// <inheritdoc />
 	public void UnregisterInventoryProvider(Type type) {
 		Mod.UnregisterInventoryProvider(type);
+	}
+
+	/// <inheritdoc />
+	public IInventoryProvider? GetProvider(object thing) {
+		return Mod.GetInventoryProvider(thing);
 	}
 
 	#endregion

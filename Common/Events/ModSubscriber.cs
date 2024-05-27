@@ -6,8 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-using Leclair.Stardew.Common.Types;
-
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
@@ -194,24 +192,6 @@ public abstract class ModSubscriber : Mod {
 		RegisterTriggerActions();
 		RegisterGameStateQueries();
 		RegisterConsoleCommands();
-	}
-
-	public void CheckRecommendedIntegrations() {
-		// Missing Integrations?
-		RecommendedIntegration[]? integrations;
-
-		try {
-			integrations = Helper.Data.ReadJsonFile<RecommendedIntegration[]>("assets/recommended_integrations.json");
-			if (integrations == null) {
-				Log("No recommendations found. Our data file seems to be missing.");
-				return;
-			}
-		} catch (Exception ex) {
-			Log($"Unable to load recommended integrations data file.", LogLevel.Warn, ex);
-			return;
-		}
-
-		LoadingHelper.CheckIntegrations(this, integrations);
 	}
 
 }

@@ -45,7 +45,9 @@ public static class CommonHelper {
 		if ((input == null) || (other == null)) return false;
 		if (input.Count != other.Count) return false;
 
-		comparer ??= EqualityComparer<TValue>.Default;
+		comparer ??= input is ValueEqualityList<TValue> vel
+			? vel.Comparer
+			: EqualityComparer<TValue>.Default;
 
 		for (int i = 0; i < input.Count; i++) {
 			if (!comparer.Equals(input[i], other[i]))
@@ -60,7 +62,9 @@ public static class CommonHelper {
 		if ((input == null) || (other == null)) return false;
 		if (input.Count != other.Count) return false;
 
-		comparer ??= EqualityComparer<TValue>.Default;
+		comparer ??= input is ValueEqualityDictionary<TKey, TValue> ved
+			? ved.ValueComparer
+			: EqualityComparer<TValue>.Default;
 
 		foreach (var entry in input) {
 			if (!other.TryGetValue(entry.Key, out TValue? value))
@@ -556,8 +560,9 @@ public static class CommonHelper {
 		return result;
 	}
 
-	public static IEnumerable<T> GetValues<T>() {
-		return Enum.GetValues(typeof(T)).Cast<T>();
+	public static IEnumerable<TEnum> GetValues<TEnum>() where TEnum : struct, Enum {
+		return Enum.GetValues<TEnum>();
+		//return Enum.GetValues(typeof(T)).Cast<T>();
 	}
 
 	#endregion
@@ -672,6 +677,15 @@ public static class CommonHelper {
 
 	#endregion
 
+	internal static IEnumerable<NPC> EnumerateCharacters(IEnumerable<GameLocation>? locations = null, bool includeEventActors = false, bool? dateable = null) {
+		foreach (var location in locations ?? EnumerateLocations(true, true)) {
+			foreach (NPC npc in location.characters) {
+				if ((includeEventActors || !npc.EventActor) && (!dateable.HasValue || dateable.Value == npc.datable.Value))
+					yield return npc;
+			}
+		}
+	}
+
 	internal static IEnumerable<GameLocation> EnumerateLocations(bool includeInteriors = true, bool includeGenerated = false) {
 
 		GameLocation current = Game1.currentLocation;
@@ -744,20 +758,43 @@ public static class CommonHelper {
 		return new((int) pos.X, (int) pos.Y);
 	}
 
-	public static void YeetMenu(IClickableMenu menu) {
+	private static Action<IClickableMenu?>? ActiveMenuSetter;
+
+	[MemberNotNull(nameof(ActiveMenuSetter))]
+	private static void LoadActiveMenuSetter() {
+		if (ActiveMenuSetter == null) {
+			var field = typeof(Game1).GetField("_activeClickableMenu", BindingFlags.Static | BindingFlags.NonPublic)
+				?? throw new ArgumentNullException("Could not get _activeClickableMenu field");
+
+			ActiveMenuSetter = field.CreateSetter<IClickableMenu?>();
+		}
+	}
+
+
+	/// <summary>
+	/// Call <see cref="IClickableMenu.exitThisMenu(bool)"/> without actually
+	/// modifying <see cref="Game1.activeClickableMenu"/>. This allows us to
+	/// ensure that any pending <see cref="Game1.nextClickableMenu"/> entries
+	/// aren't made active when we're replacing a menu with our own.
+	/// </summary>
+	/// <param name="menu">The menu being removed.</param>
+	public static void YeetMenu(this IClickableMenu menu) {
 		if (menu == null) return;
 
-		MethodInfo? CleanupMethod = menu.GetType().GetMethod("cleanupBeforeExit", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		menu.behaviorBeforeCleanup?.Invoke(menu);
+		IClickableMenu? active = Game1.activeClickableMenu;
 
-		if (CleanupMethod != null && CleanupMethod.GetParameters().Length == 0)
-			CleanupMethod.Invoke(menu, null);
+		bool is_active = menu == active;
+		bool is_game_menu_active = !is_active && active is GameMenu gm && gm.GetCurrentPage() == menu;
 
-		if (menu.exitFunction != null) {
-			IClickableMenu.onExit exitFunction = menu.exitFunction;
-			menu.exitFunction = null;
-			exitFunction();
+		if (is_active || is_game_menu_active) {
+			LoadActiveMenuSetter();
+			ActiveMenuSetter(null);
 		}
+
+		menu.exitThisMenu(playSound: false);
+
+		if (is_game_menu_active)
+			ActiveMenuSetter!(active);
 	}
 
 }

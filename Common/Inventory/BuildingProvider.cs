@@ -1,3 +1,5 @@
+#if COMMON_BCINVENTORY
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,3 +91,5 @@ public class BuildingProvider : BaseInventoryProvider<Building> {
 	}
 
 }
+
+#endif

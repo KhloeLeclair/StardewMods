@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Linq;
@@ -172,3 +172,5 @@ public class SelectableNode : IFlowNode {
 	#endregion
 
 }
+
+#endif

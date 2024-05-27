@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Collections.Generic;
@@ -381,3 +381,5 @@ public struct TextSlice : IFlowNodeSlice {
 		return !(left == right);
 	}
 }
+
+#endif

@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_BCINVENTORY
 
 using System.Collections.Generic;
 
@@ -110,3 +110,5 @@ public interface IBCInventory {
 	/// </summary>
 	int GetActualCapacity();
 }
+
+#endif
