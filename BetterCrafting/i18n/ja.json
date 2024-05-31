@@ -24,13 +24,13 @@
 	"theme.automatic": "自動",
 	"theme.default": "デフォルト",
 
-	"setting.gift-taste-style": "住人の表示形式",
+	"setting.gift-taste-style": "プレゼントの好みの表示形式",
 	"setting.gift-taste-style.heads": "アイコン",
 	"setting.gift-taste-style.names": "名前",
-	"setting.gift-taste-style.tip": "アイコンに設定すると、プレゼントの好みが各住人の顔のアイコンで表示されます。名前に設定した場合は、住人の名前が表示されます。",
+	"setting.gift-taste-style.tip": "アイコンに設定すると、各住人のプレゼントの好みが顔のアイコンで表示されます。名前に設定した場合は、住人の名前が表示されます。",
 
-	"setting.gift-taste": "住人の好みの表示",
-	"setting.gift-taste.tip": "有効にすると、アイテムのツールチップに住人の好みが表示されるようになります。検索機能で好みのレシピを検索した時は、この設定が無効でも常にマッチします。",
+	"setting.gift-taste": "プレゼントの好みの表示",
+	"setting.gift-taste.tip": "有効にすると、アイテムのツールチップにプレゼントの好みが表示されるようになります。検索機能で好みのレシピを検索した時は、この設定が無効でも常にマッチします。",
 	"setting.gift-taste.never": "無効",
 	"setting.gift-taste.shift": "Shiftを押している間",
 	"setting.gift-taste.always": "常に",
@@ -91,6 +91,19 @@
 	"setting.key.tooltip": "ホットキーの表示",
 	"setting.key.tooltip.tip": "有効にすると、Better Craftingのツールチップの下にホットキーが表示されるようになります。",
 
+	"setting.show-matching-items": "マッチするアイテムの表示",
+	"setting.show-matching-items.never": "無効",
+	"setting.show-matching-items.always": "常に",
+	"setting.show-matching-items.fuzzy": "あいまいな材料",
+	"setting.show-matching-items.fuzzy-quality": "あいまい/高品質な材料",
+	"setting.show-matching-items.tip": "Better Craftingのツールチップに、アイテムの製作によって消費するアイテムの一覧を表示するかどうかを設定します。「あいまい」は、「卵（なんでも）」のように複数のアイテムにマッチすることがある材料です。「高品質」は、通常品質よりも高い品質のアイテムです。",
+
+	"setting.source-mod": "ツールチップにMod名の表示",
+	"setting.source-mod.tip": "有効にすると、Modによって追加されたアイテムがある場合、そのMod名をBetter Craftingのツールチップに表示します",
+
+	"setting.enforce-multiplayer": "マルチプレイヤーのバランス調整",
+	"setting.enforce-multiplayer.tip": "有効にすると、「チート」かもしれないいくつかの設定が、マルチプレイヤーのホストからのみ操作できるようになります。これは「ゴミ箱の回収」「リサイクル」「好みの表示」などの機能に適用されます。",
+
 	"setting.ttwhen.Never": "無効",
 	"setting.ttwhen.ForController": "コントローラ操作時のみ",
 	"setting.ttwhen.Always": "常に",
@@ -100,6 +113,9 @@
 	"setting.action.Favorite": "お気に入りの切り替え",
 	"setting.action.BulkCraft": "一括クラフト画面の表示",
 	"setting.action.BulkCook": "一括料理画面の表示",
+
+	"setting.invalid-storage-types": "許可しないストレージタイプ",
+	"setting.invalid-storage-types.tip": "特定のタイプのストレージオブジェクト（箱、ホッパーなど）を使用できないようにすることができます。",
 
 	"setting.nearby": "作業台の拡張",
 	"setting.nearby.tip": "作業台やキッチンが、デフォルトである1ブロックの範囲内よりも多くの箱と接続できるようになります。箱同士を連鎖させたり、隙間を埋めるためのコネクターを使用することもできます。",
@@ -136,8 +152,14 @@
 	"setting.nearby.fences": "柵",
 	"setting.nearby.other": "その他の例",
 
+	"setting.recover-trash": "ゴミ箱の回収",
+	"setting.recover-trash.about": "有効にすると、ゴミ箱を右クリックすることで、捨てたアイテムを復元できるメニューを開きます。過去に捨てたアイテムは36個まで保存されます。",
+
 	"setting.recycle": "リサイクル",
 	"setting.recycle.about": "有効にすると、クラフトメニューでアイテムをリサイクルして、クラフトに使用したアイテムを取り戻すことができます。",
+
+	"setting.recycle.higher-quality": "高品質の許可",
+	"setting.recycle.higher-quality.tip": "有効にすると、アイテムの品質がレシピよりも高いときのみリサイクル可能になり、レシピの品質より低いアイテムはリサイクルできなくなります。",
 
 	"setting.recycle.fuzzy": "あいまいマッチング",
 	"setting.recycle.fuzzy.tip": "クラフトのレシピの中には、特定のアイテムを必要とせず、「卵(なんでも)」などのマッチングを行うものがあります。デフォルトでは、これらは取り戻せません。この機能を有効にすると、その場合に最も安価な対応アイテムを返却します。",
@@ -194,7 +216,7 @@
 	// Quality
 
 	"setting.quality": "品質",
-	"setting.quality.tip": "なお、SpaceCoreなど他のソースから追加されたレシピは、APIの制限により、これらの設定を反映しない場合があります。",
+	"setting.quality.tip": "SpaceCoreなど他のソースから追加されたレシピは、APIの制限により、これらの設定を反映しない場合が\nあります。",
 
 	"setting.enable-quality": "品質の制限",
 	"setting.enable-quality.tip": "有効にすると、クラフト時に使用するアイテムの最大品質を選択できるボタンが表示されます。",
@@ -223,12 +245,23 @@
 	"seasoning.enabled": "常に",
 	"seasoning.inventory": "インベントリのみ",
 
+	"setting.show-unknown": "未所持レシピの表示",
+	"setting.show-unknown.tip": "有効にすると、料理レシピと同様に、まだ習得していないレシピがクラフトメニューに表示されます。",
+
 	"setting.hide-unknown": "未所持レシピの非表示",
 	"setting.hide-unknown.tip": "有効にすると、まだ習得していないレシピがメニューに表示されなくなります。",
 
 	// Tool-tips
 	"tooltip.loves": "大好き: {{npcs}}",
 	"tooltip.likes": "好き: {{npcs}}",
+
+	"tooltip.copy-cat": "カテゴリをコピー",
+	"tooltip.paste-cat": "カテゴリを貼り付け",
+	"tooltip.trash-cat": "カテゴリを削除",
+	"tooltip.trash-cat.confirm": "カテゴリ \"{{name}}\" を本当に削除しますか？",
+
+	"tooltip.trash-all": "全カテゴリを初期状態に戻す",
+	"tooltip.trash-all.confirm": "本当にすべてのカテゴリを初期状態に戻してもよいですか？",
 
 	"tooltip.move-up": "カテゴリを上に移動",
 	"tooltip.move-down": "カテゴリを下に移動",
@@ -299,6 +332,9 @@
 	"ingredient.error": "無効な材料",
 
 	"error.locking": "一部のインベントリにアクセスできません。",
+	"error.crafting": "クラフト試行時にエラーが発生しました。",
+	"error.crafting.source": "クラフト試行時に'{{source}}'というModでエラーが発生しました。",
+	"error.pasting": "カテゴリを貼り付けできません。",
 
 	// Bulk Crafting
 	"bulk.crafting": "一括クラフト",
@@ -347,14 +383,17 @@
 	"filter.add-new": "ルールの追加",
 	"filter.from-rule": "ルールで有効",
 
+	"filter.include-toggle": "カテゴリに含める",
+	"filter.include-toggle.about": "このルールに一致するレシピをカテゴリに含める、または除外します。",
+
 	"filter.storage": "ストレージ",
 	"filter.storage.about": "箱やホッパーのような物を入れられるアイテムにマッチします。",
 
 	"filter.everything": "全て",
 	"filter.everything.about": "すべてのレシピにマッチします。",
 
-	"filter.buff": "バフ: {{type}}",
-	"filter.buff.about": "使用時に{{type}}のバフを付与するアイテムにマッチします。",
+	"filter.new-buff": "バフ",
+	"filter.new-buff.about": "使用時に特定のバフを付与するアイテムにマッチします。",
 
 	"filter.uncrafted": "未作成",
 	"filter.uncrafted.about": "まだ作ったことがないアイテムにマッチします。",
@@ -364,6 +403,13 @@
 
 	"filter.mod": "Modアイテム",
 	"filter.mod.about": "Modによって追加された全てのレシピにマッチします。",
+
+	"filter.gift-taste": "好み: {{taste}}",
+	"filter.gift-taste.about": "このルールは住人が{{taste}}なアイテムにマッチします。「未発見のプレゼントの表示」を有効にしていない限り、発見済みのものしか表示されません。",
+	"filter.gift-taste.likes": "好き",
+	"filter.gift-taste.loves": "大好き",
+	"filter.gift-taste.dislikes": "嫌い",
+	"filter.gift-taste.hates": "大嫌い",
 
 	"filter.machine": "機械類",
 	"filter.machine.about": "アイテムを加工するなど、何かしらの機能を持つ設備アイテムにマッチします。",
