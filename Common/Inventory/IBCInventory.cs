@@ -1,5 +1,6 @@
 #if COMMON_BCINVENTORY
 
+using System;
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
@@ -109,6 +110,7 @@ public interface IBCInventory {
 	/// number of entries.
 	/// </summary>
 	int GetActualCapacity();
+
 }
 
 #endif
