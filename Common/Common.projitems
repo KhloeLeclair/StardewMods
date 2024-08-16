@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -15,9 +15,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)DynamicRecipeSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Crafting\IRecyclable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\ConsoleCommand.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)events\GSQCondition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\GSQCondition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\PintailModSubscriber.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)events\TriggerAction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\TriggerAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NameValueCollectionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\RandomExtensions.cs" />
@@ -26,16 +26,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)Inventory\BuildingProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MultipleEventedInventoryExclusiveRequest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ReflectionHelper.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)serialization\AbstractConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\AbstractConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Converters\DiscriminatingConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SmokedFishSpriteInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureColorWatcher.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)types\ModAssetEditor.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityDictionary.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)types\ValueEqualityList.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)types\ValueStringBuilder.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\AttachmentSlotsNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\DynamicDrawingNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ModAssetEditor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ValueEqualityDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ValueEqualityList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ValueStringBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\AttachmentSlotsNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\DynamicDrawingNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SpookyActionAtADistance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\AbsolutePosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CombinedRingSpriteInfo.cs" />
@@ -63,7 +63,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\KMargins.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\KSize.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\ComponentSNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ui\simplelayout\EmptyNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\SimpleLayout\EmptyNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\IKLayoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\Widgets\KObject.cs" />

@@ -42,6 +42,12 @@ public class SCRecipe : IRecipe {
 		string? test = recipe.Description;
 		Texture2D testtwo = recipe.IconTexture;
 		Rectangle? testthree = recipe.IconSubrect;
+
+		if (Cooking ?
+				CraftingRecipe.cookingRecipes.ContainsKey(name) :
+				CraftingRecipe.craftingRecipes.ContainsKey(name)) {
+			this.CraftingRecipe = new CraftingRecipe(name, Cooking);
+		}
 	}
 
 	#region Identity
@@ -67,7 +73,7 @@ public class SCRecipe : IRecipe {
 		return 0;
 	}
 
-	public CraftingRecipe? CraftingRecipe => null;
+	public CraftingRecipe? CraftingRecipe { get; }
 
 	#endregion
 
