@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.7.1
+Released on November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+* Fixed: Issue where upgrading your farmhouse would consume the wrong
+  ingredients, charging you more than it should as a result.
+
+
+## 2.7.0
+Released on November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+* Fixed: Compatibility with Stardew Valley 1.6.9.
+
+
 ## 2.6.0
 Released on May 13th, 2024.
 

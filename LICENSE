@@ -1,8 +1,18 @@
-Copyright 2021 Khloe Leclair
+Copyright 2024 Khloe Leclair
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+All rights reserved unless otherwise noted.
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+---
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The following text is not part of the license and should not be
+considered part of the license. It is merely my commentary explaining
+the current state of the license:
 
+
+This license is subject to change once I've picked one that preserves my
+rights while keeping the software open. Unfortunately, Curseforge decided
+that the MIT license meant they could go against my wishes and allow
+users to upload my mods on that platform so I had to abandon that.
+
+Other mod developers, please contact me if you're interested in reusing
+some of my code. I am generally open to that.

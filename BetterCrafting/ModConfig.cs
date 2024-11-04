@@ -204,6 +204,8 @@ public class ModConfig : IBetterCraftingConfig {
 
 	public bool UseDiagonalConnections { get; set; } = true;
 
+	public bool DisallowFishSources { get; set; } = true;
+
 	public CaseInsensitiveHashSet InvalidStorages { get; set; } = new();
 
 	public CaseInsensitiveHashSet ValidConnectors { get; set; } = new();

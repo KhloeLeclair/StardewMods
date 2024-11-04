@@ -82,7 +82,7 @@ public class DataRecipe : IRecipe {
 						if (ingredient.RecycleItem != null)
 							recycleTo = delegate () {
 								if (string.IsNullOrEmpty(ingredient.RecycleItem.Condition) || GameStateQuery.CheckConditions(ingredient.RecycleItem.Condition, Game1.currentLocation, Game1.player)) {
-									ItemQueryContext ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
+									var ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
 									Item result = ItemQueryResolver.TryResolveRandomItem(ingredient.RecycleItem, ctx, avoidRepeat: false, null, null, null, (query, error) => {
 										Mod.Log($"Error attempting to spawn item for custom recipe {Name} with query '{query}': {error}", LogLevel.Error);
 									});
@@ -200,7 +200,7 @@ public class DataRecipe : IRecipe {
 
 	public Item? CreateItem() {
 
-		ItemQueryContext ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
+		var ctx = new ItemQueryContext(Game1.currentLocation, Game1.player, Game1.random);
 		foreach (var entry in Data.Output) {
 			if (string.IsNullOrEmpty(entry.Condition) || GameStateQuery.CheckConditions(entry.Condition, Game1.currentLocation, Game1.player)) {
 				Item result = ItemQueryResolver.TryResolveRandomItem(entry, ctx, avoidRepeat: false, null, null, null, (query, error) => {

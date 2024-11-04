@@ -241,7 +241,7 @@ public class SpookyActionAtADistance : EventSubscriber<ModSubscriber> {
 			if (field != null) {
 				var value = field.GetValue();
 				if (value != null && ShouldLocationUpdate(value)) {
-					Instance?.Mod?.Log($"Stopping release for location: {value.NameOrUniqueName}", LogLevel.Trace);
+					Instance?.Mod?.Log($"Stopping release for location: {value.NameOrUniqueName}", LogLevel.Trace, once: true);
 					return;
 				}
 			}

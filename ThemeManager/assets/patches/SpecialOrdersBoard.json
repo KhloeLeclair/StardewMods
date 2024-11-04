@@ -2,14 +2,50 @@
 	"ID": "SpecialOrdersBoard",
 
 	"ColorVariables": {
-		"$SpecialOrdersHover": "$ButtonHover"
+		"$SpecialOrdersHover": "$ButtonHover",
+		"$SpecialOrdersBoard:Text": "$Text",
+		"$SpecialOrdersBoard:TextShadowAlt": "$TextShadowAlt"
+	},
+
+	"FontVariables": {
+		"$SpecialOrdersBoard:Dialogue": "$Dialogue"
+	},
+
+	"BmFontVariables": {
+		"$SpecialOrdersBoard:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$SpecialOrdersBoard:ST:Normal": "$ST:Normal",
+		"$SpecialOrdersBoard:ST:Colored": "$ST:Colored"
 	},
 
 	"Patches": {
 		"#SpecialOrdersBoard:draw(SpriteBatch)": {
 			"Colors": {
 				"LightPink": { "*": "$SpecialOrdersHover" }
-			}
+			},
+
+			"ColorFields": {
+				"Game1:textColor": {
+					"*": "$SpecialOrdersBoard:Text"
+				}
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$SpecialOrdersBoard:Dialogue" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$SpecialOrdersBoard:ST:Normal",
+					"$SpecialOrdersBoard:ST:Colored",
+					"$SpecialOrdersBoard:ST:Font",
+					"$SpecialOrdersBoard:Colors"
+				]
+			},
+
+			"DrawTextWithShadow": { "*": "$SpecialOrdersBoard:TextShadowAlt" }
 		}
 	}
 }

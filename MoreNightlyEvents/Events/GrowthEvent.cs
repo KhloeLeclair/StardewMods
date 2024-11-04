@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Extensions;
 using StardewValley.TerrainFeatures;
 
 namespace Leclair.Stardew.MoreNightlyEvents.Events;
@@ -18,6 +19,8 @@ public class GrowthEvent : BaseFarmEvent<GrowthEventData> {
 
 	private int LastFairy = 0;
 	private int timeEllapsed;
+
+	public GrowthEvent() : base() { }
 
 	public GrowthEvent(string key, GrowthEventData? data = null) : base(key, data) {
 
@@ -86,7 +89,7 @@ public class GrowthEvent : BaseFarmEvent<GrowthEventData> {
 		double x = 0.0;
 		double y = 0.0;
 
-		foreach(var entry in pairs) {
+		foreach (var entry in pairs) {
 			x += entry.Key.X;
 			y += entry.Key.Y;
 		}
@@ -121,7 +124,7 @@ public class GrowthEvent : BaseFarmEvent<GrowthEventData> {
 		Game1.currentLocation.updateEvenIfFarmerIsntHere(time);
 		Game1.UpdateOther(time);
 
-		for(int i = Sprites.Count - 1; i >= 0; i--) {
+		for (int i = Sprites.Count - 1; i >= 0; i--) {
 			var sprite = Sprites[i];
 			if (!sprite.Update(time))
 				Sprites.RemoveAt(i);
@@ -159,8 +162,10 @@ public class GrowthEvent : BaseFarmEvent<GrowthEventData> {
 	}
 
 	public override void makeChangesToLocation() {
-		if (!Game1.IsMasterGame)
+		if (!Game1.IsMasterGame) {
+			PerformSideEffects(Game1.currentLocation, Game1.player);
 			return;
+		}
 
 		var pairs = Game1.currentLocation.terrainFeatures.Pairs.Where(
 			x => x.Value is HoeDirt hd &&
@@ -201,12 +206,12 @@ public class FairySprite : IDisposable {
 		Target = target;
 
 		Light = new LightSource(
+			id: $"MNE_GE_Fairy_${Id}",
 			textureIndex: 4,
 			position: Position,
 			radius: 1f,
 			color: Color.Black,
-			identifier: 642069 + Id,
-			light_context: LightSource.LightContext.None,
+			lightContext: LightSource.LightContext.None,
 			playerID: 0L
 		);
 
@@ -217,7 +222,7 @@ public class FairySprite : IDisposable {
 		Light.position.Value = Position;
 
 		Position.X -= time.ElapsedGameTime.Milliseconds * 0.15f * Speed;
-		Position.Y += MathF.Cos(time.TotalGameTime.Milliseconds * (float)Math.PI / 512f) * 1f * Speed;
+		Position.Y += MathF.Cos(time.TotalGameTime.Milliseconds * (float) Math.PI / 512f) * 1f * Speed;
 
 		if (Position.X + 128 < Game1.viewport.X)
 			return false;
@@ -259,7 +264,7 @@ public class FairySprite : IDisposable {
 	protected virtual void Dispose(bool disposing) {
 		if (!disposedValue) {
 			if (disposing)
-				Game1.currentLightSources.Remove(Light);
+				Utility.removeLightSource(Light.Id);
 
 			Light = null!;
 			disposedValue = true;

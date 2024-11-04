@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 using Leclair.Stardew.Common.Types;
 
@@ -14,6 +13,8 @@ public class PatchData {
 	public CaseInsensitiveDictionary<Dictionary<string, string>>? RawColors { get; set; }
 
 	public CaseInsensitiveDictionary<Dictionary<string, string>>? ColorFields { get; set; }
+
+	public CaseInsensitiveDictionary<Dictionary<string, string>>? ColorAlphas { get; set; }
 
 	public CaseInsensitiveDictionary<Dictionary<string, string>>? FontFields { get; set; }
 

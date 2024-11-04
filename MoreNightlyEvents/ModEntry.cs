@@ -2,28 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 using HarmonyLib;
 
-using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.MoreNightlyEvents.Events;
 using Leclair.Stardew.MoreNightlyEvents.Models;
 using Leclair.Stardew.MoreNightlyEvents.Patches;
 
-using Microsoft.Xna.Framework.Content;
-
 using Netcode;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 
 using StardewValley;
 using StardewValley.Delegates;
 using StardewValley.Events;
-using StardewValley.Locations;
 using StardewValley.TokenizableStrings;
 using StardewValley.Triggers;
 
@@ -76,8 +70,6 @@ public class ModEntry : ModSubscriber {
 
 		// Init
 		I18n.Init(Helper.Translation);
-
-		CheckRecommendedIntegrations();
 	}
 
 	#region Events
@@ -117,7 +109,7 @@ public class ModEntry : ModSubscriber {
 
 			List<string[]> entries = [];
 
-			foreach(var pair in SortedEvents) {
+			foreach (var pair in SortedEvents) {
 				var evt = pair.Value;
 				entries.Add([
 					evt.Id,
@@ -202,14 +194,14 @@ public class ModEntry : ModSubscriber {
 
 	[return: NotNullIfNotNull(nameof(input))]
 	public string? TokenizeFromEvent(string eventId, string? input, Farmer? who = null, Random? rnd = null) {
-		if (string.IsNullOrWhiteSpace(input) || EventTranslators is null || ! EventTranslators.TryGetValue(eventId, out var translator))
+		if (string.IsNullOrWhiteSpace(input) || EventTranslators is null || !EventTranslators.TryGetValue(eventId, out var translator))
 			return input;
 
 		bool ParseToken(string[] query, out string? replacement, Random? random, Farmer? player) {
 			if (!ArgUtility.TryGet(query, 0, out string? cmd, out string? error))
 				return TokenParser.LogTokenError(query, error, out replacement);
 
-			if (cmd is null || ! cmd.Equals("LocalizedText")) {
+			if (cmd is null || !cmd.Equals("LocalizedText")) {
 				replacement = null;
 				return false;
 			}
@@ -218,7 +210,7 @@ public class ModEntry : ModSubscriber {
 				return TokenParser.LogTokenError(query, error, out replacement);
 
 			var tl = translator.Get(key);
-			if (!tl.HasValue()) { 
+			if (!tl.HasValue()) {
 				replacement = null;
 				return false;
 			}
@@ -261,9 +253,9 @@ public class ModEntry : ModSubscriber {
 	private void LoadEvents() {
 		Events ??= Helper.GameContent.Load<Dictionary<string, BaseEventData>>(EVENTS_PATH);
 
-		foreach(var evt in Events.Values) {
+		foreach (var evt in Events.Values) {
 			evt.Conditions ??= new();
-			foreach(var cnd in evt.Conditions) {
+			foreach (var cnd in evt.Conditions) {
 				if (cnd.Chance < 0 || cnd.Chance > 1) {
 					Log($"Ignoring condition of event '{evt.Id}' with invalid Chance '{cnd.Chance}': chance must be number in range 0 to 1 (inclusive)", LogLevel.Warn);
 					cnd.Chance = 0;
@@ -326,17 +318,17 @@ public class ModEntry : ModSubscriber {
 
 			try {
 				data = cp.ReadJsonFile<Dictionary<string, BaseEventData>>("events.json");
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				try {
 					var dlist = cp.ReadJsonFile<List<BaseEventData>>("events.json");
 					if (dlist is not null) {
 						data = new();
-						foreach(var entry in dlist) {
+						foreach (var entry in dlist) {
 							if (!string.IsNullOrEmpty(entry.Id) && !data.ContainsKey(entry.Id))
 								data.Add(entry.Id, entry);
 						}
 					}
-				} catch(Exception) {
+				} catch (Exception) {
 					/* no op */
 				}
 
@@ -345,7 +337,7 @@ public class ModEntry : ModSubscriber {
 			}
 
 			if (data is not null)
-				foreach(var entry in data) {
+				foreach (var entry in data) {
 					entry.Value.Id = entry.Key;
 					if (result.TryAdd(entry.Key, entry.Value))
 						EventTranslators.TryAdd(entry.Key, cp.Translation);
@@ -372,7 +364,7 @@ public class ModEntry : ModSubscriber {
 			if (Game1.weddingToday)
 				return false;
 
-			foreach(Farmer who in Game1.getOnlineFarmers()) {
+			foreach (Farmer who in Game1.getOnlineFarmers()) {
 				Friendship spouse = who.GetSpouseFriendship();
 				if (spouse is not null && spouse.IsMarried() && spouse.WeddingDate == Game1.Date)
 					return false;
@@ -394,7 +386,7 @@ public class ModEntry : ModSubscriber {
 		return false;
 	}
 
-	private void ApplyDate(WorldDate date) {
+	private static void ApplyDate(WorldDate date) {
 		Game1.dayOfMonth = date.DayOfMonth;
 		Game1.season = date.Season;
 		Game1.year = date.Year;
@@ -419,7 +411,7 @@ public class ModEntry : ModSubscriber {
 		}
 	}
 
-	private BaseEventData? SelectEventImpl(LogLevel? useLevel = null, bool extraDebug = false) { 
+	private BaseEventData? SelectEventImpl(LogLevel? useLevel = null, bool extraDebug = false) {
 		LoadEvents();
 		if (ForcedEvent is not null)
 			return Events.GetValueOrDefault(ForcedEvent);
@@ -503,10 +495,10 @@ public class ModEntry : ModSubscriber {
 
 		BaseEventData? evt = SelectEvent();
 
-		if (evt is null) 
+		if (evt is null)
 			return existing;
 
-		Log($"Using Nightly Event: {evt.Id}", LogLevel.Debug);
+		Log($"Using Nightly Event '{evt.Id}' with Type '{evt.Type}'.", LogLevel.Debug);
 
 		if (evt is PlacementEventData ped)
 			return new PlacementEvent(evt.Id, ped);
@@ -517,10 +509,13 @@ public class ModEntry : ModSubscriber {
 		if (evt is GrowthEventData ged)
 			return new GrowthEvent(evt.Id, ged);
 
-		Log($"No matching event type. Ignoring event: {evt.Id}", LogLevel.Warn);
+		if (evt is MessageEventData med)
+			return new MessageEvent(evt.Id, med);
+
+		Log($"No matching event type. Ignoring event '{evt.Id}' with type '{evt.Type}'.", LogLevel.Warn);
 		return existing;
 	}
 
-#endregion
+	#endregion
 
 }

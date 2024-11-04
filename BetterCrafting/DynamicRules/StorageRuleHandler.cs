@@ -14,7 +14,7 @@ namespace Leclair.Stardew.BetterCrafting.DynamicRules;
 
 public class StorageRuleHandler : IDynamicRuleHandler {
 
-	public static readonly string[] VANILLA_CHESTS = new string[] {
+	public static readonly string[] VANILLA_CHESTS = [
 		"(BC)130", // Chest
 		"(BC)165", // Auto-Grabber
 		"(BC)216", // Mini-Fridge
@@ -25,7 +25,7 @@ public class StorageRuleHandler : IDynamicRuleHandler {
 		"(BC)BigChest",
 		"(BC)BigStoneChest",
 		"(O)913",  // Enricher (for Sprinkler)
-	};
+	];
 
 	public string DisplayName => I18n.Filter_Storage();
 

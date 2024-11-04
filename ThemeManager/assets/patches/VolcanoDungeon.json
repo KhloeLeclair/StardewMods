@@ -1,0 +1,29 @@
+{
+	"ID": "VolcanoDungeon",
+
+	"BmFontVariables": {
+		"$VolcanoDungeon:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$VolcanoDungeon:ST:Normal": "$ST:Normal",
+		"$VolcanoDungeon:ST:Colored": "$ST:Colored"
+	},
+
+	"Patches": {
+		"StardewValley.Locations.VolcanoDungeon:drawAboveAlwaysFrontLayer": {
+			"Colors": {
+				"SpriteText:Red": { "*": "$VolcanoDungeon:Level" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$VolcanoDungeon:ST:Normal",
+					"$VolcanoDungeon:ST:Colored",
+					"$VolcanoDungeon:ST:Font",
+					"$VolcanoDungeon:Colors"
+				]
+			}
+		}
+	}
+}

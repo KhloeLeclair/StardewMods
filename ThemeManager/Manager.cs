@@ -1,14 +1,16 @@
 using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 using BmFont;
 
 using HarmonyLib;
+
+using Leclair.Stardew.ThemeManager.Models;
 
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,11 +20,6 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 using xTile;
-
-using Leclair.Stardew.Common.Extensions;
-using Leclair.Stardew.ThemeManager.Models;
-using Leclair.Stardew.ThemeManager.VariableSets;
-using Nanoray.Pintail;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -259,8 +256,8 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 			if (prop.CanRead) {
 				if (typeof(IVariableSet).IsAssignableFrom(prop.PropertyType))
 					vsProps[prop] = true;
-                else if (Mod.CanProxy(prop.PropertyType, Other.UniqueID, typeof(IVariableSet), Mod.ModManifest.UniqueID))
-                    vsProps[prop] = true;
+				else if (Mod.CanProxy(prop.PropertyType, Other.UniqueID, typeof(IVariableSet), Mod.ModManifest.UniqueID))
+					vsProps[prop] = true;
 			}
 		}
 
@@ -356,8 +353,8 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 			// Now, check for your mod's owned content packs.
 			if (checkOwned) {
 				var owned = Mod.Helper.ModRegistry.GetAll()
-					.Where(x => x.IsContentPack && x.Manifest.ContentPackFor.UniqueID.Equals(Other.UniqueID, StringComparison.OrdinalIgnoreCase))
-					.Select(x => Mod.GetContentPackFor(x));
+					.Where(x => x.IsContentPack && (x.Manifest.ContentPackFor?.UniqueID.Equals(Other.UniqueID, StringComparison.OrdinalIgnoreCase) ?? false))
+					.Select(Mod.GetContentPackFor);
 				foreach (var cp in owned) {
 					if (cp is not null && cp.HasFile("theme.json"))
 						packsWithIds[cp.Manifest.UniqueID] = new(cp.Manifest, null, cp, null, "theme.json");
@@ -483,7 +480,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 
 	private void UpdateProperties(IThemeManifest manifest, DataT instance) {
 		if (ManifestProperties is not null)
-			foreach(var prop in ManifestProperties) {
+			foreach (var prop in ManifestProperties) {
 				try {
 					if (prop.Value) {
 						Mod.TryProxy(manifest, Mod.ModManifest.UniqueID, prop.Key.PropertyType, Other.UniqueID, out object? proxy, sourceType: typeof(IThemeManifest));
@@ -509,11 +506,11 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 			}
 
 		if (VariableSetProperties is not null)
-			foreach(var prop in VariableSetProperties) {
+			foreach (var prop in VariableSetProperties) {
 				object? obj;
 				try {
 					obj = prop.Key.GetValue(instance);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"Unable to read variable set instance from theme: {ex}", LogLevel.Warn);
 					continue;
 				}
@@ -735,7 +732,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		result.Add("automatic", I18n.Theme_Automatic());
 		result.Add("default", I18n.Theme_Default());
 
-		foreach(var entry in Themes) {
+		foreach (var entry in Themes) {
 			if (!entry.Value.Manifest.NonSelectable)
 				result.Add(entry.Key, GetThemeName(entry.Key, locale));
 		}
@@ -768,7 +765,6 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		return Themes.ContainsKey(themeId);
 	}
 
-#if PINTAIL_CAN_OUT
 	/// <inheritdoc />
 	public bool TryGetTheme(string themeId, [NotNullWhen(true)] out DataT? theme) {
 		if (Themes.TryGetValue(themeId, out var tdata)) {
@@ -779,7 +775,6 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		theme = null;
 		return false;
 	}
-#endif
 
 	/// <inheritdoc />
 	public DataT? GetTheme(string themeId) {
@@ -798,7 +793,6 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		return false;
 	}
 
-#if PINTAIL_CAN_OUT
 	/// <inheritdoc />
 	public bool TryGetManifest(string themeId, [NotNullWhen(true)] out IThemeManifest? manifest) {
 		if (Themes.TryGetValue(themeId, out var tdata)) {
@@ -809,7 +803,6 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		manifest = null;
 		return false;
 	}
-#endif
 
 	public IThemeManifest? GetManifest(string themeId) {
 		if (Themes.TryGetValue(themeId, out var tdata))
@@ -847,7 +840,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		}
 
 		// Does this string match something?
-		else if (!themeId.Equals("automatic", StringComparison.OrdinalIgnoreCase) && Themes.TryGetValue(themeId, out var theme) && ! theme.Manifest.NonSelectable) {
+		else if (!themeId.Equals("automatic", StringComparison.OrdinalIgnoreCase) && Themes.TryGetValue(themeId, out var theme) && !theme.Manifest.NonSelectable) {
 			ActiveThemeData = theme;
 			SelectedThemeId = themeId;
 			ActiveThemeId = themeId;
@@ -1084,20 +1077,20 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		IAssetName? assetName = GetAssetName(path, themeId: themeId, stripFileExtensions: stripFileExtensions);
 
 		// If the asset doesn't exist, clear the name.
-		if (! Mod.DoesAssetExist<T>(assetName))
+		if (!Mod.DoesAssetExist<T>(assetName))
 			assetName = null;
 
 		// If there's no name, and we have a fall back theme, try it.
 		if (assetName is null && allowFallback && !string.IsNullOrEmpty(theme?.Manifest?.FallbackTheme)) {
 			assetName = GetAssetName(path, themeId: theme.Manifest.FallbackTheme, stripFileExtensions: stripFileExtensions);
-			if (! Mod.DoesAssetExist<T>(assetName))
+			if (!Mod.DoesAssetExist<T>(assetName))
 				assetName = null;
 		}
 
 		// Finally, what about the default theme?
 		if (themeId != "default" && assetName is null) {
 			assetName = GetAssetName(path, themeId: "default", stripFileExtensions: stripFileExtensions);
-			if (! Mod.DoesAssetExist<T>(assetName))
+			if (!Mod.DoesAssetExist<T>(assetName))
 				assetName = null;
 		}
 
@@ -1223,7 +1216,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 
 		string? root;
 		string? ext = Path.GetExtension(path);
-		
+
 		// If we have a theme, then try loading from it.
 		if (theme != null && theme.Content is not null) {
 			string lpath = path;
@@ -1242,7 +1235,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 
 			try {
 				file = GetMatchingFile(lpath, ext, root, theme.Content);
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				Log($"Error when checking for an asset file in theme {theme.Manifest.Name} ({theme.Manifest.UniqueID}): {ex}", LogLevel.Error);
 				file = null;
 			}
@@ -1262,7 +1255,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 		try {
 			file = GetMatchingFile(path, ext, DefaultAssetPrefix, OtherCP);
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Log($"Error when checking for an asset file in mod assets: {ex}", LogLevel.Error);
 			file = null;
 		}
@@ -1377,16 +1370,16 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 
 			try {
 				relative = GetMatchingFile(lpath, ext, root, theme.Content);
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				if (logErrors)
 					Log($"Error when checking for an asset file in theme {theme.Manifest.Name} ({theme.Manifest.UniqueID}): {ex}", LogLevel.Error);
 				relative = null;
 			}
 
 			if (relative != null)
-				try { 
+				try {
 					return theme.Content.ModContent.Load<T>(relative);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					if (logErrors)
 						Log($"Failed to load asset \"{path}\" from theme {themeId}.", LogLevel.Warn, ex);
 				}
@@ -1468,7 +1461,7 @@ public class ThemeManager<DataT> : IThemeManager<DataT>, IThemeManagerInternal w
 
 		if (!Mod.AssetTypes.TryGetValue(e.Name, out type) && !Mod.AssetTypes.TryGetValue(e.NameWithoutLocale, out type)) {
 			string extn = Path.GetExtension(path);
-			switch(extn) {
+			switch (extn) {
 				case ".png":
 					type = typeof(Texture2D);
 					break;

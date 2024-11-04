@@ -7,6 +7,7 @@ using HarmonyLib;
 
 using Leclair.Stardew.CloudySkies.Effects;
 using Leclair.Stardew.CloudySkies.Integrations.ContentPatcher;
+using Leclair.Stardew.CloudySkies.Integrations.ItemExtensions;
 using Leclair.Stardew.CloudySkies.Integrations.UltimateFertilizer;
 using Leclair.Stardew.CloudySkies.LayerData;
 using Leclair.Stardew.CloudySkies.Layers;
@@ -63,6 +64,7 @@ public partial class ModEntry : PintailModSubscriber {
 	internal GMCMIntegration<ModConfig, ModEntry>? intGMCM;
 	internal CPIntegration? intCP;
 	internal UFIntegration? intUF;
+	internal IEIntegration? intIE;
 
 	private ulong lastLayerId = 0;
 
@@ -404,9 +406,9 @@ public partial class ModEntry : PintailModSubscriber {
 		intGMCM = new(this, () => Config, ResetConfig, SaveConfig);
 		intCP = new(this);
 		intUF = new(this);
+		intIE = new(this);
 
 		RegisterSettings();
-
 	}
 
 	[Subscriber]

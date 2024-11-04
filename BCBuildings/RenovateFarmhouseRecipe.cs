@@ -60,7 +60,7 @@ public class RenovateFarmhouseRecipe : IDynamicDrawingRecipe {
 		IsTextureLoading = true;
 
 		var home = Utility.getHomeOfFarmer(Game1.player);
-		var house = home?.GetContainingBuilding();
+		var house = home?.ParentBuilding;
 
 		if (house is null) {
 			IsTextureLoading = false;
@@ -127,9 +127,9 @@ public class RenovateFarmhouseRecipe : IDynamicDrawingRecipe {
 				trimmed = true;
 				int idx = toDraw.LastIndexOf(' ');
 				if (idx == -1)
-					toDraw = toDraw.Substring(0, toDraw.Length / 2);
+					toDraw = toDraw[..(toDraw.Length / 2)];
 				else
-					toDraw = toDraw.Substring(0, idx);
+					toDraw = toDraw[..idx];
 			} else
 				break;
 		}
@@ -138,7 +138,7 @@ public class RenovateFarmhouseRecipe : IDynamicDrawingRecipe {
 	}
 
 	public Texture2D Texture => Game1.mouseCursors;
-	public Rectangle SourceRectangle => new Rectangle(173, 423, 16, 16);
+	public Rectangle SourceRectangle => new(173, 423, 16, 16);
 
 	public int GridWidth => 10;
 
@@ -172,7 +172,8 @@ public class RenovateFarmhouseRecipe : IDynamicDrawingRecipe {
 
 		evt.Complete();
 
-		HouseRenovation.OnPurchaseRenovation(Renovation, Game1.player, 1);
+		// We pass default since we don't have a stock info object and it isn't used anyways.
+		HouseRenovation.OnPurchaseRenovation(Renovation, Game1.player, 1, default);
 
 	}
 

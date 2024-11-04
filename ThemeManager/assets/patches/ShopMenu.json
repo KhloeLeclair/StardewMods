@@ -1,11 +1,37 @@
 {
 	"ID": "ShopMenu",
 
+	"FontVariables": {
+		"$ShopMenu:Dialogue": "$Dialogue"
+	},
+
+	"BmFontVariables": {
+		"$ShopMenu:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$ShopMenu:ST:Normal": "$ST:Normal",
+		"$ShopMenu:ST:Colored": "$ST:Colored"
+	},
+
 	"Patches": {
 		"#ShopMenu:draw(SpriteBatch)": {
 			"Colors": {
 				"Wheat": { "*": "$ShopSelected" },
 				"Blue": { "*": "$ShopQiSelected" }
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$ShopMenu:Dialogue" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$ShopMenu:ST:Normal",
+					"$ShopMenu:ST:Colored",
+					"$ShopMenu:ST:Font",
+					"$ShopMenu:Colors"
+				]
 			}
 		}
 	}

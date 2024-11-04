@@ -42,7 +42,6 @@ public class ItemCacheManager : BaseManager {
 
 	private long LastCachedQuery;
 	private readonly PerScreen<Dictionary<long, Item[]>> CachedQueries = new(() => new());
-	private readonly PerScreen<GameLocation?> LastLocation = new(() => null);
 
 	public ItemCacheManager(ModEntry mod) : base(mod) { }
 
@@ -114,7 +113,7 @@ public class ItemCacheManager : BaseManager {
 					List<Item> result = new();
 
 					foreach (string id in typedef.GetAllIds()) {
-						Item? item = ItemRegistry.Create(id, allowNull: true);
+						Item? item = ItemRegistry.Create(typedef.Identifier + id, allowNull: true);
 						if (item is not null)
 							result.Add(item);
 					}
@@ -129,10 +128,10 @@ public class ItemCacheManager : BaseManager {
 	private IEnumerable<Item> GetAllUnknownItems() {
 		foreach (var typedef in ItemRegistry.ItemTypes) {
 			if (!TYPE_MAPS.ContainsKey(typedef.Identifier)) {
-				Log($"Unexpected item type: {typedef.Identifier}", StardewModdingAPI.LogLevel.Trace);
+				Log($"Unexpected item type: {typedef.Identifier}", LogLevel.Trace);
 
 				foreach (string id in typedef.GetAllIds()) {
-					Item? item = ItemRegistry.Create(id, allowNull: true);
+					Item? item = ItemRegistry.Create(typedef.Identifier + id, allowNull: true);
 					if (item is not null)
 						yield return item;
 				}

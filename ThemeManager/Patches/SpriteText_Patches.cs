@@ -2,16 +2,13 @@ using System;
 
 using HarmonyLib;
 
-using Microsoft.Xna.Framework;
+using Leclair.Stardew.ThemeManager.Managers;
 
-using StardewValley.BellsAndWhistles;
+using Microsoft.Xna.Framework;
 
 using StardewModdingAPI;
 
-using Leclair.Stardew.Common;
-using Microsoft.Xna.Framework.Graphics;
-using StardewValley;
-using Leclair.Stardew.ThemeManager.Managers;
+using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.ThemeManager.Patches;
 
@@ -55,12 +52,12 @@ internal static class SpriteText_Patches {
 
 	static bool drawString_Prefix(bool junimoText, ref Color? color) {
 		try {
-			if (! junimoText && UpdateColor && (Mod?.GameTheme?.SpriteTextColorSets?.TryGetValue("*", out var colors) ?? false)) { 
+			if (!junimoText && UpdateColor && (Mod?.GameTheme?.SpriteTextColorSets?.TryGetValue("*", out var colors) ?? false)) {
 				if (colors is not null && colors.TryGetValue(color.HasValue ? color.Value.PackedValue : -1, out var replaced))
 					color = replaced;
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.LogOnce($"An error occurred in {nameof(drawString_Prefix)}. Details:\n{ex}", LogLevel.Warn);
 		}
 
@@ -73,7 +70,7 @@ internal static class SpriteText_Patches {
 			if (colors is not null && colors.TryGetValue(index, out __result))
 				return false;
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.LogOnce($"An error occurred in {nameof(getColorFromIndex__Prefix)}. Details:\n{ex}", LogLevel.Warn);
 		}
 

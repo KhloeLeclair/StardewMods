@@ -107,6 +107,9 @@ public static class Music_Patches {
 
 		var getMusicOrDefault = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetMusicOrDefault));
 
+		if (Game1_isRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var in0 in instructions) {
 
 			if (in0.Calls(Game1_isRainingHere))
@@ -142,6 +145,9 @@ public static class Music_Patches {
 
 		var getOutsideFrequency = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetOutsideFrequency));
 		var getInsideFrequency = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetInsideFrequency));
+
+		if (GameLocation_isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 
@@ -207,6 +213,9 @@ public static class Music_Patches {
 		//var playMorningSong = AccessTools.Method(typeof(Game1), "<playMorningSong>g__PlayAction|654_0");
 		var playCustomWeatherMusic = AccessTools.Method(typeof(Music_Patches), nameof(PlayCustomWeatherMusic));
 
+		if (isRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		// Use a code matcher to find the delegate call we need to replace.
 		var matcher = new CodeMatcher(instructions)
 			.MatchStartForward(
@@ -270,6 +279,9 @@ public static class Music_Patches {
 		var getMusicOrDefault = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetMusicOrDefault));
 		var Game1_instanceGameLocation = AccessTools.Field(typeof(Game1), nameof(Game1.instanceGameLocation));
 
+		if (Game1_instanceGameLocation is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var instr in instructions) {
 			if (instr.LoadsConstant("rain")) {
 				// Old Code: "rain"
@@ -301,6 +313,9 @@ public static class Music_Patches {
 
 		var getOutsideFrequency = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetOutsideFrequency));
 		var getInsideFrequency = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetInsideFrequency));
+
+		if (isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 
@@ -367,6 +382,9 @@ public static class Music_Patches {
 
 		var getMusicOrDefault = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetMusicOrDefault));
 
+		if (isRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var instr in instructions) {
 
 			if (instr.Calls(isRainingHere))
@@ -397,6 +415,9 @@ public static class Music_Patches {
 
 		var isRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
 		var our_isRainingHere = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasMusic));
+
+		if (isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		foreach (var instr in instructions) {
 			if (instr.Calls(isRainingHere))
@@ -436,6 +457,9 @@ public static class Music_Patches {
 		var isRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
 		var our_isRainingHere = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasMusic));
 
+		if (isRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var instr in instructions) {
 			if (instr.Calls(isRainingHere))
 				// Old Code: this.IsRainingHere()
@@ -458,6 +482,9 @@ public static class Music_Patches {
 		var hasMusic = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasMusic));
 
 		var getMusicOrDefault = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetMusicOrDefault));
+
+		if (LocationWeather_get_IsRaining is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 
@@ -503,6 +530,9 @@ public static class Music_Patches {
 		var hasMusic = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasMusic));
 
 		var getMusicOrDefault = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetMusicOrDefault));
+
+		if (Game1_isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		bool seen_first_rain = false;
 		bool seen_first_raining_here = false;

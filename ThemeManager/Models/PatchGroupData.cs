@@ -20,6 +20,8 @@ public class PatchGroupData {
 
 	public CaseInsensitiveDictionary<string>? ColorVariables { get; set; }
 
+	public CaseInsensitiveDictionary<string>? ColorAlphaVariables { get; set; }
+
 	public CaseInsensitiveDictionary<string>? FontVariables { get; set; }
 
 	public CaseInsensitiveDictionary<string>? BmFontVariables { get; set; }

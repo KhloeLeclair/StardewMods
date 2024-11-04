@@ -303,12 +303,11 @@ public class BaseIngredient : IOptimizedIngredient, IConsumptionPreTrackingIngre
 		InventoryHelper.ConsumeItems(IngList, who, inventories, max_quality, low_quality_first, null, consumedItems);
 	}
 
+	private bool ItemMatcher(Item item) {
+		return CraftingRecipe.ItemMatchesForCrafting(item, ItemId);
+	}
 
 	public bool HasAvailableQuantity(int quantity, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int max_quality) {
-		bool ItemMatcher(Item item) {
-			return CraftingRecipe.ItemMatchesForCrafting(item, ItemId);
-		}
-
 		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: max_quality, limit: quantity) >= quantity;
 	}
 
@@ -317,10 +316,6 @@ public class BaseIngredient : IOptimizedIngredient, IConsumptionPreTrackingIngre
 	}
 
 	public int GetAvailableQuantity(Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int max_quality, IList<Item>? matchingItems) {
-		bool ItemMatcher(Item item) {
-			return CraftingRecipe.ItemMatchesForCrafting(item, ItemId);
-		}
-
 		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: max_quality, matchingItems: matchingItems);
 	}
 }

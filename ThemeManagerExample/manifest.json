@@ -10,10 +10,10 @@
   "UniqueID": "leclair.thememanager.example",
   "Name": "Theme Manager Example",
   "Author": "Khloe Leclair",
-  "Version": "1.0.0",
+  "Version": "1.0.0-Debug",
   "Description": "This mod is an example of how to set up ThemeManager in a mod.",
-  "MinimumApiVersion": "4.0",
-  "MinimumGameVersion": "1.6",
+  "MinimumApiVersion": "4.1.0",
+  "MinimumGameVersion": "1.6.9",
   "EntryDll": "ThemeManagerExample.dll",
   "Dependencies": [
     {

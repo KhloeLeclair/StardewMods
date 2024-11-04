@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using HarmonyLib;
+
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 
@@ -11,8 +13,12 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.Delegates;
+using StardewValley.Extensions;
+using StardewValley.Locations;
 using StardewValley.Network;
+using StardewValley.TerrainFeatures;
 using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.CloudySkies;
@@ -179,6 +185,83 @@ public partial class ModEntry {
 		return location?.ignoreDebrisWeather.Value ?? false;
 	}
 
+	private static bool TryParseDarkTime(int darkTime, string? input, out int parsedTime) {
+		if (input == null) {
+			parsedTime = default;
+			return false;
+		}
+
+		if (input.StartsWith("Dark", StringComparison.OrdinalIgnoreCase)) {
+			if (input.Length == 4)
+				parsedTime = darkTime;
+			else if (int.TryParse(input[4..], out parsedTime))
+				parsedTime += darkTime;
+			else
+				return false;
+		} else if (int.TryParse(input, out parsedTime)) {
+			if (parsedTime < 0)
+				parsedTime += darkTime;
+		} else
+			return false;
+
+		return true;
+	}
+
+
+	[GSQCondition]
+	public static bool LOCATION_TIME(string[] query, GameStateQueryContext context) {
+		GameLocation location = context.Location;
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGet(query, 2, out string? rawMinTime, out error) ||
+			!ArgUtility.TryGetOptional(query, 3, out string? rawMaxTime, out error)
+		)
+			return GameStateQuery.Helpers.ErrorResult(query, error);
+
+		int time = Game1.timeOfDay;
+		int darkTime = Game1.getTrulyDarkTime(location);
+
+		if (!TryParseDarkTime(darkTime, rawMinTime, out int minTime))
+			return GameStateQuery.Helpers.ErrorResult(query, $"unable to parse '{rawMinTime}' as minimum time");
+
+		int maxTime;
+		if (rawMaxTime == null)
+			maxTime = int.MaxValue;
+		else if (!TryParseDarkTime(darkTime, rawMaxTime, out maxTime))
+			return GameStateQuery.Helpers.ErrorResult(query, $"unable to parse '{rawMaxTime}' as maximum time");
+
+		return time >= minTime && time <= maxTime;
+	}
+
+	internal static readonly Dictionary<string, Type?> TypeCache = [];
+	internal static bool TryGetType(string name, [NotNullWhen(true)] out Type? type) {
+		if (TypeCache.TryGetValue(name, out type))
+			return type != null;
+
+		type = AccessTools.TypeByName($"StardewValley.Locations.{name}")
+			?? AccessTools.TypeByName(name);
+
+		TypeCache[name] = type;
+		return type != null;
+	}
+
+	[GSQCondition]
+	public static bool LOCATION_IS_TYPE(string[] query, GameStateQueryContext context) {
+		GameLocation location = context.Location;
+		if (!GameStateQuery.Helpers.TryGetLocationArg(query, 1, ref location, out string? error) ||
+			!ArgUtility.TryGet(query, 2, out _, out error)
+		)
+			return GameStateQuery.Helpers.ErrorResult(query, error);
+
+		Type locType = location.GetType();
+
+		for (int i = 2; i < query.Length; i++) {
+			if (TryGetType(query[i], out Type? type) && locType.IsAssignableTo(type))
+				return true;
+		}
+
+		return false;
+	}
+
 	#endregion
 
 	#region Trigger Actions
@@ -188,6 +271,307 @@ public partial class ModEntry {
 		List<string> registered = EventHelper.RegisterTriggerActions(typeof(Triggers), key, Monitor.Log);
 		if (registered.Count > 0)
 			Log($"Registered trigger actions: {string.Join(", ", registered)}", LogLevel.Trace);
+	}
+
+	#endregion
+
+	#region Critter Spawning
+
+	private static Action<GameLocation, Vector2, List<Critter>>? AddCrittersStartingAtTile;
+
+	[MemberNotNullWhen(true, nameof(AddCrittersStartingAtTile))]
+	private static bool LoadAddCrittersStartingAtTile() {
+		if (AddCrittersStartingAtTile != null)
+			return true;
+
+		var method = AccessTools.Method(typeof(GameLocation), "addCrittersStartingAtTile");
+		if (method is null)
+			return false;
+
+		AddCrittersStartingAtTile = method.CreateAction<GameLocation, Vector2, List<Critter>>();
+		return true;
+	}
+
+
+	public void SpawnCritters(GameLocation location, IEnumerable<ICritterSpawnData> spawnData, bool onlyIfOnScreen = false) {
+		if (spawnData is null || location?.critters is null || location.map?.Layers is null || location.map.Layers.Count == 0 || location.map.Layers[0] is null)
+			return;
+
+		double mapArea = location.map.Layers[0].LayerWidth * location.map.Layers[0].LayerHeight;
+		double baseChance = Math.Max(0.15, Math.Min(0.5, mapArea / 15_000.0));
+
+		HashSet<string> groups = new();
+
+		bool summer = location.IsSummerHere();
+		int critterLimit = summer ? 20 : 10;
+
+		var ctx = new GameStateQueryContext(location, Game1.player, null, null, null);
+
+		int old_count = location.critters.Count;
+
+		foreach (var entry in spawnData) {
+			if (entry.Group != null && groups.Contains(entry.Group))
+				continue;
+
+			if (entry.Chance <= 0)
+				continue;
+
+			if (!string.IsNullOrEmpty(entry.Condition) && !GameStateQuery.CheckConditions(entry.Condition, ctx))
+				continue;
+
+			if (entry.Group != null)
+				groups.Add(entry.Group);
+
+			if (location.critters.Count > critterLimit)
+				break;
+
+			switch (entry.Type.ToLower()) {
+				case "cloud":
+					SpawnCloud(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "birdie":
+					SpawnBirdie(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "firefly":
+				case "butterfly":
+					SpawnFireOrButterfly(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "rabbit":
+					SpawnRabbit(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "squirrel":
+					SpawnSquirrel(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "woodpecker":
+					SpawnWoodpecker(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "owl":
+					SpawnOwl(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				case "opossum":
+					SpawnOpossum(location, entry, entry.Chance * baseChance, onlyIfOnScreen);
+					break;
+				default:
+					Log($"Invalid critter type '{entry.Type}' when spawning critters for location '{location.Name}'.", LogLevel.Warn);
+					break;
+			}
+		}
+
+#if DEBUG
+		int spawned = location.critters.Count - old_count;
+		Log($"Spawned {spawned} critters using custom data.", LogLevel.Debug);
+#endif
+	}
+
+	private void SpawnCloud(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		double c = Math.Min(0.9, chance);
+		while (Game1.random.NextDouble() < c) {
+			Vector2 pos;
+			if (onlyIfOnScreen) {
+				pos = Game1.random.NextBool()
+					? new Vector2(
+						location.map.Layers[0].LayerWidth,
+						Game1.random.Next(location.map.Layers[0].LayerHeight)
+					)
+					: new Vector2(
+						Game1.random.Next(location.map.Layers[0].LayerWidth),
+						location.map.Layers[0].LayerHeight
+					);
+
+			} else {
+				pos = location.getRandomTile();
+				if (Utility.isOnScreen(pos * 64f, 1280))
+					continue;
+			}
+
+			var cloud = new Cloud(pos);
+			bool freeToAdd = true;
+			foreach (var existing in location.critters) {
+				if (existing is Cloud && existing.getBoundingBox(0, 0).Intersects(cloud.getBoundingBox(0, 0))) {
+					freeToAdd = false;
+					break;
+				}
+			}
+
+			if (freeToAdd)
+				location.addCritter(cloud);
+		}
+	}
+
+	private void SpawnBirdie(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		var season = location.GetSeason();
+		if (!LoadAddCrittersStartingAtTile())
+			return;
+
+		while (Game1.random.NextDouble() < chance && location.critters.Count <= 100) {
+			int birdiesToAdd = Game1.random.Next(1, 4);
+			bool success = false;
+			int tries = 0;
+			while (!success && tries < 5) {
+				Vector2 pos = location.getRandomTile();
+				if (!onlyIfOnScreen || !Utility.isOnScreen(pos * 64f, 64)) {
+					var area = new Rectangle(
+						(int) pos.X - 2,
+						(int) pos.Y - 2,
+						5, 5);
+
+					if (location.isAreaClear(area)) {
+						List<Critter> crittersToAdd = [];
+
+						int whichBird = season == Season.Fall ? 45 : 25;
+						if (Game1.random.NextBool() && Game1.MasterPlayer.mailReceived.Contains("Farm_Eternal"))
+							whichBird = season == Season.Fall ? 135 : 125;
+						if (whichBird == 25 && Game1.random.NextDouble() < 0.05)
+							whichBird = 165;
+
+						for (int i = 0; i < birdiesToAdd; i++)
+							crittersToAdd.Add(new Birdie(-100, -100, whichBird));
+
+						AddCrittersStartingAtTile(location, pos, crittersToAdd);
+					}
+				}
+
+				tries++;
+			}
+		}
+	}
+
+	private void SpawnFireOrButterfly(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		bool is_firefly = spawnData.Type.Equals("firefly", StringComparison.OrdinalIgnoreCase);
+		bool is_island = location.InIslandContext();
+
+		double c = Math.Min(0.8, chance * 1.5);
+		while (Game1.random.NextDouble() < c && location.critters.Count <= 100) {
+			Vector2 pos = location.getRandomTile();
+			if (onlyIfOnScreen && Utility.isOnScreen(pos * 64f, 64))
+				continue;
+
+			if (is_firefly)
+				location.critters.Add(new Firefly(pos));
+			else
+				location.critters.Add(new Butterfly(location, pos, is_island));
+
+			while (Game1.random.NextDouble() < 0.4) {
+				var p = pos + new Vector2(Game1.random.Next(-2, 3), Game1.random.Next(-2, 3));
+
+				if (is_firefly)
+					location.critters.Add(new Firefly(p));
+				else
+					location.critters.Add(new Butterfly(location, p, is_island));
+			}
+		}
+
+		if (Game1.timeOfDay < 1700)
+			location.tryAddPrismaticButterfly();
+	}
+
+	private void SpawnRabbit(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		if (onlyIfOnScreen || !(Game1.random.NextDouble() < chance) || location.largeTerrainFeatures is null || location.largeTerrainFeatures.Count == 0)
+			return;
+
+		for (int i = 0; i < 3; i++) {
+			int idx = Game1.random.Next(location.largeTerrainFeatures.Count);
+			if (location.largeTerrainFeatures[idx] is not Bush bush)
+				continue;
+
+			Vector2 pos = bush.Tile;
+			int distance = Game1.random.Next(5, 12);
+			bool flip = Game1.random.NextBool();
+			bool success = true;
+			var box = bush.getBoundingBox();
+
+			for (int j = 0; j < distance; j++) {
+				pos.X += (flip ? 1 : -1);
+				if (!box.Intersects(new Rectangle((int) pos.X * 64, (int) pos.Y * 64, 64, 64)) && !location.CanSpawnCharacterHere(pos)) {
+					success = false;
+					break;
+				}
+			}
+
+			if (success)
+				location.critters.Add(new Rabbit(location, pos, flip));
+		}
+	}
+
+	private void SpawnSquirrel(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		if (onlyIfOnScreen || !(Game1.random.NextDouble() < chance) || location.terrainFeatures.Length == 0)
+			return;
+
+		for (int i = 0; i < 3; i++) {
+			if (!Utility.TryGetRandom(location.terrainFeatures, out var pos, out var feature) ||
+				feature is not Tree tree ||
+				tree.growthStage.Value < 5 ||
+				tree.stump.Value
+			)
+				continue;
+
+			int distance = Game1.random.Next(4, 7);
+			bool flip = Game1.random.NextBool();
+			bool success = true;
+
+			for (int j = 0; j < distance; j++) {
+				pos.X += (flip ? 1 : -1);
+				if (!location.CanSpawnCharacterHere(pos)) {
+					success = false;
+					break;
+				}
+			}
+
+			if (success)
+				location.critters.Add(new Squirrel(pos, flip));
+		}
+	}
+
+	private void SpawnWoodpecker(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		if (onlyIfOnScreen || !(Game1.random.NextDouble() < chance) || location.terrainFeatures.Length == 0)
+			return;
+
+		for (int i = 0; i < 3; i++) {
+			if (!Utility.TryGetRandom(location.terrainFeatures, out var pos, out var feature) ||
+				feature is not Tree tree ||
+				tree.growthStage.Value < 5 ||
+				!(tree.GetData()?.AllowWoodpeckers ?? false)
+			)
+				continue;
+
+			location.critters.Add(new Woodpecker(tree, pos));
+		}
+	}
+
+	private void SpawnOwl(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		while (Game1.random.NextDouble() < chance)
+			location.addOwl();
+	}
+
+	private void SpawnOpossum(GameLocation location, ICritterSpawnData spawnData, double chance, bool onlyIfOnScreen) {
+		if (onlyIfOnScreen || !(Game1.random.NextDouble() < chance) || location.largeTerrainFeatures is null || location.largeTerrainFeatures.Count == 0)
+			return;
+
+		for (int i = 0; i < 3; i++) {
+			int idx = Game1.random.Next(location.largeTerrainFeatures.Count);
+			if (location.largeTerrainFeatures[idx] is not Bush bush)
+				continue;
+
+			Vector2 pos = bush.Tile;
+			int distance = Game1.random.Next(5, 12);
+			bool flip = Game1.player.Position.X > (location is BusStop ? 704 : 64);
+			bool success = true;
+			var box = bush.getBoundingBox();
+
+			for (int j = 0; j < distance; j++) {
+				pos.X += (flip ? 1 : -1);
+				if (!box.Intersects(new Rectangle((int) pos.X * 64, (int) pos.Y * 64, 64, 64)) && !location.CanSpawnCharacterHere(pos)) {
+					success = false;
+					break;
+				}
+			}
+
+			if (success) {
+				if (location is BusStop && Game1.random.NextDouble() < 0.5)
+					pos = new Vector2(Game1.player.Tile.X < 26 ? 36 : 16, 23 + Game1.random.Next());
+				location.critters.Add(new Rabbit(location, pos, flip));
+			}
+		}
 	}
 
 	#endregion

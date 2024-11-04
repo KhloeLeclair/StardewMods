@@ -130,6 +130,15 @@ internal static class PatchUtils {
 		return null;
 	}
 
+	internal static double? AsDouble(this CodeInstruction instr) {
+		if (instr.operand is double dval)
+			return dval;
+		if (instr.operand is float fval)
+			return fval;
+
+		return instr.AsInt();
+	}
+
 	internal static IEnumerable<CodeInstruction> ReplaceColors(
 		IEnumerable<CodeInstruction> instructions,
 		IEnumerable<KeyValuePair<Color, MethodInfo>> replacements

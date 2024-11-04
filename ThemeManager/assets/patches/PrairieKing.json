@@ -1,6 +1,14 @@
 {
 	"ID": "PrairieKing",
 
+	"ColorVariables": {
+		"$PrairieKing:ConfusedText": "$PrairieKing:OverlayText",
+		"$PrairieKingStoreItemText": "$PrairieKing:OverlayText",
+
+		"$PrairieKing:DraculaHealth": "$PrairieKing:BossHealth",
+		"$PrairieKing:OutlawHealth": "$PrairieKing:BossHealth"
+	},
+
 	"FontVariables": {
 		"$PrairieKing:Dialogue": "$Dialogue",
 		"$PrairieKing:Small": "$Small"
@@ -16,6 +24,28 @@
 	},
 
 	"Patches": {
+		"StardewValley.Minigames.AbigailGame+Dracula:draw": {
+			"RawColors": {
+				"188, 51, 74": { "*": "$PrairieKing:DraculaHealth" }
+			}
+		},
+
+		"StardewValley.Minigames.AbigailGame+Outlaw:draw": {
+			"RawColors": {
+				"188, 51, 74": { "*": "$PrairieKing:OutlawHealth" }
+			}
+		},
+
+		"StardewValley.Minigames.AbigailGame+CowboyMonster:draw": {
+			"RawColors": {
+				"88, 29, 43": { "*": "$PrairieKing:ConfusedText" }
+			},
+
+			"FontFields": {
+				"Game1:smallFont": { "*": "$PrairieKing:Small" }
+			}
+		},
+
 		"StardewValley.Minigames.AbigailGame:draw": {
 
 			"Colors": {
@@ -32,14 +62,8 @@
 			},
 
 			"FontFields": {
-				"StardewValley.Game1:dialogueFont": { "*": "$PrairieKing:Dialogue" },
-				"StardewValley.Game1:smallFont": { "*": "$PrairieKing:Small" }
-			},
-
-			"TextureFields": {
-				"StardewValley.Game1:staminaRect": { "*": "$PrairieKing:staminaRect" },
-				"StardewValley.Game1:mouseCursors": { "*": "$PrairieKing:mouseCursors" },
-				"StardewValley.Game1:controllerMaps": { "*": "$PrairieKing:controllerMaps" }
+				"Game1:dialogueFont": { "*": "$PrairieKing:Dialogue" },
+				"Game1:smallFont": { "*": "$PrairieKing:Small" }
 			},
 
 			"SpriteTextDraw": {

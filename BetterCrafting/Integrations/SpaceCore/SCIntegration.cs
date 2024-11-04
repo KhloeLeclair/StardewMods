@@ -231,6 +231,7 @@ public class SCIntegration : BaseAPIIntegration<IApi, ModEntry>, IRecipeProvider
 		try {
 			return new SCRecipe(
 				name: recipe.name,
+				crecipe: recipe,
 				recipe: ccr,
 				cooking: recipe.isCookingRecipe,
 				ingredients: ingreds

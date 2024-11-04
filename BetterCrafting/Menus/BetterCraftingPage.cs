@@ -2748,9 +2748,8 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		}
 
 		// Finish up the logic.
-
-		if (obj != null)
-			Game1.player.checkForQuestComplete(null, -1, -1, obj, null, 2);
+		if (recipe.CraftingRecipe != null && obj != null)
+			Game1.player.NotifyQuests(quest => quest.OnRecipeCrafted(recipe.CraftingRecipe, obj));
 
 		if (!cooking && Game1.player.craftingRecipes.ContainsKey(recipe.Name))
 			Game1.player.craftingRecipes[recipe.Name] += recipe.QuantityPerCraft;

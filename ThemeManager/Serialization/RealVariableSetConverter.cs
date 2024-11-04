@@ -63,6 +63,9 @@ public class RealVariableSetConverter : JsonConverter {
 		if (ttype == typeof(Color)) {
 			result = new ColorVariableSet();
 			outType = typeof(IVariableSet<Color>);
+		} else if (ttype == typeof(float)) {
+			result = new FloatVariableSet();
+			outType = typeof(IVariableSet<float>);
 		} else if (ttype == typeof(IManagedAsset<SpriteFont>)) {
 			result = new FontVariableSet();
 			outType = typeof(IVariableSet<IManagedAsset<SpriteFont>>);
@@ -117,7 +120,7 @@ public class RealVariableSetConverter : JsonConverter {
 		if (value is null) {
 			writer.WriteNull();
 			return;
-		}			
+		}
 
 		if (value is IVariableSet vs) {
 			if (vs.RawValues is not null)

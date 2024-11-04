@@ -1,6 +1,5 @@
+using System;
 using System.Collections.Generic;
-
-using Leclair.Stardew.Common.UI;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -10,6 +9,24 @@ public enum ClockAlignMode {
 	Manual
 };
 
+[Flags]
+public enum Alignment {
+	None = 0,
+
+	// Horizontal
+	Left = 1,
+	HCenter = 2,
+	Right = 4,
+
+	// Vertical
+	Top = 8,
+	VCenter = 16,
+	Bottom = 32,
+
+	// Absolute Center
+	Center = HCenter | VCenter
+}
+
 internal class ModConfig {
 
 	public bool DebugPatches { get; set; } = false;
@@ -17,6 +34,8 @@ internal class ModConfig {
 	//public bool AlignText { get; set; } = true;
 
 	public ClockAlignMode ClockMode { get; set; } = ClockAlignMode.ByTheme;
+
+	public bool PatchDropdown { get; set; } = false;
 
 	public Alignment? ClockAlignment { get; set; }
 

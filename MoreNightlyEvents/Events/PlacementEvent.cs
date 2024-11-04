@@ -14,13 +14,12 @@ using StardewValley.Buildings;
 using StardewValley.Delegates;
 using StardewValley.Extensions;
 using StardewValley.Internal;
-using StardewValley.Locations;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 
 namespace Leclair.Stardew.MoreNightlyEvents.Events;
 
-public class PlacementEvent : BaseFarmEvent<PlacementEventData> { 
+public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 	private int timer;
 
@@ -33,34 +32,36 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 	private PlacementItemData? targetData;
 	private Point? targetSize;
 
+	public PlacementEvent() : base() { }
+
 	public PlacementEvent(string key, PlacementEventData? data = null) : base(key, data) {
 
 	}
 
 	public static bool IsTileOpenBesidesTerrainFeatures(GameLocation location, Vector2 tile) {
-		Rectangle bounds = new Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64);
+		Rectangle bounds = new((int) tile.X * 64, (int) tile.Y * 64, 64, 64);
 
-		foreach(var building in location.buildings) { 
+		foreach (var building in location.buildings) {
 			if (building.intersects(bounds))
 				return false;
 		}
 
-		foreach(var clump in location.resourceClumps) {
+		foreach (var clump in location.resourceClumps) {
 			if (clump.getBoundingBox().Intersects(bounds))
 				return false;
 		}
 
-		foreach(var animal in location.animals.Values) {
+		foreach (var animal in location.animals.Values) {
 			if (animal.GetBoundingBox().Intersects(bounds))
 				return false;
 		}
 
-		foreach(var feature in location.terrainFeatures.Values) {
+		foreach (var feature in location.terrainFeatures.Values) {
 			if (feature.getBoundingBox().Intersects(bounds))
 				return false;
 		}
 
-		foreach(var feature in location.largeTerrainFeatures) {
+		foreach (var feature in location.largeTerrainFeatures) {
 			if (feature.getBoundingBox().Intersects(bounds))
 				return false;
 		}
@@ -71,7 +72,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		return location.isTilePassable(tile.ToLocation(), Game1.viewport);
 	}
 
-	public List<Vector2> CalculatePossiblePositions(GameLocation location, IEnumerable<Rectangle>? areas) {
+	public static List<Vector2> CalculatePossiblePositions(GameLocation location, IEnumerable<Rectangle>? areas) {
 		List<Vector2> result = new();
 		var layer = location.Map.Layers[0];
 		if (layer is null)
@@ -80,8 +81,8 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		if (areas is null)
 			result.AddRange(Vector2.Zero.IterArea(0, layer.LayerWidth, 0, layer.LayerHeight));
 		else
-			foreach(var area in areas) {
-				foreach(var point in area.GetPoints()) {
+			foreach (var area in areas) {
+				foreach (var point in area.GetPoints()) {
 					if (point.X >= 0 && point.X < layer.LayerWidth && point.Y >= 0 && point.Y < layer.LayerHeight)
 						result.Add(point.ToVector2());
 				}
@@ -90,14 +91,14 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		return result;
 	}
 
-	public Vector2? GetTarget(GameLocation location, int width, int height, List<Vector2>? validPositions, HashSet<Vector2> invalid_places, int attempts = 10, Random? rnd = null, bool strict = false, Func<Vector2, bool>? extraValidCheck = null) {
+	public static Vector2? GetTarget(GameLocation location, int width, int height, List<Vector2>? validPositions, HashSet<Vector2> invalid_places, int attempts = 10, Random? rnd = null, bool strict = false, Func<Vector2, bool>? extraValidCheck = null) {
 		rnd ??= Game1.random;
 
 		var layer = location.Map.Layers[0];
 		if (layer is null)
 			return null;
 
-		while(attempts > 0) {
+		while (attempts > 0) {
 			int x;
 			int y;
 			if (validPositions is not null) {
@@ -113,18 +114,18 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 			bool valid = true;
 
-			for(int i=0; i < width; i++) {
-				for(int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
 					Vector2 v = new(x + i, y + j);
 
-					if (invalid_places.Contains(v) || (validPositions is not null && ! validPositions.Contains(v))) {
+					if (invalid_places.Contains(v) || (validPositions is not null && !validPositions.Contains(v))) {
 						valid = false;
 						break;
 					}
 
 					// Loose placing requirements.
-					if (! IsTileOpenBesidesTerrainFeatures(location, v) ||
-						location.doesTileHaveProperty(x+i, y+j, "Water", "Back") != null
+					if (!IsTileOpenBesidesTerrainFeatures(location, v) ||
+						location.doesTileHaveProperty(x + i, y + j, "Water", "Back") != null
 					) {
 						valid = false;
 						break;
@@ -133,8 +134,8 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 					// Stricter placing requirements.
 					if (strict && (
 						location.IsNoSpawnTile(v) ||
-						location.doesEitherTileOrTileIndexPropertyEqual(x+i, y+j, "Spawnable", "Back", "F") ||
-						! location.CanItemBePlacedHere(v) ||
+						location.doesEitherTileOrTileIndexPropertyEqual(x + i, y + j, "Spawnable", "Back", "F") ||
+						!location.CanItemBePlacedHere(v) ||
 						location.isBehindBush(v)
 					)) {
 						valid = false;
@@ -142,7 +143,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 					}
 
 					// Extra checks
-					if (extraValidCheck != null && ! extraValidCheck(v)) {
+					if (extraValidCheck != null && !extraValidCheck(v)) {
 						valid = false;
 						break;
 					}
@@ -162,7 +163,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 	#region FarmEvent
 
 	public override bool setUp() {
-		if (! LoadData())
+		if (!LoadData())
 			return true;
 
 		Random rnd = Utility.CreateDaySaveRandom();
@@ -174,7 +175,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		// What are we placing?
 		targetData = null;
 		GameStateQueryContext ctx = new(loc, null, null, null, rnd);
-		foreach(var thing in Data.Output) {
+		foreach (var thing in Data.Output) {
 			if (string.IsNullOrEmpty(thing.Condition) || GameStateQuery.CheckConditions(thing.Condition, ctx)) {
 				targetData = thing;
 				break;
@@ -201,7 +202,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		int x;
 		int y;
 
-		switch(targetData.Type) {
+		switch (targetData.Type) {
 			case PlaceableType.Building:
 				// We need this to be a buildable location.
 				if (!loc.IsBuildableLocation())
@@ -212,7 +213,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 				var buildings = DataLoader.Buildings(Game1.content);
 				if (targetData.RandomItemId != null && targetData.RandomItemId.Count > 0) {
-					foreach(string id in targetData.RandomItemId)
+					foreach (string id in targetData.RandomItemId)
 						if (!string.IsNullOrEmpty(id) && buildings.TryGetValue(id, out var buildingData)) {
 							x = Math.Max(x, buildingData.Size.X);
 							y = Math.Max(y, buildingData.Size.Y);
@@ -251,12 +252,12 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 				var crops = DataLoader.GiantCrops(Game1.content);
 				if (targetData.RandomItemId != null && targetData.RandomItemId.Count > 0) {
 					foreach (string id in targetData.RandomItemId)
-						if (! string.IsNullOrEmpty(id) && crops.TryGetValue(id, out var cropData)) {
+						if (!string.IsNullOrEmpty(id) && crops.TryGetValue(id, out var cropData)) {
 							x = Math.Max(x, cropData.TileSize.X);
 							y = Math.Max(y, cropData.TileSize.Y);
 						}
 
-				} else if (! string.IsNullOrEmpty(targetData.ItemId) && crops.TryGetValue(targetData.ItemId, out var cropData)) {
+				} else if (!string.IsNullOrEmpty(targetData.ItemId) && crops.TryGetValue(targetData.ItemId, out var cropData)) {
 					x = cropData.TileSize.X;
 					y = cropData.TileSize.Y;
 
@@ -304,7 +305,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		if (validPositions != null && validPositions.Count == 0)
 			return true;
 
-		for(int i = 0; i < toSpawn; i++) {
+		for (int i = 0; i < toSpawn; i++) {
 			var pos = GetTarget(loc, targetSize.Value.X, targetSize.Value.Y, validPositions, invalidPlaces, attempts: 50, rnd: rnd, strict: strictPlacement, extraValidity);
 			if (pos is not null) {
 				locations.Add(pos.Value);
@@ -339,11 +340,11 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		timer += time.ElapsedGameTime.Milliseconds;
 		if (timer > 1500f && !playedSound) {
 			playedSound = true;
-			if (! string.IsNullOrEmpty(Data?.SoundName) )
+			if (!string.IsNullOrEmpty(Data?.SoundName))
 				Game1.playSound(Data.SoundName);
 		}
 
-		if (timer > (Data?.MessageDelay ?? 7000) && ! showedMessage) {
+		if (timer > (Data?.MessageDelay ?? 7000) && !showedMessage) {
 			showedMessage = true;
 			if (Data?.Message == null)
 				finished = true;
@@ -390,8 +391,14 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 	}
 
 	public override void makeChangesToLocation() {
-		if (!Game1.IsMasterGame || targetLocations is null || targetMap is null || targetData is null || targetSize is null)
+		if (targetLocations is null || targetMap is null || targetData is null || targetSize is null)
 			return;
+
+		if (!Game1.IsMasterGame) {
+			// Finally, do our stuff.
+			PerformSideEffects(targetMap, Game1.player, null);
+			return;
+		}
 
 		var mod = ModEntry.Instance;
 
@@ -405,8 +412,8 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 		int offsetY;
 
 		// Okay, it's go time.
-		foreach(var pos in targetLocations) {
-			switch(targetData.Type) {
+		foreach (var pos in targetLocations) {
+			switch (targetData.Type) {
 				case PlaceableType.Building:
 					// Pick a suitable Id.
 					id = targetData.ItemId;
@@ -457,7 +464,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 							.Select(pair => pair.Key)
 							.ToHashSet();
 
-						foreach(var entry in targetData.Animals) {
+						foreach (var entry in targetData.Animals) {
 							if (ahouse.isFull())
 								break;
 
@@ -466,7 +473,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 							if (entry.RandomAnimalId is not null && entry.RandomAnimalId.Count > 0)
 								aid = rnd.ChooseFrom(entry.RandomAnimalId);
 
-							if (string.IsNullOrEmpty(aid) || ! validAnimals.Contains(aid) || ! animals.TryGetValue(aid, out var animalData)) {
+							if (string.IsNullOrEmpty(aid) || !validAnimals.Contains(aid) || !animals.TryGetValue(aid, out var animalData)) {
 								mod.Log($"Error spawning animal in building '{id}' for event: animal id '{aid}' is not valid", StardewModdingAPI.LogLevel.Error);
 								continue;
 							}
@@ -475,12 +482,12 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 							if (entry.RandomSkinId is not null && entry.RandomSkinId.Count > 0)
 								askin = rnd.ChooseFrom(entry.RandomSkinId);
 
-							if (! string.IsNullOrEmpty(askin) && (animalData.Skins is null || ! animalData.Skins.Where(s => s.Id == askin).Any())) {
+							if (!string.IsNullOrEmpty(askin) && (animalData.Skins is null || !animalData.Skins.Where(s => s.Id == askin).Any())) {
 								mod.Log($"Error spawning animal '{aid}' in building '{id}' for event: no such skin '{askin}'", StardewModdingAPI.LogLevel.Error);
 								continue;
 							}
 
-							FarmAnimal animal = new FarmAnimal(aid, ModEntry.Instance.Helper.Multiplayer.GetNewID(), Game1.MasterPlayer.UniqueMultiplayerID);
+							var animal = new FarmAnimal(aid, ModEntry.Instance.Helper.Multiplayer.GetNewID(), Game1.MasterPlayer.UniqueMultiplayerID);
 							animal.skinID.Value = askin;
 
 							string? aname = entry.Name;
@@ -525,8 +532,8 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 							clump.modData.TryAdd(entry.Key, entry.Value);
 
 					// Remove any features under the clump.
-					for(int x = 0; x < targetSize.Value.X; x++) {
-						for(int y = 0; y < targetSize.Value.Y; y++) {
+					for (int x = 0; x < targetSize.Value.X; x++) {
+						for (int y = 0; y < targetSize.Value.Y; y++) {
 							Vector2 target = new(pos.X + x, pos.Y + y);
 							targetMap.terrainFeatures.Remove(target);
 						}
@@ -543,7 +550,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 						id = rnd.ChooseFrom(targetData.RandomItemId);
 
 					var giantCrops = DataLoader.GiantCrops(Game1.content);
-					if (string.IsNullOrEmpty(id) || ! giantCrops.TryGetValue(id, out var giantCropData)) {
+					if (string.IsNullOrEmpty(id) || !giantCrops.TryGetValue(id, out var giantCropData)) {
 						mod.Log($"Error loading giant crop '{id}' for event: unable to find giant crop data", StardewModdingAPI.LogLevel.Error);
 						continue;
 					}
@@ -576,14 +583,15 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 						continue;
 					}
 
-					if (targetData.IgnoreSeasons == IgnoreSeasonsMode.Never && ! targetMap.SeedsIgnoreSeasonsHere() && !(cropData.Seasons?.Contains(targetMap.GetSeason()) ?? false)) {
+					if (targetData.IgnoreSeasons == IgnoreSeasonsMode.Never && !targetMap.SeedsIgnoreSeasonsHere() && !(cropData.Seasons?.Contains(targetMap.GetSeason()) ?? false)) {
 						mod.Log($"Unable to place crop '{id}' for event: crop is not in season and IgnoreSeasons is set to Never.", StardewModdingAPI.LogLevel.Warn);
 						continue;
 					}
 
 					// We need to spawn a HoeDirt and add our crop.
-					HoeDirt dirt = new HoeDirt();
-					dirt.crop = new Crop(id, (int) pos.X, (int) pos.Y, targetMap);
+					var dirt = new HoeDirt {
+						crop = new Crop(id, (int) pos.X, (int) pos.Y, targetMap)
+					};
 
 					// TODO: Fertilizers?
 
@@ -640,7 +648,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 					bool fruitTree = targetData.Type == PlaceableType.FruitTree;
 
-					if (!IsTreeIdValid(id, fruitTree)) { 
+					if (!IsTreeIdValid(id, fruitTree)) {
 						mod.Log($"Error loading tree '{id}' for event: unable to find tree data", StardewModdingAPI.LogLevel.Error);
 						continue;
 					}
@@ -675,7 +683,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 					// Copy over any ModData from this spawning condition.
 					if (targetData.ModData is not null)
-						foreach(var entry in targetData.ModData)
+						foreach (var entry in targetData.ModData)
 							tree.modData.TryAdd(entry.Key, entry.Value);
 
 					// Add at the center of the 3x3 we checked was clear.
@@ -692,6 +700,12 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 					if (item is not SObject sobj) {
 						mod.Log($"Ignoring invalid item query '{targetData}' for placement: the resulting item isn't a placeable item.", StardewModdingAPI.LogLevel.Error);
+						continue;
+					}
+
+					// This is fixed in Stardew 1.6.9 but until then...
+					if (sobj.bigCraftable.Value && sobj.name == null) {
+						mod.Log($"Ignoring invalid item '{targetData}' for placement: the resulting item isn't valid.", StardewModdingAPI.LogLevel.Error);
 						continue;
 					}
 
@@ -753,7 +767,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 								break;
 
 							case "(BC)216":
-								Chest fridge = new Chest("216", pos, 217, 2) {
+								var fridge = new Chest("216", pos, 217, 2) {
 									shakeTimer = 50,
 								};
 								fridge.fridge.Value = true;
@@ -777,7 +791,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 								break;
 
 							case "(BC)275":
-								Chest loader = new Chest(playerChest: true, pos, sobj.ItemId) {
+								var loader = new Chest(playerChest: true, pos, sobj.ItemId) {
 									Name = sobj.Name,
 									shakeTimer = 50,
 									SpecialChestType = Chest.SpecialChestTypes.AutoLoader
@@ -789,7 +803,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 
 					if (targetData.Contents != null && targetData.Contents.Count > 0) {
 						List<Item> items = new();
-						foreach(var entry in targetData.Contents) {
+						foreach (var entry in targetData.Contents) {
 							Item i = ItemQueryResolver.TryResolveRandomItem(entry, ctx, logError: (query, error) => {
 								mod.Log($"Error parsing item query '{query}' for event: {error}", StardewModdingAPI.LogLevel.Error);
 							});
@@ -826,8 +840,7 @@ public class PlacementEvent : BaseFarmEvent<PlacementEventData> {
 						foreach (var entry in targetData.ModData)
 							sobj.modData.TryAdd(entry.Key, entry.Value);
 
-					if (targetItem is null)
-						targetItem = sobj;
+					targetItem ??= sobj;
 
 					break;
 			}

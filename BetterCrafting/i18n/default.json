@@ -117,6 +117,9 @@
 	"setting.invalid-storage-types": "Disallowed Storage Types",
 	"setting.invalid-storage-types.tip": "This allows you to disable certain types of storage objects (Chests, Hoppers, etc.) from being used.",
 
+	"setting.disable-fish-sources": "Never Use Fish Tanks and Ponds",
+	"setting.disable-fish-sources.tip": "When this is enabled, Better Crafting will attempt to never use Fish Tanks or Fish Ponds as sources for items for crafting. Please note that this may fail to work in some cases depending on how other mods expose these to Better Crafting.",
+
 	"setting.nearby": "Extended Workbench",
 	"setting.nearby.tip": "This feature allows Workbenches and your kitchen to connect to more chests at once, improving on the game's default range of one block. You can create chains of connected chests, or use allowed connectors to bridge gaps.",
 
@@ -400,6 +403,9 @@
 
 	"filter.search": "Search",
 	"filter.search.about": "This rule matches items against a search, using the same rules as the crafting menu.",
+
+	"filter.provider": "Recipe Provider",
+	"filter.provider.about": "This rule will match all recipes handled by a specific provider. This is intended for developer/debugging use.",
 
 	"filter.mod": "Items From Mod",
 	"filter.mod.about": "This rule will attempt to match all recipes added by a specific mod.",

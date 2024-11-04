@@ -14,6 +14,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using StardewValley;
+using StardewValley.Extensions;
 using StardewValley.GameData.LocationContexts;
 using StardewValley.Menus;
 using StardewValley.Objects;
@@ -42,12 +43,16 @@ public class TVWeatherMenu : IClickableMenu {
 
 	public List<ClickableComponent> FlowComponents;
 
+	private string LightSourceId;
+
 	private string? LastHoverContext = null;
 	private string? LastHoverWeather = null;
 
 	public TVWeatherMenu(ModEntry mod, TV tv) {
 		Mod = mod;
 		Television = tv;
+
+		LightSourceId = Television.GenerateLightSourceId(Television.TileLocation) + "_Screen";
 
 		// We do non standard rendering, so there.
 		width = 1240;
@@ -78,11 +83,11 @@ public class TVWeatherMenu : IClickableMenu {
 
 		Game1.currentLightSources.Add(
 			new LightSource(
+				LightSourceId,
 				2,
 				Television.getScreenPosition() + (is_plasma ? new Vector2(88, 80) : new Vector2(38, 48)),
 				is_plasma ? 1f : 0.55f,
 				Color.Black,
-				70907,
 				LightSource.LightContext.None,
 				0L
 			)
@@ -410,7 +415,7 @@ public class TVWeatherMenu : IClickableMenu {
 		childMenu?.emergencyShutDown();
 		childMenu = null;
 
-		Utility.removeLightSource(70907);
+		Utility.removeLightSource(LightSourceId);
 	}
 
 	public override void emergencyShutDown() {

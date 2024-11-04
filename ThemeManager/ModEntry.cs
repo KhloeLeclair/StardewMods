@@ -1,45 +1,38 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 
 using HarmonyLib;
 
-using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
-using Leclair.Stardew.Common.UI;
-
-using StardewValley;
-using StardewValley.Menus;
+using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.ThemeManager.Managers;
+using Leclair.Stardew.ThemeManager.Models;
+using Leclair.Stardew.ThemeManager.Patches;
+using Leclair.Stardew.ThemeManager.VariableSets;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
-using Leclair.Stardew.Common;
-
-using Leclair.Stardew.ThemeManager.Models;
-using Leclair.Stardew.ThemeManager.Patches;
-using Leclair.Stardew.ThemeManager.Serialization;
+using StardewValley;
+using StardewValley.Menus;
 
 using SMAPIJsonHelper = StardewModdingAPI.Toolkit.Serialization.JsonHelper;
-using Leclair.Stardew.ThemeManager.Managers;
-using Leclair.Stardew.ThemeManager.VariableSets;
-using Nanoray.Pintail;
-using System.Security.AccessControl;
-using Leclair.Stardew.Common.Extensions;
 
 namespace Leclair.Stardew.ThemeManager;
 
 public partial class ModEntry : PintailModSubscriber {
 
-	#nullable disable
+#nullable disable
 	public static ModEntry Instance { get; private set; }
 	internal ModConfig Config;
-	#nullable enable
+#nullable enable
 
 	#region Fields - Integrations
 
@@ -94,12 +87,12 @@ public partial class ModEntry : PintailModSubscriber {
 
 	// Temporarily disable nullable because these should always be set before
 	// any other code runs.
-	#nullable disable
+#nullable disable
 
 	internal SpriteFontManager SpriteFontManager;
 	internal SpriteTextManager SpriteTextManager;
 
-	#nullable enable
+#nullable enable
 
 	#endregion
 
@@ -132,11 +125,12 @@ public partial class ModEntry : PintailModSubscriber {
 		//SpriteBatch_Patches.Patch(this);
 		Game1_Patches.Patch(this);
 		SpriteText_Patches.Patch(this);
-		OptionsDropDown_Patches.Patch(this);
+		SObject_Patches.Patch(this);
 
 		// Read Configuration
 		Config = Helper.ReadConfig<ModConfig>();
-		//SpriteBatch_Patches.AlignText = Config.AlignText;
+
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 
 		// I18n
 		I18n.Init(Helper.Translation);
@@ -177,12 +171,12 @@ public partial class ModEntry : PintailModSubscriber {
 
 	internal void ResetConfig() {
 		Config = new ModConfig();
-		//Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 	}
 
 	internal void SaveConfig() {
 		Helper.WriteConfig(Config);
-		//Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 	}
 
 	[MemberNotNullWhen(true, nameof(intGMCM))]
@@ -216,7 +210,7 @@ public partial class ModEntry : PintailModSubscriber {
 			name: I18n.Setting_GameTheme,
 			tooltip: I18n.Setting_GameTheme_Tip,
 			get: c => c.StardewTheme,
-			set: (c,v) => {
+			set: (c, v) => {
 				c.StardewTheme = v;
 				GameThemeManager!._SelectTheme(v);
 			},
@@ -258,6 +252,13 @@ public partial class ModEntry : PintailModSubscriber {
 			tooltip: I18n.Setting_DebugPatches_Tip,
 			get: c => c.DebugPatches,
 			set: (c, v) => c.DebugPatches = v
+		);
+
+		intGMCM.Add(
+			name: I18n.Setting_PatchDropdown,
+			tooltip: I18n.Setting_PatchDropdown_Tip,
+			get: c => c.PatchDropdown,
+			set: (c, v) => c.PatchDropdown = v
 		);
 
 		/*intGMCM.Add(
@@ -380,7 +381,7 @@ public partial class ModEntry : PintailModSubscriber {
 			JsonHelper = new();
 			var converters = JsonHelper.JsonSettings.Converters;
 			converters.Clear();
-			foreach(var converter in helper.JsonSettings.Converters)
+			foreach (var converter in helper.JsonSettings.Converters)
 				if (converter.GetType().Name != "ColorConverter")
 					converters.Add(converter);
 
@@ -408,7 +409,7 @@ public partial class ModEntry : PintailModSubscriber {
 				return result;
 			return null;
 		}
-		
+
 		return pack.ReadJsonFile<TModel>(path);
 	}
 
@@ -465,7 +466,11 @@ public partial class ModEntry : PintailModSubscriber {
 	/// <param name="fullTypes">Whether or not the type list should include
 	/// the full types, or just the minimum necessary to uniquely match
 	/// the method.</param>
+	[Obsolete("Use ReflectionHelper instead.")]
 	internal string? ToTargetString(MemberInfo member, bool replaceMenuWithHash = true, bool? includeTypes = null, bool fullTypes = true) {
+		return ReflectionHelper.ToTargetString(member, replaceMenuWithHash, includeTypes, fullTypes);
+	}
+	/*
 		string? type = member.DeclaringType?.FullName;
 		if (type is null)
 			return null;
@@ -474,7 +479,6 @@ public partial class ModEntry : PintailModSubscriber {
 			type = $"#{type[20..]}";
 
 		bool[]? differingTypes = null;
-		int min_types = 0;
 
 		if (!includeTypes.HasValue || !fullTypes) {
 			IEnumerable<MethodBase>? methods = null;
@@ -549,24 +553,24 @@ public partial class ModEntry : PintailModSubscriber {
 			memberName = "";
 			if (string.IsNullOrEmpty(argumentList))
 				argumentList = "()";
-		}*/
+		}* /
 
 		return $"{assembly}{type}:{memberName}{argumentList}";
-	}
+	}*/
 
-	internal MethodInfo ResolveMethod(string input, Type? current = null) {
-		var result = ResolveMember<MethodInfo>(input);
+	internal static MethodInfo ResolveMethod(string input, Type? current = null) {
+		var result = ResolveMember<MethodInfo>(input, current);
 		if (result?.Item2 is null)
 			throw new ArgumentNullException($"Unable to find method: {input}");
 		return result.Value.Item2;
 	}
 
-	internal (Type, TValue)? ResolveMember<TValue>(string input, Type? current = null) where TValue : MemberInfo {
+	internal static (Type, TValue)? ResolveMember<TValue>(string input, Type? current = null) where TValue : MemberInfo {
 		var result = ResolveMembers<TValue>(input, current);
 		return result.FirstOrDefault();
 	}
 
-	internal IEnumerable<(Type, TValue)> ResolveMembers<TValue>(string input, Type? current = null) where TValue : MemberInfo {
+	internal static IEnumerable<(Type, TValue)> ResolveMembers<TValue>(string input, Type? current = null) where TValue : MemberInfo {
 		if (input == null)
 			yield break;
 
@@ -624,7 +628,7 @@ public partial class ModEntry : PintailModSubscriber {
 		bool type_length_match = true;
 
 		if (entryName.EndsWith(')')) {
-			type_length_match = ! entryName.EndsWith(",*)");
+			type_length_match = !entryName.EndsWith(",*)");
 			idx = entryName.IndexOf('(');
 
 			if (idx != -1) {
@@ -668,7 +672,7 @@ public partial class ModEntry : PintailModSubscriber {
 				if (members is null)
 					continue;
 
-				foreach(var member in members) {
+				foreach (var member in members) {
 					if (member is null || (!member.Name.Equals(entryName) && !(member is ConstructorInfo && string.IsNullOrEmpty(entryName))))
 						continue;
 
@@ -761,7 +765,7 @@ public partial class ModEntry : PintailModSubscriber {
 		int packs = 0;
 		int packloaded = 0;
 
-		foreach(var cp in Helper.ContentPacks.GetOwned()) {
+		foreach (var cp in Helper.ContentPacks.GetOwned()) {
 			int count = _LoadPatchesFrom(result, cp.DirectoryPath, "patches", cp.ModContent);
 			if (count > 0) {
 				packs++;
@@ -789,13 +793,13 @@ public partial class ModEntry : PintailModSubscriber {
 
 		int count = 0;
 
-		foreach(string file in Directory.EnumerateFiles(path, "*.json")) {
+		foreach (string file in Directory.EnumerateFiles(path, "*.json")) {
 			string relative = Path.GetRelativePath(root, file);
 			PatchGroupData? data;
 			try {
 				data = helper.Load<PatchGroupData>(relative);
 
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				Log($"Unable to read patch data from {file}: {ex}", LogLevel.Error);
 				continue;
 			}
@@ -806,7 +810,7 @@ public partial class ModEntry : PintailModSubscriber {
 			// Check to see if all the required mods are present.
 			data.CanUse = true;
 			if (data.RequiredMods is not null)
-				foreach(var entry in data.RequiredMods) {
+				foreach (var entry in data.RequiredMods) {
 					var info = Helper.ModRegistry.Get(entry.UniqueID);
 					if (!entry.Matches(info)) {
 						data.CanUse = false;
@@ -815,7 +819,7 @@ public partial class ModEntry : PintailModSubscriber {
 				}
 
 			if (data.ForbiddenMods is not null)
-				foreach(var entry in data.ForbiddenMods) {
+				foreach (var entry in data.ForbiddenMods) {
 					var info = Helper.ModRegistry.Get(entry.UniqueID);
 					if (entry.Matches(info)) {
 						data.CanUse = false;
@@ -890,12 +894,14 @@ public partial class ModEntry : PintailModSubscriber {
 		GameTheme.FontVariables ??= new FontVariableSet();
 		GameTheme.TextureVariables ??= new TextureVariableSet();
 		GameTheme.BmFontVariables ??= new BmFontVariableSet();
+		GameTheme.ColorAlphaVariables ??= new FloatVariableSet();
 
 		// Assign the patch variables.
 		GameTheme.ColorVariables.DefaultValues = GameTheme.PatchColorVariables;
 		GameTheme.FontVariables.DefaultValues = GameTheme.PatchFontVariables;
 		GameTheme.TextureVariables.DefaultValues = GameTheme.PatchTextureVariables;
 		GameTheme.BmFontVariables.DefaultValues = GameTheme.PatchBmFontVariables;
+		GameTheme.ColorAlphaVariables.DefaultValues = GameTheme.PatchColorAlphaVariables;
 
 		// Access SpriteTextColors to force all the theme's data to build.
 		int _ = GameTheme.IndexedSpriteTextColors.Count;
@@ -920,14 +926,21 @@ public partial class ModEntry : PintailModSubscriber {
 		DynamicPatcher.UpdateFonts(GameTheme.FontVariables);
 		DynamicPatcher.UpdateTextures(GameTheme.TextureVariables);
 		DynamicPatcher.UpdateBmFonts(GameTheme.BmFontVariables);
+		DynamicPatcher.UpdateColorAlphas(GameTheme.ColorAlphaVariables);
 	}
 
+	[Subscriber]
+	[EventPriority((EventPriority) int.MinValue)]
+	private void AfterGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
+		if (builder is not null)
+			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+	}
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		// Integrations
 		intCP = new(this);
-		CheckRecommendedIntegrations();
 
 		// Load Patches
 		LoadPatchGroups();
@@ -1016,15 +1029,15 @@ public partial class ModEntry : PintailModSubscriber {
 			if (field is not null) {
 				try {
 					GameContentManager_Instance = field.GetValue(Helper.GameContent);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"Unable to read GameContentManager from GameContent helper. Asset loading will break.", LogLevel.Error, ex);
 					return;
 				}
 
 				if (GameContentManager_Instance is not null)
-					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public, new Type[] {
+					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public, [
 						typeof(IAssetName)
-					});
+					]);
 			}
 		}
 	}
@@ -1043,7 +1056,7 @@ public partial class ModEntry : PintailModSubscriber {
 				try {
 					var generic = GameContentManager_DoesAssetExist.MakeGenericMethod(typeof(T));
 					@delegate = generic.CreateDelegate<GCMDoesAssetExist<T>>(GameContentManager_Instance);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"Unable to create DoesAssetExist delegate: {ex}", LogLevel.Error);
 					@delegate = null;
 				}
@@ -1058,10 +1071,16 @@ public partial class ModEntry : PintailModSubscriber {
 
 	#endregion
 
-	public bool DoesAssetExist<T>([NotNullWhen(true)] IAssetName? name) {
+	public bool DoesAssetExist<T>([NotNullWhen(true)] IAssetName? name) where T : notnull {
 		if (name is null)
 			return false;
 
+		DeclareAssetType<T>(name);
+
+#if UPDATED_SMAPI
+		return Helper.GameContent.DoesAssetExist<T>(name);
+
+#else
 		LoadGameContentManager();
 		if (GameContentManager_DoesAssetExist is null)
 			return false;
@@ -1072,6 +1091,7 @@ public partial class ModEntry : PintailModSubscriber {
 
 		DeclareAssetType<T>(name);
 		return @delegate(name);
+#endif
 	}
 
 	public void DeclareAssetType<T>(IAssetName? assetName) {
@@ -1094,14 +1114,14 @@ public partial class ModEntry : PintailModSubscriber {
 		bool reload_spritefonts = false;
 		bool reload_spritetext = false;
 
-		foreach(var entry in e.Names) {
+		foreach (var entry in e.Names) {
 			if (ManagersByThemeAsset.TryGetValue(entry.Name, out var manager))
 				manager.InvalidateThemeData();
 
 			if (ManagedAssets.TryGetValue(entry, out var reference) && reference.TryGetTarget(out var managed))
 				managed.MarkStale();
 
-			switch(entry.Name.ToLower()) {
+			switch (entry.Name.ToLower()) {
 				case "fonts/spritefont1":
 				case "fonts/smallfont":
 				case "fonts/tinyfont":
@@ -1133,7 +1153,7 @@ public partial class ModEntry : PintailModSubscriber {
 			return;
 		}
 
-		foreach(var entry in ManagersByAssetPrefix) {
+		foreach (var entry in ManagersByAssetPrefix) {
 			if (e.Name.StartsWith(entry.Key)) {
 				entry.Value.HandleAssetRequested(e);
 				return;

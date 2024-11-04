@@ -1,24 +1,22 @@
 using System;
+using System.Collections.Generic;
+
+using Leclair.Stardew.BetterCrafting;
+using Leclair.Stardew.Common;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
-using Leclair.Stardew.BetterCrafting;
+using Microsoft.Xna.Framework.Input;
 
 using StardewValley;
+using StardewValley.BellsAndWhistles;
+using StardewValley.Buildings;
+using StardewValley.Extensions;
 using StardewValley.GameData.Buildings;
+using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TokenizableStrings;
-using StardewValley.Buildings;
-using Leclair.Stardew.Common;
-using StardewValley.Locations;
-using Microsoft.Xna.Framework.Input;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using StardewValley.BellsAndWhistles;
-using StardewValley.Extensions;
 
 namespace Leclair.Stardew.BCBuildings;
 
@@ -118,7 +116,7 @@ public class BuildMenu : IClickableMenu {
 		base.cleanupBeforeExit();
 
 		if (Location is not null)
-			foreach(var building in Location.buildings)
+			foreach (var building in Location.buildings)
 				building.color = Color.White;
 
 		Game1.displayHUD = true;
@@ -162,7 +160,7 @@ public class BuildMenu : IClickableMenu {
 		if (Location is null || building is null)
 			return false;
 
-		if ( ! building.CanBePainted() && ! building.CanBeReskinned(ignoreSeparateConstructionEntries: true) )
+		if (!building.CanBePainted() && !building.CanBeReskinned(ignoreSeparateConstructionEntries: true))
 			return false;
 
 		if ((building.isCabin || building.HasIndoorsName("Farmhouse")) && building.GetIndoors() is FarmHouse house)
@@ -179,10 +177,10 @@ public class BuildMenu : IClickableMenu {
 
 		switch (building.buildingType.Value) {
 			case "Farmhouse":
-				return ! building.HasIndoorsName("Farmhouse");
+				return !building.HasIndoorsName("Farmhouse");
 
 			case "Greenhouse":
-				return ! building.HasIndoorsName("Greenhouse");
+				return !building.HasIndoorsName("Greenhouse");
 
 			case "Pet Bowl":
 			case "Shipping Bin":
@@ -349,7 +347,7 @@ public class BuildMenu : IClickableMenu {
 		if (building is null || MovingBuilding is not null)
 			return;
 
-		if ( Action == ActionType.Upgrade && Data != null ) {
+		if (Action == ActionType.Upgrade && Data != null) {
 			if (Data.BuildingToUpgrade == building.buildingType.Value)
 				building.color = COLOR_OKAY;
 			else
@@ -438,6 +436,9 @@ public class BuildMenu : IClickableMenu {
 			building.skinId.Value = SkinId;
 			building.FinishConstruction();
 
+			if (building is JunimoHut || building is Stable)
+				building.dayUpdate(Game1.Date.DayOfMonth);
+
 			frozen = true;
 			DelayedAction.functionAfterDelay(SuccessClose, 2000);
 		}
@@ -449,12 +450,12 @@ public class BuildMenu : IClickableMenu {
 		if (building is null)
 			return;
 
-		if ( ! building.CanBePainted() && !building.CanBeReskinned(ignoreSeparateConstructionEntries: true) ) {
+		if (!building.CanBePainted() && !building.CanBeReskinned(ignoreSeparateConstructionEntries: true)) {
 			Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\UI:Carpenter_CannotPaint"), 3));
 			return;
 		}
 
-		if (! CanPaint(building) ) {
+		if (!CanPaint(building)) {
 			Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\UI:Carpenter_CannotPaint_Permission"), 3));
 			return;
 		}
@@ -509,7 +510,7 @@ public class BuildMenu : IClickableMenu {
 			return;
 		}
 
-		if (! ConfirmBuildingAccessibility(pos, MovingBuilding)) {
+		if (!ConfirmBuildingAccessibility(pos, MovingBuilding)) {
 			Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\UI:Carpenter_CantBuild"), 3));
 			if (playSound)
 				Game1.playSound("cancel");
@@ -536,7 +537,7 @@ public class BuildMenu : IClickableMenu {
 		GameLocation? interior = building.GetIndoors();
 		Cabin? cabin = interior as Cabin;
 
-		if (cabin is not null && ! Game1.IsMasterGame) {
+		if (cabin is not null && !Game1.IsMasterGame) {
 			Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\UI:Carpenter_CantDemolish_LockFailed"), 3));
 			return;
 		}
@@ -568,7 +569,7 @@ public class BuildMenu : IClickableMenu {
 
 			if (cabin is not null) {
 				string name = cabin.GetCellarName();
-				foreach(var who in Game1.getAllFarmers()) {
+				foreach (var who in Game1.getAllFarmers()) {
 					if (who.currentLocation != null && who.currentLocation.Name == name) {
 						Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\UI:Carpenter_CantDemolish_PlayerHere"), 3));
 						return;
@@ -612,8 +613,8 @@ public class BuildMenu : IClickableMenu {
 				// Try to refund the materials, maybe.
 				var data = building.GetData();
 
-				if (data?.BuildMaterials != null && Mod.Config.RefundMaterial > 0) 
-					foreach(var entry in data.BuildMaterials) {
+				if (data?.BuildMaterials != null && Mod.Config.RefundMaterial > 0)
+					foreach (var entry in data.BuildMaterials) {
 						int amount = (int) (entry.Amount * (Mod.Config.RefundMaterial / 100.0));
 						if (amount > 0)
 							Game1.player.addItemToInventory(ItemRegistry.Create(entry.ItemId, amount));
@@ -636,7 +637,7 @@ public class BuildMenu : IClickableMenu {
 			Game1.currentLocation.createQuestionDialogue(
 				Game1.content.LoadString("Strings\\UI:Carpenter_DemolishCabinConfirm", cabin.owner.Name),
 				Game1.currentLocation.createYesNoResponses(),
-				delegate(Farmer who, string answer) {
+				delegate (Farmer who, string answer) {
 					Game1.activeClickableMenu = this;
 					if (answer == "Yes")
 						Game1.player.team.demolishLock.RequestLock(continueDemolish, lockFailed);
@@ -730,7 +731,7 @@ public class BuildMenu : IClickableMenu {
 		Vector2 pos = GetMouseTile();
 
 		for (int y = 0; y < building.tilesHigh.Value; y++) {
-			for(int x = 0; x < building.tilesWide.Value; x++) {
+			for (int x = 0; x < building.tilesWide.Value; x++) {
 				int idx = building.getTileSheetIndexForStructurePlacementTile(x, y);
 				Vector2 tile = pos.Move(x, y);
 				if (!Location.isBuildable(tile))
@@ -750,10 +751,10 @@ public class BuildMenu : IClickableMenu {
 			}
 		}
 
-		foreach(var additional in building.GetAdditionalPlacementTiles()) {
+		foreach (var additional in building.GetAdditionalPlacementTiles()) {
 			bool only_passable = additional.OnlyNeedsToBePassable;
 
-			foreach(var point in additional.TileArea.GetPoints()) {
+			foreach (var point in additional.TileArea.GetPoints()) {
 				int idx = building.getTileSheetIndexForStructurePlacementTile(point.X, point.Y);
 				Vector2 tile = pos.Move(point.X, point.Y);
 				if (!Location.isBuildable(tile, onlyNeedsToBePassable: only_passable))

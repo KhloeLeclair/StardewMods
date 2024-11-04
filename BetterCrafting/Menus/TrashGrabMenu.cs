@@ -22,7 +22,7 @@ public class TrashGrabMenu : ItemGrabMenu {
 	private static Action<ItemGrabMenu, SpriteBatch> GetDrawMenu() {
 		if (DrawMenu is null) {
 			var method = AccessTools.Method(typeof(ItemGrabMenu), nameof(ItemGrabMenu.draw), [typeof(SpriteBatch)]);
-			DrawMenu = method.CreateAction<ItemGrabMenu, SpriteBatch>();
+			DrawMenu = method.CreateAction<ItemGrabMenu, SpriteBatch>(callVirt: false);
 		}
 
 		return DrawMenu;
@@ -114,6 +114,7 @@ public class TrashGrabMenu : ItemGrabMenu {
 		// Draw the Menu
 		bool old_drawBG = drawBG;
 		drawBG = false;
+		//base.draw(b);
 		DrawMenu?.Invoke(this, b);
 		drawBG = old_drawBG;
 		//base.draw(b);

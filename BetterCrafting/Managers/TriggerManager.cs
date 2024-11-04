@@ -74,7 +74,7 @@ public class TriggerManager : BaseManager {
 			if (ArgUtility.TryGetBool(args, 2, out bool isBuilding, out _)) {
 				if (isBuilding)
 					mode |= BenchMode.Buildings;
-			} else if (!ArgUtility.TryGetEnum<BenchMode>(args, 2, out mode, out _)) {
+			} else if (!ArgUtility.TryGetEnum(args, 2, out mode, out _)) {
 				error = "Second argument must be: true, false or comma separated list of: Area, Map, World, or Buildings";
 				return null;
 			}

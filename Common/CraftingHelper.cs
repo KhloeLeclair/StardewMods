@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Inventory;

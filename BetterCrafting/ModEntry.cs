@@ -134,6 +134,7 @@ public class ModEntry : PintailModSubscriber {
 
 		SpookyAction.PatchGame(Harmony);
 		Patches.CraftingPage_Patches.Patch(this);
+		Patches.CraftingRecipe_Patches.Patch(this);
 		Patches.LetterViewerMenu_Patches.Patch(this);
 		Patches.SObject_Patches.Patch(this);
 		Patches.Item_Patches.Patch(this);
@@ -261,8 +262,8 @@ public class ModEntry : PintailModSubscriber {
 		if (page is GameMenu gm)
 			page = gm.GetCurrentPage();
 
-		int x = Game1.getOldMouseX();
-		int y = Game1.getOldMouseY();
+		int x = Game1.getOldMouseX(true);
+		int y = Game1.getOldMouseY(true);
 
 		if (page is TrashGrabMenu)
 			return;
@@ -1265,6 +1266,16 @@ public class ModEntry : PintailModSubscriber {
 				.StartPage("page:invalid-storage", I18n.Setting_InvalidStorageTypes)
 				.AddParagraph(I18n.Setting_InvalidStorageTypes_Tip);
 
+			GMCMIntegration
+				.Add(
+					I18n.Setting_DisableFishSources,
+					I18n.Setting_DisableFishSources_Tip,
+					c => c.DisallowFishSources,
+					(c, v) => c.DisallowFishSources = v
+				);
+
+			GMCMIntegration.AddParagraph("");
+
 			foreach (var pair in storages)
 				GMCMIntegration.Add(
 					() => TokenParser.ParseText(pair.Value),
@@ -1584,13 +1595,22 @@ public class ModEntry : PintailModSubscriber {
 				if (Game1.bigCraftableData != null && Game1.bigCraftableData.TryGetValue(md.LocalItemId, out var data))
 					result[key] = data.DisplayName;
 
-			} else if (md.TypeIdentifier == ItemRegistry.type_furniture) {
-				// TODO: This
-
 			} else if (md.TypeIdentifier == ItemRegistry.type_object) {
 				if (Game1.objectData != null && Game1.objectData.TryGetValue(md.LocalItemId, out var data))
 					result[key] = data.DisplayName;
 			}
+		}
+
+		foreach (var entry in DataLoader.Furniture(Game1.content)) {
+			string[] segments = entry.Value.Split('/');
+			bool has_storage = segments.Length > 1 && segments[1] switch {
+				"dresser" => true,
+				"fishtank" => true,
+				_ => false
+			};
+
+			if (has_storage)
+				result[ItemRegistry.type_furniture + entry.Key] = segments.Length > 7 ? segments[7] : segments[0];
 		}
 
 		if (Game1.bigCraftableData != null)
@@ -1692,6 +1712,9 @@ public class ModEntry : PintailModSubscriber {
 	}
 
 	public bool IsInvalidStorage(object obj) {
+		if (Config.DisallowFishSources && (obj is FishTankFurniture || obj is FishPond))
+			return false;
+
 		if (obj is SObject sobj)
 			return Config.InvalidStorages.Contains(sobj.QualifiedItemId);
 

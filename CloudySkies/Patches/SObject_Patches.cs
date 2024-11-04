@@ -55,6 +55,9 @@ public static class SObject_Patches {
 		var GameLocation_digUpArtifactSpot = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.digUpArtifactSpot));
 		var Our_DigUpArtifactSpot = AccessTools.Method(typeof(SObject_Patches), nameof(DigUpArtifactSpot));
 
+		if (GameLocation_digUpArtifactSpot is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var in0 in instructions) {
 			if (in0.Calls(GameLocation_digUpArtifactSpot)) {
 				yield return new CodeInstruction(in0) {

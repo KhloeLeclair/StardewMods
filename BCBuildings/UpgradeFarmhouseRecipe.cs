@@ -13,7 +13,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BCBuildings;
 
-public class UpgradeFarmhouseRecipe : IDynamicDrawingRecipe {
+public class UpgradeFarmhouseRecipe : IDynamicDrawingRecipe, IPostCraftEventRecipe {
 
 	public readonly ModEntry Mod;
 
@@ -106,7 +106,7 @@ public class UpgradeFarmhouseRecipe : IDynamicDrawingRecipe {
 		IsTextureLoading = true;
 
 		var home = Utility.getHomeOfFarmer(Game1.player);
-		var house = home?.GetContainingBuilding();
+		var house = home?.ParentBuilding;
 
 		if (house is null) {
 			IsTextureLoading = false;
@@ -242,11 +242,14 @@ public class UpgradeFarmhouseRecipe : IDynamicDrawingRecipe {
 		Game1.stats.checkForBuildingUpgradeAchievements();
 		Game1.player.autoGenerateActiveDialogueEvent($"houseUpgrade_{Game1.player.HouseUpgradeLevel}");
 
-		// Make sure our ingredients are up to date.
+		// Finish the craft so we pay for it.
+		evt.Complete();
+	}
+
+	public void PostCraft(IPostCraftEvent evt) {
+		// And only after that do we fix the ingredients for the new level.
 		UpdateIngredients();
 		ResetTexture();
-
-		evt.Complete();
 	}
 
 }

@@ -33,6 +33,10 @@
 				"Game1:textColor": { "*": "$BillboardText" }
 			},
 
+			"ColorAlphas": {
+				"Gray*0.25":  { "*": "$Calendar:DimAlpha" }
+			},
+
 			"DrawTextWithShadow": { "*": "$BillboardTextShadow" },
 
 			"FontFields": {

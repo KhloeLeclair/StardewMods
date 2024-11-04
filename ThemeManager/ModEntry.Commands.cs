@@ -1,27 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
+using System.Text.Unicode;
 
 using HarmonyLib;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Events;
+using Leclair.Stardew.ThemeManager.Models;
+using Leclair.Stardew.ThemeManager.Patches;
+using Leclair.Stardew.ThemeManager.VariableSets;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewModdingAPI;
+
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
-
-using StardewModdingAPI;
-
-using Leclair.Stardew.Common.Events;
-
-using Leclair.Stardew.ThemeManager.Models;
-using Leclair.Stardew.ThemeManager.Patches;
-using System.Text.Unicode;
-using Leclair.Stardew.ThemeManager.VariableSets;
 
 namespace Leclair.Stardew.ThemeManager;
 
@@ -30,7 +30,7 @@ public partial class ModEntry {
 	#region Console Commands
 
 	[ConsoleCommand("tm_method_tree", "View a tree of draw methods. By default, tries to view the draw() method of the currently active menu.")]
-	private void Command_MethodTree(string nm, string[] args) {
+	private void Command_MethodTree(string name, string[] args) {
 		// Use the current menu as the backup type.,
 		IClickableMenu menu = Game1.activeClickableMenu;
 		if (menu is not null) {
@@ -59,7 +59,6 @@ public partial class ModEntry {
 			child = menu.GetChildMenu();
 		}
 
-		string input = string.Join(' ', args);
 		var result = ResolveMember<MethodInfo>(string.Join(' ', args), current: menu?.GetType());
 
 		Type? type = result?.Item1;
@@ -88,8 +87,8 @@ public partial class ModEntry {
 		Log($"Method Tree:\n\n{sb}\n", LogLevel.Info);
 	}
 
-	internal void PrintTree(StringBuilder sb, SimpleNode<string> node, int level) {
-		string padding = new string(' ', level * 4);
+	internal static void PrintTree(StringBuilder sb, SimpleNode<string> node, int level) {
+		string padding = new(' ', level * 4);
 
 		sb.AppendLine($"{padding}{node.Value}");
 
@@ -97,11 +96,11 @@ public partial class ModEntry {
 			PrintTree(sb, child, level + 1);
 	}
 
-	internal SimpleNode<string>? WalkMethodTree(MethodInfo method, SimpleNode<string>? parent, int remaining, HashSet<MethodInfo> visited) {
+	internal static SimpleNode<string>? WalkMethodTree(MethodInfo method, SimpleNode<string>? parent, int remaining, HashSet<MethodInfo> visited) {
 		if (!visited.Add(method) || remaining < 0)
 			return null;
 
-		SimpleNode<string> node = new(ToTargetString(method)!, parent);
+		SimpleNode<string> node = new(ReflectionHelper.ToTargetString(method)!, parent);
 
 		try {
 			var Instructions = PatchProcessor.GetCurrentInstructions(method);
@@ -161,7 +160,7 @@ public partial class ModEntry {
 
 		string input = string.Join(' ', args);
 		bool want_ctor = false;
-		if (input.IndexOf(":(") != -1 || input.IndexOf(":.ctor") != -1)
+		if (input.Contains(":(") || input.Contains(":.ctor"))
 			want_ctor = true;
 
 		(Type, MethodBase)? result;
@@ -198,42 +197,30 @@ public partial class ModEntry {
 		// Reapply our patch.
 		patcher?.Patch();
 
-		MethodInfo[] SpriteText_Drawing = new MethodInfo[] {
+		MethodInfo[] SpriteText_Drawing = [
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawString)),
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringHorizontallyCenteredAt)),
 			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollBackground)),
 			ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,int,*)"),
 			ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,string,*)")
-			/*AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
-				typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(int), typeof(float),
-				typeof(Color?), typeof(int), typeof(float), typeof(bool)
-			}),
-			AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
-				typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(string), typeof(float),
-				typeof(Color?), typeof(int), typeof(float), typeof(bool)
-			})*/
-		};
+		];
 
 		//MethodInfo SpriteText_getColorFromIndex = AccessTools.Method(typeof(SpriteText), nameof(SpriteText.getColorFromIndex));
 
-		MethodInfo[] Utility_DrawTextShadow = new MethodInfo[] {
+		MethodInfo[] Utility_DrawTextShadow = [
 			ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,StringBuilder,*)"),
 			ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,string,*)"),
-			/*AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
-				typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
-			}),
-			AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
-				typeof(SpriteBatch), typeof(string), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
-			})*/
-		};
+		];
+
+		MethodInfo Color_Multi = AccessTools.Method(typeof(Color), "op_Multiply", [typeof(Color), typeof(float)]);
 
 		MethodInfo Utility_GetRedGreenLerp = AccessTools.Method(typeof(Utility), nameof(Utility.getRedToGreenLerpColor));
 
 		Dictionary<string, Color> colorValues = new();
 		Dictionary<MethodInfo, string> colors = new();
 		foreach (var entry in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
-			if (entry.Name.Equals("White") || entry.Name.Equals("Black"))
-				continue;
+			//if (entry.Name.Equals("White") || entry.Name.Equals("Black"))
+			//	continue;
 
 			if (entry.PropertyType != typeof(Color))
 				continue;
@@ -241,7 +228,7 @@ public partial class ModEntry {
 			try {
 				if (entry.GetValue(null) is Color color)
 					colorValues[entry.Name] = color;
-			} catch(Exception) {
+			} catch (Exception) {
 				continue;
 			}
 
@@ -272,7 +259,7 @@ public partial class ModEntry {
 			}
 		}
 
-		Log($"Method: {ToTargetString(info)}", LogLevel.Info);
+		Log($"Method: {ReflectionHelper.ToTargetString(info)}", LogLevel.Info);
 		Log($"Class: {type.FullName}", LogLevel.Trace);
 		Log($"Method (Raw): {info.FullDescription()}", LogLevel.Trace);
 
@@ -284,13 +271,34 @@ public partial class ModEntry {
 		Dictionary<string, List<int>> ColorFields = new();
 		Dictionary<string, List<int>> FontFields = new();
 		Dictionary<string, List<int>> TextureFields = new();
+		Dictionary<string, List<int>> ColorAlphas = new();
 
 		List<int> SpriteTextDraws = new();
 		List<int> DrawTextShadow = new();
 		List<int> RedToGreenLerps = new();
 
+		string? loadedColor = null;
+
 		for (int i = 0; i < Instructions.Count; i++) {
 			CodeInstruction in0 = Instructions[i];
+
+			if (i + 1 < Instructions.Count && in0.opcode == OpCodes.Ldc_R4) {
+				CodeInstruction in1 = Instructions[i + 1];
+				if (in1.Calls(Color_Multi)) {
+					string key = $"{in0.operand}";
+					if (loadedColor is not null)
+						key = $"{loadedColor}*{key}";
+					if (!ColorAlphas.TryGetValue(key, out var list)) {
+						list = [];
+						ColorAlphas[key] = list;
+					}
+
+					list.Add(i);
+					found = true;
+				}
+			}
+
+			loadedColor = null;
 
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo method) {
 				if (colors.TryGetValue(method, out string? name)) {
@@ -298,6 +306,8 @@ public partial class ModEntry {
 						list = new();
 						Colors[name] = list;
 					}
+
+					loadedColor = name;
 					list.Add(i);
 					found = true;
 				}
@@ -327,7 +337,7 @@ public partial class ModEntry {
 
 			if (in0.opcode == OpCodes.Ldsfld && in0.operand is FieldInfo fld) {
 				if (fld.FieldType == typeof(Texture2D)) {
-					string? fname = ToTargetString(fld);
+					string? fname = ReflectionHelper.ToTargetString(fld);
 					if (fname != null) {
 						if (!TextureFields.TryGetValue(fname, out var list)) {
 							list = new();
@@ -340,7 +350,7 @@ public partial class ModEntry {
 				}
 
 				if (fld.FieldType == typeof(SpriteFont)) {
-					string? fname = ToTargetString(fld);
+					string? fname = ReflectionHelper.ToTargetString(fld);
 					if (fname != null) {
 						if (!FontFields.TryGetValue(fname, out var list)) {
 							list = new();
@@ -353,13 +363,14 @@ public partial class ModEntry {
 				}
 
 				if (fld.FieldType == typeof(Color)) {
-					string? fname = ToTargetString(fld);
+					string? fname = ReflectionHelper.ToTargetString(fld);
 					if (fname != null) {
 						if (!ColorFields.TryGetValue(fname, out var list)) {
 							list = new();
 							ColorFields[fname] = list;
 						}
 
+						loadedColor = fname;
 						list.Add(i);
 						found = true;
 					}
@@ -383,6 +394,8 @@ public partial class ModEntry {
 							RawColors[key] = list;
 							colorValues[key] = new Color(val0.Value, val1.Value, val2.Value);
 						}
+
+						loadedColor = key;
 						list.Add(i);
 						found = true;
 					}
@@ -396,7 +409,7 @@ public partial class ModEntry {
 			var group = new PatchGroupData() {
 				ID = $"Generated_{name}",
 				Patches = new() {
-					{ ToTargetString(info)!, patch }
+					{ ReflectionHelper.ToTargetString(info)!, patch }
 				}
 			};
 
@@ -417,6 +430,15 @@ public partial class ModEntry {
 						{ "*", $"${name}:Raw:{i}" }
 					};
 					i++;
+				}
+			}
+
+			if (ColorAlphas.Count > 0) {
+				patch.ColorAlphas = [];
+				foreach (string key in ColorAlphas.Keys) {
+					patch.ColorAlphas[key] = new() {
+						{ "*", $"${name}:Alpha:{key}" }
+					};
 				}
 			}
 
@@ -617,6 +639,11 @@ public partial class ModEntry {
 				foreach (var entry in ColorFields)
 					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
 			}
+			if (ColorAlphas.Count > 0) {
+				bld.AppendLine($"- ColorAlphas:");
+				foreach (var entry in ColorAlphas)
+					bld.AppendLine($"  - {entry.Key} (Offsets: {string.Join(", ", entry.Value)})");
+			}
 			if (FontFields.Count > 0) {
 				bld.AppendLine($"- FontFields:");
 				foreach (var entry in FontFields)
@@ -692,23 +719,23 @@ public partial class ModEntry {
 			foreach (string entry in new string[] {
 				"default:smallFont", "default:dialogueFont", "default:tinyFont", "default:tinyFontBorder"
 			})
-				entries.Add(new string[] { entry, entry });
+				entries.Add([entry, entry]);
 
-			foreach(var entry in GameTheme.FontVariables) {
-				if (GameTheme.FontVariables.InheritedValues.TryGetValue(entry.Key, out string? src) && ! src.StartsWith('$')) {
-					entries.Add(new string[] {
+			foreach (var entry in GameTheme.FontVariables) {
+				if (GameTheme.FontVariables.InheritedValues.TryGetValue(entry.Key, out string? src) && !src.StartsWith('$')) {
+					entries.Add([
 						$"${entry.Key}",
 						src
-					});
+					]);
 				}
 			}
 
 			StringBuilder sb2 = new();
 
-			LogTable(sb2, new string[] {
+			LogTable(sb2, [
 				"Font Name",
 				"Source"
-			}, entries, LogLevel.Info);
+			], entries, LogLevel.Info);
 
 			Log(sb2.ToString(), LogLevel.Info);
 
@@ -716,7 +743,7 @@ public partial class ModEntry {
 		}
 
 		SpriteFont? font;
-		bool want_glyphs = args.Length > 1 && args[args.Length - 1] is string bit && (bit.Equals("show", StringComparison.OrdinalIgnoreCase) || bit.Equals("glyphs", StringComparison.OrdinalIgnoreCase));
+		bool want_glyphs = args.Length > 1 && args[^1] is string bit && (bit.Equals("show", StringComparison.OrdinalIgnoreCase) || bit.Equals("glyphs", StringComparison.OrdinalIgnoreCase));
 		string input = string.Join(' ', args, 0, want_glyphs ? args.Length - 1 : args.Length);
 
 		if (input.StartsWith('$'))
@@ -735,7 +762,7 @@ public partial class ModEntry {
 
 		string source = input;
 		HashSet<string> visited = new();
-		while(GameTheme is not null && source.StartsWith('$')) {
+		while (GameTheme is not null && source.StartsWith('$')) {
 			if (!visited.Add(source))
 				break;
 
@@ -776,7 +803,7 @@ public partial class ModEntry {
 		Dictionary<string, UnicodeRange> ranges = new();
 		Dictionary<string, int> rangeRemaining = new();
 
-		foreach(var prop in typeof(UnicodeRanges).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
+		foreach (var prop in typeof(UnicodeRanges).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
 			if (prop.CanRead && prop.PropertyType == typeof(UnicodeRange) && prop.Name != "All") {
 				try {
 					if (prop.GetValue(null) is UnicodeRange range)
@@ -807,7 +834,7 @@ public partial class ModEntry {
 			minRight = Math.Min(paddingRight, minRight);
 
 			int chr = (int) glyph.Character;
-			foreach(var entry in ranges) {
+			foreach (var entry in ranges) {
 				if (chr >= entry.Value.FirstCodePoint && chr < entry.Value.FirstCodePoint + entry.Value.Length) {
 					if (!rangeRemaining.TryGetValue(entry.Key, out int remaining))
 						remaining = entry.Value.Length;
@@ -817,14 +844,13 @@ public partial class ModEntry {
 				}
 			}
 
-			if (glyphs is not null)
-				glyphs.Add(new string[] {
-					((short)glyph.Character) < 32 || (short)glyph.Character == 8226 ? $"    {(short)glyph.Character}" : $" {glyph.Character} ({(short)glyph.Character})",
-					$"Left={glyph.LeftSideBearing}, Width={glyph.Width}, Right={glyph.RightSideBearing}",
-					glyph.BoundsInTexture.ToString(),
-					glyph.Cropping.ToString(),
-					$"Top={paddingTop}, Left={paddingLeft}, Right={paddingRight}, Bottom={paddingBottom}"
-				});
+			glyphs?.Add([
+				((short)glyph.Character) < 32 || (short)glyph.Character == 8226 ? $"    {(short)glyph.Character}" : $" {glyph.Character} ({(short)glyph.Character})",
+				$"Left={glyph.LeftSideBearing}, Width={glyph.Width}, Right={glyph.RightSideBearing}",
+				glyph.BoundsInTexture.ToString(),
+				glyph.Cropping.ToString(),
+				$"Top={paddingTop}, Left={paddingLeft}, Right={paddingRight}, Bottom={paddingBottom}"
+			]);
 		}
 
 		sb.AppendLine($"Minimum Glyph Size: {minWidth}x{minHeight}");
@@ -833,7 +859,7 @@ public partial class ModEntry {
 
 		if (rangeRemaining.Count > 0) {
 			sb.AppendLine($"Unicode Ranges:");
-			foreach(var entry in rangeRemaining) {
+			foreach (var entry in rangeRemaining) {
 				if (ranges.TryGetValue(entry.Key, out var range)) {
 					int percentage = (int) (100 * (range.Length - entry.Value) / (float) range.Length);
 					if (percentage >= 100)
@@ -849,9 +875,9 @@ public partial class ModEntry {
 		if (glyphs is not null) {
 			sb.AppendLine("");
 
-			LogTable(sb, new string[] {
+			LogTable(sb, [
 				"Character", "Kerning", "Bounds", "Cropping", "Padding"
-			}, glyphs, LogLevel.Info);
+			], glyphs, LogLevel.Info);
 		}
 
 		Log(sb.ToString(), LogLevel.Info);
@@ -879,46 +905,46 @@ public partial class ModEntry {
 			};
 
 			foreach (var entry in Managers)
-				ents.Add(new string[] {
+				ents.Add([
 					entry.Key.UniqueID,
 					entry.Value.Item2.ActiveThemeId,
 					entry.Value.Item2.SelectedThemeId,
 					entry.Value.Item2.GetThemeChoices().Where(x => x.Key != "automatic" && x.Key != "default").Count().ToString()
-				});
+				]);
 
-			LogTable(new string[] {
+			LogTable([
 				"Manager ID",
 				"Active Theme",
 				"Selected Theme",
 				"Total Themes"
-			}, ents, LogLevel.Info, " | ");
+			], ents, LogLevel.Info, " | ");
 			return;
 		}
 
 		if (string.Equals(args[0], "help", StringComparison.OrdinalIgnoreCase)) {
-			LogTable(null, new string[][] {
-				new string[] {
+			LogTable(null, [
+				[
 					"list", "List all the mods currently using theme managers, as well as their active themes."
-				},
-				new string[] {
+				],
+				[
 					"help", "View this information."
-				},
-				new string[] {
+				],
+				[
 					"reload", "Reload all theme managers' themes."
-				},
-				new string[] {
+				],
+				[
 					"[manager] list", "List all the themes available for a given theme manager."
-				},
-				new string[] {
+				],
+				[
 					"[manager] paths", "List a manager's asset paths, for use with Content Patcher."
-				},
-				new string[] {
+				],
+				[
 					"[manager] reload", "Reload a given theme manager's themes."
-				},
-				new string[] {
+				],
+				[
 					"[manager] [theme]", "Select a theme for a given theme manager."
-				}
-			}, LogLevel.Info);
+				]
+			], LogLevel.Info);
 			return;
 		}
 
@@ -998,10 +1024,10 @@ public partial class ModEntry {
 				if (cached.Count > 0) {
 					List<string[]> ents = new();
 					foreach (var entry in cached)
-						ents.Add(new string[] { entry.Key, entry.Value });
+						ents.Add([entry.Key, entry.Value]);
 
 					Log($"Cached Assets:", LogLevel.Info);
-					LogTable(new string[] { "Key", "Type" }, ents, LogLevel.Info);
+					LogTable(["Key", "Type"], ents, LogLevel.Info);
 				} else
 					Log($"There are no cached assets.", LogLevel.Info);
 
@@ -1068,17 +1094,17 @@ public partial class ModEntry {
 			bool sel = pair.Key == manager.SelectedThemeId;
 			bool active = pair.Key == manager.ActiveThemeId;
 
-			entries.Add(new string[] {
+			entries.Add([
 				sel ? "***" : "",
 				active ? "***" : "",
 				pair.Key,
 				pair.Value
-			});
+			]);
 		}
 
-		LogTable(new string[] {
+		LogTable([
 				"Selected", "Active", "ID", "Name"
-			}, entries, LogLevel.Info);
+			], entries, LogLevel.Info);
 	}
 
 	[ConsoleCommand("tm_repatch", "Reload all patch data and reapply patches.")]
@@ -1116,7 +1142,7 @@ public partial class ModEntry {
 
 		if (input.EndsWith('*')) {
 			wild = true;
-			input = input.Length == 1 ? null : input.Substring(0, input.Length - 1);
+			input = input.Length == 1 ? null : input[..^1];
 		}
 
 		int count = 0;
@@ -1158,7 +1184,7 @@ public partial class ModEntry {
 			if (patches is null || !patches.Owners.Contains(ModManifest.UniqueID))
 				continue;
 
-			string? name = ToTargetString(method, false);
+			string? name = ReflectionHelper.ToTargetString(method, false);
 			if (string.IsNullOrWhiteSpace(name))
 				continue;
 
@@ -1184,7 +1210,7 @@ public partial class ModEntry {
 				if (brief)
 					list.Add($"prefix({entry.priority})");
 				else
-					list.Add($"prefix: {ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
+					list.Add($"prefix: {ReflectionHelper.ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
 			}
 
 			foreach (var entry in patches.Transpilers) {
@@ -1196,7 +1222,7 @@ public partial class ModEntry {
 				if (brief)
 					list.Add($"transpiler({entry.priority})");
 				else
-					list.Add($"transpiler: {ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
+					list.Add($"transpiler: {ReflectionHelper.ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
 			}
 
 			foreach (var entry in patches.Postfixes) {
@@ -1208,7 +1234,7 @@ public partial class ModEntry {
 				if (brief)
 					list.Add($"postfix({entry.priority})");
 				else
-					list.Add($"postfix: {ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
+					list.Add($"postfix: {ReflectionHelper.ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
 			}
 
 			foreach (var entry in patches.Finalizers) {
@@ -1220,7 +1246,7 @@ public partial class ModEntry {
 				if (brief)
 					list.Add($"finalizer({entry.priority})");
 				else
-					list.Add($"finalizer: {ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
+					list.Add($"finalizer: {ReflectionHelper.ToTargetString(entry.PatchMethod)}, priority: {entry.priority}");
 			}
 
 			foreach (var entry in ByOwner) {

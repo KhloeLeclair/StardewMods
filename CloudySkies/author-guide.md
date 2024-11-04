@@ -3985,11 +3985,31 @@ to match all thus described locations, or provide the name of a specific
 location to target.
 
 
+#### `Locations <regex-or-glob>`
+
+Target the full map of the matching location(s). You can either use a regular
+expression by starting your string with a `/`, or a simpler glob-like syntax
+by not doing so. The glob-like syntax supports `?` for matching a single
+character, or `*` for matching zero or more characters.
+
+When using a regular expression, you need to include a closing `/` as well
+to end the expression. You can include an `i` after the closing `/` to
+make the regular expression case insensitive.
+
+As an example, here are two targets. One, a glob, and the other a regular
+expression:
+```
+Locations Island*
+Locations /.*?_House/i
+```
+
+
 #### `Tile <All/Here/ID> <x> <y> <radius>`
 
-Target a specific tile of the provided location(s). You can use `All` to match
-all locations, `Here` to match the current location, or provide the name
-of a specific location to target.
+Target a specific tile of the provided location(s). You can use `All`
+to match all locations, `Here` to match the current location, `Indoors` or
+`Outdoors` to match all thus described locations, or one of `Location`,
+`Locations`, or `Context` to use as described before.
 
 `x` and `y` are the X and Y tile coordinates to target, and `radius` is the
 radius to extend from the targeted tile. Use `1` to only target one
@@ -4000,8 +4020,12 @@ specific tile.
 
 Target a number of random tiles of the provided location(s). You can use `All`
 to match all locations, `Here` to match the current location, `Indoors` or
-`Outdoors` to match all thus described locations, or provide the name of a
-specific location to target.
+`Outdoors` to match all thus described locations, or one of `Location`,
+`Locations`, or `Context` to use as described before. For a quick example of
+doing that:
+```
+RandomTile Context Desert 1 10 0 1000 0 1000 1 1
+```
 
 `minCount` and `maxCount` are used to determine how many random tiles should
 be selected. The system will pick at least `minCount` and at most `maxCount`

@@ -4,11 +4,53 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
 
+#if IS_GIANT_CROP_TWEAKS
+using Leclair.Stardew.Common.Types;
+
 namespace Leclair.Stardew.GiantCropTweaks;
+#else
+namespace Leclair.Stardew.GiantCropTweaks;
+
+/// <summary>
+/// An <c>IModAssetEditor</c> is a special type of <see cref="IDictionary"/>
+/// that works with SMAPI's API proxying to allow you to edit another
+/// mod's data assets from a C# mod.
+///
+/// Unlike a normal dictionary, this custom <see cref="IDictionary"/> will
+/// potentially throw <see cref="ArgumentException"/> when adding/assigning
+/// values if they do not match the internal types.
+///
+/// To get around that, you are expected to use <see cref="GetOrCreate(string)"/>
+/// and <see cref="Create{TValue}"/> to make instances using the correct
+/// internal types, which you can then modify as needed.
+/// </summary>
+/// <typeparam name="TModel">An interface describing the internal model.</typeparam>
+public interface IModAssetEditor<TModel> : IDictionary<string, TModel> {
+
+	/// <summary>
+	/// Get the data entry with the given key. If one does not exist, create
+	/// a new entry, add it to the dictionary, and return that.
+	/// </summary>
+	/// <param name="key">The key to get an entry for.</param>
+	TModel GetOrCreate(string key);
+
+	/// <summary>
+	/// Creates an instance of the provided type. This should be used to create
+	/// instances of <typeparamref name="TValue"/>, where <typeparamref name="TValue"/>
+	/// is an interface existing within <typeparamref name="TModel"/>.
+	///
+	/// For example, if <typeparamref name="TModel"/> has a property referencing a
+	/// <c>ISomeOtherModel</c> and you need to create an instance of that, then
+	/// you'll need to call <c>Create</c> with <typeparamref name="TValue"/> set to
+	/// <c>ISomeOtherModel</c>.
+	/// </summary>
+	TValue Create<TValue>();
+
+}
+#endif
 
 
 /// <summary>
@@ -124,14 +166,6 @@ public interface IExtraGiantCropData {
 }
 
 
-public interface IExtraGiantCropDataEditor : IDictionary<string, IExtraGiantCropData> {
-
-	IExtraGiantCropData GetOrCreate(string key);
-
-
-}
-
-
 public interface IGiantCropTweaks {
 
 	/// <summary>
@@ -150,7 +184,7 @@ public interface IGiantCropTweaks {
 	/// <param name="assetData">The asset data you get when editing an
 	/// asset in the asset requested event.</param>
 	/// <returns>A dictionary-like interface for editing the asset.</returns>
-	IExtraGiantCropDataEditor GetEditor(IAssetData assetData);
+	IModAssetEditor<IExtraGiantCropData> GetEditor(IAssetData assetData);
 
 	/// <summary>
 	/// Get all the entries in the loaded data dictionary.

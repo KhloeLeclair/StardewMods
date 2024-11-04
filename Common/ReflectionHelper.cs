@@ -179,7 +179,7 @@ internal static class ReflectionHelper {
 			type = $"#{type[20..]}";
 
 		bool[]? differingTypes = null;
-		int min_types = 0;
+		//int min_types = 0;
 
 		if (!includeTypes.HasValue || !fullTypes) {
 			IEnumerable<MethodBase>? methods = null;
@@ -487,7 +487,7 @@ internal static class ReflectionHelper {
 			for (byte i = 1; i <= parms.Length; i++)
 				generator.Emit(OpCodes.Ldarg_S, i);
 
-			generator.Emit(OpCodes.Call, method);
+			generator.Emit(method.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
 			generator.Emit(OpCodes.Ret);
 
 			caller = dm.CreateDelegate(delegateType);
@@ -510,7 +510,31 @@ internal static class ReflectionHelper {
 		return (Func<TOwner, TArg1, TArg2, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2));
 	}
 
-	internal static Delegate CreateActionInner(this MethodInfo method, Type ownerType, params Type[] types) {
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TArg4, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TArg4, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TArg4, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4), typeof(TArg5));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4), typeof(TArg5), typeof(TArg6));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4), typeof(TArg5), typeof(TArg6), typeof(TArg7));
+	}
+
+	internal static Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult> CreateFunc<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult>(this MethodInfo method) {
+		return (Func<TOwner, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult>) CreateFuncInner(method, typeof(TOwner), typeof(TResult), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4), typeof(TArg5), typeof(TArg6), typeof(TArg7), typeof(TArg8));
+	}
+
+	internal static Delegate CreateActionInner(this MethodInfo method, Type ownerType, bool? callVirt = null, params Type[] types) {
 		if (method is null || method.DeclaringType is null)
 			throw new ArgumentNullException(nameof(method));
 		if (ownerType != typeof(object) && !method.DeclaringType.IsAssignableFrom(ownerType))
@@ -545,7 +569,7 @@ internal static class ReflectionHelper {
 			for (byte i = 1; i <= parms.Length; i++)
 				generator.Emit(OpCodes.Ldarg_S, i);
 
-			generator.Emit(OpCodes.Call, method);
+			generator.Emit((callVirt ?? method.IsVirtual) ? OpCodes.Callvirt : OpCodes.Call, method);
 			generator.Emit(OpCodes.Ret);
 
 			caller = dm.CreateDelegate(delegateType);
@@ -556,20 +580,20 @@ internal static class ReflectionHelper {
 	}
 
 
-	internal static Action<TOwner> CreateAction<TOwner>(this MethodInfo method) {
-		return (Action<TOwner>) CreateActionInner(method, typeof(TOwner));
+	internal static Action<TOwner> CreateAction<TOwner>(this MethodInfo method, bool? callVirt = null) {
+		return (Action<TOwner>) CreateActionInner(method, typeof(TOwner), callVirt);
 	}
 
-	internal static Action<TOwner, TArg1> CreateAction<TOwner, TArg1>(this MethodInfo method) {
-		return (Action<TOwner, TArg1>) CreateActionInner(method, typeof(TOwner), typeof(TArg1));
+	internal static Action<TOwner, TArg1> CreateAction<TOwner, TArg1>(this MethodInfo method, bool? callVirt = null) {
+		return (Action<TOwner, TArg1>) CreateActionInner(method, typeof(TOwner), callVirt, typeof(TArg1));
 	}
 
-	internal static Action<TOwner, TArg1, TArg2> CreateAction<TOwner, TArg1, TArg2>(this MethodInfo method) {
-		return (Action<TOwner, TArg1, TArg2>) CreateActionInner(method, typeof(TOwner), typeof(TArg1), typeof(TArg2));
+	internal static Action<TOwner, TArg1, TArg2> CreateAction<TOwner, TArg1, TArg2>(this MethodInfo method, bool? callVirt = null) {
+		return (Action<TOwner, TArg1, TArg2>) CreateActionInner(method, typeof(TOwner), callVirt, typeof(TArg1), typeof(TArg2));
 	}
 
-	internal static Action<TOwner, TArg1, TArg2, TArg3> CreateAction<TOwner, TArg1, TArg2, TArg3>(this MethodInfo method) {
-		return (Action<TOwner, TArg1, TArg2, TArg3>) CreateActionInner(method, typeof(TOwner), typeof(TArg1), typeof(TArg2), typeof(TArg3));
+	internal static Action<TOwner, TArg1, TArg2, TArg3> CreateAction<TOwner, TArg1, TArg2, TArg3>(this MethodInfo method, bool? callVirt = null) {
+		return (Action<TOwner, TArg1, TArg2, TArg3>) CreateActionInner(method, typeof(TOwner), callVirt, typeof(TArg1), typeof(TArg2), typeof(TArg3));
 	}
 
 	#endregion

@@ -79,6 +79,11 @@ public static class GameLocation_Patches {
 
 	#region Helper Methods
 
+	internal static void SpawnCustomCritters(GameLocation location, bool onlyIfOnScreen) {
+		if (Mod != null && PatchHelper.GetWeatherData(location) is IWeatherData wd && wd.Critters != null)
+			Mod.SpawnCritters(location, wd.Critters, onlyIfOnScreen);
+	}
+
 	internal static bool UseNightTiles(GameLocation? location) {
 		return PatchHelper.GetWeatherData(location)?.UseNightTiles ?? Game1.IsRainingHere(location);
 	}
@@ -108,6 +113,9 @@ public static class GameLocation_Patches {
 		var GameLocation_IsRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
 		var useNightTiles = AccessTools.Method(typeof(GameLocation_Patches), nameof(UseNightTiles));
 
+		if (GameLocation_IsRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var in0 in instructions) {
 
 			if (in0.Calls(GameLocation_IsRainingHere))
@@ -130,6 +138,9 @@ public static class GameLocation_Patches {
 		var Game1_weatherIcon = AccessTools.Field(typeof(Game1), nameof(Game1.weatherIcon));
 
 		var shouldNotSpawnClouds = AccessTools.Method(typeof(GameLocation_Patches), nameof(ShouldNotSpawnClouds));
+
+		if (GameLocation_IsRainingHere is null || GameLocation_IsRainingHere is null || Game1_weatherIcon is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 
@@ -178,6 +189,9 @@ public static class GameLocation_Patches {
 
 		var shouldSpawnFrogs = AccessTools.Method(typeof(GameLocation_Patches), nameof(ShouldSpawnFrogs));
 
+		if (GameLocation_IsRainingHere is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var in0 in instructions) {
 
 			if (in0.Calls(GameLocation_IsRainingHere))
@@ -201,6 +215,9 @@ public static class GameLocation_Patches {
 		var getAmbientColor = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetAmbientColor));
 
 		CodeInstruction[] instrs = instructions.ToArray();
+
+		if (GameLocation_IsRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		for (int i = 0; i < instrs.Length; i++) {
 			var in0 = instrs[i];
@@ -252,6 +269,9 @@ public static class GameLocation_Patches {
 
 		var useNightTiles = AccessTools.Method(typeof(GameLocation_Patches), nameof(UseNightTiles));
 
+		if (GameLocation_IsRainingHere is null || Game1_isRaining is null)
+			throw new Exception("could not find necessary method");
+
 		foreach (var in0 in instructions) {
 
 			if (in0.LoadsField(Game1_isRaining)) {
@@ -283,6 +303,15 @@ public static class GameLocation_Patches {
 		var GameLocation_IsRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
 		var shouldNotSpawnCritters = AccessTools.Method(typeof(GameLocation_Patches), nameof(ShouldNotSpawnCritters));
 
+		var spawnCustomCritters = AccessTools.Method(typeof(GameLocation_Patches), nameof(SpawnCustomCritters));
+
+		if (GameLocation_IsRainingHere is null)
+			throw new Exception("could not find necessary method");
+
+		yield return new CodeInstruction(OpCodes.Ldarg_0);
+		yield return new CodeInstruction(OpCodes.Ldarg_1);
+		yield return new CodeInstruction(OpCodes.Call, spawnCustomCritters);
+
 		foreach (var in0 in instructions) {
 
 			if (in0.Calls(GameLocation_IsRainingHere))
@@ -305,6 +334,9 @@ public static class GameLocation_Patches {
 
 		var hasAmbientColor = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasAmbientColor));
 		var getAmbientColor = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetAmbientColor));
+
+		if (GameLocation_IsRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 

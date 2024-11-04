@@ -538,6 +538,13 @@ public interface IWeatherData {
 
 	#endregion
 
+	#region Custom Critters
+
+	public IList<ICritterSpawnData> Critters { get; }
+
+	#endregion
+
+
 	#region Screen Tinting
 
 	/// <summary>
@@ -558,6 +565,46 @@ public interface IWeatherData {
 	public IList<ILayerData> Layers { get; }
 
 }
+
+
+public interface ICritterSpawnData {
+
+	/// <summary>
+	/// The unique Id for this critter spawn data entry. This need only
+	/// be unique within the <see cref="IWeatherData"/> containing it.
+	/// </summary>
+	string Id { get; set; }
+
+	#region Conditions
+
+	/// <summary>
+	/// A game state query for determining if this critter should spawn.
+	/// </summary>
+	string? Condition { get; set; }
+
+	/// <summary>
+	/// If you set a group, only the first critter spawn rule in a group
+	/// will be used at any given time.
+	/// </summary>
+	string? Group { get; set; }
+
+	#endregion
+
+	/// <summary>
+	/// The type of critter to spawn.
+	/// </summary>
+	string Type { get; set; }
+
+	/// <summary>
+	/// How likely is this critter to spawn? This is multiplied by a value
+	/// calculated based on the size of the current map, which will be a
+	/// number between 0.15 and 0.5, inclusive. Setting this to 2.0, for
+	/// example, would result in an effective chance between 0.3 and 1.0.
+	/// </summary>
+	float Chance { get; set; }
+
+}
+
 
 public interface IScreenTintData {
 

@@ -52,6 +52,8 @@ public class RecipeManager : BaseManager {
 
 	private readonly PerScreen<Dictionary<IRecipe, (List<NPC>, List<NPC>)?>> RecipeTastes = new(() => new());
 
+	private readonly PerScreen<Dictionary<IRecipe, IRecipeProvider?>> RecipeProviders = new(() => new());
+
 	// Seen Recipes
 	private bool LoadedSeen = false;
 	private bool SeenDirty = false;
@@ -240,11 +242,13 @@ public class RecipeManager : BaseManager {
 				}
 
 				ProviderMods.TryGetValue(provider, out string? modId);
+				if (modId is not null)
+					extra = extra.Select(recipe => UpgradeRecipeProxy(modId, recipe));
 
-				if (modId is null)
-					result.AddRange(extra);
-				else
-					result.AddRange(extra.Select(recipe => UpgradeRecipeProxy(modId, recipe)));
+				foreach (var recipe in extra) {
+					result.Add(recipe);
+					RecipeProviders.Value[recipe] = provider;
+				}
 			}
 		}
 
@@ -648,6 +652,7 @@ public class RecipeManager : BaseManager {
 		RegisterRuleHandler("Storage", new StorageRuleHandler());
 		RegisterRuleHandler("Sprinkler", new SprinklerRuleHandler());
 		RegisterRuleHandler("Light", new LightRuleHandler());
+		RegisterRuleHandler("Provider", new DebugRecipeProviderHandler(Mod));
 	}
 
 	public bool RegisterRuleHandler(string key, IDynamicRuleHandler handler) {
@@ -783,6 +788,20 @@ public class RecipeManager : BaseManager {
 		RecipeTastes.ResetAllScreens();
 	}
 
+	internal IEnumerable<IRecipeProvider> GetRecipeProviders() {
+		foreach (var provider in Providers) {
+			yield return provider;
+		}
+	}
+
+	internal string? GetProviderMod(IRecipeProvider provider) {
+		return ProviderMods.GetValueOrDefault(provider);
+	}
+
+	internal IRecipeProvider? GetProvider(IRecipe recipe) {
+		return RecipeProviders.Value.GetValueOrDefault(recipe);
+	}
+
 	public void AddProvider(IRecipeProvider provider, string? modId = null) {
 		if (provider == null)
 			throw new ArgumentNullException(nameof(provider));
@@ -848,6 +867,7 @@ public class RecipeManager : BaseManager {
 			if (modId is not null)
 				recipe = UpgradeRecipeProxy(modId, recipe);
 
+			RecipeProviders.Value[recipe] = provider;
 			return recipe;
 		}
 
@@ -868,6 +888,8 @@ public class RecipeManager : BaseManager {
 		RecipesLoaded.Value = true;
 		CraftingRecipesByName.Value.Clear();
 		CookingRecipesByName.Value.Clear();
+
+		RecipeProviders.Value.Clear();
 
 		CraftingRecipes.Value.Clear();
 		CookingRecipes.Value.Clear();
@@ -915,6 +937,7 @@ public class RecipeManager : BaseManager {
 
 					CookingRecipesByName.Value.Add(recipe.Name, upgraded);
 					CookingRecipes.Value.Add(upgraded);
+					RecipeProviders.Value[upgraded] = provider;
 				}
 		}
 
@@ -962,6 +985,7 @@ public class RecipeManager : BaseManager {
 
 					CraftingRecipesByName.Value.Add(recipe.Name, upgraded);
 					CraftingRecipes.Value.Add(upgraded);
+					RecipeProviders.Value[upgraded] = provider;
 				}
 		}
 

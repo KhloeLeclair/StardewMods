@@ -2,9 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Intrinsics.X86;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -13,7 +11,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 
 using StardewModdingAPI;
-using StardewModdingAPI.Events;
 
 using StardewValley.BellsAndWhistles;
 
@@ -147,7 +144,7 @@ public class FallbackManagedAsset<TValue> : IManagedAsset<TValue> where TValue :
 
 		try {
 			_Value = Helper.ModContent.Load<TValue>(Path);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.Log($"Failed loading asset from '{Path}' for managed asset: {ex}", LogLevel.Error);
 		}
 	}
@@ -352,6 +349,14 @@ public interface IGameTheme {
 	/// <param name="key">The variable to get.</param>
 	IManagedAsset<Texture2D>? GetManagedTextureVariable(string key);
 
+	/// <summary>
+	/// Try to get a color alpha variable.
+	/// </summary>
+	/// <param name="key">The variable to get.</param>
+	/// <param name="value">The value of the variable.</param>
+	/// <returns>Whether or not the variable exists.</returns>
+	bool TryGetColorAlphaVariable(string key, out float value);
+
 	#endregion
 
 	/// <summary>
@@ -359,6 +364,12 @@ public interface IGameTheme {
 	/// not case-sensitive.
 	/// </summary>
 	IVariableSet<Color> ColorVariables { get; }
+
+	/// <summary>
+	/// A dictionary of all the color alpha variables used by the theme.
+	/// Keys are not case-sensitive.
+	/// </summary>
+	IVariableSet<float> ColorAlphaVariables { get; }
 
 	/// <summary>
 	/// A dictionary of all valid BmFonts used by the theme. Keys are

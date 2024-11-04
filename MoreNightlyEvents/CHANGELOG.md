@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.0
+Released November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+### Fixed
+* Compatibility with Stardew Valley 1.6.9.
+
+
+## 0.3.0
+Released June 6th, 2024.
+
+### Added
+* A `Message` type event that plays a sound and displays a message,
+  like how `Placement` events work, but that doesn't actually place
+  anything.
+
+### Fixed
+* Issue where some events caused crashes for farmhands in multiplayer
+  due to missing constructors.
+* Issue where side effects would not run for farmhands.
+* Issue where an invalid item could be spawned and cause issues for
+  saving the game. (Fixed in Stardew Valley 1.6.9, but this is a fix
+  for previous versions of the game.)
+* Remove some unnecessary log messages that were confusing users.
+
+
 ## 0.2.0
 Released April 16th, 2024.
 

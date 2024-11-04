@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.14.0
+Released November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+### Added
+* Setting to disallow pulling items from fish tanks and fish ponds. This
+  is added in response to other mods adding these to Better Crafting as
+  a source of items, even though most users probably don't want to use
+  those fish as crafting ingredients.
+* Harmony patches for the vanilla crafting menu so certain category-based
+  ingredients that don't appear correctly should now have icons and proper
+  descriptive text.
+
+### Fixed
+* Compatibility with Stardew Valley 1.6.9.
+* Recipes using SpaceCore features not displaying accurate information,
+  including descriptions and number of times crafted.
+* Certain dynamic rules not correctly listing all items if those items are
+  of a different type than a simple object.
+* The trash can recovery menu not properly supporting UI Scales other
+  than 100%.
+* Reduce spammy logging from the class that prevents mutexes from being
+  released while the crafting menu is open.
+
+### API
+* Added a new recipe provider dynamic rule for debugging use, which lets
+  you filter based on which recipe provider is handling a recipe.
+* Fixed recipes using SpaceCore not including a reference to the vanilla
+  `CraftingRecipe` instance for the recipe.
+
+
 ## 2.13.0
 Released May 31st, 2024.
 

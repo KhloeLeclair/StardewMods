@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 
 using HarmonyLib;
-using Microsoft.Xna.Framework.Graphics;
+
+using Leclair.Stardew.Common.UI;
+
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
 using StardewValley;
 using StardewValley.Menus;
-using System.Reflection.Emit;
-using Leclair.Stardew.Common.UI;
 
 namespace Leclair.Stardew.CloudySkies.Patches;
 
@@ -37,7 +40,7 @@ public static class DayTimeMoneyBox_Patches {
 		try {
 			if (Mod is not null)
 				return Mod.DrawWeatherIcon(b, menu.Position + new Vector2(116, 68));
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Mod?.Log($"Error drawing weather icon: {ex}", StardewModdingAPI.LogLevel.Error, once: true);
 		}
 
@@ -68,7 +71,7 @@ public static class DayTimeMoneyBox_Patches {
 
 	private static IEnumerable<CodeInstruction> Draw__Transpiler(IEnumerable<CodeInstruction> instructions) {
 
-		var first_match = new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(Game1), nameof(Game1.weatherIcon)));
+		var first_match = new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(Game1), nameof(Game1.weatherIcon)) ?? throw new Exception($"could not find {nameof(Game1.weatherIcon)}"));
 
 		var matcher = new CodeMatcher(instructions)
 			.MatchStartForward(first_match)

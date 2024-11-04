@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Microsoft.Xna.Framework;
 
@@ -20,7 +21,6 @@ public class ArgumentParser {
 	public static ArgumentParser New() {
 		return new ArgumentParser();
 	}
-
 
 	#region Type Conversion
 
@@ -101,12 +101,13 @@ public class ArgumentParser {
 		RegisterConverter<Rectangle>(ParseRectangle, "<x:number> <y:number> <width:number> <height:number>");
 		RegisterConverter<Vector2>(ParseVector2, "<x:number> <y:number>");
 		RegisterConverter<string[]>(ParseRemainder);
-		RegisterConverter<IEnumerable<GameLocation>>(ParseLocationContext, "<Location/Context> <Any/Here/ID>");
+		RegisterConverter<IEnumerable<GameLocation>>(ParseLocationContext, "<Location/Locations/Context> <Any/Here/ID>");
 		RegisterConverter<Farmer>(ParseFarmer, "<Current/Host/Target/ID>");
 		RegisterConverter<ParsedFarmers>(ParseFarmers, "<Any/All/Current/Host/Target/ID>");
 		RegisterConverter<Color>(ParseColor, "<color>");
 		RegisterConverter<IEnumerable<TargetPosition>>(ParseTargetPosition, "<target>");
 		RegisterConverter<TargetTileFilter>(ParseTargetTileFilter, "<target-filter>");
+		RegisterConverter<Regex>(ParseRegularExpression, "<regex-or-glob>");
 	}
 
 	#region Converters
@@ -142,9 +143,11 @@ public class ArgumentParser {
 
 	private enum TargetType {
 		Location,
+		Locations,
 		Context,
 		Player,
 		NPC,
+		Region,
 		Tile,
 		RandomTile
 	};
@@ -157,7 +160,7 @@ public class ArgumentParser {
 		}
 
 		// For Location and Context, we just fall back to LocationContext.
-		if (type == TargetType.Location || type == TargetType.Context) {
+		if (type == TargetType.Location || type == TargetType.Locations || type == TargetType.Context) {
 			if (!ParseLocationContext(input, index, out consumed, out error, out var val)) {
 				value = default;
 				return false;
@@ -169,13 +172,16 @@ public class ArgumentParser {
 
 		int radius;
 
-		if (type == TargetType.Tile || type == TargetType.RandomTile) {
+		if (type == TargetType.Tile || type == TargetType.Region || type == TargetType.RandomTile) {
 			// Inputs:
+			// Region [location] [minX] [maxX] [minY] [maxY]
 			// Tile [location] [x] [y] [radius]
 			// RandomTile [location] [minCount] [maxCount] [minX] [maxX] [minY] [maxY] [minRadius] [maxRadius]
-			consumed = type == TargetType.Tile
-				? 5
-				: 10;
+			consumed = type switch {
+				TargetType.Tile => 5,
+				TargetType.Region => 6,
+				_ => 10
+			};
 
 			if (index + consumed > input.Length) {
 				error = $"Encountered end of input attempting to read {typeof(TargetType).GetEnumName(type)}";
@@ -183,13 +189,15 @@ public class ArgumentParser {
 				return false;
 			}
 
-			if (!TryConvert<string>(input, index + 1, out _, out error, out string? locationName)) {
+			if (!TryConvert(input, index + 1, out _, out error, out string? locationName)) {
 				error = $"Unable to parse {typeof(TargetType).GetEnumName(type)} target: {error}";
 				value = default;
 				return false;
 			}
 
 			IEnumerable<GameLocation> locations;
+			int offset = 1;
+
 			if (locationName.Equals("Indoors", StringComparison.OrdinalIgnoreCase) || locationName.Equals("Inside", StringComparison.OrdinalIgnoreCase)) {
 				locations = CommonHelper.EnumerateLocations(true)
 					.Where(loc => !loc.IsOutdoors);
@@ -209,7 +217,12 @@ public class ArgumentParser {
 			} else if (locationName.Equals("Any", StringComparison.OrdinalIgnoreCase) || locationName.Equals("All", StringComparison.OrdinalIgnoreCase))
 				locations = CommonHelper.EnumerateLocations();
 
-			else {
+			else if (TryConvert(input, index + 1, out int cons, out error, out IEnumerable<GameLocation>? locs)) {
+				locations = locs;
+				offset = cons;
+				consumed += offset - 1;
+
+			} else {
 				var loc = Game1.getLocationFromName(locationName);
 				if (loc is null) {
 					error = $"Could not find location with name '{locationName}'";
@@ -220,29 +233,66 @@ public class ArgumentParser {
 				locations = [loc];
 			}
 
-			if (type == TargetType.Tile) {
-				if (!TryConvert(input, index + 2, out _, out error, out int x) ||
-					!TryConvert(input, index + 3, out _, out error, out int y) ||
-					!TryConvert(input, index + 4, out _, out error, out radius)
+			if (type == TargetType.Region) {
+				if (!TryConvert(input, index + offset + 1, out _, out error, out int minX) ||
+					!TryConvert(input, index + offset + 2, out _, out error, out int maxX) ||
+					!TryConvert(input, index + offset + 3, out _, out error, out int minY) ||
+					!TryConvert(input, index + offset + 4, out _, out error, out int maxY)
+				) {
+					error = $"Unable to parse Region target: {error}";
+					value = default;
+					return false;
+				}
+
+				if (minX < 0)
+					minX = 0;
+				if (minY < 0)
+					minY = 0;
+
+				if (maxX < minX)
+					maxX = minX;
+				if (maxY < minY)
+					maxY = minY;
+
+				IEnumerable<TargetPosition> GetPositions(GameLocation loc) {
+					int mX = Math.Min(maxX, loc.Map?.Layers?[0]?.LayerWidth ?? maxX);
+					int mY = Math.Min(maxY, loc.Map?.Layers?[0]?.LayerHeight ?? maxY);
+
+					for (int y = minY; y <= mY; y++) {
+						for (int x = minX; x <= mX; x++) {
+							yield return new TargetPosition(loc, new(x, y), 0);
+						}
+					}
+				}
+
+				value = locations
+					.SelectMany(loc => GetPositions(loc));
+
+				return true;
+
+			} else if (type == TargetType.Tile) {
+				if (!TryConvert(input, index + offset + 1, out _, out error, out int x) ||
+					!TryConvert(input, index + offset + 2, out _, out error, out int y) ||
+					!TryConvert(input, index + offset + 3, out _, out error, out radius)
 				) {
 					error = $"Unable to parse Tile target: {error}";
 					value = default;
 					return false;
 				}
 
-				Vector2 pos = new Vector2(x, y);
+				Vector2 pos = new(x, y);
 				value = locations.Select(x => new TargetPosition(x, pos, radius));
 				return true;
 
 			} else {
-				if (!TryConvert(input, index + 2, out _, out error, out int minCount) ||
-					!TryConvert(input, index + 3, out _, out error, out int maxCount) ||
-					!TryConvert(input, index + 4, out _, out error, out int minX) ||
-					!TryConvert(input, index + 5, out _, out error, out int maxX) ||
-					!TryConvert(input, index + 6, out _, out error, out int minY) ||
-					!TryConvert(input, index + 7, out _, out error, out int maxY) ||
-					!TryConvert(input, index + 8, out _, out error, out int minRadius) ||
-					!TryConvert(input, index + 9, out _, out error, out int maxRadius)
+				if (!TryConvert(input, index + offset + 1, out _, out error, out int minCount) ||
+					!TryConvert(input, index + offset + 2, out _, out error, out int maxCount) ||
+					!TryConvert(input, index + offset + 3, out _, out error, out int minX) ||
+					!TryConvert(input, index + offset + 4, out _, out error, out int maxX) ||
+					!TryConvert(input, index + offset + 5, out _, out error, out int minY) ||
+					!TryConvert(input, index + offset + 6, out _, out error, out int maxY) ||
+					!TryConvert(input, index + offset + 7, out _, out error, out int minRadius) ||
+					!TryConvert(input, index + offset + 8, out _, out error, out int maxRadius)
 				) {
 					error = $"Unable to parse RandomTile target: {error}";
 					value = default;
@@ -262,7 +312,7 @@ public class ArgumentParser {
 				maxX++;
 				maxY++;
 
-				value = locations.Select(x => {
+				value = locations.SelectMany(x => {
 					int count = Game1.random.Next(minCount, maxCount);
 					int mX = Math.Min(maxX, x.Map?.Layers?[0]?.LayerWidth ?? maxX);
 					int mY = Math.Min(maxY, x.Map?.Layers?[0]?.LayerHeight ?? maxY);
@@ -275,7 +325,7 @@ public class ArgumentParser {
 					}
 
 					return positions;
-				}).SelectMany(x => x);
+				});
 
 				return true;
 			}
@@ -342,7 +392,7 @@ public class ArgumentParser {
 				return true;
 			}
 
-			if (!long.TryParse(targetName, out long id) || Game1.getFarmer(id) is not Farmer farmer || farmer.currentLocation is null) {
+			if (!long.TryParse(targetName, out long id) || Game1.GetPlayer(id, onlyOnline: true) is not Farmer farmer || farmer.currentLocation is null) {
 				error = $"Unable to get farmer with ID: {id}";
 				value = default;
 				return false;
@@ -377,8 +427,99 @@ public class ArgumentParser {
 
 	private enum LocationOrContext {
 		Location,
+		Locations,
 		Context
 	};
+
+	private static bool ParseRegularExpression(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out Regex? value) {
+		consumed = 1;
+
+		if (!ArgUtility.TryGet(input, index, out string? raw, out error)) {
+			value = default;
+			return false;
+		}
+
+		if (string.IsNullOrEmpty(raw)) {
+			error = "Input cannot be empty";
+			value = default;
+			return false;
+		}
+
+		if (raw.StartsWith('/')) {
+			// Find the closing '/' starting from index 1
+			int idx = raw.LastIndexOf('/');
+			if (idx <= 0) {
+				value = default;
+				error = $"Invalid regular expression, no ending /: {raw}";
+				return false;
+			}
+
+			// Extract the pattern
+			string pattern = raw[1..idx];
+			// Extract the options
+			string options = raw[(idx + 1)..];
+
+			RegexOptions opts = RegexOptions.None;
+			if (options.Contains('i', StringComparison.OrdinalIgnoreCase))
+				opts |= RegexOptions.IgnoreCase;
+
+			try {
+				value = new Regex(pattern, opts);
+				error = null;
+				return true;
+
+			} catch (Exception) {
+				value = default;
+				error = $"Invalid regular expression /{pattern}/{options}";
+				return false;
+			}
+		}
+
+		// Treat it as a glob-like instead.
+		// Escape all characters except '*' and '?', which are converted to regex.
+		StringBuilder sb = new();
+
+		// TODO: More advanced glob stuff
+		/*int i = 0;
+		while (i < raw.Length) {
+			char c = raw[i];
+
+			if (c == '*') {
+				if (i + 1 < raw.Length && raw[i + 1] == '*') {
+					// Double **
+					i++;
+					sb.Append(".*");
+
+				} else {
+					// Single *
+					sb.Append(".*");
+				}
+
+			} else if (c == '?') {
+				// Single ?
+				sb.Append('.');
+
+			} else if (c == '[') {
+				// Character Classes
+
+
+			}
+
+
+		}*/
+
+		foreach (char c in raw) {
+			sb.Append(c switch {
+				'*' => ".*",
+				'?' => ".",
+				_ => Regex.Escape(c.ToString())
+			});
+		}
+
+		value = new Regex(sb.ToString());
+		error = null;
+		return true;
+	}
 
 	private static bool ParseLocationContext(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out IEnumerable<GameLocation>? value) {
 		consumed = 2;
@@ -428,6 +569,15 @@ public class ArgumentParser {
 				value = [loc];
 			}
 
+		} else if (target == LocationOrContext.Locations) {
+			if (!ParseRegularExpression(input, index + 1, out _, out error, out var re)) {
+				value = default;
+				return false;
+			}
+
+			value = CommonHelper.EnumerateLocations()
+				.Where(loc => re.IsMatch(loc.NameOrUniqueName));
+
 		} else {
 			if (locationName.Equals("Here", StringComparison.OrdinalIgnoreCase))
 				locationName = Game1.currentLocation.GetLocationContextId();
@@ -458,9 +608,9 @@ public class ArgumentParser {
 	private static bool ParseFarmer(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out Farmer? value) {
 		consumed = 1;
 
-		if (!ArgUtility.TryGetEnum<TargetPlayer>(input, index, out var target, out error)) {
+		if (!ArgUtility.TryGetEnum<TargetPlayer>(input, index, out var target, out _)) {
 			if (long.TryParse(input[index], out long id)) {
-				if (Game1.getFarmerMaybeOffline(id) is Farmer farmer) {
+				if (Game1.GetPlayer(id, onlyOnline: false) is Farmer farmer) {
 					error = null;
 					value = farmer;
 					return true;
@@ -497,9 +647,9 @@ public class ArgumentParser {
 	private static bool ParseFarmers(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out ParsedFarmers? value) {
 		consumed = 1;
 
-		if (!ArgUtility.TryGetEnum<TargetPlayer>(input, index, out var target, out error)) {
+		if (!ArgUtility.TryGetEnum<TargetPlayer>(input, index, out var target, out _)) {
 			if (long.TryParse(input[index], out long id)) {
-				if (Game1.getFarmerMaybeOffline(id) is Farmer farmer) {
+				if (Game1.GetPlayer(id, onlyOnline: false) is Farmer farmer) {
 					error = null;
 					value = new(false, [farmer]);
 					return true;
@@ -638,7 +788,7 @@ public class ArgumentParser {
 			value = new string[consumed];
 			input.CopyTo(value, index);
 		} else
-			value = Array.Empty<string>();
+			value = [];
 
 		return true;
 	}

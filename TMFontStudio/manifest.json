@@ -1,11 +1,20 @@
 {
-  "EntryDll": "ThemeManagerFontStudio.dll",
+  /*
+   | This file is automatically updated by ModManifestBuilder
+   | when the project is compiled.
+   | 
+   | Changes made to this file may be overwritten.
+   | 
+   */
+  "$schema": "https://smapi.io/schemas/manifest.json",
+  "UniqueID": "leclair.stardew.tmfontstudio",
   "Name": "Theme Manager: Font Studio",
   "Author": "Khloe Leclair",
   "Version": "0.5.0-Debug",
   "Description": "A font authoring add-on for Theme Manager, to make it easier for modders to create custom fonts.",
-  "UniqueID": "leclair.stardew.tmfontstudio",
-  "MinimumApiVersion": "3.16",
+  "MinimumApiVersion": "4.0",
+  "MinimumGameVersion": "1.6",
+  "EntryDll": "ThemeManagerFontStudio.dll",
   "Dependencies": [
     {
       "UniqueID": "leclair.thememanager",

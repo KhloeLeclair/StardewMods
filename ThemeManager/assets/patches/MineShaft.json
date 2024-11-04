@@ -1,0 +1,41 @@
+{
+	"ID": "MineShaft",
+
+	"FontVariables": {
+		"$MineShaft:Dialogue": "$Dialogue"
+	},
+
+	"BmFontVariables": {
+		"$MineShaft:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$MineShaft:ST:Normal": "$ST:Normal",
+		"$MineShaft:ST:Colored": "$ST:Colored"
+	},
+
+	"Patches": {
+		"StardewValley.Locations.MineShaft:drawAboveAlwaysFrontLayer": {
+			"Colors": {
+				"SpriteText:Purple": { "*": "$MineShaft:Level:SkullCavern" },
+				"SpriteText:Red": { "*": "$MineShaft:Level:Lava" },
+				"SpriteText:Cyan": { "*": "$MineShaft:Level:Ice" },
+				"SpriteText:Green": { "*": "$MineShaft:Level:Nature" },
+				"SpriteText:White": { "*": "$MineShaft:Level" }
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$MineShaft:Dialogue" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$MineShaft:ST:Normal",
+					"$MineShaft:ST:Colored",
+					"$MineShaft:ST:Font",
+					"$MineShaft:Colors"
+				]
+			}
+		}
+	}
+}

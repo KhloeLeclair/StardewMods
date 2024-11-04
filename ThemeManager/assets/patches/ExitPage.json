@@ -2,14 +2,30 @@
 	"ID": "ExitPage",
 
 	"ColorVariables": {
+		"$ExitPage:Text": "$Text",
+		"$ExitPage:TextShadowAlt": "$TextShadowAlt",
 		"$ExitPageHover": "$Hover"
+	},
+
+	"FontVariables": {
+		"$ExitPage:Dialogue": "$Dialogue"
 	},
 
 	"Patches": {
 		"#ExitPage:draw(SpriteBatch)": {
 			"Colors": {
 				"Wheat": { "*": "$ExitPageHover" }
-			}
+			},
+
+			"ColorFields": {
+				"Game1:textColor": { "*": "$ExitPage:Text" }
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$ExitPage:Dialogue" }
+			},
+
+			"DrawTextWithShadow": { "*": "$ExitPage:TextShadowAlt" }
 		}
 	}
 }

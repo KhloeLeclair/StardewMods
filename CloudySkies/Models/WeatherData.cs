@@ -88,6 +88,13 @@ public class WeatherData : IWeatherData {
 
 	#endregion
 
+	#region Critters
+
+	[JsonConverter(typeof(AbstractListConverter<CritterSpawnData, ICritterSpawnData>))]
+	public IList<ICritterSpawnData> Critters { get; set; } = new List<ICritterSpawnData>();
+
+	#endregion
+
 	#region Screen Tint
 
 	[JsonConverter(typeof(AbstractListConverter<ScreenTintData, IScreenTintData>))]

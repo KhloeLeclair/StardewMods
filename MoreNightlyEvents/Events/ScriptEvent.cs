@@ -24,7 +24,7 @@ public class ScriptEvent : BaseFarmEvent<ScriptEventData> {
 	#region FarmEvent
 
 	public override bool setUp() {
-		if (! LoadData() || string.IsNullOrEmpty(Data.Script))
+		if (!LoadData() || string.IsNullOrEmpty(Data.Script))
 			return true;
 
 		// Try to load our new map. If we can't, then quit

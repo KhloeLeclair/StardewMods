@@ -85,6 +85,7 @@ public static class Game1_Patches {
 			// Weather nonsense that we can't target by name.
 			var newDayRainFix = new HarmonyMethod(typeof(Game1_Patches), nameof(NewDayRain__Transpiler));
 
+			int patched = 0;
 			foreach (var type in typeof(Game1).GetNestedTypes(AccessTools.all)) {
 				if (type != null && type.IsClass) {
 					foreach (var method in AccessTools.GetDeclaredMethods(type)) {
@@ -108,6 +109,7 @@ public static class Game1_Patches {
 						if (parms.Length != 1 || parms[0].ParameterType != typeof(GameLocation))
 							continue;
 
+						patched++;
 						mod.Harmony.Patch(
 							original: method,
 							transpiler: newDayRainFix
@@ -115,6 +117,9 @@ public static class Game1_Patches {
 					}
 				}
 			}
+
+			if (patched == 0)
+				throw new Exception("unable to find _newDayAfterFade delegate to patch");
 
 		} catch (Exception ex) {
 			mod.Log($"Error patching Game1. Weather will not work correctly.", StardewModdingAPI.LogLevel.Error, ex);
@@ -133,6 +138,9 @@ public static class Game1_Patches {
 
 		var GameLocation_isRainingHere = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsRainingHere));
 		var hasAmbientColor = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.HasAmbientColor));
+
+		if (GameLocation_isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		foreach (var in0 in instructions) {
 			if (in0.Calls(GameLocation_isRainingHere))
@@ -157,6 +165,9 @@ public static class Game1_Patches {
 		var getLightingTint = AccessTools.Method(typeof(PatchHelper), nameof(PatchHelper.GetLightingTint));
 
 		var Color_OrangeRed = AccessTools.PropertyGetter(typeof(Color), nameof(Color.OrangeRed));
+
+		if (GameLocation_isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		CodeInstruction[] instrs = instructions.ToArray();
 
@@ -205,6 +216,9 @@ public static class Game1_Patches {
 		var Color_Blue = AccessTools.PropertyGetter(typeof(Color), nameof(Color.Blue));
 
 		CodeInstruction[] instrs = instructions.ToArray();
+
+		if (GameLocation_isRainingHere is null)
+			throw new Exception("could not find necessary method");
 
 		bool seen_raining = false;
 

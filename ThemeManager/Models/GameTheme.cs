@@ -1,21 +1,20 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Types;
+using Leclair.Stardew.ThemeManager.Serialization;
+using Leclair.Stardew.ThemeManager.VariableSets;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 using Newtonsoft.Json;
 
-using StardewValley;
-using StardewValley.BellsAndWhistles;
-
 using StardewModdingAPI;
 
-using Leclair.Stardew.Common;
-using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.Types;
-using Microsoft.Xna.Framework.Graphics;
-using Leclair.Stardew.ThemeManager.Serialization;
-using Leclair.Stardew.ThemeManager.VariableSets;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using StardewValley;
+using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.ThemeManager.Models;
 
@@ -45,6 +44,7 @@ public class GameTheme : IGameTheme {
 	private List<string>? _InheritedPatches;
 	[JsonIgnore]
 	private Dictionary<string, string>? _PatchColorVariables;
+	private Dictionary<string, string>? _PatchColorAlphaVariables;
 	private Dictionary<string, string>? _PatchFontVariables;
 	private Dictionary<string, string>? _PatchBmFontVariables;
 	private Dictionary<string, string>? _PatchTextureVariables;
@@ -91,8 +91,13 @@ public class GameTheme : IGameTheme {
 	#endregion
 
 	/// <inheritdoc />
+	public bool TryGetColorAlphaVariable(string key, [NotNullWhen(true)] out float result) {
+		return ColorAlphaVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out result);
+	}
+
+	/// <inheritdoc />
 	public Color? GetColorVariable(string key) {
-		if (! string.IsNullOrEmpty(key) && ColorVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out var color))
+		if (!string.IsNullOrEmpty(key) && ColorVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out var color))
 			return color;
 		return null;
 	}
@@ -172,6 +177,10 @@ public class GameTheme : IGameTheme {
 	[JsonConverter(typeof(RealVariableSetConverter))]
 	public IVariableSet<IManagedAsset<IBmFontData>> BmFontVariables { get; set; } = new BmFontVariableSet();
 
+	/// <inheritdoc />
+	[JsonConverter(typeof(RealVariableSetConverter))]
+	public IVariableSet<float> ColorAlphaVariables { get; set; } = new FloatVariableSet();
+
 	/// <summary>
 	/// The raw sprite text color sets, read from the underlying JSON object.
 	/// You should use <see cref="SpriteTextColorSets"/> rather than this.
@@ -219,8 +228,8 @@ public class GameTheme : IGameTheme {
 			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
 				result = RawSpriteTextColorSets is not null ? new(RawSpriteTextColorSets) : new();
 				foreach (var entry in other.InheritedSpriteTextColorSets) {
-					if (result.TryGetValue(entry.Key, out var existing)) { 
-						foreach(var pair in entry.Value)
+					if (result.TryGetValue(entry.Key, out var existing)) {
+						foreach (var pair in entry.Value)
 							existing.TryAdd(pair.Key, pair.Value);
 					} else
 						result.TryAdd(entry.Key, entry.Value);
@@ -292,9 +301,9 @@ public class GameTheme : IGameTheme {
 
 			var result = new Dictionary<string, Dictionary<long, Color?>>();
 
-			foreach(var entry in InheritedSpriteTextColorSets) {
+			foreach (var entry in InheritedSpriteTextColorSets) {
 				var subresult = new Dictionary<long, Color?>();
-				foreach(var pair in entry.Value) {
+				foreach (var pair in entry.Value) {
 					long key;
 					if (pair.Key is null || pair.Key.Equals("null", System.StringComparison.OrdinalIgnoreCase) || pair.Key.Equals("default", System.StringComparison.OrdinalIgnoreCase))
 						key = -1;
@@ -334,7 +343,7 @@ public class GameTheme : IGameTheme {
 
 			var result = new Dictionary<int, Color>();
 
-			foreach(var entry in InheritedSpriteTextColors) {
+			foreach (var entry in InheritedSpriteTextColors) {
 				if (entry.Value.StartsWith('$')) {
 					if (ColorVariables.TryGetValue(entry.Value[1..], out var color))
 						result[entry.Key] = color;
@@ -358,7 +367,7 @@ public class GameTheme : IGameTheme {
 
 			var result = new List<string>();
 
-			foreach(string entry in InheritedPatches) {
+			foreach (string entry in InheritedPatches) {
 				if (entry.StartsWith('-'))
 					result.Remove(entry[1..]);
 				else
@@ -375,6 +384,7 @@ public class GameTheme : IGameTheme {
 		_PatchFontVariables = null;
 		_PatchBmFontVariables = null;
 		_PatchTextureVariables = null;
+		_PatchColorAlphaVariables = null;
 	}
 
 	internal Dictionary<string, string> PatchColorVariables {
@@ -404,6 +414,37 @@ public class GameTheme : IGameTheme {
 			}
 
 			_PatchColorVariables = result;
+			return result;
+		}
+	}
+
+	internal Dictionary<string, string> PatchColorAlphaVariables {
+		get {
+			if (_PatchColorAlphaVariables is not null)
+				return _PatchColorAlphaVariables;
+
+			var result = new CaseInsensitiveDictionary<string>();
+
+			if (Patches.Count > 0) {
+				ModEntry.Instance.LoadPatchGroups();
+
+				foreach (string patch in Patches) {
+					if (ModEntry.Instance.PatchGroups.TryGetValue(patch, out var group)) {
+						if (group.CanUse && group.ColorAlphaVariables is not null) {
+							foreach (var entry in group.ColorAlphaVariables) {
+								// Make sure to strip the "$" from the start of
+								// variable keys.
+								result.TryAdd(
+									entry.Key.StartsWith('$') ? entry.Key[1..] : entry.Key,
+									entry.Value
+								);
+							}
+						}
+					}
+				}
+			}
+
+			_PatchColorAlphaVariables = result;
 			return result;
 		}
 	}

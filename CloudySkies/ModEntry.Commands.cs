@@ -8,6 +8,7 @@ using Leclair.Stardew.Common.Events;
 using StardewModdingAPI;
 
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.Network;
 
 namespace Leclair.Stardew.CloudySkies;
@@ -199,5 +200,39 @@ public partial class ModEntry {
 
 		Log($"Updated {count} locations.", LogLevel.Info);
 	}
+
+
+	[ConsoleCommand("cs_reset_critters", "Clear all the existing critters on the current map, and then spawn new ones.")]
+	public void ResetCrittersCommand(string name, string[] args) {
+		if (!Context.IsWorldReady) {
+			Log($"Load the game first.", LogLevel.Error);
+			return;
+		}
+
+		var loc = Game1.currentLocation;
+		if (loc is null || !loc.IsOutdoors) { 
+			Log($"Can only be used outdoors.", LogLevel.Warn);
+			return;
+		}
+
+		int old_critters = loc.critters?.Count ?? 0;
+
+		// TODO: Remove lights from old critters.
+		/*if (loc.critters != null) {
+			foreach(var critter in loc.critters) {
+				if (critter is Firefly fly) {
+					
+				}
+			}
+		}*/
+
+		loc.critters?.Clear();
+		loc.tryToAddCritters();
+
+		int new_critters = loc.critters?.Count ?? 0;
+
+		Log($"Reset critters (old count: {old_critters}, new count: {new_critters}).", LogLevel.Info);
+	}
+
 
 }

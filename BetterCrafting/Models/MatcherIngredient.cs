@@ -43,9 +43,9 @@ public class MatcherIngredient : IOptimizedIngredient, IConsumptionPreTrackingIn
 
 		Condition = condition;
 
-		IngList = new (Func<Item, bool>, int)[] {
+		IngList = [
 			(ItemMatcher, Quantity)
-		};
+		];
 
 		RecycledSprite = new(item => SpriteHelper.GetSprite(item), () => RecycledItem?.Item1);
 		if (recycleTo is not null) {

@@ -2,18 +2,20 @@ using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
+using Leclair.Stardew.Common;
+using Leclair.Stardew.ThemeManager.Models;
+using Leclair.Stardew.ThemeManager.Serialization;
+using Leclair.Stardew.ThemeManager.VariableSets;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using StardewValley.BellsAndWhistles;
+using Newtonsoft.Json;
+
 using StardewModdingAPI;
 
-using Leclair.Stardew.Common;
-using Leclair.Stardew.Common.Extensions;
-using Leclair.Stardew.ThemeManager.Models;
-using Leclair.Stardew.ThemeManager.Serialization;
-using Newtonsoft.Json;
-using Leclair.Stardew.ThemeManager.VariableSets;
+using StardewValley.BellsAndWhistles;
+
 using static Leclair.Stardew.ThemeManager.IThemeManagerApi;
 
 namespace Leclair.Stardew.ThemeManager;
@@ -73,6 +75,8 @@ public class ModAPI : IThemeManagerApi {
 		Type tType = typeof(TValue);
 		if (tType == typeof(Color))
 			return (IVariableSet<TValue>) new ColorVariableSet();
+		if (tType == typeof(float))
+			return (IVariableSet<TValue>) new FloatVariableSet();
 		if (tType == typeof(IManagedAsset<IBmFontData>))
 			return (IVariableSet<TValue>) new BmFontVariableSet();
 		if (tType == typeof(IManagedAsset<SpriteFont>))
@@ -139,12 +143,12 @@ public class ModAPI : IThemeManagerApi {
 			Mod.Managers[Other] = (typeof(DataT), manager);
 		}
 
-		if (! string.IsNullOrEmpty(manager.AssetLoaderPrefix))
-			lock((Mod.ManagersByAssetPrefix as ICollection).SyncRoot) {
+		if (!string.IsNullOrEmpty(manager.AssetLoaderPrefix))
+			lock ((Mod.ManagersByAssetPrefix as ICollection).SyncRoot) {
 				Mod.ManagersByAssetPrefix[manager.AssetLoaderPrefix] = (IThemeManagerInternal) manager;
 			}
 
-		if (manager.UsingThemeRedirection && ! string.IsNullOrEmpty(manager.ThemeLoaderPath))
+		if (manager.UsingThemeRedirection && !string.IsNullOrEmpty(manager.ThemeLoaderPath))
 			lock ((Mod.ManagersByThemeAsset as ICollection).SyncRoot) {
 				Mod.ManagersByThemeAsset[manager.ThemeLoaderPath] = (IThemeManagerInternal) manager;
 			}
@@ -163,9 +167,8 @@ public class ModAPI : IThemeManagerApi {
 		}
 	}
 
-#if PINTAIL_CAN_OUT
 	public bool TryGetManager([NotNullWhen(true)] out IThemeManager? themeManager, IManifest? forMod = null) {
-		lock((Mod.Managers as ICollection).SyncRoot) {
+		lock ((Mod.Managers as ICollection).SyncRoot) {
 			if (!Mod.Managers.TryGetValue(forMod ?? Other, out var manager)) {
 				themeManager = null;
 				return false;
@@ -175,7 +178,6 @@ public class ModAPI : IThemeManagerApi {
 			return true;
 		}
 	}
-#endif
 
 	public IThemeManager<DataT>? GetTypedManager<DataT>(IManifest? forMod = null) where DataT : class, new() {
 		lock ((Mod.Managers as ICollection).SyncRoot) {
@@ -186,7 +188,6 @@ public class ModAPI : IThemeManagerApi {
 		}
 	}
 
-#if PINTAIL_CAN_OUT
 	public bool TryGetTypedManager<DataT>([NotNullWhen(true)] out IThemeManager<DataT>? themeManager, IManifest? forMod = null) where DataT : class, new() {
 		lock ((Mod.Managers as ICollection).SyncRoot) {
 			if (!Mod.Managers.TryGetValue(forMod ?? Other, out var manager) || manager.Item1 != typeof(DataT)) {
@@ -198,7 +199,6 @@ public class ModAPI : IThemeManagerApi {
 			return themeManager is not null;
 		}
 	}
-#endif
 
 	#endregion
 

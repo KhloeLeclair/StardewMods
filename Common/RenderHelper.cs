@@ -755,7 +755,7 @@ public static class RenderHelper {
 		b.GraphicsDevice.ScissorRectangle = Rectangle.Intersect(rectangle, old_scissor);
 
 		try {
-			action?.Invoke();
+			action();
 		} finally {
 			b.End();
 

@@ -38,7 +38,7 @@ public static class FarmEventInterrupter {
 
 public abstract class BaseFarmEvent<T> : FarmEvent, IInterruptable, INetObject<NetFields>, IDisposable where T : BaseEventData {
 
-	protected readonly NetString key = new NetString();
+	protected readonly NetString key = new();
 	protected T? Data;
 
 	protected GameLocation? preEventLocation;
@@ -93,14 +93,14 @@ public abstract class BaseFarmEvent<T> : FarmEvent, IInterruptable, INetObject<N
 		return result;
 	}
 
-	protected void PerformSideEffects(GameLocation location, Farmer? who = null, Item? targetItem = null) {
+	protected void PerformSideEffects(GameLocation? location, Farmer? who = null, Item? targetItem = null) {
 
 		if (Data?.SideEffects is null || Data.SideEffects.Count == 0)
 			return;
 
 		var ctx = new GameStateQueryContext(location, who, targetItem, null, Game1.random);
 
-		foreach(var effect in Data.SideEffects) {
+		foreach (var effect in Data.SideEffects) {
 			if (effect.Actions is null || effect.Actions.Count == 0)
 				continue;
 

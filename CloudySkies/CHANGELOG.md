@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.8.0
+Released November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+### Added
+* Custom weather types have more control over critter spawning with their
+  new `Critters` property.
+* New game state queries for checking the class type of a given location
+  and for checking the game time within a specific location, which can be
+  used to determine if it's dark in that location.
+* New console command for resetting the spawned critters in the
+  current location.
+* New syntax for trigger action targets for targeting more than one location
+  based on location names.
+* New syntax for trigger action targets for targeting a region of a location.
+* New trigger actions for spawning ores and resource clumps (boulders, logs,
+  meteorites, etc.)
+
+### Changed
+* Added more safety checks to the Harmony patches out of paranoia that
+  something broke with 1.6.9. (Miraculously, the only things that broke
+  weren't Harmony related at all.)
+
+### Fixed
+* Compatibility with Stardew Valley 1.6.9.
+
+
 ## 1.7.0
 Released May 18th, 2024.
 

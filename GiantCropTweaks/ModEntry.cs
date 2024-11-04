@@ -23,7 +23,7 @@ using StardewValley.TerrainFeatures;
 
 namespace Leclair.Stardew.GiantCropTweaks;
 
-public class ModEntry : ModSubscriber {
+public class ModEntry : PintailModSubscriber {
 
 	public const string CUSTOM_CROP_DATA = @"Mods/leclair.giantcroptweaks/Data";
 
@@ -145,14 +145,14 @@ public class ModEntry : ModSubscriber {
 			// Handle additions first.
 			HashSet<Vector2> valid = new();
 
-			foreach(var entry in Game1.currentLocation.resourceClumps) {
+			foreach (var entry in Game1.currentLocation.resourceClumps) {
 				if (entry is GiantCrop crop)
 					added += ProtectGiantCropDirt(Game1.currentLocation, crop, valid);
 			}
 
 			// Now, check every HoeDirt to see if it should be removed.
-			foreach(var entry in Game1.currentLocation.terrainFeatures.Pairs) {
-				if (entry.Value is HoeDirt dirt && ! valid.Contains(entry.Key) && dirt.modData.ContainsKey(MD_PROTECT)) {
+			foreach (var entry in Game1.currentLocation.terrainFeatures.Pairs) {
+				if (entry.Value is HoeDirt dirt && !valid.Contains(entry.Key) && dirt.modData.ContainsKey(MD_PROTECT)) {
 					removed++;
 					dirt.modData.Remove(MD_PROTECT);
 				}
@@ -164,7 +164,7 @@ public class ModEntry : ModSubscriber {
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
+		foreach (var name in e.Names) {
 			if (name.IsEquivalentTo(CUSTOM_CROP_DATA))
 				CropData = null;
 
@@ -180,15 +180,6 @@ public class ModEntry : ModSubscriber {
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		if (e.Name.IsEquivalentTo(CUSTOM_CROP_DATA))
 			e.LoadFrom(InternalLoadCropData, AssetLoadPriority.Exclusive);
-
-		/*if (e.Name.IsEquivalentTo(@"Data/GiantCrops"))
-			e.Edit(editor => {
-				var data = editor.AsDictionary<string, GiantCropData>();
-
-				foreach (var entry in data.Data.Values)
-					entry.Chance = 1.1f;
-
-			}, AssetEditPriority.Late);*/
 	}
 
 	[Subscriber]
@@ -200,7 +191,7 @@ public class ModEntry : ModSubscriber {
 	private void OnTerrainFeaturesChanged(object? sender, TerrainFeatureListChangedEventArgs e) {
 		var features = e.Location.terrainFeatures;
 		int count = 0;
-		foreach(var entry in e.Removed) {
+		foreach (var entry in e.Removed) {
 			if (entry.Value is HoeDirt dirt && dirt.modData.ContainsKey(MD_PROTECT)) {
 				// Surely this is too stupid to work.
 				count++;
@@ -364,8 +355,8 @@ public class ModEntry : ModSubscriber {
 
 		int i = -1;
 
-		for(int xOffset = 0; xOffset < width; xOffset++) {
-			for(int yOffset = 0; yOffset < height; yOffset++) {
+		for (int xOffset = 0; xOffset < width; xOffset++) {
+			for (int yOffset = 0; yOffset < height; yOffset++) {
 				i++;
 				int x = originX + xOffset;
 				int y = originY + yOffset;
