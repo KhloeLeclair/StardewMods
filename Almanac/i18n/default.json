@@ -351,27 +351,31 @@
 
 	"location.Forest.River": "River",
 	"location.Forest.Pond": "Pond",
+	"location.Forest.Lake": "Lake",
 
 	"location.Island.Ocean": "Ocean",
 	"location.Island.Freshwater": "Freshwater",
-
+	"Location.Desert.TopPond": "TopPond",
 	// Maps: Stardew Aquarium
 	"location.Custom_ExteriorMuseum": "Stardew Aquarium",
 
 	// Maps: Stardew Valley Expanded
 	"location.Custom_AdventurerSummit": "Adventurer Summit",
 	"location.Custom_BlueMoonVineyard": "Blue Moon Vineyard",
-	"location.Custom_BlueMoonVineyard.0": "Ocean",
-	"location.Custom_BlueMoonVineyard.1": "River",
+	"location.Custom_BlueMoonVineyard.Ocean": "Ocean",
+	"location.Custom_BlueMoonVineyard.River": "River",
 	"location.Custom_CrimsonBadlands": "Crimson Badlands",
 	"location.Custom_FableReef": "Fable Reef",
 	"location.Custom_ForestWest": "West Cindersap Forest",
 	"location.Custom_Highlands": "The Highlands",
-	"location.Custom_Highlands.0": "Ruins",
-	"location.Custom_Highlands.1": "River",
+	"location.Custom_Highlands.Pond": "Pond",
+	"location.Custom_Highlands.River": "River",
 	"location.Custom_HighlandsCavern": "The Highlands (Cavern)",
 	"location.Custom_JunimoWoods": "Junimo Woods",
-	//"location.Custom_MorrisProperty": "",
+	"location.Custom_MorrisProperty": "Morris Property",
+	"location.Custom_HenchmanBackyard": "Henchman Backyard",
+	"location.Custom_ForbiddenMaze": "Forbidden Maze",
+	"location.Custom_DiamondCavern": "Diamond Cavern",
 	"location.Custom_ShearwaterBridge": "Shearwater Bridge",
 	"location.Custom_SpriteSpring2": "Sprite Spring",
 	"location.Custom_GrampletonSuburbs": "Grampleton Suburbs",

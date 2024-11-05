@@ -1,3 +1,4 @@
+/*
 #nullable enable
 
 using System;
@@ -214,7 +215,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 				}
 
 				builder.Text("\n\n");
-			}*/
+			}
 
 			if (pirateDays!.Count > 0) {
 				string dates = string.Join(", ", pirateDays);
@@ -333,3 +334,4 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 	#endregion
 
 }
+*/

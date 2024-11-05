@@ -263,7 +263,7 @@ public class CropPage : BasePage<CropState>, ICalendarPage, ITab {
 			rightNeighborID = ClickableComponent.SNAP_AUTOMATIC
 		};
 		tabSeedsSprite = Game1.random.Next(2 * AlmanacMenu.TABS.Length);
-		spriteSeeds = SpriteHelper.GetSprite(InventoryHelper.CreateItemById("(O)495", 1));
+		spriteSeeds = SpriteHelper.GetSprite(ItemRegistry.Create("(O)495"));
 
 		// Cache Agriculturist status.
 		Agriculturist = Game1.player.professions.Contains(Farmer.agriculturist);
@@ -350,7 +350,7 @@ public class CropPage : BasePage<CropState>, ICalendarPage, ITab {
 				break;
 		}
 
-		spriteSeeds = SpriteHelper.GetSprite(InventoryHelper.CreateItemById(seasonSeeds, 1));
+		spriteSeeds = SpriteHelper.GetSprite(ItemRegistry.Create(seasonSeeds));
 
 		LastDays = new List<CropInfo>[ModEntry.DaysPerMonth];
 

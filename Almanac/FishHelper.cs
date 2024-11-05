@@ -122,7 +122,7 @@ public static class FishHelper {
 		//Dictionary<SubLocation, seasons>
 		Dictionary<string, Dictionary<SubLocation, List<int>>> result = new();
 		//Dictionary<locationId, locationData>
-		var locations = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
+		var locations = Game1.content.Load<Dictionary<string, LocationData>>(@"Data\Locations");
 
 		foreach (var lp in locations) {
 			if (SkipLocation(lp.Key))
@@ -164,7 +164,7 @@ public static class FishHelper {
 	public static Dictionary<string, List<SubLocation>> GetFishLocations(int season) {
 		Dictionary<string, List<SubLocation>> result = new();
 
-		var locations = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
+		var locations = Game1.content.Load<Dictionary<string, LocationData>>(@"Data\Locations");
 		foreach (var lp in locations) {
 			if (SkipLocation(lp.Key))
 				continue;
@@ -197,7 +197,7 @@ public static class FishHelper {
 		if (key == "BeachNightMarket")
 			key = "Beach";
 
-		locations ??= Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations");
+		locations ??= Game1.content.Load<Dictionary<string, LocationData>>(@"Data\Locations");
 		Dictionary<string, List<string>> result;
 		GameLocation loc;
 		if (locations.ContainsKey(key) && ContainsFish(locations[key]))
@@ -262,7 +262,7 @@ public static class FishHelper {
 			}
 		}
 		try{
-			GetLocationFish(season, locations[Game1.GetFarmTypeKey()], result);
+			GetLocationFish(season, locations[Game1.GetFarmTypeID()], result);
 		} catch {
 			ModEntry.Instance.Log($"Error at {getLocName(locations[Game1.GetFarmTypeKey()])}, farm key section.", LogLevel.Warn);
 		}
@@ -288,10 +288,10 @@ public static class FishHelper {
 		if (data.Equals(null))
 			return existing;
 
-		string name = getLocName(data);
+		string name = data.DisplayName;
 		List<SpawnFishData> entries = data.Fish;
-		if (!data.Equals(Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"])) {
-			LocationData Default = Game1.content.Load<Dictionary<string, LocationData>>("Data\\Locations")["Default"];
+		if (!data.Equals(DataLoader.Locations(Game1.content)["Default"])) {
+			LocationData Default = DataLoader.Locations(Game1.content)["Default"];
 			foreach (SpawnFishData f in Default.Fish)
 				if (!entries.Contains(f))
 					entries.Add(f);
@@ -316,8 +316,19 @@ public static class FishHelper {
 		return false;
 	}
 	private static string getLocName(LocationData data) {
-		string name = data.DisplayName == null ? "No DisplayName" : data.DisplayName;
+		string name = data.DisplayName ?? "No DisplayName";
 		string endCheck = name.Substring(name.Length - 7);
+		switch (name) {
+			case "Farm_Standard":
+			case "Farm_Forest":
+			case "Farm_FourCorners":
+			case "Farm_Hilltop":
+			case "Farm_Riverland":
+			case "Farm_Wilderness":
+			case "Farm_Beach":
+				name = "Farm";
+				break;
+		}
 		switch (endCheck) {
 			case "Name]]]":
 				name = "Farm";
@@ -344,7 +355,7 @@ public static class FishHelper {
 				name = "Woods";
 				break;
 		}
-		if (name.Length > 25) name = endCheck;
+		//if (name.Length > 25) name = endCheck;
 		return name;
 	}
 	private static bool canAddFish(SpawnFishData fish, int season, LocationData data) {
