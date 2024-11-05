@@ -30,9 +30,9 @@
 
   <!-- paths -->
 	<PropertyGroup>
-		<!--GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - $(GameVersion) with $(SmapiVersion)</GamePath-->
-    <!--GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley - 1.6.8</GamePath-->
-    <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley</GamePath>
+		<!--GamePath>D:\SteamLibrary\steamapps\common\Stardew Valley - $(GameVersion) with $(SmapiVersion)</GamePath-->
+    <!--GamePath>D:\SteamLibrary\steamapps\common\Stardew Valley - 1.6.8</GamePath-->
+    <GamePath>D:\SteamLibrary\steamapps\common\Stardew Valley</GamePath>
 
 		<GamePath Condition="!Exists('$(GamePath)')">C:\</GamePath>
 		<GameModsPath>$(GamePath)\$(ModSet)</GameModsPath>
