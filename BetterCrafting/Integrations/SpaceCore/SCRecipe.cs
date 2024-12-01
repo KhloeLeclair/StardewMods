@@ -25,14 +25,14 @@ public class SCRecipe : IRecipe {
 		Cooking = cooking;
 		Ingredients = ingredients.ToArray();
 
-		Item? example = CreateItem();
-		SortValue = $"{example?.ParentSheetIndex ?? 0}";
-		QuantityPerCraft = example?.Stack ?? 1;
-		Stackable = (example?.maximumStackSize() ?? 1) > 1;
+		ExampleItem = CreateItem();
+		SortValue = $"{ExampleItem?.ParentSheetIndex ?? 0}";
+		QuantityPerCraft = ExampleItem?.Stack ?? 1;
+		Stackable = (ExampleItem?.maximumStackSize() ?? 1) > 1;
 
 		if (recipe.Name != null)
 			DisplayName = recipe.Name;
-		else if (example is not null && ItemRegistry.GetData(example.QualifiedItemId) is ParsedItemData data)
+		else if (ExampleItem is not null && ItemRegistry.GetData(ExampleItem.QualifiedItemId) is ParsedItemData data)
 			DisplayName = data.DisplayName;
 		else
 			DisplayName = Name;
@@ -57,7 +57,7 @@ public class SCRecipe : IRecipe {
 
 	public virtual int GetTimesCrafted(Farmer who) {
 		if (Cooking) {
-			if (who.recipesCooked.TryGetValue(Name, out int count))
+			if (who.recipesCooked.TryGetValue(ExampleItem?.ItemId ?? Name, out int count))
 				return count;
 			return 0;
 
