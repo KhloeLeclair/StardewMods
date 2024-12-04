@@ -59,7 +59,7 @@ public class ItemCacheManager : BaseManager {
 
 		items = ItemQueryResolver.TryResolve(
 			data,
-			new ItemQueryContext(Game1.player.currentLocation, Game1.player, Game1.random),
+			new ItemQueryContext(Game1.player.currentLocation, Game1.player, Game1.random, $"Better Crafting ingredient ${id}"),
 			avoidRepeat: false,
 			logError: (query, error) => {
 				Mod.Log($"Error attempting to resolve ingredient with query '{query}': {error}", LogLevel.Error);
