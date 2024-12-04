@@ -149,7 +149,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 	//Recipe State
 	protected long CraftCachedAt = 0;
-	protected Dictionary<IRecipe, bool>? CanCraftCache;
+	protected Dictionary<IRecipe, string?>? CanCraftCache;
 
 	// Tabs
 	public ClickableTextureComponent? btnTabsUp;
@@ -2559,7 +2559,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	) {
 		Dictionary<IIngredient, List<Item>> matchingItems = [];
 
-		if (!recipe.CanCraft(Game1.player) || !recipe.HasIngredients(Game1.player, items, locked, Quality, matchingItems)) {
+		if (!recipe.CanCraft(Game1.player) || !DoCanCraftEvent(recipe, out _) || !recipe.HasIngredients(Game1.player, items, locked, Quality, matchingItems)) {
 			onDone(successes, used_additional);
 			return;
 		}
@@ -2582,7 +2582,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (obj is not null)
 			obj.Stack = recipe.QuantityPerCraft;
 
-		var _ = new ChainedPerformCraftHandler(Mod, recipe, Game1.player, obj, matchingItems, this, pce => {
+		var x = new ChainedPerformCraftHandler(Mod, recipe, Game1.player, obj, matchingItems, this, pce => {
 			FinishCraftRecursive(
 				recipe, successes, times, onDone,
 				locked, items, chests, matchingItems,
@@ -2630,11 +2630,12 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		Item? obj = pce.Item;
 		bool made = false;
 
-		IIngredient[]? ingredients = null;
 		bool consume = true;
 		bool seasoningInventories = Mod.Config.UseSeasoning != SeasoningMode.InventoryOnly;
+		ApplySeasoningEvent? seasoning = null;
 
 		if (cooking) {
+			// TODO: Determine if this is still a thing. Can we rip it out?
 			if (Mod.intCSkill != null && Mod.intCSkill.IsLoaded && recipe.CraftingRecipe != null && obj != null && chests != null) {
 				consume = Mod.intCSkill.ModifyCookedItem(
 					recipe.CraftingRecipe,
@@ -2643,19 +2644,18 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				);
 			}
 
-			if (Mod.Config.UseSeasoning != SeasoningMode.Disabled && obj is SObject sobj && sobj.Quality == 0) {
-				ingredients = SEASONING_RECIPE;
+			if (Mod.Config.UseSeasoning != SeasoningMode.Disabled && obj != null) {
+				seasoning = new(Mod, this, recipe, Game1.player, obj, false, true, Quality, seasoningInventories ? items : null, seasoningInventories ? locked : null);
 
-				if (CraftingHelper.HasIngredients(
-					ingredients,
-					Game1.player,
-					seasoningInventories ? items : null,
-					seasoningInventories ? locked : null,
-					Quality
-				))
-					sobj.Quality = 2;
-				else
-					ingredients = null;
+				// Run the apply seasoning events.
+				foreach (var api in Mod.APIInstances.Values)
+					api.EmitApplySeasoning(seasoning);
+
+				// Apply Qi Seasoning if we weren't told not to.
+				seasoning.ApplyQiSeasoning();
+
+				// And get the object back.
+				obj = seasoning.Item;
 			}
 		}
 
@@ -2693,21 +2693,35 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			// And refresh the working items list since we consumed items, assuming
 			// this isn't the last pass. Don't do this if ingredients is not null
 			// though as it'd be wasted effort.
-			if (times > 1 && ingredients == null)
+			if (times > 1 && seasoning?.AppliedIngredients != null)
 				items = GetActualContainerContents(locked);
 		}
 
-		if (ingredients != null) {
+		if (seasoning?.AppliedIngredients != null) {
 			used_additional = true;
 
 			// Consume ingredients and rebuild our item list.
-			CraftingHelper.ConsumeIngredients(ingredients, Game1.player, seasoningInventories ? locked : null, Quality, Mod.Config.LowQualityFirst, null, consumedItems, craftingModified);
+			CraftingHelper.ConsumeIngredients(
+				seasoning.AppliedIngredients,
+				Game1.player,
+				seasoningInventories ? locked : null,
+				Quality,
+				Mod.Config.LowQualityFirst,
+				seasoning._MatchingItems,
+				consumedItems,
+				craftingModified
+			);
+
 			if (times > 1)
 				items = GetActualContainerContents(locked);
 
 			// Show a notice if the user used their last seasoning.
-			if (!CraftingHelper.HasIngredients(ingredients, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null, Quality))
-				Game1.showGlobalMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Seasoning_UsedLast"));
+			if (seasoning.UsedLastChecks != null)
+				foreach (var check in seasoning.UsedLastChecks) {
+					if (!CraftingHelper.HasIngredients(check.Item2, Game1.player, seasoningInventories ? items : null, seasoningInventories ? locked : null, Quality)) {
+						Game1.showGlobalMessage(check.Item1 ?? I18n.Seasoning_UsedLast(check.Item2.FirstOrDefault()?.DisplayName ?? I18n.Seasoning_Generic()));
+					}
+				}
 		}
 
 		// Now run the PostCraftEvent.
@@ -4409,12 +4423,15 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 		if (!recipe.Stackable)
 			return false;
 
+		// Check that we can actually craft this.
+		if (!CanCraft(recipe, null, out _, skipCache: true))
+			return false;
+
 		bool shifting = Game1.oldKBState.IsKeyDown(Keys.LeftShift);
 		bool ctrling = Game1.oldKBState.IsKeyDown(Keys.LeftControl);
 
 		int quantity = recipe.QuantityPerCraft * (shifting ? (ctrling ? 25 : 5) : 1);
 
-		// TODO: Check that we can craft it.
 		var bulk = new BulkCraftingMenu(Mod, this, recipe, quantity) {
 			exitFunction = () => {
 				if (Game1.options.SnappyMenus)
@@ -5051,24 +5068,45 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			CanCraftCache = null;
 	}
 
-	public bool CanCraft(IRecipe recipe, Lazy<IList<Item?>?>? itemListGetter) {
+	private bool DoCanCraftEvent(IRecipe recipe, out string? reason) {
+		var evt = new CheckCanCraftEvent(Game1.player, recipe, recipe.CraftingRecipe?.isCookingRecipe ?? cooking, this);
+
+		foreach (var api in Mod.APIInstances.Values) {
+			api.EmitCheckCanCraft(evt);
+			if (evt.HasFailed)
+				break;
+		}
+
+		reason = evt.HasFailed ? evt.FailReason : null;
+		return !evt.HasFailed;
+	}
+
+	public bool CanCraft(IRecipe recipe, Lazy<IList<Item?>?>? itemListGetter, out string? reason, bool skipCache = false) {
 		if (CanCraftCache == null) {
 			CanCraftCache = [];
 			CraftCachedAt = DateTime.UtcNow.Ticks;
 		}
 
-		if (CanCraftCache.TryGetValue(recipe, out bool value))
-			return value;
+		if (skipCache || !CanCraftCache.TryGetValue(recipe, out string? value)) {
+			value = null;
 
-		if (!recipe.CanCraft(Game1.player))
-			value = false;
-		else {
-			IList<Item?>? items = itemListGetter?.Value ?? GetEstimatedContainerContents();
-			value = recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality);
+			if (!recipe.CanCraft(Game1.player))
+				value = string.Empty;
+
+			else if (!DoCanCraftEvent(recipe, out string? val))
+				value = val ?? string.Empty;
+
+			else if (itemListGetter is not null) {
+				IList<Item?>? items = itemListGetter.Value;
+				if (!recipe.HasIngredients(Game1.player, items, UnsafeInventories, Quality))
+					value = string.Empty;
+			}
+
+			CanCraftCache[recipe] = value;
 		}
 
-		CanCraftCache[recipe] = value;
-		return value;
+		reason = string.IsNullOrEmpty(value) ? null : value;
+		return value is null;
 	}
 
 	#endregion
@@ -5301,7 +5339,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 					qualityColor = Color.Black * 0.35f;
 
-				} else if (Editing ? !in_category : !CanCraft(recipe, items)) {
+				} else if (Editing ? !in_category : !CanCraft(recipe, items, out _)) {
 					// Recipe without Ingredients
 					drawn = true;
 					if (draw_dynamic)
@@ -5590,6 +5628,18 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 				wrapText: true
 			);
 		}
+
+		// Fail Reason
+		string? failReason = CanCraftCache?.GetValueOrDefault(hoverRecipe);
+		if (!string.IsNullOrEmpty(failReason)) {
+			builder.Flow(
+				FlowHelper.Builder()
+					.FormatText(failReason)
+					.Build(),
+				wrapText: true
+			);
+		}
+
 
 		// Buffs
 		AddBuffsToTooltip(builder, lastRecipeHover.Value, false, true);

@@ -22,8 +22,8 @@ public static class CraftingHelper {
 			GameStateQuery.CheckConditions(cing.Condition, ctx);
 	}
 
-	public static bool HasIngredients(IIngredient[]? ingredients, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality, Dictionary<IIngredient, List<Item>>? matchingItems = null) {
-		if (ingredients == null || ingredients.Length == 0)
+	public static bool HasIngredients(IEnumerable<IIngredient>? ingredients, Farmer who, IList<Item?>? items, IList<IBCInventory>? inventories, int maxQuality, Dictionary<IIngredient, List<Item>>? matchingItems = null) {
+		if (ingredients == null)
 			return true;
 
 		GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
@@ -56,7 +56,7 @@ public static class CraftingHelper {
 		return HasIngredients(recipe.Ingredients, who, items, inventories, maxQuality, matchingItems);
 	}
 
-	public static void ConsumeIngredients(IIngredient[]? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems, bool[]? modifiedInventories) {
+	public static void ConsumeIngredients(IEnumerable<IIngredient>? ingredients, Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, Dictionary<IIngredient, List<Item>>? matchingItems, IList<Item>? consumedItems, bool[]? modifiedInventories) {
 		if (ingredients != null) {
 			GameStateQueryContext ctx = new(Game1.player.currentLocation, Game1.player, null, null, Game1.random);
 

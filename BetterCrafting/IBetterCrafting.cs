@@ -1323,6 +1323,169 @@ public interface IDiscoverIconsEvent {
 
 }
 
+
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> periodically
+/// whenever the player is using the Better Crafting menu, and allows mods
+/// to override whether or not a player can craft a given recipe in bulk.
+/// This event is also emitted when performing a craft, and will be called
+/// again each iteration if a player is performing bulk crafting.
+/// <seealso cref="IRecipe.CanCraft(Farmer)"/>
+/// </summary>
+public interface ICheckCanCraftEvent {
+
+	/// <summary>
+	/// The player we're performing the check for.
+	/// </summary>
+	Farmer Player { get; }
+
+	/// <summary>
+	/// The recipe we're checking.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player is
+	/// crafting from.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// If this is true, this is a cooking recipe. Otherwise, it's a
+	/// crafting recipe.
+	/// </summary>
+	bool IsCooking { get; }
+
+	/// <summary>
+	/// Signal that the player cannot craft this recipe. A reason
+	/// may be provided and, if one is, it will be displayed to the
+	/// player in a tool-tip when they select the recipe.
+	/// </summary>
+	/// <param name="reason">An optional reason that the recipe
+	/// cannot be crafted. This supports some basic rich text formatting
+	/// using the escape sequences documented here: <see href="https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md#rich-text"/>
+	/// If you just want to make it red, you can put the string
+	/// <c>@C{red}</c> at the start of your string.</param>
+	void Fail(string? reason = null);
+
+}
+
+
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> whenever an item is
+/// being cooked, to allow other mods to apply custom seasoning logic. This will
+/// only ever be fired for cooking recipes and not crafting recipes. Additionally,
+/// this will not be fired if the recipe in question does not produce an <see cref="Item"/>.
+/// 
+/// This event may also be emitted when the bulk crafting menu is opened, in
+/// order to determine a seasoning to display on the menu. In that case, the
+/// <see cref="IsSimulation"/> value will be set to <c>true</c>, the
+/// <see cref="Item"/> instance will be discarded, and no ingredients will
+/// be consumed. Instead, they'll be cached and displayed in the menu.
+///
+/// Please note that this event is designed to be used with <see cref="IIngredient"/>s
+/// and not custom inventory manipulation. This is to allow Better Crafting to
+/// handle consuming ingredients by itself upon success. As such, it does not
+/// expose the list of inventories that the player is working with. This is by
+/// design. Instead, you should use the <see cref="HasIngredients(IEnumerable{IIngredient})"/>
+/// method to check if any necessary items are present and then
+/// <see cref="ApplySeasoning(IEnumerable{IIngredient}?)"/> to consume them.
+/// </summary>
+public interface IApplySeasoningEvent {
+
+	/// <summary>
+	/// The player performing the craft.
+	/// </summary>
+	Farmer Player { get; }
+
+	/// <summary>
+	/// The recipe being crafted.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+	/// <summary>
+	/// The item being crafted. You can freely change this item, including
+	/// replacing it when a new instance. If the craft does not succeed for
+	/// any reason, note that this item will be discarded.
+	/// </summary>
+	Item Item { get; set; }
+
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player is
+	/// crafting from.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// The current seasoning mode. This event will not be called if the
+	/// seasoning mode is set to <c>Disabled</c>. However, it's still
+	/// useful to know this in case you need to limit your behavior to
+	/// only affect the player's inventory.
+	/// </summary>
+	SeasoningMode SeasoningMode { get; }
+
+	/// <summary>
+	/// If this is true, no craft is actually taking place. Instead, this
+	/// event is being used to determine what seasoning should be
+	/// displayed to the player in the UI. You should perform your usual
+	/// checks, but not necessarily perform any side effects.
+	/// </summary>
+	bool IsSimulation { get; }
+
+	/// <summary>
+	/// Whether or not the base game's Qi Seasoning logic should be used.
+	/// Set this to <c>false</c> to disable it.
+	/// </summary>
+	bool AllowQiSeasoning { get; set; }
+
+	/// <summary>
+	/// Check to see if the player has the provided ingredients in their
+	/// inventory. This is <see cref="SeasoningMode"/>-aware.
+	/// </summary>
+	/// <param name="ingredients">The ingredients to check.</param>
+	bool HasIngredients(IEnumerable<IIngredient> ingredients);
+
+	/// <inheritdoc cref="HasIngredients(IEnumerable{IIngredient})"/>
+	bool HasIngredients(IIngredient ingredient);
+
+	/// <summary>
+	/// Mark that you have applied seasoning to this item. If you supply
+	/// an enumeration of ingredients, those ingredients will be remembered
+	/// and consumed if the craft is a success.
+	/// </summary>
+	/// <param name="ingredients">An optional enumeration of ingredients to consume upon success.</param>
+	void ApplySeasoning(IEnumerable<IIngredient>? ingredients = null);
+
+	/// <inheritdoc cref="ApplySeasoning(IEnumerable{IIngredient}?)"/>
+	void ApplySeasoning(IIngredient? ingredient = null);
+
+	/// <summary>
+	/// Mark that Better Crafting should display a message to the player
+	/// if, after consuming the seasoning ingredient(s), there are not
+	/// enough ingredients to season another item.
+	/// </summary>
+	/// <param name="message">The message to display. If this is not
+	/// set, the default message from the base game will be used.</param>
+	void SetUsedLastMessage(string? message = null);
+
+	/// <summary>
+	/// A dictionary for looking up matching ingredient items. You can
+	/// check this after calling <see cref="HasIngredients(IEnumerable{IIngredient})"/>
+	/// to determine which items may be consumed.
+	/// 
+	/// If an <see cref="IIngredient"/> does not have an entry in this
+	/// list, then that ingredient does not support the ingredient
+	/// matching feature.
+	///
+	/// You may remove an item from the list to prevent it from
+	/// being consumed but we will not perform extra checks for
+	/// you to ensure that a sufficient quantity of items remain.
+	/// </summary>
+	IReadOnlyDictionary<IIngredient, List<Item>> MatchingItems { get; }
+
+}
+
+
 public enum MaxQuality {
 	Disabled,
 	None,
@@ -1502,6 +1665,31 @@ public interface IBetterCrafting {
 	/// <see cref="IPostCraftEventRecipe.PostCraft(IPostCraftEvent)"/>.
 	/// </summary>
 	event Action<IPostCraftEvent>? PostCraft;
+
+	/// <summary>
+	/// This event is fired periodically when the crafting menu is
+	/// open in order to determine if a player can currently craft
+	/// a recipe. This is similar to the <see cref="IRecipe.CanCraft(Farmer)"/>
+	/// method, but a general event for overriding all recipes.
+	///
+	/// The result of this check may be cached by Better Crafting
+	/// for performance reasons. In such an event, the cache will
+	/// be invalidated if Better Crafting detects any inventory
+	/// changes, as well as after a certain period of time has
+	/// elapsed. Additionally, this is called again immediately
+	/// before performing a craft.
+	/// </summary>
+	event Action<ICheckCanCraftEvent>? CheckCanCraft;
+
+	/// <summary>
+	/// This event is fired when cooking, and not crafting, and
+	/// allows other mods to override the base game's seasoning
+	/// behavior. You can use this event to make any changes to
+	/// the crafted item you want, and you can set an enumeration
+	/// of <see cref="IIngredient"/>s that will be consumed only
+	/// if the craft is successfully completed.
+	/// </summary>
+	event Action<IApplySeasoningEvent>? ApplySeasoning;
 
 	#endregion
 

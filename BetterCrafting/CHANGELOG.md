@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.15.0
+Released November 5th, 2024 for Stardew Valley 1.6.14+.
+
+### Fixed
+* Issue where cooking recipe times crafted counts were not being
+  tallied correctly in conjunction with SpaceCore.
+
+### API
+* Added a new event for applying seasoning to a cooked item. This event
+  results in ingredients only being consumed if the craft is successful,
+  and additionally allows you to disable the base game's
+  Qi Seasoning behavior.
+* Added a new event for determining if a player can craft a given recipe.
+
+
 ## 2.14.0
 Released November 4th, 2024.
 

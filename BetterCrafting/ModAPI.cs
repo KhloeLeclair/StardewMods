@@ -204,20 +204,57 @@ public class ModAPI : IBetterCrafting {
 		if (PerformCraft is null)
 			yield break;
 
-		foreach (Delegate del in PerformCraft.GetInvocationList()) {
+		foreach (Delegate del in PerformCraft.GetInvocationList())
 			yield return (Action<IGlobalPerformCraftEvent>) del;
-		}
 	}
 
 	/// <inheritdoc />
 	public event Action<IPostCraftEvent>? PostCraft;
 
-	internal void EmitPostCraft(IPostCraftEvent evt) {
+	internal bool EmitPostCraft(IPostCraftEvent evt) {
 		try {
 			PostCraft?.Invoke(evt);
 		} catch (Exception ex) {
 			Mod.Log($"There was an error in the PostCraft event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+			return false;
 		}
+
+		return true;
+	}
+
+
+	/// <inheritdoc />
+	public event Action<ICheckCanCraftEvent>? CheckCanCraft;
+
+	internal bool EmitCheckCanCraft(ICheckCanCraftEvent evt) {
+		if (CheckCanCraft is not null)
+			try {
+				CheckCanCraft(evt);
+			} catch (Exception ex) {
+				Mod.Log($"There was an error in the CheckCanCraft event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+				return false;
+			}
+
+		return true;
+	}
+
+	/// <inheritdoc />
+	public event Action<IApplySeasoningEvent>? ApplySeasoning;
+
+	internal bool EmitApplySeasoning(ApplySeasoningEvent evt) {
+		if (ApplySeasoning is not null)
+			try {
+				evt.CurrentMod = Other;
+				ApplySeasoning(evt);
+			} catch (Exception ex) {
+				Mod.Log($"There was an error in the ApplySeasoning event handler of the mod '{Other.Name}' ({Other.UniqueID}): {ex}", LogLevel.Error);
+				return false;
+			} finally {
+				evt.CurrentMod = null;
+				evt.UpdateUsedLast();
+			}
+
+		return true;
 	}
 
 	#endregion

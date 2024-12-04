@@ -14,7 +14,7 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 public class SCRecipe : IRecipe {
 
 	public readonly ICustomCraftingRecipe Recipe;
-	public readonly Item? ExampleItem;
+	public readonly string? ItemId;
 	public readonly bool Cooking;
 	private readonly CraftingRecipe cRecipe;
 
@@ -25,14 +25,15 @@ public class SCRecipe : IRecipe {
 		Cooking = cooking;
 		Ingredients = ingredients.ToArray();
 
-		ExampleItem = CreateItem();
-		SortValue = $"{ExampleItem?.ParentSheetIndex ?? 0}";
-		QuantityPerCraft = ExampleItem?.Stack ?? 1;
-		Stackable = (ExampleItem?.maximumStackSize() ?? 1) > 1;
+		var item = CreateItem();
+		ItemId = item?.ItemId;
+		SortValue = $"{item?.ParentSheetIndex ?? 0}";
+		QuantityPerCraft = item?.Stack ?? 1;
+		Stackable = (item?.maximumStackSize() ?? 1) > 1;
 
 		if (recipe.Name != null)
 			DisplayName = recipe.Name;
-		else if (ExampleItem is not null && ItemRegistry.GetData(ExampleItem.QualifiedItemId) is ParsedItemData data)
+		else if (item is not null && ItemRegistry.GetData(item.QualifiedItemId) is ParsedItemData data)
 			DisplayName = data.DisplayName;
 		else
 			DisplayName = Name;
@@ -57,7 +58,7 @@ public class SCRecipe : IRecipe {
 
 	public virtual int GetTimesCrafted(Farmer who) {
 		if (Cooking) {
-			if (who.recipesCooked.TryGetValue(ExampleItem?.ItemId ?? Name, out int count))
+			if (who.recipesCooked.TryGetValue(ItemId ?? Name, out int count))
 				return count;
 			return 0;
 

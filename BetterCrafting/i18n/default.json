@@ -248,6 +248,9 @@
 	"seasoning.enabled": "Always",
 	"seasoning.inventory": "Inventory Only",
 
+	"seasoning.used-last": "You've used up all of your {{item}}.",
+	"seasoning.generic": "seasoning",
+
 	"setting.show-unknown": "Show Unknown Recipes",
 	"setting.show-unknown.tip": "When enabled, recipes you haven't learned yet will be displayed in the menu similarly to how unknown cooking recipes are.",
 

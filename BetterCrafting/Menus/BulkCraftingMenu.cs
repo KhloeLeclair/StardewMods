@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Crafting;
 using Leclair.Stardew.Common.Events;
@@ -54,8 +55,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public float maxWidth = -1;
 
 	private readonly SeasoningMode Seasoning;
-	private int SeasoningAmount;
-	private readonly IIngredient? SeasonIngred;
+	private readonly Dictionary<IIngredient, int>? SeasoningIngredients;
 
 	public BulkCraftingMenu(ModEntry mod, BetterCraftingPage menu, IRecipe recipe, int initial)
 	: base(mod) {
@@ -68,9 +68,20 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		if (!Menu.cooking || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
 			Seasoning = SeasoningMode.Disabled;
 		else {
-			if (obj is SObject sobj && Quality == 0) {
+			IList<Item?>? items = Menu.GetEstimatedContainerContents();
+			IList<IBCInventory>? unsaf = Menu.GetUnsafeInventories();
+			var evt = new ApplySeasoningEvent(mod, menu, recipe, Game1.player, obj, true, true, menu.Quality, items, unsaf);
+			foreach (var api in mod.APIInstances.Values)
+				api.EmitApplySeasoning(evt);
+
+			evt.ApplyQiSeasoning();
+
+			if (evt.AppliedIngredients != null) {
 				Seasoning = Mod.Config.UseSeasoning;
-				SeasonIngred = BetterCraftingPage.SEASONING_RECIPE[0];
+				SeasoningIngredients = [];
+				foreach (var ing in evt.AppliedIngredients)
+					SeasoningIngredients[ing] = 0;
+
 			} else
 				Seasoning = SeasoningMode.Disabled;
 		}
@@ -351,10 +362,50 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			}
 		}
 
-		if (SeasonIngred != null && SeasoningAmount > 0) {
-			builder
-				.Divider()
-				.Add(BuildIngredientRow(SeasonIngred, SeasoningAmount, crafts));
+		if (SeasoningIngredients != null) {
+			ingredients = [];
+
+			foreach (var entry in SeasoningIngredients) {
+				ingredients.Add(BuildIngredientRow(entry.Key, entry.Value, crafts));
+				if (ingredients.Count >= 40)
+					break;
+			}
+
+			if (ingredients.Count > 0) {
+				builder.Divider();
+
+				if (ingredients.Count < 8)
+					builder.AddSpacedRange(4, ingredients);
+				else {
+					List<ISimpleNode> left = [];
+					List<ISimpleNode> right = [];
+
+					bool right_side = false;
+
+					for (int i = 0; i < ingredients.Count; i += 2) {
+						if (right_side) {
+							right.Add(ingredients[i]);
+							right.Add(ingredients[i + 1]);
+						} else {
+							left.Add(ingredients[i]);
+							left.Add(ingredients[i + 1]);
+						}
+
+						right_side = !right_side;
+					}
+
+					builder
+						.Group(margin: 8)
+							.Group(align: Alignment.Top)
+								.AddSpacedRange(4, left)
+							.EndGroup()
+							.Divider(false)
+							.Group(align: Alignment.Top)
+								.AddSpacedRange(4, right)
+							.EndGroup()
+						.EndGroup();
+				}
+			}
 		}
 
 		builder.Divider();
@@ -529,8 +580,6 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 					amount = entry.GetAvailableQuantity(Game1.player, items, unsaf, Menu.Quality);
 				}
 
-				int quant = entry.Quantity * crafts;
-
 				Craftable = Math.Min(amount / entry.Quantity, Craftable);
 
 				if (!AvailableQuantity.ContainsKey(entry) || AvailableQuantity[entry] != amount) {
@@ -539,16 +588,22 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				}
 			}
 
-		SeasoningAmount = SeasonIngred?.GetAvailableQuantity(
-			Game1.player,
-			Seasoning == SeasoningMode.Enabled ? items : null,
-			Seasoning == SeasoningMode.Enabled ? unsaf : null,
-			Menu.Quality
-		) ?? 0;
+		int SeasonableCrafts = int.MaxValue;
+		if (SeasoningIngredients is not null) {
+			bool useInv = Seasoning == SeasoningMode.Enabled;
+			foreach (var entry in SeasoningIngredients.Keys) {
+				int amount = entry.GetAvailableQuantity(Game1.player, useInv ? items : null, useInv ? unsaf : null, Menu.Quality);
+				SeasoningIngredients[entry] = amount;
 
-		if (SeasoningAmount > 0 && Craftable > SeasoningAmount) {
+				SeasonableCrafts = Math.Min(amount / entry.Quantity, SeasonableCrafts);
+			}
+
+		} else
+			SeasonableCrafts = 0;
+
+		if (SeasonableCrafts > 0 && Craftable > SeasonableCrafts) {
 			Craftable *= Recipe.QuantityPerCraft;
-			CraftingLimit = SeasoningAmount * Recipe.QuantityPerCraft;
+			CraftingLimit = SeasonableCrafts * Recipe.QuantityPerCraft;
 		} else {
 			Craftable *= Recipe.QuantityPerCraft;
 			CraftingLimit = Craftable;

@@ -20,7 +20,7 @@
 		<DefineConstants Condition="$(EnableTranslation) == 'True'">$(DefineConstants);TRANSLATION</DefineConstants>
 
 		<!-- game version -->
-		<GameVersion>1.6.9</GameVersion>
+		<GameVersion>1.6.14</GameVersion>
 		<SmapiVersion>4.1.0</SmapiVersion>
 		<ModSet>DevMods</ModSet>
 
@@ -67,7 +67,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
-		<PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.3.1" />
+		<PackageReference Include="Leclair.Stardew.ModManifestBuilder" Version="2.4.0" />
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(GamePath)\smapi-internal\Newtonsoft.Json.dll</HintPath>
 			<Private>false</Private>
