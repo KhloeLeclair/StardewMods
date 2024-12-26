@@ -9,10 +9,10 @@
   "UniqueID": "leclair.bettercrafting",
   "Name": "Better Crafting",
   "Author": "Khloe Leclair",
-  "Version": "2.15.0",
+  "Version": "2.15.1",
   "Description": "Replaces the vanilla crafting menu with an improved reimplementation with support for favorites, categories, and that doesn't lock nearby chests in multiplayer.",
   "MinimumApiVersion": "4.1.0",
-  "MinimumGameVersion": "1.6.14",
+  "MinimumGameVersion": "1.6.15",
   "EntryDll": "BetterCrafting.dll",
   "UpdateKeys": [
     "Nexus:11115@Main",

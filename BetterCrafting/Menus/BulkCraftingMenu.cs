@@ -65,8 +65,9 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		Item? obj = Recipe.CreateItemSafe();
 		Quality = obj is null ? 0 : obj.Quality;
 
-		if (!Menu.cooking || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
+		if (!Menu.cooking || obj is null || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
 			Seasoning = SeasoningMode.Disabled;
+
 		else {
 			IList<Item?>? items = Menu.GetEstimatedContainerContents();
 			IList<IBCInventory>? unsaf = Menu.GetUnsafeInventories();

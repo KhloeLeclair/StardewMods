@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.15.1
+Released December 26th, 2024 for Stardew Valley 1.6.15+.
+
+### Fixed
+* Issue where available ingredients weren't being updated in some cases,
+  allowing more of an item to be crafted than should be possible.
+* Issue where the order of recipes in a category would be inconsistent,
+  especially when using dynamic rules.
+* Issue where the bulk crafting menu may not work correctly for recipes
+  that don't produce a standard object.
+
+
 ## 2.15.0
 Released November 5th, 2024 for Stardew Valley 1.6.14+.
 

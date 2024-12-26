@@ -1812,14 +1812,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 				if (cat.UseRules) {
 					cat.CachedRules = Mod.Recipes.HydrateDynamicRules(cat.DynamicRules);
+					cat.CachedRecipes = [];
+				}
 
-					if (cat.CachedRules is not null) {
-						foreach (IRecipe recipe in Recipes) {
+				bool has_rules = cat.CachedRules is not null;
+				bool has_recipes = cat.Recipes is not null;
+
+				if (has_rules || has_recipes)
+					foreach (IRecipe recipe in Recipes) {
+						bool matched = false;
+
+						if (has_rules) {
 							Lazy<Item?> result = new(() => recipe.CreateItemSafe(CreateLog));
 
-							bool matched = false;
-
-							foreach (var handler in cat.CachedRules) {
+							foreach (var handler in cat.CachedRules!) {
 								if (handler.Item3.Inverted) {
 									if (matched && handler.Item1.DoesRecipeMatch(recipe, result, handler.Item2))
 										matched = false;
@@ -1828,25 +1834,14 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 									matched = true;
 							}
 
-							if (matched) {
-								recipes.Add(recipe);
-								if (!cat.IncludeInMisc)
-									unused.Remove(recipe);
-							}
+							if (matched)
+								cat.CachedRecipes!.Add(recipe);
 						}
-					}
 
-					// Make a copy of the list, so we won't modify it with
-					// recipes that aren't rules-based.
-					cat.CachedRecipes = new(recipes);
-				}
+						if (!matched && has_recipes && cat.Recipes!.Contains(recipe.Name))
+							matched = true;
 
-				if (/*!cat.UseRules &&*/ cat.Recipes is not null)
-					foreach (string name in cat.Recipes) {
-						if (!RecipesByName.TryGetValue(name, out IRecipe? recipe))
-							continue;
-
-						if (!recipes.Contains(recipe)) {
+						if (matched) {
 							recipes.Add(recipe);
 							if (!cat.IncludeInMisc)
 								unused.Remove(recipe);
@@ -2693,7 +2688,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 			// And refresh the working items list since we consumed items, assuming
 			// this isn't the last pass. Don't do this if ingredients is not null
 			// though as it'd be wasted effort.
-			if (times > 1 && seasoning?.AppliedIngredients != null)
+			if (times > 1 && seasoning?.AppliedIngredients == null)
 				items = GetActualContainerContents(locked);
 		}
 
