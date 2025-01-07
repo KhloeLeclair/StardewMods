@@ -1122,7 +1122,7 @@ public class ModEntry : PintailModSubscriber {
 					0 => 0,
 					_ => (int) Math.Pow(2, v + 1)
 				},
-				-1, 4, 1,
+				-2, 4, 1,
 				format: val => val switch {
 					-2 => I18n.Setting_Nearby_Nearby_Active(),
 					-1 => I18n.Setting_Nearby_Nearby_Map(),
