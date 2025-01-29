@@ -15,7 +15,7 @@ using StardewModdingAPI;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
-public class MatcherIngredient : IOptimizedIngredient, IConditionalIngredient, IRecyclable {
+public class MatcherIngredient : IOptimizedIngredient, IConsumptionTrackingIngredient, IConditionalIngredient, IRecyclable {
 
 	public readonly Func<Item, bool> ItemMatcher;
 	private readonly (Func<Item, bool>, int)[] IngList;
@@ -175,8 +175,12 @@ public class MatcherIngredient : IOptimizedIngredient, IConditionalIngredient, I
 		return InventoryHelper.CountItem(ItemMatcher, who, items, out bool _, max_quality: maxQuality, limit: quantity) >= quantity;
 	}
 
-	public void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst) {
-		InventoryHelper.ConsumeItems(IngList, who, inventories, maxQuality, lowQualityFirst);
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int max_quality, bool low_quality_first) {
+		Consume(who, inventories, max_quality, low_quality_first, null);
+	}
+
+	public void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems) {
+		InventoryHelper.ConsumeItems(IngList, who, inventories, maxQuality, lowQualityFirst, consumedItems);
 	}
 
 	#endregion

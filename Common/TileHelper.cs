@@ -16,6 +16,10 @@ namespace Leclair.Stardew.Common;
 
 public static class TileHelper {
 
+	internal static Vector2 Move(this Vector2 origin, float x, float y) {
+		return new(origin.X + x, origin.Y + y);
+	}
+
 	internal static IEnumerable<Vector2> IterArea(this Vector2 origin, int radius, bool lazy = true) {
 		var result = IterArea(origin, -radius, radius, -radius, radius);
 		if (lazy)

@@ -145,38 +145,22 @@
 				"Type": "Item",
 				"RecipeName": "Wood Fence"
 			},
+			"UseRules": true,
+			"DynamicRules": [
+				{
+					"Id": "Floors"
+				},
+				{
+					"Id": "Fences"
+				},
+				{
+					"Id": "Furniture"
+				},
+				{
+					"Id": "Light"
+				}
+			],
 			"Recipes": [
-				"Gate",
-				"Wood Fence",
-				"Stone Fence",
-				"Iron Fence",
-				"Hardwood Fence",
-				"Wood Floor",
-				"Stone Floor",
-				"Weathered Floor",
-				"Crystal Floor",
-				"Straw Floor",
-				"Gravel Path",
-				"Wood Path",
-				"Crystal Path",
-				"Cobblestone Path",
-				"Stepping Stone Path",
-				"Brick Floor",
-				"Rustic Plank Floor",
-				"Stone Walkway Floor",
-				"Torch",
-				"Campfire",
-				"Wooden Brazier",
-				"Stone Brazier",
-				"Gold Brazier",
-				"Carved Brazier",
-				"Stump Brazier",
-				"Barrel Brazier",
-				"Skull Brazier",
-				"Marble Brazier",
-				"Wood Lamp-post",
-				"Iron Lamp-post",
-				"Jack-O-Lantern",
 				"Tub o' Flowers",
 				"Wicked Statue",
 				"Flute Block",

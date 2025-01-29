@@ -352,6 +352,34 @@ public interface IIngredient {
 
 
 /// <summary>
+/// An optional interface for IIngredients that allows them to track the
+/// exact items consumed when performing a craft, which can then be
+/// reported to the IRecipe in an event.
+/// </summary>
+public interface IConsumptionTrackingIngredient {
+
+	/// <summary>
+	/// Consume this ingredient out of the player's inventory and the other
+	/// available inventories.
+	/// </summary>
+	/// <param name="who">The farmer performing the craft</param>
+	/// <param name="inventories">All the available inventories.</param>
+	/// <param name="maxQuality">The maximum item quality we are allowed to
+	/// count. This cannot be ignored unless <see cref="SupportsQuality"/>
+	/// returns <c>false</c>.</param>
+	/// <param name="lowQualityFirst">Whether or not we should make an effort
+	/// to consume lower quality ingredients before consuming higher quality
+	/// ingredients.</param>
+	/// <param name="consumedItems">A list to store consumed items in. This
+	/// is to allow recipes to track what specific items were consumed when
+	/// crafting, to allow for things like adjusting the resulting quality
+	/// based on input items or anything like that.</param>
+	void Consume(Farmer who, IList<IBCInventory>? inventories, int maxQuality, bool lowQualityFirst, IList<Item>? consumedItems);
+
+}
+
+
+/// <summary>
 /// This event is dispatched by Better Crafting whenever a player performs a
 /// craft, and may be fired multiple times in quick succession if a player is
 /// performing bulk crafting.
@@ -385,6 +413,63 @@ public interface IPerformCraftEvent {
 	/// consumed and the player will receive the item, if there is one.
 	/// </summary>
 	void Complete();
+
+}
+
+
+/// <summary>
+/// An extended IPerformCraftEvent subclass that also includes a
+/// reference to the recipe being used. This is necessary because
+/// adding this to the existing model would break Pintail proxying,
+/// for some reason.
+/// </summary>
+public interface IGlobalPerformCraftEvent : IPerformCraftEvent {
+
+	/// <summary>
+	/// The recipe being crafted.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+}
+
+
+/// <summary>
+/// This event is dispatched by Better Crafting whenever a
+/// craft has been completed, and may be used to modify
+/// the finished Item, if there is one, before the item is
+/// placed into the player's inventory. At this point
+/// the craft has been finalized and cannot be canceled.
+/// </summary>
+public interface IPostCraftEvent {
+
+	/// <summary>
+	/// The recipe being crafted.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+	/// <summary>
+	/// The player performing the craft.
+	/// </summary>
+	Farmer Player { get; }
+
+	/// <summary>
+	/// The item being crafted, may be null depending on the recipe.
+	/// Can be changed.
+	/// </summary>
+	Item? Item { get; set; }
+
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player
+	/// is crafting from.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// A list of ingredient items that were consumed during the
+	/// crafting process. This may not contain all items.
+	/// </summary>
+	List<Item> ConsumedItems { get; }
+
 }
 
 
@@ -564,6 +649,25 @@ public interface IRecipe {
 	}
 
 	#endregion
+}
+
+
+/// <summary>
+/// An optional interface for IRecipes that adds an event to the recipe
+/// to be called after performing a craft, but before the item is added
+/// to the player's inventory.
+/// </summary>
+public interface IPostCraftEventRecipe {
+
+	/// <summary>
+	/// This method is called after a craft has been performed, and can
+	/// be used to modify the output of a craft based on the ingredients
+	/// consumed by the crafting process.
+	/// </summary>
+	/// <param name="evt">Details about the event, including a reference
+	/// to any produced item, and a list of all consumed items.</param>
+	void PostCraft(IPostCraftEvent evt);
+
 }
 
 
@@ -907,6 +1011,15 @@ public interface IRecipeBuilder {
 	IRecipeBuilder OnPerformCraft(Action<IPerformCraftEvent>? action);
 
 	/// <summary>
+	/// A method called after a craft has been performed, which can be used
+	/// to modify the output of a crafting operation based on the ingredients
+	/// consumed by the crafting process.
+	/// </summary>
+	/// <param name="action">A method called after performing a craft.</param>
+	/// <returns>The same <see cref="IRecipeBuilder"/> instance</returns>
+	IRecipeBuilder OnPostCraft(Action<IPostCraftEvent>? action);
+
+	/// <summary>
 	/// Creates an instance of the <see cref="Item"/> this recipe crafts, if
 	/// this recipe crafts an item. Return <c>null</c> if the recipe does not
 	/// create an item (and use your logic in <see cref="OnPerformCraft(Action{IPerformCraftEvent}?)"/>).
@@ -1109,6 +1222,7 @@ public interface IBetterCraftingMenu {
 /// or remove specific containers from a menu.
 /// </summary>
 public interface IPopulateContainersEvent {
+
 	/// <summary>
 	/// The relevant Better Crafting menu.
 	/// </summary>
@@ -1185,11 +1299,30 @@ public interface IBetterCrafting {
 	/// </summary>
 	IBetterCraftingMenu? GetActiveMenu();
 
+	#endregion
+
+	#region Events
+
 	/// <summary>
 	/// This event is fired whenever a new Better Crafting menu is opened,
 	/// allowing other mods to manipulate the list of containers.
 	/// </summary>
 	event Action<IPopulateContainersEvent>? MenuPopulateContainers;
+
+	/// <summary>
+	/// This event is fired whenever a player crafts an item using
+	/// Better Crafting. This fires before <see cref="IRecipe.PerformCraft(IPerformCraftEvent)" />
+	/// to allow generic events to cancel before specific events go off.
+	/// </summary>
+	event Action<IGlobalPerformCraftEvent>? PerformCraft;
+
+	/// <summary>
+	/// This event is fired whenever a player crafts an item using
+	/// Better Crafting, once the craft is finished but before the
+	/// item is given to the player. This happens after
+	/// <see cref="IPostCraftEventRecipe.PostCraft(IPostCraftEvent)"/>.
+	/// </summary>
+	event Action<IPostCraftEvent>? PostCraft;
 
 	#endregion
 
@@ -1252,12 +1385,16 @@ public interface IBetterCrafting {
 	/// <param name="name">The recipe's name.</param>
 	IRecipeBuilder RecipeBuilder(string name);
 
-	/// <summary>
-	/// Ensure an <see cref="IDynamicDrawingRecipe"/> is properly wrapped
-	/// as one by the API layer.
-	/// </summary>
-	/// <param name="recipe">The recipe to wrap.</param>
+	[Obsolete("Do not use this anymore, we have magic now to make optional interfaces work.")]
 	IRecipe WrapDynamicRecipe(IDynamicDrawingRecipe recipe);
+
+	/// <summary>
+	/// Report a custom <see cref="IRecipe"/> type to Better Crafting.
+	/// This can be used to prime the proxy factory cache, which will
+	/// prevent any performance hiccups once the game has loaded.
+	/// </summary>
+	/// <param name="type">The type to report.</param>
+	void ReportRecipeType(Type type);
 
 	#endregion
 
@@ -1356,6 +1493,11 @@ public interface IBetterCrafting {
 	/// <param name="maxQuality">The maximum quality to consume.</param>
 	/// <param name="lowQualityFirst">Whether or not to consume low quality
 	/// items first.</param>
+	/// <param name="consumedItems">An optional list that will contain copies
+	/// of the consumed Items.</param>
+	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null);
+
+	[Obsolete("Use the version with an optional parameter for consumedItems.")]
 	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false);
 
 	/// <summary>

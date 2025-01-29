@@ -38,6 +38,7 @@ public class RecipeBuilder : IRecipeBuilder {
 	private Func<Farmer, string?>? tooltipExtra;
 
 	private Action<IPerformCraftEvent>? performCraft;
+	private Action<IPostCraftEvent>? postCraft;
 	private Func<Item?>? createItem;
 
 	private bool allowRecycling = true;
@@ -208,6 +209,12 @@ public class RecipeBuilder : IRecipeBuilder {
 	}
 
 	/// <inheritdoc />
+	public IRecipeBuilder OnPostCraft(Action<IPostCraftEvent>? value) {
+		postCraft = value;
+		return this;
+	}
+
+	/// <inheritdoc />
 	public IRecipeBuilder Item(Func<Item?>? value) {
 		createItem = value;
 		return this;
@@ -249,6 +256,7 @@ public class RecipeBuilder : IRecipeBuilder {
 			canCraft: canCraft,
 			tooltipExtra: tooltipExtra,
 			performCraft: performCraft,
+			postCraft: postCraft,
 			createItem: createItem,
 			quantity: quantity,
 			stackable: stackable,
@@ -262,7 +270,7 @@ public class RecipeBuilder : IRecipeBuilder {
 
 }
 
-public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
+public class BuiltRecipe : IRecipe, IPostCraftEventRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 
 	public static readonly Rectangle ERROR_SOURCE = new(268, 470, 16, 16);
 
@@ -283,6 +291,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 	private readonly Func<Farmer, string?>? tooltipExtra;
 
 	private readonly Action<IPerformCraftEvent>? performCraft;
+	private readonly Action<IPostCraftEvent>? postCraft;
 	private readonly Func<Item?>? createItem;
 
 	// Cached Stuff
@@ -294,7 +303,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 	private int _h;
 
 
-	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Func<Item?>? createItem, int? quantity, bool? stackable, bool allowRecycling, Func<bool>? shouldDrawFunction, Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction) {
+	public BuiltRecipe(CraftingRecipe? recipe, string name, string? sortValue, Func<string>? displayName, Func<string?>? description, Func<Farmer, bool>? hasRecipe, Func<Farmer, int>? timesCrafted, Func<Texture2D>? texture, Func<Rectangle?>? source, int? gridWidth, int? gridHeight, IIngredient[] ingredients, Func<Farmer, bool>? canCraft, Func<Farmer, string?>? tooltipExtra, Action<IPerformCraftEvent>? performCraft, Action<IPostCraftEvent>? postCraft, Func<Item?>? createItem, int? quantity, bool? stackable, bool allowRecycling, Func<bool>? shouldDrawFunction, Action<SpriteBatch, Rectangle, Color, bool, bool, float, ClickableTextureComponent?>? drawFunction) {
 		CraftingRecipe = recipe;
 		Name = name;
 		Ingredients = ingredients;
@@ -310,6 +319,7 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 		this.canCraft = canCraft;
 		this.tooltipExtra = tooltipExtra;
 		this.performCraft = performCraft;
+		this.postCraft = postCraft;
 		this.createItem = createItem;
 		this.shouldDrawFunction = shouldDrawFunction;
 		this.drawFunction = drawFunction;
@@ -518,6 +528,11 @@ public class BuiltRecipe : IRecipe, IRecipeWithCaching, IDynamicDrawingRecipe {
 			else
 				evt.Complete();
 		}
+	}
+
+	public void PostCraft(IPostCraftEvent evt) {
+		if (postCraft is not null)
+			postCraft(evt);
 	}
 
 	#endregion

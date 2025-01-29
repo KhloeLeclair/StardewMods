@@ -22,6 +22,7 @@ public static class Item_Patches {
 		Monitor = mod.Monitor;
 
 		try {
+			// TODO: Convert this to a transpiler of Item.canStackWith()
 			foreach(var type in AccessTools.AllTypes()) {
 				if (type.IsAssignableTo(typeof(ISalable)) && AccessTools.DeclaredMethod(type, nameof(ISalable.maximumStackSize)) is MethodInfo method && !method.IsAbstract)
 					mod.Harmony!.Patch(

@@ -54,6 +54,12 @@ public enum TTWhen {
 	Always
 };
 
+public enum NewRecipeMode {
+	Disabled,
+	Uncrafted,
+	Unseen
+};
+
 public class ModConfig {
 
 	public string Theme { get; set; } = "automatic";
@@ -70,6 +76,9 @@ public class ModConfig {
 	public GiftMode ShowTastes { get; set; } = GiftMode.Shift;
 	public bool ShowAllTastes { get; set; } = false;
 	public GiftStyle TasteStyle { get; set; } = GiftStyle.Heads;
+
+	public NewRecipeMode NewRecipes { get; set; } = NewRecipeMode.Disabled;
+	public bool NewRecipesPrismatic { get; set; } = false;
 
 	// Quality
 	public MaxQuality MaxQuality { get; set; } = MaxQuality.Iridium;

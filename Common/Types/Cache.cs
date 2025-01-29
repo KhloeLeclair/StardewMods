@@ -9,17 +9,20 @@ public class Cache<T, K> {
 	private readonly Func<K, T> Getter;
 	private readonly Func<K> KeyGetter;
 
+#nullable disable
 	private T LastValue;
 	private K LastKey;
+#nullable enable
 	private bool Valid;
+
+	public Cache(Func<K> keyGetter, Func<K, T> getter) {
+		Getter = getter;
+		KeyGetter = keyGetter;
+	}
 
 	public Cache(Func<K, T> getter, Func<K> keyGetter) {
 		Getter = getter;
 		KeyGetter = keyGetter;
-
-		LastKey = KeyGetter();
-		LastValue = Getter(LastKey);
-		Valid = true;
 	}
 
 	public void Invalidate() {

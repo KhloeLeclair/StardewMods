@@ -322,6 +322,15 @@ public static class SpriteHelper {
 		if (item is null)
 			return new Rectangle(0, 0, 0, 0);
 
+		// TODO: Not half-ass this
+		var data = ItemRegistry.GetData(item.QualifiedItemId);
+		if (data is null)
+			return null;
+
+		return data.GetSourceRect();
+
+		/*
+
 		int tileSize = SObject.spriteSheetTileSize;
 		Type type = item.GetType();
 		string ts = type.ToString();
@@ -422,7 +431,7 @@ public static class SpriteHelper {
 		}
 
 		// Unknown
-		return new Rectangle(0, 0, 0, 0);
+		return null;*/
 	}
 
 	public static SpriteInfo? GetSprite(Item? item) {
@@ -459,6 +468,13 @@ public static class SpriteHelper {
 					overlayColor: co.color.Value
 				);
 			}
+		}
+
+		// Combined Ring
+		if (item is CombinedRing ring) {
+			// CombinedRings are crazy.
+			if (ring.combinedRings.Count > 1)
+				return new CombinedRingSpriteInfo(ring);
 		}
 
 		// Assume for now that other objects will only have a texture + rect.
@@ -517,8 +533,8 @@ public static class SpriteHelper {
 			Texture2D? texture = null;
 			if (moddata != null) {
 				try {
-					texture = Game1.content.Load<Texture2D>(moddata.Name);
-				} catch (Exception) { *//* no-op *//* }
+					texture = Game1.content.Load<Texture2D>(moddata.);
+				} catch (Exception) { /* no-op * / }
 			}
 
 			if (texture == null)

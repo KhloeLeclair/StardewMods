@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.5.0
+Released April 10th, 2024.
+
+### New Features
+* Added the ability to label recipes as new. You can choose to either
+  label a recipe as new if you haven't crafted it yet, or if you haven't
+  hovered your mouse over it to view its tool-tip yet.
+
+### Changes
+* You can now toggle recipes on and off even if a category is using rules.
+  Please note that you can only enable extra recipes, you can't hide
+  recipes that matched a rule.
+* Added a dynamic category rule to match all of a specific mod's items.
+* Added dynamic category rules for: floors and paths, fences, furniture.
+* Added dynamic category rules for all remaining item buffs.
+* Updated how buffs are displayed in recipe tool-tips, to bring them
+  more in line with Stardew Valley 1.6.
+
+### Fixed
+* When receiving recipes from other C# mods via the API, optional
+  interfaces are now detected correctly.
+* Changed the logic for loading recipes to not use locking, in case
+  that was what's been causing some loading freezes for one user.
+
+### API Changes
+* Added the ability to track which specific Items are being consumed
+  when crafting a recipe.
+* Added a new post-craft event that can be used to modify items after
+  its ingredients are consumed, using the tracked items as
+  mentioned above.
+* Added the ability for mods to register crafting and post-crafting
+  events that apply to all recipes.
+
 ## 2.4.0
 Released April 7th, 2024.
 

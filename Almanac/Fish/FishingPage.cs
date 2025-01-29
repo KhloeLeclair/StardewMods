@@ -537,7 +537,7 @@ public class FishingPage : BasePage<FishingState>, ILeftFlowMargins {
 					)
 					.Text(" ")
 					.Text(
-						Game1.content.LoadString(@"Strings\StringsFromCSFiles:SkillsPage.cs.11607"),
+						Game1.content.LoadString(@"Strings\StringsFromCSFiles:Farmer.cs.1993"),
 						bold: true
 					)
 					.Build();

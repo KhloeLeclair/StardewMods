@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.GameData.Buildings;
 using StardewValley.Menus;
 using StardewValley.TokenizableStrings;
@@ -108,7 +109,7 @@ public class BuildingRecipe : IDynamicDrawingRecipe {
 	}
 
 	public int GetTimesCrafted(Farmer who) {
-		return 0;
+		return -1;
 	}
 
 	public CraftingRecipe? CraftingRecipe => null;
@@ -201,8 +202,8 @@ public class BuildingRecipe : IDynamicDrawingRecipe {
 		if ( ! who.currentLocation.IsBuildableLocation() )
 			return false;
 
-		/*if (Data.BuildingToUpgrade != null && !who.currentLocation.isBuildingConstructed(Data.BuildingToUpgrade))
-			return false;*/
+		if (Data.BuildingToUpgrade != null && !who.currentLocation.isBuildingConstructed(Data.BuildingToUpgrade))
+			return false;
 
 		return true;
 	}
@@ -223,13 +224,39 @@ public class BuildingRecipe : IDynamicDrawingRecipe {
 
 	public void PerformCraft(IPerformCraftEvent evt) {
 
-		// TODO: Open the menu.
+		var bld = Building.CreateInstanceFromId(BuildingId, Vector2.Zero);
+		bld.skinId.Value = SkinId;
 
-		evt.Cancel();
+		if (bld.CanBeReskinned(ignoreSeparateConstructionEntries: true)) {
+			var child = new BuildingSkinMenu(bld);
+
+			var old_menu = Game1.activeClickableMenu;
+			Game1.activeClickableMenu = child;
+
+			child.exitFunction = () => {
+				Game1.activeClickableMenu = old_menu;
+				StageTwoPerformCraft(evt, bld.skinId.Value);
+			};
+
+		} else
+			StageTwoPerformCraft(evt, SkinId);
+			
+	}
+
+	private void StageTwoPerformCraft(IPerformCraftEvent evt, string? skinId) { 
+
+		var menu = new BuildMenu(Mod, ActionType.Build, BuildingId, skinId, Data, evt);
+		var old_menu = Game1.activeClickableMenu;
+
+		Game1.activeClickableMenu = menu;
+
+		menu.exitFunction = () => {
+			Game1.activeClickableMenu = old_menu;
+			evt.Cancel();
+		};
 
 	}
 
 	#endregion
-
 
 }

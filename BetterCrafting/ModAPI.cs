@@ -115,6 +115,10 @@ public class ModAPI : IBetterCrafting {
 		return null;
 	}
 
+	#endregion
+
+	#region Events
+
 	/// <inheritdoc />
 	public event Action<IPopulateContainersEvent>? MenuPopulateContainers;
 
@@ -142,6 +146,25 @@ public class ModAPI : IBetterCrafting {
 		return disable_discovery;
 	}
 
+	/// <inheritdoc />
+	public event Action<IGlobalPerformCraftEvent>? PerformCraft;
+
+	internal IEnumerable<Action<IGlobalPerformCraftEvent>> GetPerformCraftHooks() {
+		if (PerformCraft is null)
+			yield break;
+
+		foreach(Delegate del in PerformCraft.GetInvocationList()) {
+			yield return (Action<IGlobalPerformCraftEvent>) del;
+		}
+	}
+
+	/// <inheritdoc />
+	public event Action<IPostCraftEvent>? PostCraft;
+
+	internal void EmitPostCraft(IPostCraftEvent evt) {
+		PostCraft?.Invoke(evt);
+	}
+
 	#endregion
 
 	#region Recipes
@@ -153,7 +176,7 @@ public class ModAPI : IBetterCrafting {
 
 	/// <inheritdoc />
 	public void AddRecipeProvider(IRecipeProvider provider) {
-		Mod.Recipes.AddProvider(provider);
+		Mod.Recipes.AddProvider(provider, modId: Other.UniqueID);
 	}
 
 	/// <inheritdoc />
@@ -182,8 +205,13 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
+	[Obsolete("Don't use this, we automatically detect IDynamicDrawingRecipe using magic.")]
 	public IRecipe WrapDynamicRecipe(IDynamicDrawingRecipe recipe) {
 		return recipe;
+	}
+
+	public void ReportRecipeType(Type type) {
+		Mod.Recipes.TryPrimeRecipeProxyFactory(Other.UniqueID, type, out _);
 	}
 
 	#endregion
@@ -269,6 +297,11 @@ public class ModAPI : IBetterCrafting {
 	}
 
 	/// <inheritdoc />
+	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null) {
+		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst, consumedItems);
+	}
+
+	[Obsolete("Use the one with the optional consumedItems parameter.")]
 	public void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false) {
 		InventoryHelper.ConsumeItems(items, who, inventories, maxQuality, lowQualityFirst);
 	}
