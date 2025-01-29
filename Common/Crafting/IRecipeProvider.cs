@@ -1,5 +1,7 @@
 #nullable enable
 
+#if COMMON_CRAFTING
+
 using System.Collections.Generic;
 
 using StardewValley;
@@ -44,3 +46,6 @@ public interface IRecipeProvider {
 	/// <returns>An enumeration of this provider's additional recipes, or null.</returns>
 	IEnumerable<IRecipe>? GetAdditionalRecipes(bool cooking);
 }
+
+
+#endif

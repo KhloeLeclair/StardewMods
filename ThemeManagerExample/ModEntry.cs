@@ -1,15 +1,16 @@
 using System;
 
+using Leclair.Stardew.CloudySkies;
+using Leclair.Stardew.Common;
+using Leclair.Stardew.ThemeManager;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using StardewValley;
-using StardewValley.Menus;
-
 using StardewModdingAPI;
 
-using Leclair.Stardew.ThemeManager;
-using System.Collections.Generic;
+using StardewValley;
+using StardewValley.Menus;
 
 namespace ThemeManagerExample;
 
@@ -35,9 +36,12 @@ public class ModEntry : Mod {
 	}
 
 	private void Display_RenderedHud(object? sender, StardewModdingAPI.Events.RenderedHudEventArgs e) {
+		if (e.SpriteBatch != null)
+			return;
+
 		// Read values from our theme!
 		float scale = Theme.TextScale;
-		Color color = Theme.TextColor ?? GameTheme?.GetVariable("Text") ?? Game1.textColor;
+		Color color = Theme.TextColor ?? GameTheme?.GetColorVariable("Text") ?? Game1.textColor;
 
 		// Set up the text!
 		string text = $"Hello!\n\nSelected Theme: {ThemeManager?.SelectedThemeId}\nActive Theme: {ThemeManager?.ActiveThemeId}";
@@ -72,8 +76,67 @@ public class ModEntry : Mod {
 		);
 	}
 
+
+	public class TestEffect : IWeatherEffect {
+
+		public ulong Id { get; }
+
+		public uint Rate { get; }
+
+		public TestEffect(ulong id, ICustomEffectData data) {
+			Id = id;
+			Rate = data.Rate;
+		}
+
+		public void Update(GameTime time) {
+			Game1.player.bathingClothes.Value = time.TotalGameTime.TotalSeconds % 10 >= 5;
+		}
+	}
+
+
+	public class TestThing : IWeatherLayer {
+		public ulong Id { get; }
+		public LayerDrawType DrawType { get; }
+
+		public readonly Color Color;
+
+		public TestThing(ulong id, ICustomLayerData data) {
+			Id = id;
+			DrawType = data.Mode;
+
+			string? colorInput = null;
+			if (data.Fields.TryGetValue("Color", out var token))
+				colorInput = ((string?) token);
+
+			Color = CommonHelper.ParseColor(colorInput) ?? Color.White;
+		}
+
+		public void Draw(SpriteBatch batch, GameTime time, RenderTarget2D targetScreen) {
+			batch.Draw(Game1.mouseCursors, Vector2.Zero, Color);
+		}
+
+		// other methods left out for brevity
+
+		public void MoveWithViewport(int offsetX, int offsetY) { }
+		public void ReloadAssets() { }
+		public void Resize(Point newSize, Point oldSize) { }
+		public void Update(GameTime time) { }
+	}
+
+
+
 	private void GameLoop_GameLaunched(object? sender, StardewModdingAPI.Events.GameLaunchedEventArgs e) {
 		SetupTheme();
+
+		ICloudySkiesApi? api = null;
+		try {
+			api = Helper.ModRegistry.GetApi<ICloudySkiesApi>("leclair.cloudyskies");
+		} catch (Exception ex) {
+			Monitor.Log($"Unable to fetch Cloudy Skies API: {ex}", LogLevel.Error);
+		}
+
+		api?.RegisterLayerType("Test", (id, data) => new TestThing(id, data));
+		api?.RegisterEffectType("Test", (id, data) => new TestEffect(id, data));
 
 		Background = LoadManaged<Texture2D>("Background.png");
 	}
@@ -108,11 +171,11 @@ public class ModEntry : Mod {
 		ThemeManager.ThemeChanged += OnThemeChanged;
 	}
 
-	private void OnBaseThemeChanged(object? sender, IThemeChangedEvent<IGameTheme> e) {
-		GameTheme =  e.NewData;
+	private void OnBaseThemeChanged(IThemeChangedEvent<IGameTheme> e) {
+		GameTheme = e.NewData;
 	}
 
-	private void OnThemeChanged(object? sender, IThemeChangedEvent<ThemeData> e) {
+	private void OnThemeChanged(IThemeChangedEvent<ThemeData> e) {
 		Theme = e.NewData;
 		Background = LoadManaged<Texture2D>("Background.png");
 	}

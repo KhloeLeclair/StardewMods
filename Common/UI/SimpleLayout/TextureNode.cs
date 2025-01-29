@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -43,3 +43,5 @@ public class TextureNode : ISimpleNode {
 			batch.Draw(Texture, position, Source, Color.White * alpha, 0f, Vector2.Zero, Scale, SpriteEffects.None, GUIHelper.GetLayerDepth(position.Y));
 	}
 }
+
+#endif

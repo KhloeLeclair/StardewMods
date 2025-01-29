@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Linq;
 
 using Leclair.Stardew.Common;
@@ -86,14 +87,12 @@ public class BaseRecipe : IRecipe {
 	}
 
 	public virtual Item? CreateItem() {
-		return Recipe.createItem();
+		Item? result = Recipe.createItem() ?? throw new ArgumentNullException("unexpectedly failed to create an item");
+		return result;
 	}
 
 	public virtual void PerformCraft(IPerformCraftEvent evt) {
-		if (evt.Item is null)
-			evt.Cancel();
-		else
-			evt.Complete();
+		evt.Complete();
 	}
 
 	public virtual CraftingRecipe CraftingRecipe => Recipe;

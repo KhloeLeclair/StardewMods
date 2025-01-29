@@ -42,7 +42,6 @@ public class ItemCacheManager : BaseManager {
 
 	private long LastCachedQuery;
 	private readonly PerScreen<Dictionary<long, Item[]>> CachedQueries = new(() => new());
-	private readonly PerScreen<GameLocation?> LastLocation = new(() => null);
 
 	public ItemCacheManager(ModEntry mod) : base(mod) { }
 
@@ -60,7 +59,7 @@ public class ItemCacheManager : BaseManager {
 
 		items = ItemQueryResolver.TryResolve(
 			data,
-			new ItemQueryContext(Game1.player.currentLocation, Game1.player, Game1.random),
+			new ItemQueryContext(Game1.player.currentLocation, Game1.player, Game1.random, $"Better Crafting ingredient ${id}"),
 			avoidRepeat: false,
 			logError: (query, error) => {
 				Mod.Log($"Error attempting to resolve ingredient with query '{query}': {error}", LogLevel.Error);
@@ -77,17 +76,17 @@ public class ItemCacheManager : BaseManager {
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
+		foreach (var name in e.Names) {
 			// This path covers two objects.
 			if (name.BaseName == FLOORPAPER) {
-				Log($"Clearing floors and wallpapers cache.", StardewModdingAPI.LogLevel.Trace);
+				Log($"Clearing floors and wallpapers cache.", LogLevel.Trace);
 				ItemMaps.Remove(ItemRegistry.type_floorpaper);
 				ItemMaps.Remove(ItemRegistry.type_wallpaper);
 				CachedQueries.ResetAllScreens();
 
 				// And the rest...
 			} else if (REVERSE_TYPE_MAPS.TryGetValue(name.BaseName, out string? typekey)) {
-				Log($"Clearing {typekey} cache.", StardewModdingAPI.LogLevel.Trace);
+				Log($"Clearing {typekey} cache.", LogLevel.Trace);
 				ItemMaps.Remove(typekey);
 				CachedQueries.ResetAllScreens();
 			}
@@ -107,14 +106,14 @@ public class ItemCacheManager : BaseManager {
 	#endregion
 
 	private void LoadItems() {
-		foreach(string type in TYPE_MAPS.Keys) {
+		foreach (string type in TYPE_MAPS.Keys) {
 			if (!ItemMaps.ContainsKey(type)) {
 				var typedef = ItemRegistry.GetTypeDefinition(type);
 				if (typedef is not null) {
 					List<Item> result = new();
 
 					foreach (string id in typedef.GetAllIds()) {
-						Item? item = ItemRegistry.Create(id, allowNull: true);
+						Item? item = ItemRegistry.Create(typedef.Identifier + id, allowNull: true);
 						if (item is not null)
 							result.Add(item);
 					}
@@ -127,12 +126,12 @@ public class ItemCacheManager : BaseManager {
 	}
 
 	private IEnumerable<Item> GetAllUnknownItems() {
-		foreach(var typedef in ItemRegistry.ItemTypes) {
+		foreach (var typedef in ItemRegistry.ItemTypes) {
 			if (!TYPE_MAPS.ContainsKey(typedef.Identifier)) {
-				Log($"Unexpected item type: {typedef.Identifier}", StardewModdingAPI.LogLevel.Trace);
+				Log($"Unexpected item type: {typedef.Identifier}", LogLevel.Trace);
 
 				foreach (string id in typedef.GetAllIds()) {
-					Item? item = ItemRegistry.Create(id, allowNull: true);
+					Item? item = ItemRegistry.Create(typedef.Identifier + id, allowNull: true);
 					if (item is not null)
 						yield return item;
 				}
@@ -148,14 +147,14 @@ public class ItemCacheManager : BaseManager {
 		// First, make sure we've loaded everything.
 		LoadItems();
 
-		foreach(var items in ItemMaps.Values) {
+		foreach (var items in ItemMaps.Values) {
 			if (items is not null)
-				foreach(var item in items)
+				foreach (var item in items)
 					if (predicate(item))
 						yield return item;
 		}
 
-		foreach(var item in GetAllUnknownItems()) {
+		foreach (var item in GetAllUnknownItems()) {
 			if (predicate(item))
 				yield return item;
 		}

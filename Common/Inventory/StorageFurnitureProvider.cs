@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_BCINVENTORY
 
 using System;
 using System.Collections.Generic;
@@ -65,3 +65,5 @@ public class StorageFurnitureProvider : BaseInventoryProvider<StorageFurniture> 
 		return null;
 	}
 }
+
+#endif

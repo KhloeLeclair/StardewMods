@@ -1,10 +1,26 @@
 {
 	"ID": "TutorialMenu",
 
+	"ColorVariables": {
+		"$TutorialMenu:Text": "$Text"
+	},
+
+	"FontVariables": {
+		"$TutorialMenu:Small": "$Small"
+	},
+
 	"Patches": {
 		"#TutorialMenu:draw(SpriteBatch)": {
 			"Colors": {
 				"Blue": { "*": "$TutorialHover" }
+			},
+
+			"ColorFields": {
+				"Game1:textColor": { "*": "$TutorialMenu:Text" }
+			},
+
+			"FontFields": {
+				"Game1:smallFont": { "*": "$TutorialMenu:Small" }
 			}
 		}
 	}

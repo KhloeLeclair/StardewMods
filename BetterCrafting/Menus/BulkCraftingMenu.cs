@@ -27,7 +27,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public readonly BetterCraftingPage Menu;
 
 	// Caching
-	private readonly Dictionary<IIngredient, int> AvailableQuantity = new();
+	private readonly Dictionary<IIngredient, int> AvailableQuantity = [];
+	private readonly Dictionary<IIngredient, List<Item>> MatchingItems = [];
+
+	private int Quality;
 
 	public int Quantity { get; private set; } = 1;
 	private ISimpleNode Layout;
@@ -52,21 +55,34 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	public float maxWidth = -1;
 
 	private readonly SeasoningMode Seasoning;
-	private int SeasoningAmount;
-	private readonly IIngredient? SeasonIngred;
+	private readonly Dictionary<IIngredient, int>? SeasoningIngredients;
 
 	public BulkCraftingMenu(ModEntry mod, BetterCraftingPage menu, IRecipe recipe, int initial)
 	: base(mod) {
 		Menu = menu;
 		Recipe = recipe;
 
-		if (!Menu.cooking || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
+		Item? obj = Recipe.CreateItemSafe();
+		Quality = obj is null ? 0 : obj.Quality;
+
+		if (!Menu.cooking || obj is null || Mod.Config.UseSeasoning == SeasoningMode.Disabled)
 			Seasoning = SeasoningMode.Disabled;
+
 		else {
-			Item? obj = Recipe.CreateItemSafe();
-			if (obj is SObject sobj && sobj.Quality == 0) {
+			IList<Item?>? items = Menu.GetEstimatedContainerContents();
+			IList<IBCInventory>? unsaf = Menu.GetUnsafeInventories();
+			var evt = new ApplySeasoningEvent(mod, menu, recipe, Game1.player, obj, true, true, menu.Quality, items, unsaf);
+			foreach (var api in mod.APIInstances.Values)
+				api.EmitApplySeasoning(evt);
+
+			evt.ApplyQiSeasoning();
+
+			if (evt.AppliedIngredients != null) {
 				Seasoning = Mod.Config.UseSeasoning;
-				SeasonIngred = BetterCraftingPage.SEASONING_RECIPE[0];
+				SeasoningIngredients = [];
+				foreach (var ing in evt.AppliedIngredients)
+					SeasoningIngredients[ing] = 0;
+
 			} else
 				Seasoning = SeasoningMode.Disabled;
 		}
@@ -85,7 +101,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		initialize((int) point.X, (int) point.Y, width, height, true);
 
 		txtQuantity = new TextBox(
-			textBoxTexture: Game1.content.Load<Texture2D>("LooseSprites\\textBox"),
+			textBoxTexture: Game1.content.Load<Texture2D>(@"LooseSprites\textBox"),
 			null,
 			Game1.smallFont,
 			Game1.textColor
@@ -127,8 +143,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnLess = new ClickableTextureComponent(
 			new Rectangle(0, 0, 28, 32),
-			Game1.mouseCursors,
-			new Rectangle(177, 345, 7, 8),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(177, 345, 7, 8)
+				: Sprites.Other.BTN_MINUS,
 			4f
 		) {
 			myID = 1,
@@ -140,8 +158,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnMore = new ClickableTextureComponent(
 			new Rectangle(0, 0, 28, 32),
-			Game1.mouseCursors,
-			new Rectangle(184, 345, 7, 8),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(184, 345, 7, 8)
+				: Sprites.Other.BTN_PLUS,
 			4f
 		) {
 			myID = 2,
@@ -153,8 +173,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		btnCraft = new ClickableTextureComponent(
 			new Rectangle(0, 0, 64, 64),
-			Game1.mouseCursors,
-			new Rectangle(366, 373, 16, 16),
+			Menu.Background ?? Game1.mouseCursors,
+			Menu.Background is null
+				? new Rectangle(366, 373, 16, 16)
+				: Sprites.Other.BTN_HAMMER,
 			scale: 4f
 		) {
 			myID = 4,
@@ -165,13 +187,15 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		};
 
 		int ingredients = Recipe.Ingredients?.Length ?? 0;
-		if ( ingredients > 20 ) {
+		if (ingredients > 20) {
 			totalPages = (int) Math.Ceiling(ingredients / 20f);
 
 			btnPrev = new ClickableTextureComponent(
 				new Rectangle(0, 0, 64, 64),
-				Game1.mouseCursors,
-				new Rectangle(349, 492, 16, 16),
+				Menu.Background ?? Game1.mouseCursors,
+				Menu.Background is null
+					? new Rectangle(349, 492, 16, 16)
+					: Sprites.CustomScroll.PAGE_LEFT,
 				scale: 4f
 			) {
 				myID = 5,
@@ -183,8 +207,10 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 			btnNext = new ClickableTextureComponent(
 				new Rectangle(0, 0, 64, 64),
-				Game1.mouseCursors,
-				new Rectangle(365, 492, 16, 16),
+				Menu.Background ?? Game1.mouseCursors,
+				Menu.Background is null
+					? new Rectangle(365, 492, 16, 16)
+					: Sprites.CustomScroll.PAGE_RIGHT,
 				scale: 4f
 			) {
 				myID = 6,
@@ -253,8 +279,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 	[MemberNotNull(nameof(Layout))]
 	public void UpdateLayout() {
 
-
-		List<ISimpleNode> ingredients = new();
+		List<ISimpleNode> ingredients = [];
 
 		int crafts = Quantity / Recipe.QuantityPerCraft;
 
@@ -271,7 +296,9 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 					amount = 0;
 
 				ingredients.Add(BuildIngredientRow(entry, amount, crafts));
-				if (ingredients.Count >= 20)
+				ingredients.Add(BuildIngredientItems(entry, amount, crafts));
+
+				if (ingredients.Count >= 40)
 					break;
 			}
 
@@ -282,20 +309,20 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		var builder = SimpleHelper
 			.Builder(minSize: new Vector2(4 * 80, 0))
-			.Text(I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
+			.Text(Menu.cooking ? I18n.Bulk_Cooking() : I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
 			//.Divider()
 			.Group(margin: 8)
 				.Space()
 				.Sprite(
 					Recipe is IDynamicDrawingRecipe ddr
-						? new DynamicRecipeSpriteInfo(ddr)
-						: new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle),
+						? new DynamicRecipeSpriteInfo(ddr, quality: Quality)
+						: new SpriteInfo(Recipe.Texture, Recipe.SourceRectangle, quality: Quality),
 					quantity: Quantity
 				)
 				.Space(expand: false)
 				.Group()
 					.Text(Recipe.DisplayName)
-					.Text(I18n.Bulk_Craftable(Craftable), color: Game1.textColor * .75f)
+					.Text(Menu.cooking ? I18n.Bulk_Cookable(Craftable) : I18n.Bulk_Craftable(Craftable), color: ((Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor) * .75f)
 				.EndGroup()
 				.Space()
 			.EndGroup();
@@ -303,19 +330,22 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		if (ingredients.Count > 0) {
 			builder.Divider();
 
-			if (ingredients.Count < 4)
+			if (ingredients.Count < 8)
 				builder.AddSpacedRange(4, ingredients);
 			else {
-				List<ISimpleNode> left = new();
-				List<ISimpleNode> right = new();
+				List<ISimpleNode> left = [];
+				List<ISimpleNode> right = [];
 
 				bool right_side = false;
 
-				foreach (var ing in ingredients) {
-					if (right_side)
-						right.Add(ing);
-					else
-						left.Add(ing);
+				for (int i = 0; i < ingredients.Count; i += 2) {
+					if (right_side) {
+						right.Add(ingredients[i]);
+						right.Add(ingredients[i + 1]);
+					} else {
+						left.Add(ingredients[i]);
+						left.Add(ingredients[i + 1]);
+					}
 
 					right_side = !right_side;
 				}
@@ -325,7 +355,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 						.Group(align: Alignment.Top)
 							.AddSpacedRange(4, left)
 						.EndGroup()
-						.Divider()
+						.Divider(false)
 						.Group(align: Alignment.Top)
 							.AddSpacedRange(4, right)
 						.EndGroup()
@@ -333,10 +363,50 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			}
 		}
 
-		if (SeasonIngred != null && SeasoningAmount > 0) {
-			builder
-				.Divider()
-				.Add(BuildIngredientRow(SeasonIngred, SeasoningAmount, crafts));
+		if (SeasoningIngredients != null) {
+			ingredients = [];
+
+			foreach (var entry in SeasoningIngredients) {
+				ingredients.Add(BuildIngredientRow(entry.Key, entry.Value, crafts));
+				if (ingredients.Count >= 40)
+					break;
+			}
+
+			if (ingredients.Count > 0) {
+				builder.Divider();
+
+				if (ingredients.Count < 8)
+					builder.AddSpacedRange(4, ingredients);
+				else {
+					List<ISimpleNode> left = [];
+					List<ISimpleNode> right = [];
+
+					bool right_side = false;
+
+					for (int i = 0; i < ingredients.Count; i += 2) {
+						if (right_side) {
+							right.Add(ingredients[i]);
+							right.Add(ingredients[i + 1]);
+						} else {
+							left.Add(ingredients[i]);
+							left.Add(ingredients[i + 1]);
+						}
+
+						right_side = !right_side;
+					}
+
+					builder
+						.Group(margin: 8)
+							.Group(align: Alignment.Top)
+								.AddSpacedRange(4, left)
+							.EndGroup()
+							.Divider(false)
+							.Group(align: Alignment.Top)
+								.AddSpacedRange(4, right)
+							.EndGroup()
+						.EndGroup();
+				}
+			}
 		}
 
 		builder.Divider();
@@ -354,7 +424,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 				maxWidth = LayoutSize.X;
 
-				for(int page = 2; page <= totalPages; page++) {
+				for (int page = 2; page <= totalPages; page++) {
 					currentPage = page;
 					UpdateLayout();
 				}
@@ -370,20 +440,78 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			maxWidth = LayoutSize.X;
 	}
 
+	private ISimpleNode BuildIngredientItems(IIngredient ing, int available, int crafts) {
+		if (!MatchingItems.TryGetValue(ing, out var matching) || matching.Count == 0)
+			return EmptyNode.Instance;
+
+		int quant = ing.Quantity * crafts;
+
+		int qq = 0;
+		int i = 0;
+
+		bool had_quality = false;
+
+		while (qq < quant && i < matching.Count) {
+			var item = matching[i];
+			if (item.Quality > 0) {
+				had_quality = true;
+				break;
+			}
+
+			int consumed = Math.Min(quant - qq, item.Stack);
+			qq += consumed;
+			i++;
+		}
+
+		var config = Mod.Config.ShowMatchingItem;
+		bool wanted = config == ShowMatchingItemMode.Always ||
+			(config != ShowMatchingItemMode.Disabled && ing is IConsumptionPreTrackingIngredient cpt2 && cpt2.IsFuzzyIngredient) ||
+			(config == ShowMatchingItemMode.FuzzyQuality && had_quality);
+
+		if (!wanted)
+			return EmptyNode.Instance;
+
+		var fb = FlowHelper.Builder()
+			.Text(" ");
+
+		qq = 0;
+		i = 0;
+		while (qq < quant && i < matching.Count) {
+			var item = matching[i];
+			int consumed = Math.Min(quant - qq, item.Stack);
+			qq += consumed;
+			fb.Text(" ");
+			fb.Sprite(
+				SpriteHelper.GetSprite(item),
+				2f,
+				align: Alignment.VCenter,
+				quantity: consumed
+			);
+			fb.Text($" {item.DisplayName}",
+				shadow: false,
+				color: (Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor ?? Game1.textColor) * 0.5f,
+				align: Alignment.VCenter
+			);
+			i++;
+		}
+
+		return new FlowNode(fb.Build());
+	}
+
 	private ISimpleNode BuildIngredientRow(IIngredient ing, int available, int crafts) {
 		int quant = ing.Quantity * crafts;
 
 		Color color = available < ing.Quantity ?
-			(Mod.Theme?.QuantityCriticalTextColor ?? Color.Red) :
+			(Menu.Theme.QuantityCriticalTextColor ?? Color.Red) :
 			available < quant ?
-				(Mod.Theme?.QuantityWarningTextColor ?? Color.OrangeRed) :
-					Game1.textColor;
+				(Menu.Theme.QuantityWarningTextColor ?? Color.OrangeRed) :
+					(Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor : null) ?? Game1.textColor;
 
 		Color? shadow = available < ing.Quantity ?
-			Mod.Theme?.QuantityCriticalShadowColor :
+			Menu.Theme.QuantityCriticalShadowColor :
 			available < quant ?
-				Mod.Theme?.QuantityWarningShadowColor :
-					null;
+				Menu.Theme.QuantityWarningShadowColor :
+					(Menu.Theme.CustomTooltip ? Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor : null);
 
 		return SimpleHelper
 			.Builder(LayoutDirection.Horizontal, margin: 8)
@@ -435,8 +563,23 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		if (Recipe.Ingredients is not null)
 			foreach (var entry in Recipe.Ingredients) {
-				int amount = entry.GetAvailableQuantity(Game1.player, items, unsaf, Menu.Quality);
-				int quant = entry.Quantity * crafts;
+				int amount;
+				if (entry is IConsumptionPreTrackingIngredient cpt) {
+					List<Item> matching = [];
+					MatchingItems[entry] = matching;
+					amount = cpt.GetAvailableQuantity(Game1.player, items, unsaf, Menu.Quality, matching);
+
+					if (Mod.Config.LowQualityFirst)
+						matching.Sort((a, b) => {
+							if (a.Quality < b.Quality) return -1;
+							if (b.Quality < a.Quality) return 1;
+							return 0;
+						});
+
+				} else {
+					MatchingItems.Remove(entry);
+					amount = entry.GetAvailableQuantity(Game1.player, items, unsaf, Menu.Quality);
+				}
 
 				Craftable = Math.Min(amount / entry.Quantity, Craftable);
 
@@ -446,16 +589,22 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				}
 			}
 
-		SeasoningAmount = SeasonIngred?.GetAvailableQuantity(
-			Game1.player,
-			Seasoning == SeasoningMode.Enabled ? items : null,
-			Seasoning == SeasoningMode.Enabled ? unsaf : null,
-			Menu.Quality
-		) ?? 0;
+		int SeasonableCrafts = int.MaxValue;
+		if (SeasoningIngredients is not null) {
+			bool useInv = Seasoning == SeasoningMode.Enabled;
+			foreach (var entry in SeasoningIngredients.Keys) {
+				int amount = entry.GetAvailableQuantity(Game1.player, useInv ? items : null, useInv ? unsaf : null, Menu.Quality);
+				SeasoningIngredients[entry] = amount;
 
-		if (SeasoningAmount > 0 && Craftable > SeasoningAmount) {
+				SeasonableCrafts = Math.Min(amount / entry.Quantity, SeasonableCrafts);
+			}
+
+		} else
+			SeasonableCrafts = 0;
+
+		if (SeasonableCrafts > 0 && Craftable > SeasonableCrafts) {
 			Craftable *= Recipe.QuantityPerCraft;
-			CraftingLimit = SeasoningAmount * Recipe.QuantityPerCraft;
+			CraftingLimit = SeasonableCrafts * Recipe.QuantityPerCraft;
 		} else {
 			Craftable *= Recipe.QuantityPerCraft;
 			CraftingLimit = Craftable;
@@ -489,7 +638,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		if (txtQuantity != null && !txtQuantity.Selected)
 			txtQuantity.Text = Quantity.ToString();
 
-		if (old == Quantity && ! changed)
+		if (old == Quantity && !changed)
 			return false;
 
 		if (do_update) {
@@ -625,17 +774,23 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 		// Dim the Background
 		b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
 
+		Texture2D? texture = Menu.Theme.CustomTooltip ? Menu.Background : null;
+
 		// Background
 		RenderHelper.DrawBox(
 			b,
-			texture: Game1.menuTexture,
-			sourceRect: new Rectangle(0, 256, 60, 60),
+			texture: texture ?? Game1.menuTexture,
+			sourceRect: texture is null
+				? RenderHelper.Sprites.NativeDialogue.ThinBox
+				: RenderHelper.Sprites.CustomBCraft.ThinBox,
 			x: xPositionOnScreen,
 			y: yPositionOnScreen,
 			width: width,
 			height: height,
 			color: Color.White,
-			scale: 1f
+			scale: texture is null
+				? 1f
+				: 4f
 		);
 
 		Layout?.Draw(
@@ -645,8 +800,8 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			new Vector2(width, height),
 			1f,
 			Game1.smallFont,
-			Game1.textColor,
-			null
+			(texture is null ? null : Menu.Theme.TooltipTextColor ?? Menu.Theme.TextColor) ?? Game1.textColor,
+			(texture is null ? null : Menu.Theme.TooltipTextShadowColor ?? Menu.Theme.TextShadowColor)
 		);
 
 		txtQuantity.Draw(b);
@@ -685,7 +840,8 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		// Mouse
 		Game1.mouseCursorTransparency = 1f;
-		drawMouse(b);
+		if (!Menu.Theme.CustomMouse || !RenderHelper.DrawMouse(b, Menu.Background, RenderHelper.Sprites.BCraftMouse))
+			drawMouse(b);
 	}
 
 	#endregion

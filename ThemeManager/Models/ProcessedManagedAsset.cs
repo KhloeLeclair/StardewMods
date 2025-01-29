@@ -48,7 +48,7 @@ public class ProcessedManagedAsset<TValue> : IManagedAsset<TValue>, IDisposable 
 
 	#endregion
 
-	private void OnMarkedStale(object? sender, EventArgs e) {
+	private void OnMarkedStale() {
 		MarkStale();
 	}
 
@@ -62,7 +62,7 @@ public class ProcessedManagedAsset<TValue> : IManagedAsset<TValue>, IDisposable 
 
 	public object? RawValue => Value;
 
-	public event EventHandler? MarkedStale;
+	public event Action? MarkedStale;
 
 	#endregion
 
@@ -111,7 +111,8 @@ public class ProcessedManagedAsset<TValue> : IManagedAsset<TValue>, IDisposable 
 
 	public void MarkStale() {
 		_IsStale = true;
-		MarkedStale?.SafeInvoke(this, monitor: ModEntry.Instance.Monitor);
+		MarkedStale?.Invoke();
+		//MarkedStale?.SafeInvoke(this, monitor: ModEntry.Instance.Monitor);
 	}
 
 	#endregion

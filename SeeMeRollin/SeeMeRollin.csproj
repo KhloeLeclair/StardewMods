@@ -5,9 +5,20 @@
 		<Version>2.0.0</Version>
 		<RootNamespace>Leclair.Stardew.SeeMeRollin</RootNamespace>
 
+    <UseCommon>GMCM;UI;SimpleLayout</UseCommon>
+    
 		<EnableHarmony>true</EnableHarmony>
 		<EnableTranslation>true</EnableTranslation>
 	</PropertyGroup>
+
+  <PropertyGroup>
+    <BaseManifest>new</BaseManifest>
+
+    <Name>See Me Rollin'</Name>
+    <UniqueID>leclair.seemerollin</UniqueID>
+    <Description>Adds roller shoes to the game. Move quickly when you want. Don't when you don't.</Description>
+    <UpdateKeys>Nexus:10976</UpdateKeys>
+  </PropertyGroup>
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />

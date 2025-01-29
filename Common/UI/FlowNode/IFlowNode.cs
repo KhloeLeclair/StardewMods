@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 
@@ -32,3 +32,5 @@ public interface IFlowNode {
 	Func<IFlowNodeSlice, int, int, bool>? OnClick { get; }
 	Func<IFlowNodeSlice, int, int, bool>? OnRightClick { get; }
 }
+
+#endif

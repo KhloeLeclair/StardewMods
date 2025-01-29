@@ -15,9 +15,7 @@
 		<UpdateKeys></UpdateKeys>
 
     <BundleExtraAssemblies>ThirdParty</BundleExtraAssemblies>
-    
 		<EnableTranslation>true</EnableTranslation>
-    
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 

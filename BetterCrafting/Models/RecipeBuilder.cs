@@ -522,12 +522,8 @@ public class BuiltRecipe : IRecipe, IPostCraftEventRecipe, IRecipeWithCaching, I
 	public void PerformCraft(IPerformCraftEvent evt) {
 		if (performCraft is not null) {
 			performCraft(evt);
-		} else {
-			if (evt.Item is null)
-				evt.Cancel();
-			else
-				evt.Complete();
-		}
+		} else
+			evt.Complete();
 	}
 
 	public void PostCraft(IPostCraftEvent evt) {

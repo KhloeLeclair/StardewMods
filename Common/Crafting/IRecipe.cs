@@ -1,5 +1,7 @@
 #nullable enable
 
+#if COMMON_CRAFTING
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -226,3 +228,6 @@ public interface IPostCraftEventRecipe {
 	void PostCraft(IPostCraftEvent evt);
 
 }
+
+
+#endif

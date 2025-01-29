@@ -20,6 +20,8 @@ public class PatchGroupData {
 
 	public CaseInsensitiveDictionary<string>? ColorVariables { get; set; }
 
+	public CaseInsensitiveDictionary<string>? ColorAlphaVariables { get; set; }
+
 	public CaseInsensitiveDictionary<string>? FontVariables { get; set; }
 
 	public CaseInsensitiveDictionary<string>? BmFontVariables { get; set; }
@@ -29,7 +31,7 @@ public class PatchGroupData {
 	public Dictionary<string, PatchData>? Patches { get; set; }
 
 	[JsonIgnore]
-	public Dictionary<string, MethodInfo[]>? Methods { get; set; }
+	public Dictionary<string, MethodBase[]>? Methods { get; set; }
 
 }
 

@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Leclair.Stardew.Common.Crafting;
 
@@ -17,23 +14,26 @@ namespace Leclair.Stardew.BetterCrafting.Integrations.SpaceCore;
 public class SCRecipe : IRecipe {
 
 	public readonly ICustomCraftingRecipe Recipe;
-	public readonly Item? ExampleItem;
+	public readonly string? ItemId;
 	public readonly bool Cooking;
+	private readonly CraftingRecipe cRecipe;
 
-	public SCRecipe(string name, ICustomCraftingRecipe recipe, bool cooking, IEnumerable<IIngredient> ingredients) {
+	public SCRecipe(string name, CraftingRecipe crecipe, ICustomCraftingRecipe recipe, bool cooking, IEnumerable<IIngredient> ingredients) {
 		Name = name;
+		cRecipe = crecipe;
 		Recipe = recipe;
 		Cooking = cooking;
 		Ingredients = ingredients.ToArray();
 
-		Item? example = CreateItem();
-		SortValue = $"{example?.ParentSheetIndex ?? 0}";
-		QuantityPerCraft = example?.Stack ?? 1;
-		Stackable = (example?.maximumStackSize() ?? 1) > 1;
+		var item = CreateItem();
+		ItemId = item?.ItemId;
+		SortValue = $"{item?.ParentSheetIndex ?? 0}";
+		QuantityPerCraft = item?.Stack ?? 1;
+		Stackable = (item?.maximumStackSize() ?? 1) > 1;
 
 		if (recipe.Name != null)
 			DisplayName = recipe.Name;
-		else if (example is not null && ItemRegistry.GetData(example.QualifiedItemId) is ParsedItemData data)
+		else if (item is not null && ItemRegistry.GetData(item.QualifiedItemId) is ParsedItemData data)
 			DisplayName = data.DisplayName;
 		else
 			DisplayName = Name;
@@ -58,7 +58,8 @@ public class SCRecipe : IRecipe {
 
 	public virtual int GetTimesCrafted(Farmer who) {
 		if (Cooking) {
-			// TODO: This
+			if (who.recipesCooked.TryGetValue(ItemId ?? Name, out int count))
+				return count;
 			return 0;
 
 		} else if (who.craftingRecipes.ContainsKey(Name))
@@ -67,7 +68,7 @@ public class SCRecipe : IRecipe {
 		return 0;
 	}
 
-	public CraftingRecipe? CraftingRecipe => null;
+	public CraftingRecipe? CraftingRecipe => cRecipe;
 
 	#endregion
 
@@ -76,7 +77,7 @@ public class SCRecipe : IRecipe {
 	public bool AllowRecycling { get; } = true;
 
 	public string DisplayName { get; }
-	public string Description => Recipe.Description ?? string.Empty;
+	public string Description => cRecipe.description ?? string.Empty;
 
 	public Texture2D Texture => Recipe.IconTexture;
 

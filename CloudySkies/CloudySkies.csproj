@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>CloudySkies</AssemblyName>
+    <Version>1.8.0</Version>
+    <RootNamespace>Leclair.Stardew.CloudySkies</RootNamespace>
+
+    <UseCommon>GMCM;UI;FLOW;SIMPLELAYOUT</UseCommon>
+
+    <DefineConstants>$(DefineConstants);IS_CLOUDY_SKIES</DefineConstants>
+
+    <EnablePintail>true</EnablePintail>
+    <EnableHarmony>true</EnableHarmony>
+    <EnableTranslation>true</EnableTranslation>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BaseManifest>new</BaseManifest>
+
+    <Name>Cloudy Skies</Name>
+    <UniqueId>leclair.cloudyskies</UniqueId>
+    <Description>A framework mod for adding custom weather types to the game via content packs!</Description>
+    <UpdateKeys>Nexus:23135@main</UpdateKeys>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SMAPIDependency Include="Pathoschild.ContentPatcher" Required="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="LICENSE.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Import Project="..\Common\Common.projitems" Label="Shared" />
+  <Import Project="..\_build\common.targets" />
+</Project>

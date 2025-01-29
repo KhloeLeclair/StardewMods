@@ -1,0 +1,47 @@
+{
+	"mod.name": "多云的天空",
+
+	"setting.weather-tooltip": "显示天气工具提示",
+	"setting.weather-tooltip.about": "启用后，当您将鼠标悬停在时钟的天气图标上时，会显示一个工具提示，显示当前的天气状况名称。",
+
+	"setting.shaders.enable": "允许着色器",
+	"setting.shaders.enable.about": "是否允许自定义天气类型使用着色器。如果禁用此选项，将不会渲染任何着色器层。",
+
+	"setting.shaders": "着色器设置",
+	"setting.shaders.description": "您可以完全禁用着色器，或者在这里禁用特定的着色器。",
+
+	"setting.shaders.specific": "特定着色器",
+
+	"setting.shader.Blur": "模糊",
+	"setting.shader.Distortion": "扭曲",
+	"setting.shader.Colorize": "着色",
+	"setting.shader.Palettize": "调色板化",
+	"setting.shader.Pixelate": "像素化",
+
+	"setting.development": "开发/调试设置",
+
+	"setting.debug": "显示调试时间",
+	"setting.debug.about": "启用后，屏幕上将显示一个计时器，显示更新和渲染天气所花费的时间。这可以帮助确保在创建自定义天气条件时不会过于过分。",
+
+	"setting.debug.shaders": "调试：重新编译着色器",
+	"setting.debug.shaders.about": "启用后，如果着色器的源代码存在于'.fx'文件中，并且旁边有编译后的'.mgfx'文件，Cloudy Skies将尝试使用'mgfxc'实用程序重新编译着色器。",
+
+	"setting.replace-tv-menu": "替换电视天气频道",
+	"setting.replace-tv-menu.about": "启用后，我们将用支持显示更多地点天气的自定义版本替换电视的天气频道。",
+
+	"setting.custom-ginger-isle": "使用自定义姜岛艺术",
+	"setting.custom-ginger-isle.about": "启用后，我们将用更符合其他艺术风格的自定义艺术替换我们的自定义电视天气频道中的姜岛艺术。",
+
+	"tv.select-location": "选择一个地点：",
+
+	"location.stardew-valley": "星露谷物语",
+	"location.calico-desert": "[LocalizedText Strings\\StringsFromCSFiles:Utility.cs.5861]",
+
+	"weather.sunny": "晴朗",
+	"weather.rain": "雨",
+	"weather.debris": "风",
+	"weather.lightning": "雷暴",
+	"weather.festival": "晴朗",
+	"weather.snow": "雪",
+	"weather.green": "绿雨"
+}

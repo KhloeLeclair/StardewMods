@@ -1,0 +1,13 @@
+{
+	"$schema": "https://smapi.io/schemas/manifest.json",
+	"UniqueID": "leclair.mne.samplepack",
+	"Name": "[MNE] Sample Events",
+	"Author": "Khloe Leclair",
+	"Version": "1.1.0",
+	"Description": "Some sample night-time events using More Nightly Events.",
+	"UpdateKeys": [],
+	"ContentPackFor": {
+		"UniqueID": "leclair.morenightlyevents",
+		"MinimumVersion": "0.2.0"
+	}
+}

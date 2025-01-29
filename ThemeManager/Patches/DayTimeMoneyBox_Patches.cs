@@ -1,16 +1,13 @@
 using System;
-using System.Collections.Generic;
-
-using Leclair.Stardew.Common.UI;
-
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 using HarmonyLib;
 
+using Microsoft.Xna.Framework;
+
+using StardewModdingAPI;
+
 using StardewValley;
 using StardewValley.Menus;
-using StardewModdingAPI;
 
 namespace Leclair.Stardew.ThemeManager.Patches;
 

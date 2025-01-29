@@ -174,6 +174,65 @@ public interface IInventoryProvider {
 
 
 /// <summary>
+/// This is an extension of <see cref="IInventoryProvider"/> that allows you
+/// to implement custom logic that runs before and after an inventory is
+/// used for write operations. You can use this to perform locks or to
+/// synchronize an object.
+/// </summary>
+public interface IEventedInventoryProvider : IInventoryProvider {
+
+	/// <summary>
+	/// The callback method you call when we have either obtained exclusive
+	/// access to the inventory, or doing so has failed for some reason.
+	/// </summary>
+	/// <param name="success">Whether or not we have obtained exclusive access</param>
+	delegate void StartExclusiveCallback(bool success);
+
+	/// <summary>
+	/// This is called when we need exclusive access to an inventory to perform
+	/// write operations. You are expected to either return a boolean, or
+	/// return <c>null</c> and then call <paramref name="callback"/>
+	/// when any logic necessary to obtain write access to the inventory is
+	/// completed, and may call it immediately.
+	///
+	/// If this method returns <c>null</c>, then you MUST call onComplete even
+	/// if the object cannot be obtained for write access.
+	///
+	/// If you are using native NetMutex to control exclusive access, you do
+	/// not need to use these methods and can just use the standard
+	/// <see cref="IInventoryProvider.GetMutex(object, GameLocation?, Farmer?)"/>
+	/// and <see cref="IInventoryProvider.IsMutexRequired(object, GameLocation?, Farmer?)"/>
+	/// methods for exclusive access.
+	/// 
+	/// If you do not call onComplete within 5 seconds, the operation will
+	/// time out and an error will be logged / shown to the user.
+	/// </summary>
+	/// <param name="obj">the object</param>
+	/// <param name="location">the map where the object is</param>
+	/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
+	/// <param name="callback">A callback to call when the object has been
+	/// obtained for write access. Call this with <c>true</c> if the object
+	/// was obtained successfully, or <c>false</c> if it could not be
+	/// obtained successfully.</param>
+	/// <returns>Whether there was an immediate success (<c>true</c>), an
+	/// immediate failure (<c>false</c>), or we should expect the callback
+	/// to be called (<c>null</c>).</returns>
+	bool? StartExclusive(object obj, GameLocation? location, Farmer? who, StartExclusiveCallback callback);
+
+	/// <summary>
+	/// This is called whenever we are done using an inventory exclusively,
+	/// and can be used to perform any necessary cleanup logic and to release
+	/// any locks.
+	/// </summary>
+	/// <param name="obj">the object</param>
+	/// <param name="location">the map where the object is</param>
+	/// <param name="who">the player accessing the inventory, or null if no player is involved</param>
+	void EndExclusive(object obj, GameLocation? location, Farmer? who);
+
+}
+
+
+/// <summary>
 /// An <c>IBCInventory</c> represents an item storage that
 /// Better Crafting is interacting with, whether by extracting
 /// items or inserting them.
@@ -270,6 +329,7 @@ public interface IBCInventory {
 	/// number of entries.
 	/// </summary>
 	int GetActualCapacity();
+
 }
 
 
@@ -1219,13 +1279,20 @@ public interface IBetterCraftingMenu {
 /// Better Crafting menu is opened, and serves to allow other mods to add
 /// or remove specific containers from a menu.
 /// </summary>
-public interface IPopulateContainersEvent {
+public interface IPopulateContainersEvent : ISimplePopulateContainersEvent {
 
 	/// <summary>
 	/// The relevant Better Crafting menu.
 	/// </summary>
 	IBetterCraftingMenu Menu { get; }
 
+}
+
+/// <summary>
+/// A simplified interface for the PopulateContainers event that allows
+/// you to remove the IBetterCraftingMenu interface.
+/// </summary>
+public interface ISimplePopulateContainersEvent {
 	/// <summary>
 	/// A list of all the containers this menu should draw items from.
 	/// </summary>
@@ -1236,10 +1303,260 @@ public interface IPopulateContainersEvent {
 	/// own container discovery logic, if you so desire.
 	/// </summary>
 	bool DisableDiscovery { get; set; }
+}
+
+
+
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> whenever the
+/// player opens the category icon picker, and serves to allow other
+/// mods to add icons to the list for the player to pick from.
+/// </summary>
+public interface IDiscoverIconsEvent {
+
+	/// <summary>
+	/// A list of all the extra icons the icon picker should present to
+	/// the player. This expects texture paths to load from game content,
+	/// and source rectangles.
+	/// </summary>
+	IList<(string, Rectangle)> Icons { get; }
 
 }
 
+
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> periodically
+/// whenever the player is using the Better Crafting menu, and allows mods
+/// to override whether or not a player can craft a given recipe in bulk.
+/// This event is also emitted when performing a craft, and will be called
+/// again each iteration if a player is performing bulk crafting.
+/// <seealso cref="IRecipe.CanCraft(Farmer)"/>
+/// </summary>
+public interface ICheckCanCraftEvent {
+
+	/// <summary>
+	/// The player we're performing the check for.
+	/// </summary>
+	Farmer Player { get; }
+
+	/// <summary>
+	/// The recipe we're checking.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player is
+	/// crafting from.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// If this is true, this is a cooking recipe. Otherwise, it's a
+	/// crafting recipe.
+	/// </summary>
+	bool IsCooking { get; }
+
+	/// <summary>
+	/// Signal that the player cannot craft this recipe. A reason
+	/// may be provided and, if one is, it will be displayed to the
+	/// player in a tool-tip when they select the recipe.
+	/// </summary>
+	/// <param name="reason">An optional reason that the recipe
+	/// cannot be crafted. This supports some basic rich text formatting
+	/// using the escape sequences documented here: <see href="https://github.com/KhloeLeclair/StardewMods/blob/main/Almanac/author-guide.md#rich-text"/>
+	/// If you just want to make it red, you can put the string
+	/// <c>@C{red}</c> at the start of your string.</param>
+	void Fail(string? reason = null);
+
+}
+
+
+/// <summary>
+/// This event is emitted by <see cref="IBetterCrafting"/> whenever an item is
+/// being cooked, to allow other mods to apply custom seasoning logic. This will
+/// only ever be fired for cooking recipes and not crafting recipes. Additionally,
+/// this will not be fired if the recipe in question does not produce an <see cref="Item"/>.
+/// 
+/// This event may also be emitted when the bulk crafting menu is opened, in
+/// order to determine a seasoning to display on the menu. In that case, the
+/// <see cref="IsSimulation"/> value will be set to <c>true</c>, the
+/// <see cref="Item"/> instance will be discarded, and no ingredients will
+/// be consumed. Instead, they'll be cached and displayed in the menu.
+///
+/// Please note that this event is designed to be used with <see cref="IIngredient"/>s
+/// and not custom inventory manipulation. This is to allow Better Crafting to
+/// handle consuming ingredients by itself upon success. As such, it does not
+/// expose the list of inventories that the player is working with. This is by
+/// design. Instead, you should use the <see cref="HasIngredients(IEnumerable{IIngredient})"/>
+/// method to check if any necessary items are present and then
+/// <see cref="ApplySeasoning(IEnumerable{IIngredient}?)"/> to consume them.
+/// </summary>
+public interface IApplySeasoningEvent {
+
+	/// <summary>
+	/// The player performing the craft.
+	/// </summary>
+	Farmer Player { get; }
+
+	/// <summary>
+	/// The recipe being crafted.
+	/// </summary>
+	IRecipe Recipe { get; }
+
+	/// <summary>
+	/// The item being crafted. You can freely change this item, including
+	/// replacing it when a new instance. If the craft does not succeed for
+	/// any reason, note that this item will be discarded.
+	/// </summary>
+	Item Item { get; set; }
+
+	/// <summary>
+	/// The <c>BetterCraftingPage</c> menu instance that the player is
+	/// crafting from.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// The current seasoning mode. This event will not be called if the
+	/// seasoning mode is set to <c>Disabled</c>. However, it's still
+	/// useful to know this in case you need to limit your behavior to
+	/// only affect the player's inventory.
+	/// </summary>
+	SeasoningMode SeasoningMode { get; }
+
+	/// <summary>
+	/// If this is true, no craft is actually taking place. Instead, this
+	/// event is being used to determine what seasoning should be
+	/// displayed to the player in the UI. You should perform your usual
+	/// checks, but not necessarily perform any side effects.
+	/// </summary>
+	bool IsSimulation { get; }
+
+	/// <summary>
+	/// Whether or not the base game's Qi Seasoning logic should be used.
+	/// Set this to <c>false</c> to disable it.
+	/// </summary>
+	bool AllowQiSeasoning { get; set; }
+
+	/// <summary>
+	/// Check to see if the player has the provided ingredients in their
+	/// inventory. This is <see cref="SeasoningMode"/>-aware.
+	/// </summary>
+	/// <param name="ingredients">The ingredients to check.</param>
+	bool HasIngredients(IEnumerable<IIngredient> ingredients);
+
+	/// <inheritdoc cref="HasIngredients(IEnumerable{IIngredient})"/>
+	bool HasIngredients(IIngredient ingredient);
+
+	/// <summary>
+	/// Mark that you have applied seasoning to this item. If you supply
+	/// an enumeration of ingredients, those ingredients will be remembered
+	/// and consumed if the craft is a success.
+	/// </summary>
+	/// <param name="ingredients">An optional enumeration of ingredients to consume upon success.</param>
+	void ApplySeasoning(IEnumerable<IIngredient>? ingredients = null);
+
+	/// <inheritdoc cref="ApplySeasoning(IEnumerable{IIngredient}?)"/>
+	void ApplySeasoning(IIngredient? ingredient = null);
+
+	/// <summary>
+	/// Mark that Better Crafting should display a message to the player
+	/// if, after consuming the seasoning ingredient(s), there are not
+	/// enough ingredients to season another item.
+	/// </summary>
+	/// <param name="message">The message to display. If this is not
+	/// set, the default message from the base game will be used.</param>
+	void SetUsedLastMessage(string? message = null);
+
+	/// <summary>
+	/// A dictionary for looking up matching ingredient items. You can
+	/// check this after calling <see cref="HasIngredients(IEnumerable{IIngredient})"/>
+	/// to determine which items may be consumed.
+	/// 
+	/// If an <see cref="IIngredient"/> does not have an entry in this
+	/// list, then that ingredient does not support the ingredient
+	/// matching feature.
+	///
+	/// You may remove an item from the list to prevent it from
+	/// being consumed but we will not perform extra checks for
+	/// you to ensure that a sufficient quantity of items remain.
+	/// </summary>
+	IReadOnlyDictionary<IIngredient, List<Item>> MatchingItems { get; }
+
+}
+
+
+public enum MaxQuality {
+	Disabled,
+	None,
+	Silver,
+	Gold,
+	Iridium
+};
+
+public enum SeasoningMode {
+	Disabled,
+	Enabled,
+	InventoryOnly
+}
+
+public interface IBetterCraftingConfig {
+
+	bool ShowSourceModInTooltip { get; }
+
+	bool UseFullHeight { get; }
+
+	bool ReplaceCooking { get; }
+
+	bool ReplaceCrafting { get; }
+
+	bool UseCategories { get; }
+
+	bool LowQualityFirst { get; }
+
+	MaxQuality MaxQuality { get; }
+
+	bool UseUniformGrid { get; }
+
+	bool SortBigLast { get; }
+
+	bool HideUnknown { get; }
+
+	SeasoningMode UseSeasoning { get; }
+
+	bool UseDiscovery { get; }
+
+	int MaxInventories { get; }
+
+	int MaxDistance { get; }
+
+	int MaxCheckedTiles { get; }
+
+	int MaxWorkbenchGap { get; }
+
+	int NearbyRadius { get; }
+
+	bool UseDiagonalConnections { get; }
+
+	bool EnableCookoutWorkbench { get; }
+
+	bool EnableCookoutLongevity { get; }
+
+	bool EnableCookoutExpensive { get; }
+
+	bool UseTransfer { get; }
+
+}
+
+
 public interface IBetterCrafting {
+
+	/// <summary>
+	/// This allows you to read some configuration values from
+	/// Better Crafting, which may be useful when interacting
+	/// with the API.
+	/// </summary>
+	IBetterCraftingConfig Config { get; }
 
 	#region GUI
 
@@ -1297,15 +1614,42 @@ public interface IBetterCrafting {
 	/// </summary>
 	IBetterCraftingMenu? GetActiveMenu();
 
+	/// <summary>
+	/// Cast an <see cref="IClickableMenu"/> to a <see cref="IBetterCraftingMenu"/>
+	/// if it's an instance of our menu, or return <c>null</c> otherwise.
+	/// </summary>
+	/// <param name="menu">The menu to cast.</param>
+	IBetterCraftingMenu? GetMenu(IClickableMenu menu);
+
 	#endregion
 
 	#region Events
+
+	/// <summary>
+	/// This event is fired when the player opens the category icon picker,
+	/// and can be used to register extra icons for the player to pick from.
+	/// </summary>
+	event Action<IDiscoverIconsEvent>? DiscoverIcons;
 
 	/// <summary>
 	/// This event is fired whenever a new Better Crafting menu is opened,
 	/// allowing other mods to manipulate the list of containers.
 	/// </summary>
 	event Action<IPopulateContainersEvent>? MenuPopulateContainers;
+
+	/// <summary>
+	/// This event is fired whenever a new Better Crafting menu is opened,
+	/// allowing other mods to manipulate the list of containers. This
+	/// version of the event doesn't include a reference to the menu, which
+	/// makes it possible to reduce the amount of the API file you're
+	/// using by quite a bit.
+	/// </summary>
+	event Action<ISimplePopulateContainersEvent>? MenuSimplePopulateContainers;
+
+	/// <summary>
+	/// This event is fired whenever a Better Crafting menu is closed.
+	/// </summary>
+	event Action<IClickableMenu>? MenuClosing;
 
 	/// <summary>
 	/// This event is fired whenever a player crafts an item using
@@ -1321,6 +1665,31 @@ public interface IBetterCrafting {
 	/// <see cref="IPostCraftEventRecipe.PostCraft(IPostCraftEvent)"/>.
 	/// </summary>
 	event Action<IPostCraftEvent>? PostCraft;
+
+	/// <summary>
+	/// This event is fired periodically when the crafting menu is
+	/// open in order to determine if a player can currently craft
+	/// a recipe. This is similar to the <see cref="IRecipe.CanCraft(Farmer)"/>
+	/// method, but a general event for overriding all recipes.
+	///
+	/// The result of this check may be cached by Better Crafting
+	/// for performance reasons. In such an event, the cache will
+	/// be invalidated if Better Crafting detects any inventory
+	/// changes, as well as after a certain period of time has
+	/// elapsed. Additionally, this is called again immediately
+	/// before performing a craft.
+	/// </summary>
+	event Action<ICheckCanCraftEvent>? CheckCanCraft;
+
+	/// <summary>
+	/// This event is fired when cooking, and not crafting, and
+	/// allows other mods to override the base game's seasoning
+	/// behavior. You can use this event to make any changes to
+	/// the crafted item you want, and you can set an enumeration
+	/// of <see cref="IIngredient"/>s that will be consumed only
+	/// if the craft is successfully completed.
+	/// </summary>
+	event Action<IApplySeasoningEvent>? ApplySeasoning;
 
 	#endregion
 
@@ -1493,6 +1862,12 @@ public interface IBetterCrafting {
 	/// items first.</param>
 	/// <param name="consumedItems">An optional list that will contain copies
 	/// of the consumed Items.</param>
+	/// <param name="matchedItems">An optional list of item instances that,
+	/// if provided, will prevent any item instances not in the list from
+	/// being consumed.</param>
+	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null, IList<Item>? matchedItems = null);
+
+	[Obsolete("Use the version with an optional parameter for matchedItems.")]
 	void ConsumeItems(IEnumerable<(Func<Item, bool>, int)> items, Farmer? who, IEnumerable<IBCInventory>? inventories, int maxQuality = int.MaxValue, bool lowQualityFirst = false, IList<Item>? consumedItems = null);
 
 	[Obsolete("Use the version with an optional parameter for consumedItems.")]
@@ -1510,7 +1885,12 @@ public interface IBetterCrafting {
 	/// <param name="who">An optional player, to include that player's inventory in the search.</param>
 	/// <param name="items">An optional enumeration of <see cref="Item"/>s to include in the search.</param>
 	/// <param name="maxQuality">The maximum quality of item to count.</param>
+	/// <param name="matchingItems">An optional list of item instances. If set,
+	/// we will add every counted item instance to the list.</param>
 	/// <returns>The number of matching items.</returns>
+	int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue, IList<Item>? matchingItems = null);
+
+	[Obsolete("Use the version with an optional matchingItems parameter.")]
 	int CountItem(Func<Item, bool> predicate, Farmer? who, IEnumerable<Item?>? items, int maxQuality = int.MaxValue);
 
 	#endregion
@@ -1612,6 +1992,14 @@ public interface IBetterCrafting {
 	/// </summary>
 	/// <param name="type"></param>
 	void UnregisterInventoryProvider(Type type);
+
+	/// <summary>
+	/// Get an inventory provider for the provided thing. If there are no
+	/// inventory providers capable of handling the thing, returns
+	/// <c>null</c> instead.
+	/// </summary>
+	/// <param name="thing">The instance to get an inventory provider for.</param>
+	IInventoryProvider? GetProvider(object thing);
 
 	#endregion
 

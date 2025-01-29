@@ -1,17 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
 
 using HarmonyLib;
 
-using Netcode;
-
 using StardewModdingAPI;
 
-using StardewValley;
 using StardewValley.Menus;
-using StardewValley.Network;
 
 namespace Leclair.Stardew.BetterCrafting.Patches;
 
@@ -38,7 +32,7 @@ public static class CraftingPage_Patches {
 		try {
 			var exclusives = ModEntry.Instance?.Stations?.GetExclusiveRecipes(__instance.cooking);
 			if (exclusives != null)
-				foreach(string recipe in exclusives)
+				foreach (string recipe in exclusives)
 					__result.Remove(recipe);
 
 		} catch (Exception ex) {

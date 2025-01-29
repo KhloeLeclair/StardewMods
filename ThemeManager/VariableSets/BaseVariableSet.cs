@@ -2,15 +2,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 
 using HarmonyLib;
 
-using StardewModdingAPI;
+using Leclair.Stardew.Common;
+using Leclair.Stardew.ThemeManager.Serialization;
 
 using Newtonsoft.Json;
-using Leclair.Stardew.ThemeManager.Serialization;
-using System.Linq;
+
+using StardewModdingAPI;
 
 namespace Leclair.Stardew.ThemeManager.VariableSets;
 
@@ -28,14 +30,14 @@ public abstract class BaseVariableSet<TValue> : IVariableSet<TValue> {
 
 	public static void RegisterFunction(Type type, string name, TryFunctionDelegate handler) {
 		Dictionary<string, TryFunctionDelegate>? values;
-		lock((Functions as ICollection).SyncRoot) {
+		lock ((Functions as ICollection).SyncRoot) {
 			if (!Functions.TryGetValue(type, out values)) {
 				values = new(StringComparer.OrdinalIgnoreCase);
 				Functions[type] = values;
 			}
 		}
 
-		lock((values as ICollection).SyncRoot) {
+		lock ((values as ICollection).SyncRoot) {
 			if (!values.ContainsKey(name))
 				values.Add(name, handler);
 		}
@@ -61,7 +63,7 @@ public abstract class BaseVariableSet<TValue> : IVariableSet<TValue> {
 				result.TryAdd(method.Name[9..], @delegate);
 
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Unable to create function delegate for {ModEntry.Instance.ToTargetString(method)}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Unable to create function delegate for {ReflectionHelper.ToTargetString(method)}: {ex}", LogLevel.Error);
 				continue;
 			}
 		}

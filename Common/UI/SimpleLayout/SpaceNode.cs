@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -32,3 +32,5 @@ public class SpaceNode : ISimpleNode {
 		/* spaces don't draw ~ */
 	}
 }
+
+#endif

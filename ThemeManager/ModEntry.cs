@@ -1,45 +1,38 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 
 using HarmonyLib;
 
-using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
-using Leclair.Stardew.Common.UI;
-
-using StardewValley;
-using StardewValley.Menus;
+using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
+using Leclair.Stardew.ThemeManager.Managers;
+using Leclair.Stardew.ThemeManager.Models;
+using Leclair.Stardew.ThemeManager.Patches;
+using Leclair.Stardew.ThemeManager.VariableSets;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
-using Leclair.Stardew.Common;
-
-using Leclair.Stardew.ThemeManager.Models;
-using Leclair.Stardew.ThemeManager.Patches;
-using Leclair.Stardew.ThemeManager.Serialization;
+using StardewValley;
+using StardewValley.Menus;
 
 using SMAPIJsonHelper = StardewModdingAPI.Toolkit.Serialization.JsonHelper;
-using Leclair.Stardew.ThemeManager.Managers;
-using Leclair.Stardew.ThemeManager.VariableSets;
-using Nanoray.Pintail;
-using System.Security.AccessControl;
-using Leclair.Stardew.Common.Extensions;
 
 namespace Leclair.Stardew.ThemeManager;
 
-public partial class ModEntry : ModSubscriber {
+public partial class ModEntry : PintailModSubscriber {
 
-	#nullable disable
+#nullable disable
 	public static ModEntry Instance { get; private set; }
 	internal ModConfig Config;
-	#nullable enable
+#nullable enable
 
 	#region Fields - Integrations
 
@@ -78,7 +71,7 @@ public partial class ModEntry : ModSubscriber {
 
 	internal Dictionary<string, PatchGroupData>? PatchGroups;
 
-	internal readonly Dictionary<MethodInfo, DynamicPatcher> DynamicPatchers = new();
+	internal readonly Dictionary<MethodBase, DynamicPatcher> DynamicPatchers = new();
 
 	#endregion
 
@@ -94,12 +87,12 @@ public partial class ModEntry : ModSubscriber {
 
 	// Temporarily disable nullable because these should always be set before
 	// any other code runs.
-	#nullable disable
+#nullable disable
 
 	internal SpriteFontManager SpriteFontManager;
 	internal SpriteTextManager SpriteTextManager;
 
-	#nullable enable
+#nullable enable
 
 	#endregion
 
@@ -129,14 +122,15 @@ public partial class ModEntry : ModSubscriber {
 		// TODO: NumberSelectionMenu
 
 		DayTimeMoneyBox_Patches.Patch(this);
-		SpriteBatch_Patches.Patch(this);
+		//SpriteBatch_Patches.Patch(this);
 		Game1_Patches.Patch(this);
 		SpriteText_Patches.Patch(this);
-		OptionsDropDown_Patches.Patch(this);
+		SObject_Patches.Patch(this);
 
 		// Read Configuration
 		Config = Helper.ReadConfig<ModConfig>();
-		SpriteBatch_Patches.AlignText = Config.AlignText;
+
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 
 		// I18n
 		I18n.Init(Helper.Translation);
@@ -177,12 +171,12 @@ public partial class ModEntry : ModSubscriber {
 
 	internal void ResetConfig() {
 		Config = new ModConfig();
-		Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 	}
 
 	internal void SaveConfig() {
 		Helper.WriteConfig(Config);
-		Patches.SpriteBatch_Patches.AlignText = Config.AlignText;
+		OptionsDropDown_Patches.Patch(this, Config.PatchDropdown);
 	}
 
 	[MemberNotNullWhen(true, nameof(intGMCM))]
@@ -216,7 +210,7 @@ public partial class ModEntry : ModSubscriber {
 			name: I18n.Setting_GameTheme,
 			tooltip: I18n.Setting_GameTheme_Tip,
 			get: c => c.StardewTheme,
-			set: (c,v) => {
+			set: (c, v) => {
 				c.StardewTheme = v;
 				GameThemeManager!._SelectTheme(v);
 			},
@@ -261,14 +255,21 @@ public partial class ModEntry : ModSubscriber {
 		);
 
 		intGMCM.Add(
+			name: I18n.Setting_PatchDropdown,
+			tooltip: I18n.Setting_PatchDropdown_Tip,
+			get: c => c.PatchDropdown,
+			set: (c, v) => c.PatchDropdown = v
+		);
+
+		/*intGMCM.Add(
 			name: I18n.Setting_FixText,
 			tooltip: I18n.Setting_FixText_Tip,
 			get: c => c.AlignText,
 			set: (c, v) => {
 				c.AlignText = v;
-				Patches.SpriteBatch_Patches.AlignText = v;
+				//Patches.SpriteBatch_Patches.AlignText = v;
 			}
-		);
+		);*/
 
 		var clock_choices = new Dictionary<string, Func<string>> {
 			{ "by-theme", I18n.Setting_FromTheme },
@@ -380,7 +381,7 @@ public partial class ModEntry : ModSubscriber {
 			JsonHelper = new();
 			var converters = JsonHelper.JsonSettings.Converters;
 			converters.Clear();
-			foreach(var converter in helper.JsonSettings.Converters)
+			foreach (var converter in helper.JsonSettings.Converters)
 				if (converter.GetType().Name != "ColorConverter")
 					converters.Add(converter);
 
@@ -408,7 +409,7 @@ public partial class ModEntry : ModSubscriber {
 				return result;
 			return null;
 		}
-		
+
 		return pack.ReadJsonFile<TModel>(path);
 	}
 
@@ -462,7 +463,14 @@ public partial class ModEntry : ModSubscriber {
 	/// included. By default, this is null and a list will be included only
 	/// if the member is a constructor or method AND there is potential
 	/// ambiguity in selecting the correct method.</param>
-	internal string? ToTargetString(MemberInfo member, bool replaceMenuWithHash = true, bool? includeTypes = null) {
+	/// <param name="fullTypes">Whether or not the type list should include
+	/// the full types, or just the minimum necessary to uniquely match
+	/// the method.</param>
+	[Obsolete("Use ReflectionHelper instead.")]
+	internal string? ToTargetString(MemberInfo member, bool replaceMenuWithHash = true, bool? includeTypes = null, bool fullTypes = true) {
+		return ReflectionHelper.ToTargetString(member, replaceMenuWithHash, includeTypes, fullTypes);
+	}
+	/*
 		string? type = member.DeclaringType?.FullName;
 		if (type is null)
 			return null;
@@ -470,23 +478,43 @@ public partial class ModEntry : ModSubscriber {
 		if (type.StartsWith("StardewValley.Menus.") && replaceMenuWithHash)
 			type = $"#{type[20..]}";
 
-		if (!includeTypes.HasValue) {
+		bool[]? differingTypes = null;
+
+		if (!includeTypes.HasValue || !fullTypes) {
+			IEnumerable<MethodBase>? methods = null;
+
 			if (member is ConstructorInfo) {
 				var ctors = member.DeclaringType is not null ?
 					AccessTools.GetDeclaredConstructors(member.DeclaringType)
 					: null;
 
-				includeTypes = ctors is null || ctors.Count > 1 || ctors[0] != member;
+				if (!includeTypes.HasValue)
+					includeTypes = ctors is null || ctors.Count > 1 || ctors[0] != member;
+
+				if (ctors is not null && ctors.Count > 1)
+					methods = ctors;
 
 			} else if (member is MethodBase) {
 				var meths = member.DeclaringType is not null ?
 					AccessTools.GetDeclaredMethods(member.DeclaringType).Where(x => x.Name.Equals(member.Name)).ToArray()
 					: null;
 
-				includeTypes = meths is null || meths.Length > 1 || meths[0] != member;
+				if (!includeTypes.HasValue)
+					includeTypes = meths is null || meths.Length > 1 || meths[0] != member;
 
-			} else
+				if (meths is not null && meths.Length > 1)
+					methods = meths;
+
+			} else if (!includeTypes.HasValue)
 				includeTypes = false;
+
+			// If we have methods, work on the types.
+			if (methods is not null && member is MethodBase meth) {
+				var parameters = meth.GetParameters();
+				differingTypes = new bool[parameters.Length];
+
+				// TODO: This.
+			}
 		}
 
 		string? argumentList;
@@ -500,16 +528,15 @@ public partial class ModEntry : ModSubscriber {
 
 				for (int i = 0; i < parms.Length; i++)
 					args[i] = parms[i].ParameterType?.Name ?? string.Empty;
+
 			} else if (member is PropertyInfo prop)
-				args = new string[] {
-				prop.PropertyType?.Name ?? string.Empty
-			};
+				args = [prop.PropertyType?.Name ?? string.Empty];
+
 			else if (member is FieldInfo field)
-				args = new string[] {
-				field.FieldType?.Name ?? string.Empty
-			};
+				args = [field.FieldType?.Name ?? string.Empty];
+
 			else
-				args = Array.Empty<string>();
+				args = [];
 
 			argumentList = $"({string.Join(',', args)})";
 		} else
@@ -521,15 +548,29 @@ public partial class ModEntry : ModSubscriber {
 		else
 			assembly = $"{assembly}!";
 
-		return $"{assembly}{type}:{member.Name}{argumentList}";
+		string memberName = member.Name;
+		/*if (member is ConstructorInfo) {
+			memberName = "";
+			if (string.IsNullOrEmpty(argumentList))
+				argumentList = "()";
+		}* /
+
+		return $"{assembly}{type}:{memberName}{argumentList}";
+	}*/
+
+	internal static MethodInfo ResolveMethod(string input, Type? current = null) {
+		var result = ResolveMember<MethodInfo>(input, current);
+		if (result?.Item2 is null)
+			throw new ArgumentNullException($"Unable to find method: {input}");
+		return result.Value.Item2;
 	}
 
-	internal (Type, TValue)? ResolveMember<TValue>(string input, Type? current = null) where TValue : MemberInfo {
+	internal static (Type, TValue)? ResolveMember<TValue>(string input, Type? current = null) where TValue : MemberInfo {
 		var result = ResolveMembers<TValue>(input, current);
 		return result.FirstOrDefault();
 	}
 
-	internal IEnumerable<(Type, TValue)> ResolveMembers<TValue>(string input, Type? current = null) where TValue : MemberInfo {
+	internal static IEnumerable<(Type, TValue)> ResolveMembers<TValue>(string input, Type? current = null) where TValue : MemberInfo {
 		if (input == null)
 			yield break;
 
@@ -578,16 +619,23 @@ public partial class ModEntry : ModSubscriber {
 			typeName = $"StardewValley.Menus.{typeName[1..]}";
 		else if (typeName.Equals("Game1"))
 			typeName = "StardewValley.Game1";
+		else if (typeName.Equals("Utility"))
+			typeName = "StardewValley.Utility";
+		else if (typeName.Equals("SpriteText"))
+			typeName = "StardewValley.BellsAndWhistles.SpriteText";
 
 		string[]? types = null;
+		bool type_length_match = true;
+
 		if (entryName.EndsWith(')')) {
+			type_length_match = !entryName.EndsWith(",*)");
 			idx = entryName.IndexOf('(');
 
 			if (idx != -1) {
-				types = entryName[(idx + 1)..(entryName.Length - 1)].Split(',');
+				types = entryName[(idx + 1)..(entryName.Length - (type_length_match ? 1 : 3))].Split(',');
 				entryName = entryName[..idx];
 
-				if (types.Length > 1 && typeof(TValue) != typeof(MethodInfo))
+				if (types.Length > 1 && !typeof(MethodBase).IsAssignableFrom(typeof(TValue)))
 					yield break;
 			}
 		}
@@ -602,7 +650,15 @@ public partial class ModEntry : ModSubscriber {
 
 				List<TValue>? members;
 
-				if (typeof(TValue) == typeof(MethodInfo))
+				if (typeof(TValue) == typeof(MethodBase)) {
+					members = AccessTools.GetDeclaredConstructors(type)
+						.Select(ctor => ctor as MethodBase)
+						.Concat(AccessTools.GetDeclaredMethods(type)
+							.Select(meth => meth as MethodBase)
+						)
+						.ToList() as List<TValue>;
+
+				} else if (typeof(TValue) == typeof(MethodInfo))
 					members = AccessTools.GetDeclaredMethods(type) as List<TValue>;
 				else if (typeof(TValue) == typeof(FieldInfo))
 					members = AccessTools.GetDeclaredFields(type) as List<TValue>;
@@ -616,14 +672,17 @@ public partial class ModEntry : ModSubscriber {
 				if (members is null)
 					continue;
 
-				foreach(var member in members) {
-					if (member is null || !member.Name.Equals(entryName))
+				foreach (var member in members) {
+					if (member is null || (!member.Name.Equals(entryName) && !(member is ConstructorInfo && string.IsNullOrEmpty(entryName))))
 						continue;
 
 					if (types is not null) {
 						if (member is MethodBase method) {
 							var parms = method.GetParameters();
-							if (parms.Length != types.Length)
+							if (type_length_match
+								? (parms.Length != types.Length)
+								: (parms.Length < types.Length)
+							)
 								continue;
 
 							bool valid = true;
@@ -631,6 +690,15 @@ public partial class ModEntry : ModSubscriber {
 								string inp = types[i];
 								if (string.IsNullOrEmpty(inp))
 									continue;
+
+								if (inp.Equals("int"))
+									inp = typeof(int).Name;
+								else if (inp.Equals("long"))
+									inp = typeof(long).Name;
+								else if (inp.Equals("float"))
+									inp = typeof(float).Name;
+								else if (inp.Equals("double"))
+									inp = typeof(double).Name;
 
 								var parm = parms[i];
 								if (!string.Equals(parm.ParameterType.FullName, inp, StringComparison.OrdinalIgnoreCase) &&
@@ -674,142 +742,6 @@ public partial class ModEntry : ModSubscriber {
 
 	#endregion
 
-	#region Pin the Tail on Pintail
-
-	private IProxyManager<string>? SMAPI_ProxyManager;
-
-	/// <summary>
-	/// Grab SMAPI's ProxyManager so we use the same Pintail instances as
-	/// SMAPI's API proxying.
-	/// </summary>
-	public IProxyManager<string>? GetProxyManager() {
-		if (SMAPI_ProxyManager is not null)
-			return SMAPI_ProxyManager;
-
-		try {
-			var field = AccessTools.Field(Helper.ModRegistry.GetType(), "ProxyFactory");
-			object? InterfaceProxyFactory = field.GetValue(Helper.ModRegistry);
-			if (InterfaceProxyFactory is null)
-				throw new ArgumentNullException(nameof(InterfaceProxyFactory));
-
-			field = AccessTools.Field(InterfaceProxyFactory.GetType(), "ProxyManager");
-			object? ProxyManager = field.GetValue(InterfaceProxyFactory);
-
-			if (ProxyManager is IProxyManager<string> pms)
-				SMAPI_ProxyManager = pms;
-			else
-				throw new ArgumentException(nameof(ProxyManager));
-
-		} catch(Exception ex) {
-			Log($"Unable to grab ProxyManager from SMAPI: {ex}", LogLevel.Error);
-		}
-
-		return SMAPI_ProxyManager;
-	}
-
-	public bool CanProxy<T>(Type destinationType, string destinationModId) {
-		return CanProxy(typeof(T), destinationType, destinationModId);
-	}
-
-	public bool CanProxy(Type sourceType, Type destinationType, string destinationModId) {
-		return CanProxy(sourceType, ModManifest.UniqueID, destinationType, destinationModId);
-	}
-
-	public bool CanProxy(Type sourceType, string sourceModId, Type destinationType, string destinationModId) {
-		if (sourceModId == destinationModId)
-			return false;
-
-		var proxy = GetProxyManager();
-		if (proxy is null)
-			return false;
-
-		try {
-			// Try to un-proxy
-			foreach (Type itype in sourceType.GetInterfacesRecursively(includingSelf: true)) {
-				var unfactory = proxy.GetProxyFactory(new ProxyInfo<string>(
-					target: new TypeInfo<string>(sourceModId, destinationType),
-					proxy: new TypeInfo<string>(destinationModId, itype)
-				));
-
-				if (unfactory is null)
-					continue;
-
-				return true;
-			}
-
-			proxy.ObtainProxyFactory(new ProxyInfo<string>(
-				target: new TypeInfo<string>(sourceModId, sourceType),
-				proxy: new TypeInfo<string>(destinationModId, destinationType)
-			));
-
-			return true;
-		} catch {
-			return false;
-		}
-	}
-
-	public bool TryProxyRemote<T>(object? sourceInstance, string sourceModId, [NotNullWhen(true)] out T? destinationInstance, bool silent = false, Type? sourceType = null) {
-		if (TryProxy(sourceInstance, sourceModId, typeof(T), ModManifest.UniqueID, out object? obj, silent: silent, sourceType: sourceType) && obj is T tobj) {
-			destinationInstance = tobj;
-			return true;
-		}
-
-		destinationInstance = default;
-		return false;
-	}
-
-	public bool TryProxy(object? sourceInstance, string sourceModId, Type destinationType, string destinationModId, [NotNullWhen(true)] out object? destinationInstance, bool silent = false, Type? sourceType = null) {
-		var proxy = GetProxyManager();
-		if (sourceModId == destinationModId || proxy is null || sourceInstance is null) {
-			destinationInstance = null;
-			return false;
-		}
-
-		try {
-			sourceType ??= sourceInstance.GetType();
-
-			// Short circuit Pintail proxies if we can.
-			if (sourceType.GetField("__Target", BindingFlags.Instance | BindingFlags.NonPublic) is FieldInfo field && destinationType.IsAssignableFrom(field.FieldType)) {
-				destinationInstance = field.GetValue(sourceInstance);
-				if (destinationInstance is not null)
-					return true;
-			}
-
-			// Try to un-proxy
-			foreach (Type itype in sourceType.GetInterfacesRecursively(includingSelf: true)) {
-				var unfactory = proxy.GetProxyFactory(new ProxyInfo<string>(
-					target: new TypeInfo<string>(sourceModId, destinationType),
-					proxy: new TypeInfo<string>(destinationModId, itype)
-				));
-
-				if (unfactory is null)
-					continue;
-
-				if (unfactory.TryUnproxy(proxy, sourceInstance, out object? unproxied)) {
-					destinationInstance = unproxied;
-					return true;
-				}
-			}
-
-			var factory = proxy.ObtainProxyFactory(new ProxyInfo<string>(
-				target: new TypeInfo<string>(sourceModId, sourceType),
-				proxy: new TypeInfo<string>(destinationModId, destinationType)
-			));
-
-			destinationInstance = factory.ObtainProxy(proxy, sourceInstance);
-			return true;
-
-		} catch(Exception ex) {
-			if (!silent)
-				Log($"Unable to proxy type {sourceInstance.GetType()} to {destinationType}: {ex}", LogLevel.Debug);
-			destinationInstance = null;
-			return false;
-		}
-	}
-
-
-	#endregion
-
 	#region Patch Group Handling
 
 	/// <summary>
@@ -833,7 +765,7 @@ public partial class ModEntry : ModSubscriber {
 		int packs = 0;
 		int packloaded = 0;
 
-		foreach(var cp in Helper.ContentPacks.GetOwned()) {
+		foreach (var cp in Helper.ContentPacks.GetOwned()) {
 			int count = _LoadPatchesFrom(result, cp.DirectoryPath, "patches", cp.ModContent);
 			if (count > 0) {
 				packs++;
@@ -861,13 +793,13 @@ public partial class ModEntry : ModSubscriber {
 
 		int count = 0;
 
-		foreach(string file in Directory.EnumerateFiles(path, "*.json")) {
+		foreach (string file in Directory.EnumerateFiles(path, "*.json")) {
 			string relative = Path.GetRelativePath(root, file);
 			PatchGroupData? data;
 			try {
 				data = helper.Load<PatchGroupData>(relative);
 
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				Log($"Unable to read patch data from {file}: {ex}", LogLevel.Error);
 				continue;
 			}
@@ -878,7 +810,7 @@ public partial class ModEntry : ModSubscriber {
 			// Check to see if all the required mods are present.
 			data.CanUse = true;
 			if (data.RequiredMods is not null)
-				foreach(var entry in data.RequiredMods) {
+				foreach (var entry in data.RequiredMods) {
 					var info = Helper.ModRegistry.Get(entry.UniqueID);
 					if (!entry.Matches(info)) {
 						data.CanUse = false;
@@ -887,7 +819,7 @@ public partial class ModEntry : ModSubscriber {
 				}
 
 			if (data.ForbiddenMods is not null)
-				foreach(var entry in data.ForbiddenMods) {
+				foreach (var entry in data.ForbiddenMods) {
 					var info = Helper.ModRegistry.Get(entry.UniqueID);
 					if (entry.Matches(info)) {
 						data.CanUse = false;
@@ -929,7 +861,7 @@ public partial class ModEntry : ModSubscriber {
 
 				foreach (var entry in patch.Patches) {
 					if (!patch.Methods.TryGetValue(entry.Key, out var methods)) {
-						methods = ResolveMembers<MethodInfo>(entry.Key, null).Select(x => x.Item2).ToArray();
+						methods = ResolveMembers<MethodBase>(entry.Key, null).Select(x => x.Item2).ToArray();
 						patch.Methods[entry.Key] = methods;
 					}
 
@@ -942,7 +874,7 @@ public partial class ModEntry : ModSubscriber {
 						patcher.AddPatch(entry.Value);
 					}
 
-					if (methods.Length == 0)
+					if (methods.Length == 0 && entry.Value.WarnIfNotFound)
 						Log($"Unable to apply method patch for patch {key}. Cannot find matching method: {entry.Key}", LogLevel.Warn);
 				}
 			}
@@ -955,26 +887,30 @@ public partial class ModEntry : ModSubscriber {
 		}
 	}
 
-	private void OnStardewThemeChanged(object? sender, IThemeChangedEvent<GameTheme> e) {
+	private void OnStardewThemeChanged(IThemeChangedEvent<GameTheme> e) {
 		GameTheme = e.NewData;
 
 		GameTheme.ColorVariables ??= new ColorVariableSet();
 		GameTheme.FontVariables ??= new FontVariableSet();
 		GameTheme.TextureVariables ??= new TextureVariableSet();
 		GameTheme.BmFontVariables ??= new BmFontVariableSet();
+		GameTheme.ColorAlphaVariables ??= new FloatVariableSet();
 
 		// Assign the patch variables.
 		GameTheme.ColorVariables.DefaultValues = GameTheme.PatchColorVariables;
 		GameTheme.FontVariables.DefaultValues = GameTheme.PatchFontVariables;
 		GameTheme.TextureVariables.DefaultValues = GameTheme.PatchTextureVariables;
 		GameTheme.BmFontVariables.DefaultValues = GameTheme.PatchBmFontVariables;
+		GameTheme.ColorAlphaVariables.DefaultValues = GameTheme.PatchColorAlphaVariables;
 
 		// Access SpriteTextColors to force all the theme's data to build.
-		int _ = GameTheme.SpriteTextColors.Count;
+		int _ = GameTheme.IndexedSpriteTextColors.Count;
+		_ = GameTheme.SpriteTextColorSets.Count;
 
 		// Apply the text color / text shadow color to the fields in Game1.
 		Game1.textColor = GameTheme.ColorVariables.GetValueOrDefault("Text", GameThemeManager!.DefaultTheme.ColorVariables["Text"]);
 		Game1.textShadowColor = GameTheme.ColorVariables.GetValueOrDefault("TextShadow", GameThemeManager!.DefaultTheme.ColorVariables["TextShadow"]);
+		Game1.textShadowDarkerColor = GameTheme.ColorVariables.GetValueOrDefault("TextShadowAlt", GameThemeManager!.DefaultTheme.ColorVariables["TextShadowAlt"]);
 		Game1.unselectedOptionColor = GameTheme.ColorVariables.GetValueOrDefault("UnselectedOption", GameThemeManager!.DefaultTheme.ColorVariables["UnselectedOption"]);
 
 		// Apply the font fields in Game1.
@@ -986,17 +922,25 @@ public partial class ModEntry : ModSubscriber {
 
 		// Update the values used by the patches.
 		DynamicPatcher.UpdateColors(GameTheme.ColorVariables);
+		DynamicPatcher.UpdateSpriteTextColors(GameTheme.SpriteTextColorSets);
 		DynamicPatcher.UpdateFonts(GameTheme.FontVariables);
 		DynamicPatcher.UpdateTextures(GameTheme.TextureVariables);
 		DynamicPatcher.UpdateBmFonts(GameTheme.BmFontVariables);
+		DynamicPatcher.UpdateColorAlphas(GameTheme.ColorAlphaVariables);
 	}
 
+	[Subscriber]
+	[EventPriority((EventPriority) int.MinValue)]
+	private void AfterGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
+		if (builder is not null)
+			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+	}
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
 		// Integrations
 		intCP = new(this);
-		CheckRecommendedIntegrations();
 
 		// Load Patches
 		LoadPatchGroups();
@@ -1085,13 +1029,15 @@ public partial class ModEntry : ModSubscriber {
 			if (field is not null) {
 				try {
 					GameContentManager_Instance = field.GetValue(Helper.GameContent);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"Unable to read GameContentManager from GameContent helper. Asset loading will break.", LogLevel.Error, ex);
 					return;
 				}
 
 				if (GameContentManager_Instance is not null)
-					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public);
+					GameContentManager_DoesAssetExist = GameContentManager_Instance.GetType().GetMethod("DoesAssetExist", BindingFlags.Instance | BindingFlags.Public, [
+						typeof(IAssetName)
+					]);
 			}
 		}
 	}
@@ -1110,7 +1056,7 @@ public partial class ModEntry : ModSubscriber {
 				try {
 					var generic = GameContentManager_DoesAssetExist.MakeGenericMethod(typeof(T));
 					@delegate = generic.CreateDelegate<GCMDoesAssetExist<T>>(GameContentManager_Instance);
-				} catch(Exception ex) {
+				} catch (Exception ex) {
 					Log($"Unable to create DoesAssetExist delegate: {ex}", LogLevel.Error);
 					@delegate = null;
 				}
@@ -1125,10 +1071,16 @@ public partial class ModEntry : ModSubscriber {
 
 	#endregion
 
-	public bool DoesAssetExist<T>([NotNullWhen(true)] IAssetName? name) {
+	public bool DoesAssetExist<T>([NotNullWhen(true)] IAssetName? name) where T : notnull {
 		if (name is null)
 			return false;
 
+		DeclareAssetType<T>(name);
+
+#if UPDATED_SMAPI
+		return Helper.GameContent.DoesAssetExist<T>(name);
+
+#else
 		LoadGameContentManager();
 		if (GameContentManager_DoesAssetExist is null)
 			return false;
@@ -1139,6 +1091,7 @@ public partial class ModEntry : ModSubscriber {
 
 		DeclareAssetType<T>(name);
 		return @delegate(name);
+#endif
 	}
 
 	public void DeclareAssetType<T>(IAssetName? assetName) {
@@ -1161,14 +1114,14 @@ public partial class ModEntry : ModSubscriber {
 		bool reload_spritefonts = false;
 		bool reload_spritetext = false;
 
-		foreach(var entry in e.Names) {
+		foreach (var entry in e.Names) {
 			if (ManagersByThemeAsset.TryGetValue(entry.Name, out var manager))
 				manager.InvalidateThemeData();
 
 			if (ManagedAssets.TryGetValue(entry, out var reference) && reference.TryGetTarget(out var managed))
 				managed.MarkStale();
 
-			switch(entry.Name.ToLower()) {
+			switch (entry.Name.ToLower()) {
 				case "fonts/spritefont1":
 				case "fonts/smallfont":
 				case "fonts/tinyfont":
@@ -1200,7 +1153,7 @@ public partial class ModEntry : ModSubscriber {
 			return;
 		}
 
-		foreach(var entry in ManagersByAssetPrefix) {
+		foreach (var entry in ManagersByAssetPrefix) {
 			if (e.Name.StartsWith(entry.Key)) {
 				entry.Value.HandleAssetRequested(e);
 				return;

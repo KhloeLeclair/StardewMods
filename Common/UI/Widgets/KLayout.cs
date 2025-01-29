@@ -1,3 +1,5 @@
+#if COMMON_WIDGETS
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,3 +30,5 @@ public abstract class KLayout : KObject, IKLayoutItem {
 	#endregion
 
 }
+
+#endif

@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 using HarmonyLib;
 
@@ -13,10 +8,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 
 using StardewValley;
-using StardewValley.BellsAndWhistles;
-using StardewValley.Locations;
 using StardewValley.Menus;
-using StardewValley.Tools;
 
 namespace Leclair.Stardew.ThemeManager.Patches;
 
@@ -30,9 +22,25 @@ internal static class OptionsDropDown_Patches {
 	private static int CurrentX;
 	private static int CurrentY;
 
+	private static bool IsPatched;
+
+	internal static void Patch(ModEntry mod, bool enabled) {
+		if (IsPatched == enabled)
+			return;
+		if (enabled)
+			Patch(mod);
+		else
+			Unpatch();
+	}
+
 	internal static void Patch(ModEntry mod) {
 		Mod = mod;
 		Monitor = mod.Monitor;
+
+		if (IsPatched)
+			return;
+
+		IsPatched = true;
 
 		Mod.Helper.Events.Input.CursorMoved += OnCursorMoved;
 		Mod.Helper.Events.Input.ButtonPressed += OnButtonPressed;
@@ -59,8 +67,42 @@ internal static class OptionsDropDown_Patches {
 				prefix: new HarmonyMethod(typeof(OptionsDropDown_Patches), nameof(LeftClickReleased_Prefix))
 			);
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			mod.Log($"Unable to apply OptionsDropDown patches due to error.", LogLevel.Error, ex);
+		}
+	}
+
+	internal static void Unpatch() {
+		if (!IsPatched || Mod is null)
+			return;
+
+		IsPatched = false;
+
+		Mod.Helper.Events.Input.CursorMoved -= OnCursorMoved;
+		Mod.Helper.Events.Input.ButtonPressed -= OnButtonPressed;
+
+		try {
+			Mod.Harmony!.Unpatch(
+				AccessTools.Method(typeof(OptionsDropDown), nameof(OptionsDropDown.draw)),
+				HarmonyPatchType.All, Mod.Harmony.Id
+			);
+
+			Mod.Harmony.Unpatch(
+				AccessTools.Method(typeof(OptionsDropDown), nameof(OptionsDropDown.receiveLeftClick)),
+				HarmonyPatchType.All, Mod.Harmony.Id
+			);
+
+			Mod.Harmony.Unpatch(
+				AccessTools.Method(typeof(OptionsDropDown), nameof(OptionsDropDown.leftClickHeld)),
+				HarmonyPatchType.All, Mod.Harmony.Id
+			);
+
+			Mod.Harmony.Unpatch(
+				AccessTools.Method(typeof(OptionsDropDown), nameof(OptionsDropDown.leftClickReleased)),
+				HarmonyPatchType.All, Mod.Harmony.Id
+			);
+		} catch (Exception ex) {
+			Mod.Log($"Unable to remove OptionsDropDown patches due to error.", LogLevel.Error, ex);
 		}
 	}
 
@@ -73,8 +115,9 @@ internal static class OptionsDropDown_Patches {
 		}
 	}
 
+	[EventPriority(EventPriority.High)]
 	static void OnButtonPressed(object? sender, ButtonPressedEventArgs e) {
-		if (Current is not null && ! e.IsSuppressed() && e.Button == SButton.MouseLeft) {
+		if (Current is not null && !e.IsSuppressed() && e.Button == SButton.MouseLeft) {
 			var field = Mod?.Helper.Reflection.GetField<bool>(Current, "clicked", false);
 			bool clicked = field?.GetValue() ?? false;
 			if (!clicked)
@@ -84,7 +127,7 @@ internal static class OptionsDropDown_Patches {
 			var pos = e.Cursor.GetScaledScreenPixels();
 
 			// Do the bounds contain the dropdown?
-			if (Current.dropDownBounds.Contains(pos.X - CurrentX, pos.Y - CurrentY) || (Game1.options.gamepadControls && ! Game1.lastCursorMotionWasMouse)) {
+			if (Current.dropDownBounds.Contains(pos.X - CurrentX, pos.Y - CurrentY) || (Game1.options.gamepadControls && !Game1.lastCursorMotionWasMouse)) {
 				Game1.playSound("drumkit6");
 				field?.SetValue(false);
 				OptionsDropDown.selected = Current;
@@ -96,6 +139,7 @@ internal static class OptionsDropDown_Patches {
 		}
 	}
 
+	[EventPriority(EventPriority.High)]
 	static void OnCursorMoved(object? sender, CursorMovedEventArgs e) {
 		if (Current is not null) {
 			var field = Mod?.Helper.Reflection.GetField<bool>(Current, "clicked", false);
@@ -156,7 +200,7 @@ internal static class OptionsDropDown_Patches {
 				return false;
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.LogOnce($"An error occurred in {nameof(LeftClickReleased_Prefix)}: {ex}", LogLevel.Error);
 		}
 
@@ -170,7 +214,7 @@ internal static class OptionsDropDown_Patches {
 				CurrentY = slotY;
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.LogOnce($"An error occurred in {nameof(Draw_Prefix)}: {ex}", LogLevel.Error);
 		}
 

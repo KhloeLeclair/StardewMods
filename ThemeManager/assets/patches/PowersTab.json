@@ -1,0 +1,15 @@
+{
+	"ID": "PowersTab",
+
+	"FontVariables": {
+		"$PowersTab:Small": "$Small"
+	},
+
+	"Patches": {
+		"#PowersTab:draw": {
+			"FontFields": {
+				"Game1:smallFont": { "*": "$PowersTab:Small" }
+			}
+		}
+	}
+}

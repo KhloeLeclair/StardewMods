@@ -1,13 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using Leclair.Stardew.Common.Types;
 using Leclair.Stardew.GiantCropTweaks.Models;
 
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-
 using StardewModdingAPI;
+
 
 namespace Leclair.Stardew.GiantCropTweaks;
 
@@ -21,45 +19,35 @@ public class ModApi : IGiantCropTweaks {
 		Other = other;
 	}
 
-	public IReadOnlyDictionary<string, IGiantCropData> GiantCrops {
-		get {
-			Mod.LoadCropData();
-			return Mod.ApiData;
-		}
+	public IExtraGiantCropData CreateNew() {
+		return new ExtraGiantCropData();
 	}
 
-	public bool TryGetSource(string id, [NotNullWhen(true)] out Rectangle? source) {
+	public IEnumerable<KeyValuePair<string, IExtraGiantCropData>> GetData() {
 		Mod.LoadCropData();
-		if (Mod.ApiData.TryGetValue(id, out var data)) {
-			source = new(
-				x: data.TexturePosition.X,
-				y: data.TexturePosition.Y,
-				width: 16 * data.TileSize.X,
-				height: 16 * (data.TileSize.Y + 1)
-			);
+		foreach (var pair in Mod.CropData)
+			yield return new(pair.Key, pair.Value);
+	}
+
+	public IModAssetEditor<IExtraGiantCropData> GetEditor(IAssetData assetData) {
+		return new ModAssetEditor<ModEntry, ExtraGiantCropData, IExtraGiantCropData>(
+			Mod,
+			Other,
+			assetData,
+			data => data.Id,
+			(data, id) => data.Id = id,
+			null
+		);
+	}
+
+	public bool TryGetData(string key, [NotNullWhen(true)] out IExtraGiantCropData? data) {
+		Mod.LoadCropData();
+		if (Mod.CropData.TryGetValue(key, out var result)) {
+			data = result;
 			return true;
 		}
 
-		source = null;
-		return false;
-	}
-
-	public bool TryGetTexture(string id, [NotNullWhen(true)] out Texture2D? texture) {
-		Mod.LoadCropData();
-		if (Mod.ApiData.TryGetValue(id, out var data)) {
-			if (!string.IsNullOrEmpty(data.Texture)) {
-				try {
-					texture = Mod.Helper.GameContent.Load<Texture2D>(data.Texture);
-				} catch (Exception ex) {
-					Mod.Log($"Unable to load texture \"{data.Texture}\" for giant crop \"{id}\".", LogLevel.Error, ex);
-					texture = null;
-				}
-
-				return texture is not null;
-			}
-		}
-
-		texture = null;
+		data = null;
 		return false;
 	}
 }

@@ -2,11 +2,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>BCBuildings</AssemblyName>
-		<Version>2.5.0</Version>
+		<Version>2.7.2</Version>
 		<RootNamespace>Leclair.Stardew.BCBuildings</RootNamespace>
 
 		<EnableTranslation>true</EnableTranslation>
+    <UseCommon>GMCM</UseCommon>
 	</PropertyGroup>
+
+  <PropertyGroup>
+    <BaseManifest>new</BaseManifest>
+    
+    <Name>Better Crafting: Buildings</Name>
+    <UniqueID>leclair.bcbuildings</UniqueID>
+    <Description>Adds support for crafting farm buildings to Better Crafting.</Description>
+    <UpdateKeys>Nexus:11115@Buildings;ModDrop:1115749@Buildings</UpdateKeys>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SMAPIDependency Include="leclair.bettercrafting" Version="2.13-beta" />
+  </ItemGroup>
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
 	<Import Project="..\_build\common.targets" />

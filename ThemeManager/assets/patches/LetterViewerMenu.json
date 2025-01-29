@@ -2,14 +2,48 @@
 	"ID": "LetterViewerMenu",
 
 	"ColorVariables": {
-		"$LetterViewerHover": "$ButtonHover"
+		"$LetterViewerHover": "$ButtonHover",
+		"$LetterViewerMenu:Text": "$Text",
+		"$LetterViewerMenu:TextShadowAlt": "$TextShadowAlt"
+	},
+
+	"FontVariables": {
+		"$LetterViewerMenu:Dialogue": "$Dialogue"
+	},
+
+	"BmFontVariables": {
+		"$LetterViewerMenu:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$LetterViewerMenu:ST:Normal": "$ST:Normal",
+		"$LetterViewerMenu:ST:Colored": "$ST:Colored"
 	},
 
 	"Patches": {
 		"#LetterViewerMenu:draw(SpriteBatch)": {
 			"Colors": {
 				"LightPink": { "*": "$LetterViewerHover" }
-			}
+			},
+
+			"ColorFields": {
+				"Game1:textColor": { "*": "$LetterViewerMenu:Text" }
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$LetterViewerMenu:Dialogue" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$LetterViewerMenu:ST:Normal",
+					"$LetterViewerMenu:ST:Colored",
+					"$LetterViewerMenu:ST:Font",
+					"$LetterViewerMenu:Colors"
+				]
+			},
+
+			"DrawTextWithShadow": { "*": "$LetterViewerMenu:TextShadowAlt" }
 		}
 	}
 }

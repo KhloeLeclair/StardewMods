@@ -67,7 +67,7 @@ public class SCIngredient : IIngredient {
 
 		return inventories
 			.Where(val => val.Inventory is not null)
-			.Select(val => (IInventory) val.Inventory!)
+			.Select(val => val.Inventory!)
 			.ToList();
 	}
 

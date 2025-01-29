@@ -1,5 +1,380 @@
 # Changelog
 
+## 2.15.1
+Released December 26th, 2024 for Stardew Valley 1.6.15+.
+
+### Fixed
+* Issue where available ingredients weren't being updated in some cases,
+  allowing more of an item to be crafted than should be possible.
+* Issue where the order of recipes in a category would be inconsistent,
+  especially when using dynamic rules.
+* Issue where the bulk crafting menu may not work correctly for recipes
+  that don't produce a standard object.
+
+
+## 2.15.0
+Released November 5th, 2024 for Stardew Valley 1.6.14+.
+
+### Fixed
+* Issue where cooking recipe times crafted counts were not being
+  tallied correctly in conjunction with SpaceCore.
+
+### API
+* Added a new event for applying seasoning to a cooked item. This event
+  results in ingredients only being consumed if the craft is successful,
+  and additionally allows you to disable the base game's
+  Qi Seasoning behavior.
+* Added a new event for determining if a player can craft a given recipe.
+
+
+## 2.14.0
+Released November 4th, 2024.
+
+*This version is compatible with Stardew Valley 1.6.9 **only**.* Please
+use an earlier release for compatibility with earlier versions of
+Stardew Valley.
+
+### Added
+* Setting to disallow pulling items from fish tanks and fish ponds. This
+  is added in response to other mods adding these to Better Crafting as
+  a source of items, even though most users probably don't want to use
+  those fish as crafting ingredients.
+* Harmony patches for the vanilla crafting menu so certain category-based
+  ingredients that don't appear correctly should now have icons and proper
+  descriptive text.
+
+### Fixed
+* Compatibility with Stardew Valley 1.6.9.
+* Recipes using SpaceCore features not displaying accurate information,
+  including descriptions and number of times crafted.
+* Certain dynamic rules not correctly listing all items if those items are
+  of a different type than a simple object.
+* The trash can recovery menu not properly supporting UI Scales other
+  than 100%.
+* Reduce spammy logging from the class that prevents mutexes from being
+  released while the crafting menu is open.
+
+### API
+* Added a new recipe provider dynamic rule for debugging use, which lets
+  you filter based on which recipe provider is handling a recipe.
+* Fixed recipes using SpaceCore not including a reference to the vanilla
+  `CraftingRecipe` instance for the recipe.
+
+
+## 2.13.0
+Released May 31st, 2024.
+
+### Fixed
+* Support a new 1.6 feature for showing the prices for crafted items.
+* Bulk crafting stopping at 20 items when using the Bulk Crafting menu.
+* Issue with an upcoming SMAPI update that would cause Better Crafting
+  to fail to load due to a constructor signature change within Pintail.
+
+### API
+* Added `IEventedInventoryProvider` to allow mods providing inventories
+  an alternative to `NetMutex` for establishing a lock for ensuring
+  exclusive access for performing write operations to an inventory.
+
+
+## 2.12.0
+Released May 27th, 2024.
+
+### Added
+* Setting to enforce some feature flags in multiplayer. Notably, this can
+  be used by the multiplayer host to disable the recover trash feature, to
+  disable the setting to reveal all gift tastes, to disable recycling items
+  with unknown recipes, and to disable recycling recipes with fuzzy items.
+* Setting to recycle items of higher-quality than any known recipe produces,
+  which is now enabled by default.
+* Setting to mark specific storage items as invalid for the purpose of acting
+  as sources of items. You can use this to, for example, stop Better Crafting
+  from using items that are in Hoppers.
+
+### Changed
+* Inventories are now cleaned only once per crafting operation, once the
+  crafting has finished, to avoid doing a lot of redundant work.
+
+### Fixed
+* Issue where crafting too many items would crash due to a stack exception.
+* The crafting menu now protects any items that are in its list of inventories
+  from use in crafting, as well as being trashed or removed from the player's
+  inventory.
+
+### API
+* Added new, simpler event for populating menu containers to allow mods to
+  listen to the event while also avoiding needing to include `IBetterCraftingMenu`,
+  `IRecipe`, etc. in their copy of the API file.
+* Added new event for when a menu closes.
+* Added method for casting an `IClickableMenu` to an `IBetterCraftingMenu`,
+  if the provided menu is one of our menus.
+
+
+## 2.11.0
+Released May 20th, 2024.
+
+### Added
+* Feature to recover trashed items. Just right-click on the trash can
+  in your menu (not all menus supported) to open a menu containing items
+  you've recently thrown in the trash. Up to 36 items are remembered at
+  any given time.
+* Ability to invert dynamic rules to exclude recipes from a category,
+  rather than including them.
+
+### Compatibility
+* Introduced a feature to block harmful Harmony patches from other mods.
+  I do not block other mods by default, but I reserve the right to do so
+  if another mod causes Better Crafting to break.
+* Start logging any mods that have applied Harmony patches to Better Crafting
+  at the end of the Game Started event.
+* Added `Resource Storage` to the list of mods that are not allowed to
+  Harmony patch Better Crafting. This is because Resource Storage attempts
+  to apply patches to modify how Better Crafting consumes items, but it
+  does so inconsistently and players will be presented with a confusing
+  situation where it seems as though they have enough items to perform
+  a craft but actually trying to do the craft does nothing.
+
+### Fixed
+* Minor text rendering issue where a color would leak outside of a colored
+  text segment.
+
+
+## 2.10.0
+Released May 13th, 2024.
+
+### Added
+* `Show Unknown Recipes` setting to display unknown recipes in the
+  crafting menu, similarly to how they're displayed in the cooking
+  menu. That is to say: greyed out.
+* `Show Matching Items` setting to display exactly which items should
+  be consumed when performing a craft. This *may* be inaccurate but it
+  is unlikely. This is disabled by default.
+
+### Changed
+* Recipes that create items with a quality greater than low quality
+  will now display a quality icon on the crafting menu.
+
+### Fixed
+* Integration with SpaceCore Vanilla Asset Expansion crafting recipe
+  overrides. I found a way to fix it without needing to wait for Casey
+  to merge my pull request.
+* Tool-tip caching not working correctly when the crafting menu
+  is in category editing mode.
+
+### API
+* Much of our configuration is now exposed via our API.
+* `CategoryIcon` now has a `Frames` property that can be used to set how
+  many frames of animation should be displayed. Note that this is largely
+  untested, but it should allow for animated station icons.
+
+
+## 2.9.0
+Released May 5th, 2024.
+
+### Added
+* New setting to display the mod that added an item on crafting tool-tips.
+
+### Changed
+* Improve integration with SpaceCore Vanilla Asset Extension crafting recipe
+  overrides, with support for our ingredient quality features as well as
+  item recycling. (Note: This will require an update from SpaceCore before
+  it will function correctly.)
+
+### Fixed
+* If an error happens in another mod's event handlers for one of our events,
+  capture the error properly and log it to minimize disruption to the user.
+
+
+## 2.8.3
+Released May 2nd, 2024.
+
+### Added
+* New dynamic rule for matching recipes that a given character likes
+  or loves. By default, this only matches discovered gift tastes, but
+  you can enable the "Show Undiscovered Gift Tastes" setting to make
+  it match everything.
+
+### Changed
+* All the dynamic rules for buffs have been combined into one rule,
+  with a selection dialog for the specific buff you want. This allows
+  for a better user experience by de-cluttering the rule selection
+  dialog, as well as showing you how many recipes any particular
+  buff actually match.
+
+### Fixed
+* The cursor snapping when it shouldn't.
+* Issue where Better Crafting was loading `Data/Objects` and `Data/Buffs`
+  during GameStarted, which could cache the resources early and cause
+  other mods' edits to not apply.
+* When drawing the `NEW` label on recipes, use a larger rectangle
+  that supports all languages.
+* Attempt to fix a sporadic NRE with the temporary loading menu for
+  controller users.
+
+
+## 2.8.2
+Released April 20th, 2024.
+
+### Changed
+* Improve cursor snapping for controller users when using
+  the crafting menu.
+
+### Fixed
+* Issue where an error would be printed to the console when
+  attempting to load certain textures.
+* Update mutexes before attempting to lock them, which should
+  improve some issues where mutexes were failing to lock when
+  attempting to craft.
+
+
+## 2.8.1
+Released April 19th, 2024.
+
+Sorry for the back to back, but there was a compatibility issue
+with other mods causing the menu to not work.
+
+### Fixed
+* The temporary menu class used to avoid immediately loading
+  the full Better Crafting menu would throw an error when
+  the user is using certain mod combinations.
+
+
+## 2.8.0
+Released April 19th, 2024.
+
+### New Features
+* You can copy, paste, and delete categories when editing them now,
+  making it easier to move a category into or out of your Per-Save
+  Data or to share them. Additionally, you can shift-click the
+  delete button to reset *all* your categories.
+* Better Crafting will attempt to automatically color its UI
+  buttons to match your current UI theme.
+
+### Changed
+* When opening the game menu, the Better Crafting menu won't
+  load until you directly access it, which should improve
+  performance somewhat.
+* Added some diagnostic logging for performance.
+
+### Fixed
+* Workbench connectors not working correctly.
+
+### Translation
+* Removed the Turkish translation file, as that is out of
+  date and there is an external mod providing it.
+
+### API
+* Added a new event to let other mods add extra icons to the
+  built-in icon picker.
+* Fixed setting item to `null` in pre-craft event causing
+  crafting to fail.
+
+
+## 2.7.0
+Released April 17th, 2024.
+
+### New Features
+* The mod now uses a global save for categories and favorite recipes.
+  This can be toggled on a per-save basis. Saves with existing
+  category / favorite customization will automatically start with
+  per-save customization enabled.
+* Added new dynamic rules for selecting recipes based on item category,
+  context tags, and edibility. With these, almost all recipes in the
+  base game are categorized using rules rather than manually.
+
+### Changes
+* The "Items from Mod" dynamic rule now only displays the count of
+  recipes within the current menu mode (cooking vs crafting) when
+  you're selecting a mod.
+* Update tool-tip rendering in our menu to be more like the base game.
+
+### Fixed
+* Unable to translate a certain string from the "Items from Mod"
+  selection dialog.
+* When using the Kitchen, always add the location's fridge to the
+  inventories to craft from, regardless of other discover settings.
+* The controls to toggle dynamic rules on, as well as include items
+  in the Misc. category, should not appear on the Misc. category itself.
+* Change to word wrapping causing some text to not appear on new
+  lines when it should.
+
+### API Changes
+* When using the trigger/map action to open the menu, there is a new
+  syntax that allows for greater flexibility in configuring how
+  inventories are discovered.
+
+
+## 2.6.2
+Released April 13th, 2024.
+
+### Changes
+* Add a quick setting to hide the Edit Categories button, since
+  someone requested it and it's easy.
+
+### Fixed
+* Issue where the Use Nearby Chests setting would not have its initial
+  value set correctly when opening the settings menu, causing it to
+  be reduced over time.
+* Issue where the Use Nearby Chests setting would be unable to include
+  all chests in its active area due to scanning limitations meant to
+  limit performance impacts.
+* Improve performance of item comparison slightly by changing how we
+  apply our harmony patch for Item.canStackWith.
+* Improve word wrapping when dealing with exceptionally long unbroken
+  character sequences, which is mainly an issue in
+  non-English languages.
+
+### Translation
+* Updated Korean language strings. Thanks, wally.
+
+
+## 2.6.1
+Released April 12th, 2024.
+
+### Changes
+* Junimo Chests are no longer blacklisted.
+
+### Fixed
+* Properly check if the optional background texture is available before
+  attempting to load it. Fixes error messages every time the menu opens.
+* Fixed an issue where the Transfer to Inventories feature would not
+  work correctly when using Better Chests.
+* Improve de-duplication logic for inventories.
+
+
+## 2.6.0
+Released April 11th, 2024.
+
+This should be the last release for a while, barring any unexpected bugs.
+I've been toying with a few ideas while mindlessly working on this, but
+I have what I want thought out for Almanac now.
+
+### New Features
+* You can now re-order your categories when editing them.
+* There is a new option to open the crafting menu with the full height
+  of your screen if opened via a workbench, kitchen, or other means
+  that does not place it within the game menu.
+
+### Changes
+* When listing the available mods to include items from a mod, we now
+  count how many items there are from each mod, and put those without
+  items at the end of the list. Further, we sort the list alphabetically
+  by mod name.
+* When crafting an item that will have attachment slots, show the
+  attachment slots in the recipe tool-tip.
+* When viewing a recipe with an absurd number of ingredients, try to
+  fit it on the screen better by using more columns.
+
+### Fixed
+* Apply theme text colors more thoroughly to the crafting menu.
+* Spaces appearing near recipes when a recipe would be included both
+  by manual selection and because it matched a rule.
+
+### API Changes
+* Added the ability for content authors to create custom dynamic rules
+  using the game's native item queries feature by modifying the
+  target path `Mods/leclair.bettercrafting/Rules`
+
+
 ## 2.5.0
 Released April 10th, 2024.
 

@@ -13,7 +13,7 @@ public class Cache<T, K> {
 	private T LastValue;
 	private K LastKey;
 #nullable enable
-	private bool Valid;
+	public bool Valid { get; private set; }
 
 	public Cache(Func<K> keyGetter, Func<K, T> getter) {
 		Getter = getter;

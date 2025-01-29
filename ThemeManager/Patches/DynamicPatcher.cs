@@ -1,26 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 using HarmonyLib;
 
-using Leclair.Stardew.ThemeManager.Models;
-using Microsoft.Xna.Framework;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Types;
+using Leclair.Stardew.ThemeManager.Managers;
+using Leclair.Stardew.ThemeManager.Models;
+
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
+
 using StardewValley;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Xna.Framework.Graphics;
-using System.Text;
 using StardewValley.BellsAndWhistles;
+
 using static StardewValley.BellsAndWhistles.SpriteText;
-using System.Runtime.CompilerServices;
-using BmFont;
-using Leclair.Stardew.ThemeManager.Managers;
 
 namespace Leclair.Stardew.ThemeManager.Patches;
 
@@ -32,6 +34,8 @@ internal class DynamicPatcher : IDisposable {
 	internal static Dictionary<MethodBase, DynamicPatcher> LivePatchers = new();
 
 	private static IReadOnlyDictionary<string, Color>? Colors;
+	private static IReadOnlyDictionary<string, float>? Alphas;
+	private static IReadOnlyDictionary<string, Dictionary<long, Color?>>? SpriteTextColors;
 	private static IReadOnlyDictionary<string, IManagedAsset<SpriteFont>>? Fonts;
 	private static IReadOnlyDictionary<string, IManagedAsset<IBmFontData>>? BmFonts;
 	private static IReadOnlyDictionary<string, IManagedAsset<Texture2D>>? Textures;
@@ -42,6 +46,14 @@ internal class DynamicPatcher : IDisposable {
 
 	public static void UpdateColors(IReadOnlyDictionary<string, Color> colors) {
 		Colors = colors;
+	}
+
+	public static void UpdateColorAlphas(IReadOnlyDictionary<string, float> alphas) {
+		Alphas = alphas;
+	}
+
+	public static void UpdateSpriteTextColors(IReadOnlyDictionary<string, Dictionary<long, Color?>> colors) {
+		SpriteTextColors = colors;
 	}
 
 	public static void UpdateFonts(IReadOnlyDictionary<string, IManagedAsset<SpriteFont>> fonts) {
@@ -70,52 +82,77 @@ internal class DynamicPatcher : IDisposable {
 			SpriteTextManager.Instance?.ApplyFont(spriteTex, coloredTex, fontData);
 	}
 
-	public static void SpriteText_drawStringHorizontallyCenteredAt(SpriteBatch b, string s, int x, int y, int characterPosition, int width, int height, float alpha, float layerDepth, bool junimoText, int color, int maxWidth, string? texOne, string? texTwo, string? font) {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ModifySpriteTextColor(string? colorMap, ref Color? color) {
+		if (colorMap != null &&
+			SpriteTextColors != null &&
+			(SpriteTextColors.TryGetValue(colorMap, out Dictionary<long, Color?>? colors) || SpriteTextColors.TryGetValue("*", out colors)) &&
+			colors.TryGetValue(color.HasValue ? color.Value.PackedValue : -1, out Color? replaced)
+		)
+			color = replaced;
+	}
+
+	public static void SpriteText_drawStringHorizontallyCenteredAt(SpriteBatch b, string s, int x, int y, int characterPosition, int width, int height, float alpha, float layerDepth, bool junimoText, Color? color, int maxWidth, string? texOne, string? texTwo, string? font, string? colorMap) {
 		ModifySpriteText(texOne, texTwo, font);
+		ModifySpriteTextColor(colorMap, ref color);
+		SpriteText_Patches.UpdateColor = false;
 
 		try {
 			SpriteText.drawStringHorizontallyCenteredAt(b, s, x, y, characterPosition, width, height, alpha, layerDepth, junimoText, color, maxWidth);
 		} finally {
+			SpriteText_Patches.UpdateColor = true;
 			SpriteTextManager.Instance?.ApplyNormalFont();
 		}
 	}
 
-	public static void SpriteText_drawStringWithScrollCenteredAt_Int(SpriteBatch b, string s, int x, int y, int width, float alpha, int color, int scrollType, float layerDepth, bool junimoText, string? texOne, string? texTwo, string? font) {
+	public static void SpriteText_drawStringWithScrollCenteredAt_Int(SpriteBatch b, string s, int x, int y, int width, float alpha, Color? color, int scrollType, float layerDepth, bool junimoText, string? texOne, string? texTwo, string? font, string? colorMap) {
 		ModifySpriteText(texOne, texTwo, font);
+		ModifySpriteTextColor(colorMap, ref color);
+		SpriteText_Patches.UpdateColor = false;
 
 		try {
 			SpriteText.drawStringWithScrollCenteredAt(b, s, x, y, width, alpha, color, scrollType, layerDepth, junimoText);
 		} finally {
+			SpriteText_Patches.UpdateColor = true;
 			SpriteTextManager.Instance?.ApplyNormalFont();
 		}
 	}
 
-	public static void SpriteText_drawStringWithScrollCenteredAt_String(SpriteBatch b, string s, int x, int y, string placeHolderWidthText, float alpha, int color, int scrollType, float layerDepth, bool junimoText, string? texOne, string? texTwo, string? font) {
+	public static void SpriteText_drawStringWithScrollCenteredAt_String(SpriteBatch b, string s, int x, int y, string placeHolderWidthText, float alpha, Color? color, int scrollType, float layerDepth, bool junimoText, string? texOne, string? texTwo, string? font, string? colorMap) {
 		ModifySpriteText(texOne, texTwo, font);
+		ModifySpriteTextColor(colorMap, ref color);
+		SpriteText_Patches.UpdateColor = false;
 
 		try {
 			SpriteText.drawStringWithScrollCenteredAt(b, s, x, y, placeHolderWidthText, alpha, color, scrollType, layerDepth, junimoText);
 		} finally {
+			SpriteText_Patches.UpdateColor = true;
 			SpriteTextManager.Instance?.ApplyNormalFont();
 		}
 	}
 
-	public static void SpriteText_drawStringWithScrollBackground(SpriteBatch b, string s, int x, int y, string placeHolderWidthText, float alpha, int color, ScrollTextAlignment scroll_text_alignment, string? texOne, string? texTwo, string? font) {
+	public static void SpriteText_drawStringWithScrollBackground(SpriteBatch b, string s, int x, int y, string placeHolderWidthText, float alpha, Color? color, ScrollTextAlignment scroll_text_alignment, string? texOne, string? texTwo, string? font, string? colorMap) {
 		ModifySpriteText(texOne, texTwo, font);
+		ModifySpriteTextColor(colorMap, ref color);
+		SpriteText_Patches.UpdateColor = false;
 
 		try {
 			SpriteText.drawStringWithScrollBackground(b, s, x, y, placeHolderWidthText, alpha, color, scroll_text_alignment);
 		} finally {
+			SpriteText_Patches.UpdateColor = true;
 			SpriteTextManager.Instance?.ApplyNormalFont();
 		}
 	}
 
-	public static void SpriteText_drawString(SpriteBatch b, string s, int x, int y, int characterPosition, int width, int height, float alpha, float layerDepth, bool junimoText, int drawBGScroll, string placeHolderScrollWidthText, int color, ScrollTextAlignment scroll_text_alignment, string? texOne, string? texTwo, string? font) {
+	public static void SpriteText_drawString(SpriteBatch b, string s, int x, int y, int characterPosition, int width, int height, float alpha, float layerDepth, bool junimoText, int drawBGScroll, string placeHolderScrollWidthText, Color? color, ScrollTextAlignment scroll_text_alignment, string? texOne, string? texTwo, string? font, string? colorMap) {
 		ModifySpriteText(texOne, texTwo, font);
+		ModifySpriteTextColor(colorMap, ref color);
+		SpriteText_Patches.UpdateColor = false;
 
 		try {
 			SpriteText.drawString(b, s, x, y, characterPosition, width, height, alpha, layerDepth, junimoText, drawBGScroll, placeHolderScrollWidthText, color, scroll_text_alignment);
 		} finally {
+			SpriteText_Patches.UpdateColor = true;
 			SpriteTextManager.Instance?.ApplyNormalFont();
 		}
 	}
@@ -133,12 +170,16 @@ internal class DynamicPatcher : IDisposable {
 	#region Font Access
 
 	public static SpriteFont GetFont(SpriteFont @default, string key) {
-		return Fonts != null && Fonts.TryGetValue(key, out var font) && font.Value is SpriteFont sf ? sf: @default;
+		return Fonts != null && Fonts.TryGetValue(key, out var font) && font.Value is SpriteFont sf ? sf : @default;
 	}
 
 	#endregion
 
 	#region Color Access
+
+	internal static float GetColorAlpha(float @default, string key) {
+		return Alphas != null && Alphas.TryGetValue(key, out float alpha) ? alpha : @default;
+	}
 
 	internal static void DrawTextWithShadowSB(SpriteBatch b, StringBuilder text, SpriteFont font, Vector2 position, Color color, float scale = 1f, float layerDepth = -1f, int horizontalShadowOffset = -1, int verticalShadowOffset = -1, float shadowIntensity = 1f, int numShadows = 3, string? key = null) {
 		if (Colors != null && key != null && Colors.TryGetValue(key, out Color val))
@@ -235,7 +276,14 @@ internal class DynamicPatcher : IDisposable {
 	}
 
 	internal static Color GetColorPacked(string key, uint @default) {
-		return Colors != null && Colors.TryGetValue(key, out Color val) ? val: new Color(@default);
+		return Colors != null && Colors.TryGetValue(key, out Color val) ? val : new Color(@default);
+	}
+
+	internal static void GetColorPackedRef(ref Color instance, string key, uint @default) {
+		if (Colors != null && Colors.TryGetValue(key, out Color val))
+			instance.PackedValue = val.PackedValue;
+		else
+			instance.PackedValue = @default;
 	}
 
 	internal static Color GetColor(Color @default, string key) {
@@ -280,7 +328,7 @@ internal class DynamicPatcher : IDisposable {
 			}
 		}
 
-		foreach(PropertyInfo prop in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
+		foreach (PropertyInfo prop in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
 			string name = prop.Name;
 			if (prop.PropertyType != typeof(Color))
 				continue;
@@ -299,6 +347,37 @@ internal class DynamicPatcher : IDisposable {
 				AddColor(name, method, color.Value);
 		}
 
+		foreach (PropertyInfo prop in typeof(SpriteText).GetProperties(BindingFlags.Static | BindingFlags.Public)) {
+			string name = prop.Name;
+			if (prop.PropertyType != typeof(Color))
+				continue;
+
+			if (prop.GetGetMethod() is not MethodInfo method)
+				continue;
+
+			Color? color;
+			try {
+				color = prop.GetValue(null) as Color?;
+			} catch {
+				continue;
+			}
+
+			if (name.StartsWith("color_"))
+				name = name[6..];
+
+			if (color.HasValue)
+				AddColor($"SpriteText:{name}", method, color.Value);
+		}
+
+
+		return dict;
+	});
+
+	internal static Lazy<Dictionary<MethodInfo, Color>> ColorPropertyColors = new(() => {
+		var dict = new Dictionary<MethodInfo, Color>();
+		foreach (var entry in ColorProperties.Value.Values)
+			dict.TryAdd(entry.Item1, entry.Item2);
+
 		return dict;
 	});
 
@@ -308,7 +387,7 @@ internal class DynamicPatcher : IDisposable {
 
 	private readonly ModEntry Mod;
 
-	public readonly MethodInfo Method;
+	public readonly MethodBase Method;
 	public readonly string Key;
 
 	private readonly MethodInfo HMethod;
@@ -327,7 +406,7 @@ internal class DynamicPatcher : IDisposable {
 
 	#region Life Cycle
 
-	public DynamicPatcher(ModEntry mod, MethodInfo method, string key) {
+	public DynamicPatcher(ModEntry mod, MethodBase method, string key) {
 		Mod = mod;
 		Method = method;
 		Key = key;
@@ -404,14 +483,14 @@ internal class DynamicPatcher : IDisposable {
 	/// <returns></returns>
 	public bool Update() {
 		// Update our patches lists as necessary.
-		foreach(var entry in AddedPatches) {
+		foreach (var entry in AddedPatches) {
 			if (!Patches.Contains(entry)) {
 				Patches.Add(entry);
 				IsDirty = true;
 			}
 		}
 
-		foreach(var entry in RemovedPatches) {
+		foreach (var entry in RemovedPatches) {
 			if (Patches.Remove(entry))
 				IsDirty = true;
 		}
@@ -428,6 +507,7 @@ internal class DynamicPatcher : IDisposable {
 				Colors = new(),
 				RawColors = new(),
 				ColorFields = new(),
+				ColorAlphas = new(),
 				FontFields = new(),
 				TextureFields = new(),
 				SpriteTextDraw = new(),
@@ -464,7 +544,19 @@ internal class DynamicPatcher : IDisposable {
 					foreach (var entry in patch.ColorFields) {
 						if (!applied.ColorFields.TryGetValue(entry.Key, out var existing)) {
 							existing = new();
-							applied.ColorFields[entry.Key] = entry.Value;
+							applied.ColorFields[entry.Key] = existing;
+						}
+
+						foreach (var ent in entry.Value)
+							existing[ent.Key] = ent.Value;
+					}
+				}
+
+				if (patch.ColorAlphas is not null) {
+					foreach (var entry in patch.ColorAlphas) {
+						if (!applied.ColorAlphas.TryGetValue(entry.Key, out var existing)) {
+							existing = [];
+							applied.ColorAlphas[entry.Key] = existing;
 						}
 
 						foreach (var ent in entry.Value)
@@ -476,7 +568,7 @@ internal class DynamicPatcher : IDisposable {
 					foreach (var entry in patch.FontFields) {
 						if (!applied.FontFields.TryGetValue(entry.Key, out var existing)) {
 							existing = new();
-							applied.FontFields[entry.Key] = entry.Value;
+							applied.FontFields[entry.Key] = existing;
 						}
 
 						foreach (var ent in entry.Value)
@@ -488,7 +580,7 @@ internal class DynamicPatcher : IDisposable {
 					foreach (var entry in patch.TextureFields) {
 						if (!applied.TextureFields.TryGetValue(entry.Key, out var existing)) {
 							existing = new();
-							applied.TextureFields[entry.Key] = entry.Value;
+							applied.TextureFields[entry.Key] = existing;
 						}
 
 						foreach (var ent in entry.Value)
@@ -497,7 +589,7 @@ internal class DynamicPatcher : IDisposable {
 				}
 
 				if (patch.SpriteTextDraw is not null) {
-					foreach(var entry in patch.SpriteTextDraw)
+					foreach (var entry in patch.SpriteTextDraw)
 						applied.SpriteTextDraw[entry.Key] = entry.Value;
 				}
 
@@ -523,17 +615,17 @@ internal class DynamicPatcher : IDisposable {
 				if (!applied.Colors!.ShallowEquals(AppliedChanges.Colors!))
 					IsDirty = true;
 				else if (!IsDirty) {
-					foreach(var entry in applied.Colors!) {
+					foreach (var entry in applied.Colors!) {
 						if (AppliedChanges.Colors!.TryGetValue(entry.Key, out var existing))
 							IsDirty |= entry.Value.ShallowEquals(existing);
 						else
 							IsDirty = true;
 					}
 				}
-				if (! IsDirty && !applied.RawColors!.ShallowEquals(AppliedChanges.RawColors!))
+				if (!IsDirty && !applied.RawColors!.ShallowEquals(AppliedChanges.RawColors!))
 					IsDirty = true;
 				else if (!IsDirty) {
-					foreach(var entry in applied.RawColors!) {
+					foreach (var entry in applied.RawColors!) {
 						if (AppliedChanges.RawColors!.TryGetValue(entry.Key, out var existing))
 							IsDirty |= entry.Value.ShallowEquals(existing);
 						else
@@ -543,8 +635,18 @@ internal class DynamicPatcher : IDisposable {
 				if (!IsDirty && !applied.ColorFields!.ShallowEquals(AppliedChanges.ColorFields!))
 					IsDirty = true;
 				else if (!IsDirty) {
-					foreach(var entry in applied.ColorFields!) {
+					foreach (var entry in applied.ColorFields!) {
 						if (AppliedChanges.ColorFields!.TryGetValue(entry.Key, out var existing))
+							IsDirty |= entry.Value.ShallowEquals(existing);
+						else
+							IsDirty = true;
+					}
+				}
+				if (!IsDirty && !applied.ColorAlphas!.ShallowEquals(AppliedChanges.ColorAlphas!))
+					IsDirty = true;
+				else if (!IsDirty) {
+					foreach (var entry in applied.ColorAlphas!) {
+						if (AppliedChanges.ColorAlphas!.TryGetValue(entry.Key, out var existing))
 							IsDirty |= entry.Value.ShallowEquals(existing);
 						else
 							IsDirty = true;
@@ -573,7 +675,7 @@ internal class DynamicPatcher : IDisposable {
 				if (!IsDirty && !applied.DrawTextWithShadow!.ShallowEquals(AppliedChanges.DrawTextWithShadow!))
 					IsDirty = true;
 				else if (!IsDirty) {
-					foreach(var entry in applied.DrawTextWithShadow!) {
+					foreach (var entry in applied.DrawTextWithShadow!) {
 						if (AppliedChanges.DrawTextWithShadow!.TryGetValue(entry.Key, out string? existing))
 							IsDirty |= string.Equals(entry.Value, existing);
 						else
@@ -593,7 +695,7 @@ internal class DynamicPatcher : IDisposable {
 				if (!IsDirty && !applied.RedToGreenLerp!.ShallowEquals(AppliedChanges.RedToGreenLerp!))
 					IsDirty = true;
 				else if (!IsDirty) {
-					foreach(var entry in applied.RedToGreenLerp!) {
+					foreach (var entry in applied.RedToGreenLerp!) {
 						if (AppliedChanges.RedToGreenLerp!.TryGetValue(entry.Key, out string[]? existing))
 							IsDirty |= entry.Value.ShallowEquals(existing);
 						else
@@ -628,7 +730,7 @@ internal class DynamicPatcher : IDisposable {
 		if (IsDisposed || Mod.Harmony is null)
 			return;
 
-		if (! IsPatched || LivePatchers.TryGetValue(Method, out var patcher) && patcher != this) {
+		if (!IsPatched || LivePatchers.TryGetValue(Method, out var patcher) && patcher != this) {
 			Patch();
 			return;
 		}
@@ -642,7 +744,7 @@ internal class DynamicPatcher : IDisposable {
 
 		try {
 			Mod.Harmony.Patch(Method);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Mod.Log($"There was an error applying harmony patches to {Key}: {ex}", LogLevel.Error);
 		}
 
@@ -669,7 +771,7 @@ internal class DynamicPatcher : IDisposable {
 
 		try {
 			Mod.Harmony.Patch(Method, transpiler: new HarmonyMethod(HMethod, priority: Priority.Last));
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Mod.Log($"There was an error applying harmony patches to {Key}: {ex}", LogLevel.Error);
 		}
 
@@ -695,7 +797,7 @@ internal class DynamicPatcher : IDisposable {
 	#region The Actual Patch
 
 	internal static bool TryGetMatch<T>(Dictionary<RuleRange, T> rules, int offset, int hit, [NotNullWhen(true)] out T match) {
-		foreach(var entry in rules)
+		foreach (var entry in rules)
 			if (entry.Key.Test(offset, hit)) {
 				match = entry.Value;
 				return match is not null;
@@ -711,15 +813,15 @@ internal class DynamicPatcher : IDisposable {
 
 		int count = 0;
 
-		foreach(var entry in source) {
+		foreach (var entry in source) {
 			bool matched = false;
-			foreach (var field in ModEntry.Instance.ResolveMembers<FieldInfo>(entry.Key, current)) {
+			foreach (var field in ModEntry.ResolveMembers<FieldInfo>(entry.Key, current)) {
 				if (field.Item2 is null)
 					continue;
 
 				matched = true;
 
-				foreach(var ent in entry.Value) {
+				foreach (var ent in entry.Value) {
 					if (!RuleRange.TryParse(ent.Key, out var range)) {
 						ModEntry.Instance.Log($"Unable to parse rule \"{ent.Key}\" for {entry.Key} while processing {key}", LogLevel.Warn);
 						continue;
@@ -758,6 +860,13 @@ internal class DynamicPatcher : IDisposable {
 	}
 
 
+	internal record AlphaTarget(Color? Color, FieldInfo? Field) {
+
+		internal static readonly AlphaTarget EMPTY = new(null, null);
+
+	}
+
+
 	internal static IEnumerable<CodeInstruction> Transpiler(MethodBase method, IEnumerable<CodeInstruction> instructions) {
 		DidPatch = true;
 
@@ -774,6 +883,7 @@ internal class DynamicPatcher : IDisposable {
 		Dictionary<MethodInfo, int> HitColors = new();
 		Dictionary<Color, int> HitRawColors = new();
 		Dictionary<FieldInfo, int> HitFields = new();
+		Dictionary<float, int> HitAlphas = new();
 
 		int HitLerps = 0;
 		int HitSpriteTextDraw = 0;
@@ -784,6 +894,9 @@ internal class DynamicPatcher : IDisposable {
 		Dictionary<Color, Dictionary<RuleRange, string>> RawColors = new();
 		Dictionary<FieldInfo, Dictionary<RuleRange, string>> ColorFields = new();
 
+		Dictionary<float, Dictionary<AlphaTarget, Dictionary<RuleRange, string>>> ColorAlphas = new();
+		Dictionary<float, Dictionary<AlphaTarget, Dictionary<RuleRange, float>>> DirectColorAlphas = new();
+
 		Dictionary<MethodInfo, Dictionary<RuleRange, Color>> DirectColors = new();
 		Dictionary<Color, Dictionary<RuleRange, Color>> DirectRawColors = new();
 		Dictionary<FieldInfo, Dictionary<RuleRange, Color>> DirectColorFields = new();
@@ -791,7 +904,7 @@ internal class DynamicPatcher : IDisposable {
 		Dictionary<FieldInfo, Dictionary<RuleRange, string>> FontFields = new();
 		Dictionary<FieldInfo, Dictionary<RuleRange, string>> TextureFields = new();
 
-		Dictionary<RuleRange, (string, string, string?)>? SpriteTextDraw = null;
+		Dictionary<RuleRange, (string, string, string?, string?)>? SpriteTextDraw = null;
 
 		Dictionary<RuleRange, string>? DrawTextWithShadow = null;
 		Dictionary<RuleRange, Color>? DirectDrawTextWithShadow = null;
@@ -800,7 +913,7 @@ internal class DynamicPatcher : IDisposable {
 		Dictionary<RuleRange, (Color, Color, Color)>? DirectLerp = null;
 
 		if (patcher.AppliedChanges.Colors is not null)
-			foreach(var entry in patcher.AppliedChanges.Colors) {
+			foreach (var entry in patcher.AppliedChanges.Colors) {
 				if (!ColorProperties.Value.TryGetValue(entry.Key, out var getter)) {
 					patcher.Mod.Log($"Unable to find color named \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
 					continue;
@@ -842,8 +955,82 @@ internal class DynamicPatcher : IDisposable {
 				}
 			}
 
+		if (patcher.AppliedChanges.ColorAlphas is not null)
+			foreach (var entry in patcher.AppliedChanges.ColorAlphas) {
+				string floatPart;
+				string? colorPart;
+				int idx = entry.Key.IndexOf('*');
+				if (idx == -1) {
+					floatPart = entry.Key;
+					colorPart = null;
+				} else {
+					colorPart = entry.Key[..idx].TrimEnd();
+					floatPart = entry.Key[(idx + 1)..].TrimStart();
+				}
+
+				if (!float.TryParse(floatPart, out float keyFloat)) {
+					patcher.Mod.Log($"Unable to parse color alpha key \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
+					continue;
+				}
+
+				AlphaTarget target;
+				if (string.IsNullOrEmpty(colorPart))
+					target = AlphaTarget.EMPTY;
+				else if (CommonHelper.TryParseColor(colorPart, out Color? parsedColor))
+					target = new(parsedColor, null);
+				else {
+					var member = ModEntry.ResolveMember<FieldInfo>(colorPart, method.DeclaringType);
+					if (member is null || member.Value.Item2 is null) {
+						patcher.Mod.Log($"Unable to find target of color alpha key \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					target = new(null, member.Value.Item2);
+				}
+
+				if (!ColorAlphas.TryGetValue(keyFloat, out var colorEntries) || !colorEntries.TryGetValue(target, out var entries))
+					entries = [];
+
+				if (!DirectColorAlphas.TryGetValue(keyFloat, out var directEntries) || !directEntries.TryGetValue(target, out var directs))
+					directs = [];
+
+				foreach (var ent in entry.Value) {
+					if (!RuleRange.TryParse(ent.Key, out var range)) {
+						patcher.Mod.Log($"Unable to parse rule \"{ent.Key}\" processing {patcher.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					if (ent.Value.StartsWith('$'))
+						entries[range] = ent.Value[1..];
+					else if (float.TryParse(ent.Value, out float f))
+						directs[range] = f;
+					else
+						patcher.Mod.Log($"Unable to parse float \"{ent.Value}\" processing {patcher.Key}", LogLevel.Warn);
+				}
+
+				if (entries.Count > 0) {
+					if (!ColorAlphas.TryGetValue(keyFloat, out colorEntries)) {
+						colorEntries = [];
+						ColorAlphas[keyFloat] = colorEntries;
+					}
+
+					colorEntries[target] = entries;
+					count++;
+				}
+
+				if (directs.Count > 0) {
+					if (!DirectColorAlphas.TryGetValue(keyFloat, out directEntries)) {
+						directEntries = [];
+						DirectColorAlphas[keyFloat] = directEntries;
+					}
+
+					directEntries[target] = directs;
+					count++;
+				}
+			}
+
 		if (patcher.AppliedChanges.RawColors is not null)
-			foreach(var entry in patcher.AppliedChanges.RawColors) {
+			foreach (var entry in patcher.AppliedChanges.RawColors) {
 				if (!CommonHelper.TryParseColor(entry.Key, out var keycolor)) {
 					patcher.Mod.Log($"Unable to parse raw color \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
 					continue;
@@ -865,10 +1052,8 @@ internal class DynamicPatcher : IDisposable {
 						entries[range] = ent.Value[1..];
 					else if (CommonHelper.TryParseColor(ent.Value, out var c))
 						directs[range] = c.Value;
-					else {
+					else
 						patcher.Mod.Log($"Unable to parse color \"{ent.Value}\" processing {patcher.Key}", LogLevel.Warn);
-						continue;
-					}
 				}
 
 				if (entries.Count > 0) {
@@ -887,25 +1072,39 @@ internal class DynamicPatcher : IDisposable {
 		count += HydrateFieldSet(patcher.Key, patcher.AppliedChanges.TextureFields, TextureFields, null, method.DeclaringType);
 
 		if (patcher.AppliedChanges.SpriteTextDraw is not null) {
-			foreach(var entry in patcher.AppliedChanges.SpriteTextDraw) {
+			foreach (var entry in patcher.AppliedChanges.SpriteTextDraw) {
 				if (!RuleRange.TryParse(entry.Key, out var range)) {
 					patcher.Mod.Log($"Unable to parse rule \"{entry.Key}\" for SpriteTextDraw while processing {patcher.Key}", LogLevel.Warn);
 					continue;
 				}
 
-				if (entry.Value is null || entry.Value.Length < 2 || entry.Value.Length > 3 || string.IsNullOrWhiteSpace(entry.Value[0]) || string.IsNullOrWhiteSpace(entry.Value[1]) || !entry.Value[0].StartsWith('$') || !entry.Value[1].StartsWith('$') || (entry.Value.Length == 3 && (string.IsNullOrWhiteSpace(entry.Value[2]) || !entry.Value[2].StartsWith('$')))) {
+				if (entry.Value is null ||
+					entry.Value.Length < 2 ||
+					entry.Value.Length > 4 ||
+					string.IsNullOrWhiteSpace(entry.Value[0]) ||
+					string.IsNullOrWhiteSpace(entry.Value[1]) ||
+					!entry.Value[0].StartsWith('$') ||
+					!entry.Value[1].StartsWith('$') ||
+					(entry.Value.Length >= 3 && (string.IsNullOrWhiteSpace(entry.Value[2]) || !entry.Value[2].StartsWith('$'))) ||
+					(entry.Value.Length >= 4 && (string.IsNullOrWhiteSpace(entry.Value[3]) || !entry.Value[3].StartsWith('$')))
+				) {
 					patcher.Mod.Log($"Invalid value \"{entry.Value}\" for \"{entry.Key}\" for SpriteTextDraw while processing {patcher.Key}", LogLevel.Warn);
 					continue;
 				}
 
 				SpriteTextDraw ??= new();
-				SpriteTextDraw[range] = new(entry.Value[0][1..], entry.Value[1][1..], entry.Value.Length == 3 ? entry.Value[2][1..] : null);
+				SpriteTextDraw[range] = new(
+					entry.Value[0][1..],
+					entry.Value[1][1..],
+					entry.Value.Length >= 3 ? entry.Value[2][1..] : null,
+					entry.Value.Length >= 4 ? entry.Value[3][1..] : null
+				);
 				count++;
 			}
 		}
 
 		if (patcher.AppliedChanges.DrawTextWithShadow is not null)
-			foreach(var entry in patcher.AppliedChanges.DrawTextWithShadow) {
+			foreach (var entry in patcher.AppliedChanges.DrawTextWithShadow) {
 				if (!RuleRange.TryParse(entry.Key, out var range)) {
 					patcher.Mod.Log($"Unable to parse rule \"{entry.Key}\" processing {patcher.Key}", LogLevel.Warn);
 					continue;
@@ -960,6 +1159,7 @@ internal class DynamicPatcher : IDisposable {
 			patcher.Mod.Log($"Patching {patcher.Key} with {count} changes.");
 
 		bool has_raw = RawColors.Count > 0 || DirectRawColors.Count > 0;
+		bool has_alpha = ColorAlphas.Count > 0 || DirectColorAlphas.Count > 0;
 
 		// SpriteTextDraw
 		Dictionary<MethodInfo, MethodInfo> SpriteTextDraw_Methods = new() {
@@ -976,17 +1176,11 @@ internal class DynamicPatcher : IDisposable {
 				AccessTools.Method(typeof(DynamicPatcher), nameof(SpriteText_drawStringWithScrollBackground))
 			},
 			{
-				AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
-					typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(int), typeof(float),
-					typeof(int), typeof(int), typeof(float), typeof(bool)
-				}),
+				ModEntry.ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,int,*)"),
 				AccessTools.Method(typeof(DynamicPatcher), nameof(SpriteText_drawStringWithScrollCenteredAt_Int))
 			},
 			{
-				AccessTools.Method(typeof(SpriteText), nameof(SpriteText.drawStringWithScrollCenteredAt), new Type[] {
-					typeof(SpriteBatch), typeof(string), typeof(int), typeof(int), typeof(string), typeof(float),
-					typeof(int), typeof(int), typeof(float), typeof(bool)
-				}),
+				ModEntry.ResolveMethod($"SpriteText:{nameof(SpriteText.drawStringWithScrollCenteredAt)}(SpriteBatch,,,,string,*)"),
 				AccessTools.Method(typeof(DynamicPatcher), nameof(SpriteText_drawStringWithScrollCenteredAt_String))
 			}
 		};
@@ -995,6 +1189,7 @@ internal class DynamicPatcher : IDisposable {
 		MethodInfo getTexture = AccessTools.Method(typeof(DynamicPatcher), nameof(GetTexture));
 
 		MethodInfo getColorPacked = AccessTools.Method(typeof(DynamicPatcher), nameof(GetColorPacked));
+		MethodInfo getColorPackedRef = AccessTools.Method(typeof(DynamicPatcher), nameof(GetColorPackedRef));
 		MethodInfo getColor = AccessTools.Method(typeof(DynamicPatcher), nameof(GetColor));
 		MethodInfo getLerpPacked = AccessTools.Method(typeof(DynamicPatcher), nameof(GetLerpColorPacked));
 		MethodInfo getLerp = AccessTools.Method(typeof(DynamicPatcher), nameof(GetLerpColor));
@@ -1006,16 +1201,15 @@ internal class DynamicPatcher : IDisposable {
 
 		MethodInfo Utility_GetRedGreenLerp = AccessTools.Method(typeof(Utility), nameof(Utility.getRedToGreenLerpColor));
 
-		MethodInfo Utility_DrawTextShadowSB = AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
-			typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
-		});
-		MethodInfo Utility_DrawTextShadowStr = AccessTools.Method(typeof(Utility), nameof(Utility.drawTextWithShadow), new Type[] {
-			typeof(SpriteBatch), typeof(string), typeof(SpriteFont), typeof(Vector2), typeof(Color), typeof(float), typeof(float), typeof(int), typeof(int), typeof(float), typeof(int)
-		});
+		MethodInfo Utility_DrawTextShadowSB = ModEntry.ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,StringBuilder,*)");
+		MethodInfo Utility_DrawTextShadowStr = ModEntry.ResolveMethod($"Utility:{nameof(Utility.drawTextWithShadow)}(SpriteBatch,string,*)");
 
-		ConstructorInfo cstruct = AccessTools.Constructor(typeof(Color), new Type[] {
+		MethodInfo Color_Multi = AccessTools.Method(typeof(Color), "op_Multiply", [typeof(Color), typeof(float)]);
+		MethodInfo getAlpha = AccessTools.Method(typeof(DynamicPatcher), nameof(GetColorAlpha));
+
+		ConstructorInfo cstruct = AccessTools.Constructor(typeof(Color), [
 			typeof(uint)
-		});
+		]);
 
 		var instrs = instructions.ToArray();
 		Color color;
@@ -1043,8 +1237,64 @@ internal class DynamicPatcher : IDisposable {
 			replaced++;
 		}
 
+		AlphaTarget lastColor = AlphaTarget.EMPTY;
+
 		for (int i = 0; i < instrs.Length; i++) {
 			CodeInstruction in0 = instrs[i];
+
+			// Color Alphas
+			if (in0.opcode == OpCodes.Ldc_R4 && in0.operand is float value && i + 1 < instrs.Length && has_alpha) {
+				CodeInstruction in1 = instrs[i + 1];
+				if (in1.Calls(Color_Multi)) {
+					int hits = HitAlphas.GetValueOrDefault(value);
+					hits++;
+					HitAlphas[value] = hits;
+
+					if (ColorAlphas.TryGetValue(value, out var colorEntries) &&
+						colorEntries.TryGetValue(lastColor, out var entries) &&
+						TryGetMatch(entries, i, hits, out string? key)
+					) {
+						AddAndLog(
+							$"Replacing raw color alpha {value} with \"{key}\" at {i}",
+							[
+								in0,
+								new CodeInstruction(
+									OpCodes.Ldstr,
+									key
+								),
+								new CodeInstruction(
+									opcode: OpCodes.Call,
+									operand: getAlpha
+								)
+							],
+
+							oldInstructions: [in0]
+						);
+
+						continue;
+
+					} else if (DirectColorAlphas.TryGetValue(value, out var directEntries) &&
+						directEntries.TryGetValue(lastColor, out var dentries) &&
+						TryGetMatch(dentries, i, hits, out float newValue)
+					) {
+						AddAndLog(
+							$"Replacing raw color alpha {value} with static {newValue} at {i}",
+							[
+								new CodeInstruction(in0) {
+									opcode = OpCodes.Ldc_R4,
+									operand = newValue
+								}
+							],
+
+							oldInstructions: [in0]
+						);
+
+						continue;
+					}
+				}
+			}
+
+			lastColor = AlphaTarget.EMPTY;
 
 			// Raw Colors (new Color(r, g, b))
 			if (i + 3 < instrs.Length && has_raw) {
@@ -1052,13 +1302,16 @@ internal class DynamicPatcher : IDisposable {
 				CodeInstruction in2 = instrs[i + 2];
 				CodeInstruction in3 = instrs[i + 3];
 
-				if (in3.IsConstructor<Color>()) {
+				bool is_con = in3.IsConstructor<Color>();
+
+				if (is_con || in3.IsCallConstructor<Color>()) {
 					int? val0 = in0.AsInt();
 					int? val1 = in1.AsInt();
 					int? val2 = in2.AsInt();
 
 					if (val0.HasValue && val1.HasValue && val2.HasValue) {
 						Color c = new(val0.Value, val1.Value, val2.Value);
+						lastColor = new(c, null);
 
 						// Increment hits
 						HitRawColors.TryGetValue(c, out int hits);
@@ -1068,7 +1321,7 @@ internal class DynamicPatcher : IDisposable {
 						if (RawColors.TryGetValue(c, out var entries) && TryGetMatch(entries, i, hits, out string? key)) {
 							AddAndLog(
 								$"Replacing raw color {c} with \"{key}\" at {i}",
-								new CodeInstruction[] {
+								[
 									new CodeInstruction(in0) {
 										opcode = OpCodes.Ldstr,
 										operand = key
@@ -1079,13 +1332,13 @@ internal class DynamicPatcher : IDisposable {
 									),
 									new CodeInstruction(
 										opcode: OpCodes.Call,
-										operand: getColorPacked
+										operand: is_con ? getColorPacked : getColorPackedRef
 									)
-								},
+								],
 
-								oldInstructions: new CodeInstruction[] {
+								oldInstructions: [
 									in0, in1, in2, in3
-								}
+								]
 							);
 
 							i += 3;
@@ -1094,20 +1347,20 @@ internal class DynamicPatcher : IDisposable {
 						} else if (DirectRawColors.TryGetValue(c, out var cent) && TryGetMatch(cent, i, hits, out Color clr)) {
 							AddAndLog(
 								$"Replacing raw color {c} with static {clr} at {i}",
-								new CodeInstruction[] {
+								[
 									new CodeInstruction(in0) {
 										opcode = OpCodes.Ldc_I4,
 										operand = unchecked((int) clr.PackedValue)
 									},
 									new CodeInstruction(
-										opcode: OpCodes.Newobj,
+										opcode: in3.opcode,
 										operand: cstruct
 									)
-								},
+								],
 
-								oldInstructions: new CodeInstruction[] {
+								oldInstructions: [
 									in0, in1, in2, in3
-								}
+								]
 							);
 
 							i += 3;
@@ -1119,6 +1372,9 @@ internal class DynamicPatcher : IDisposable {
 
 			// Methods
 			if (in0.opcode == OpCodes.Call && in0.operand is MethodInfo meth) {
+				if (ColorPropertyColors.Value.TryGetValue(meth, out Color colorColor))
+					lastColor = new(colorColor, null);
+
 				// Color Properties (Color.Red, Color.White, etc.)
 				if (Colors.TryGetValue(meth, out var centries)) {
 					// Increment hits.
@@ -1129,7 +1385,7 @@ internal class DynamicPatcher : IDisposable {
 					if (TryGetMatch(centries.Item1, i, hits, out string? key)) {
 						AddAndLog(
 							$"Replacing color property {meth.Name} with \"{key}\" at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldstr,
 									operand = key
@@ -1142,11 +1398,11 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Call,
 									operand: getColorPacked
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1163,7 +1419,7 @@ internal class DynamicPatcher : IDisposable {
 					if (TryGetMatch(dcentries, i, hits, out color)) {
 						AddAndLog(
 							$"Replacing color property {meth.Name} with static {color} at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldc_I4,
 									operand = unchecked((int) color.PackedValue)
@@ -1172,11 +1428,11 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Newobj,
 									operand: cstruct
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1191,7 +1447,7 @@ internal class DynamicPatcher : IDisposable {
 					if (DrawTextWithShadow is not null && TryGetMatch(DrawTextWithShadow, i, HitDrawTextWithShadow, out string? key)) {
 						AddAndLog(
 							$"Replacing {meth.Name} call with \"{key}\" at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldstr,
 									operand = key
@@ -1200,11 +1456,11 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Call,
 									operand: is_sb ? drawTextSB : drawTextStr
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1213,7 +1469,7 @@ internal class DynamicPatcher : IDisposable {
 					if (DirectDrawTextWithShadow is not null && TryGetMatch(DirectDrawTextWithShadow, i, HitDrawTextWithShadow, out var c)) {
 						AddAndLog(
 							$"Replacing {meth.Name} call with static {c} at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldc_I4,
 									operand = unchecked((int) c.PackedValue)
@@ -1222,9 +1478,9 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Call,
 									operand: is_sb ? drawTextSBPacked : drawTextStrPacked
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] { in0 }
+							oldInstructions: [in0]
 						);
 
 						continue;
@@ -1241,7 +1497,7 @@ internal class DynamicPatcher : IDisposable {
 					else if (TryGetMatch(SpriteTextDraw, i, HitSpriteTextDraw, out var values)) {
 						AddAndLog(
 							$"Replacing {meth.Name} call with \"{values}\" at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldstr,
 									operand = values.Item1
@@ -1255,14 +1511,18 @@ internal class DynamicPatcher : IDisposable {
 									operand: values.Item3
 								),
 								new CodeInstruction(
+									opcode: values.Item4 == null ? OpCodes.Ldnull : OpCodes.Ldstr,
+									operand: values.Item4
+								),
+								new CodeInstruction(
 									opcode: OpCodes.Call,
 									operand: wrapped
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1276,7 +1536,7 @@ internal class DynamicPatcher : IDisposable {
 					if (Lerp is not null && TryGetMatch(Lerp, i, HitLerps, out var values)) {
 						AddAndLog(
 							$"Replacing {meth.Name} call with \"{values}\" at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldstr,
 									operand = values.Item1
@@ -1293,11 +1553,11 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Call,
 									operand: getLerp
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1306,7 +1566,7 @@ internal class DynamicPatcher : IDisposable {
 					if (DirectLerp is not null && TryGetMatch(DirectLerp, i, HitLerps, out var cvalues)) {
 						AddAndLog(
 							$"Replacing {meth.Name} call with static {cvalues} at {i}",
-							new CodeInstruction[] {
+							[
 								new CodeInstruction(in0) {
 									opcode = OpCodes.Ldc_I4,
 									operand = unchecked((int) cvalues.Item1.PackedValue)
@@ -1323,11 +1583,11 @@ internal class DynamicPatcher : IDisposable {
 									opcode: OpCodes.Call,
 									operand: getLerpPacked
 								)
-							},
+							],
 
-							oldInstructions: new CodeInstruction[] {
+							oldInstructions: [
 								in0
-							}
+							]
 						);
 
 						continue;
@@ -1339,6 +1599,9 @@ internal class DynamicPatcher : IDisposable {
 
 			// Static Fields
 			if ((in0.opcode == OpCodes.Ldsfld || in0.opcode == OpCodes.Ldfld) && in0.operand is FieldInfo field) {
+				if (field.FieldType == typeof(Color))
+					lastColor = new(null, field);
+
 				HitFields.TryGetValue(field, out int hits);
 				hits++;
 				HitFields[field] = hits;
@@ -1347,7 +1610,7 @@ internal class DynamicPatcher : IDisposable {
 				if (TextureFields.TryGetValue(field, out var tentries) && TryGetMatch(tentries, i, hits, out string? key)) {
 					AddAndLog(
 						$"Replacing static texture field {field.Name} with \"{key}\" at {i}",
-						new CodeInstruction[] {
+						[
 							in0,
 							new CodeInstruction(
 								opcode: OpCodes.Ldstr,
@@ -1357,11 +1620,11 @@ internal class DynamicPatcher : IDisposable {
 								opcode: OpCodes.Call,
 								operand: getTexture
 							)
-						},
+						],
 
-						oldInstructions: new CodeInstruction[] {
+						oldInstructions: [
 							in0
-						}
+						]
 					);
 
 					continue;
@@ -1371,7 +1634,7 @@ internal class DynamicPatcher : IDisposable {
 				if (FontFields.TryGetValue(field, out var fentries) && TryGetMatch(fentries, i, hits, out key)) {
 					AddAndLog(
 						$"Replacing static font field {field.Name} with \"{key}\" at {i}",
-						new CodeInstruction[] {
+						[
 							in0,
 							new CodeInstruction(
 								opcode: OpCodes.Ldstr,
@@ -1381,11 +1644,11 @@ internal class DynamicPatcher : IDisposable {
 								opcode: OpCodes.Call,
 								operand: getFont
 							)
-						},
+						],
 
-						oldInstructions: new CodeInstruction[] {
+						oldInstructions: [
 							in0
-						}
+						]
 					);
 
 					continue;
@@ -1395,7 +1658,7 @@ internal class DynamicPatcher : IDisposable {
 				if (ColorFields.TryGetValue(field, out var entries) && TryGetMatch(entries, i, hits, out key)) {
 					AddAndLog(
 						$"Replacing static color field {field.Name} with \"{key}\" at {i}",
-						new CodeInstruction[] {
+						[
 							in0,
 							new CodeInstruction(
 								opcode: OpCodes.Ldstr,
@@ -1405,11 +1668,11 @@ internal class DynamicPatcher : IDisposable {
 								opcode: OpCodes.Call,
 								operand: getColor
 							)
-						},
+						],
 
-						oldInstructions: new CodeInstruction[] {
+						oldInstructions: [
 							in0
-						}
+						]
 					);
 
 					continue;
@@ -1420,7 +1683,7 @@ internal class DynamicPatcher : IDisposable {
 				if (in0.opcode == OpCodes.Ldsfld && DirectColorFields.TryGetValue(field, out var cent) && TryGetMatch(cent, i, hits, out color)) {
 					AddAndLog(
 						$"Replacing static color field {field.Name} with static {color} at {i}",
-						new CodeInstruction[] {
+						[
 							new CodeInstruction(in0) {
 								opcode = OpCodes.Ldc_I4,
 								operand = unchecked((int) color.PackedValue)
@@ -1429,11 +1692,11 @@ internal class DynamicPatcher : IDisposable {
 								opcode: OpCodes.Newobj,
 								operand: cstruct
 							)
-						},
+						],
 
-						oldInstructions: new CodeInstruction[] {
+						oldInstructions: [
 							in0
-						}
+						]
 					);
 
 					continue;

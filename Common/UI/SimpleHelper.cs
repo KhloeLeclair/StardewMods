@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
 
 using Leclair.Stardew.Common.UI.SimpleLayout;
 
@@ -6,14 +6,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.UI;
 
 public static class SimpleHelper {
 
-	public static SimpleBuilder Builder(LayoutDirection dir = LayoutDirection.Vertical, int margin = 0, Vector2? minSize = null, Alignment align = Alignment.None) {
-		return new(null, new LayoutNode(dir, null, margin, minSize, align));
+	public static ISimpleBuilder Builder(LayoutDirection dir = LayoutDirection.Vertical, int margin = 0, Vector2? minSize = null, Alignment align = Alignment.None) {
+		return new SimpleBuilder(null, new LayoutNode(dir, null, margin, minSize, align));
 	}
 
 	public static void DrawHover(
@@ -59,8 +58,8 @@ public static class SimpleHelper {
 		int mx = Game1.getOldMouseX();
 		int my = Game1.getOldMouseY();
 
-		int x = overrideX < 0 ? mx + 32 + offsetX : overrideX;
-		int y = overrideY < 0 ? my + 32 + offsetY : overrideY;
+		int x = overrideX == -1 ? mx + 32 + offsetX : overrideX;
+		int y = overrideY == -1 ? my + 32 + offsetY : overrideY;
 
 		Rectangle safeArea = Utility.getSafeArea();
 
@@ -75,7 +74,7 @@ public static class SimpleHelper {
 			x += 16;
 
 			if (x + width > safeArea.Right)
-				 x = safeArea.Right - width;
+				x = safeArea.Right - width;
 		}
 
 		if (x < safeArea.Left)
@@ -143,3 +142,5 @@ public static class SimpleHelper {
 	}
 
 }
+
+#endif

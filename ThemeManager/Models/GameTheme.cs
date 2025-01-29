@@ -1,20 +1,20 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+
+using Leclair.Stardew.Common;
+using Leclair.Stardew.Common.Types;
+using Leclair.Stardew.ThemeManager.Serialization;
+using Leclair.Stardew.ThemeManager.VariableSets;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 using Newtonsoft.Json;
 
-using StardewValley;
-using StardewValley.BellsAndWhistles;
-
 using StardewModdingAPI;
 
-using Leclair.Stardew.Common;
-using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.Types;
-using Microsoft.Xna.Framework.Graphics;
-using Leclair.Stardew.ThemeManager.Serialization;
-using Leclair.Stardew.ThemeManager.VariableSets;
+using StardewValley;
+using StardewValley.BellsAndWhistles;
 
 namespace Leclair.Stardew.ThemeManager.Models;
 
@@ -29,9 +29,14 @@ public class GameTheme : IGameTheme {
 	internal bool Processing = false;
 
 	[JsonIgnore]
-	private Dictionary<int, Color>? _SpriteTextColors;
+	private Dictionary<int, Color>? _IndexedSpriteTextColors;
 	[JsonIgnore]
-	private Dictionary<int, string>? _InheritedSpriteTextColors;
+	private Dictionary<int, string>? _InheritedIndexedSpriteTextColors;
+
+	[JsonIgnore]
+	private Dictionary<string, Dictionary<long, Color?>>? _SpriteTextColorSets;
+	[JsonIgnore]
+	private Dictionary<string, Dictionary<string, string?>>? _InheritedSpriteTextColorSets;
 
 	[JsonIgnore]
 	private List<string>? _Patches;
@@ -39,6 +44,7 @@ public class GameTheme : IGameTheme {
 	private List<string>? _InheritedPatches;
 	[JsonIgnore]
 	private Dictionary<string, string>? _PatchColorVariables;
+	private Dictionary<string, string>? _PatchColorAlphaVariables;
 	private Dictionary<string, string>? _PatchFontVariables;
 	private Dictionary<string, string>? _PatchBmFontVariables;
 	private Dictionary<string, string>? _PatchTextureVariables;
@@ -64,7 +70,7 @@ public class GameTheme : IGameTheme {
 		rawVariables["Text"] = ColorToString(Game1.textColor);
 		rawVariables["TextShadow"] = ColorToString(Game1.textShadowColor);
 		rawVariables["UnselectedOption"] = ColorToString(Game1.unselectedOptionColor);
-		rawVariables["TextShadowAlt"] = "221, 148, 84";
+		rawVariables["TextShadowAlt"] = ColorToString(Game1.textShadowDarkerColor);
 
 		rawVariables["ErrorText"] = "Red";
 		rawVariables["Hover"] = "Wheat";
@@ -72,11 +78,11 @@ public class GameTheme : IGameTheme {
 
 		theme.ColorVariables.RawValues = rawVariables;
 
-		theme.RawSpriteTextColors ??= new();
+		theme.RawIndexedSpriteTextColors ??= new();
 		for (int i = 0; i <= 8; i++) {
 			var color = SpriteText.getColorFromIndex(i);
-			theme.SpriteTextColors[i] = color;
-			theme.RawSpriteTextColors[i] = ColorToString(color);
+			theme.IndexedSpriteTextColors[i] = color;
+			theme.RawIndexedSpriteTextColors[i] = ColorToString(color);
 		}
 
 		return theme;
@@ -85,8 +91,13 @@ public class GameTheme : IGameTheme {
 	#endregion
 
 	/// <inheritdoc />
+	public bool TryGetColorAlphaVariable(string key, [NotNullWhen(true)] out float result) {
+		return ColorAlphaVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out result);
+	}
+
+	/// <inheritdoc />
 	public Color? GetColorVariable(string key) {
-		if (! string.IsNullOrEmpty(key) && ColorVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out var color))
+		if (!string.IsNullOrEmpty(key) && ColorVariables.TryGetValue(key.StartsWith('$') ? key[1..] : key, out var color))
 			return color;
 		return null;
 	}
@@ -140,7 +151,8 @@ public class GameTheme : IGameTheme {
 				_Manifest = value;
 
 				if (_Manifest?.FallbackTheme != old_fallback) {
-					_InheritedSpriteTextColors = null;
+					_InheritedIndexedSpriteTextColors = null;
+					_InheritedSpriteTextColorSets = null;
 					_InheritedPatches = null;
 					_Patches = null;
 					ResetPatchVariables();
@@ -165,12 +177,23 @@ public class GameTheme : IGameTheme {
 	[JsonConverter(typeof(RealVariableSetConverter))]
 	public IVariableSet<IManagedAsset<IBmFontData>> BmFontVariables { get; set; } = new BmFontVariableSet();
 
+	/// <inheritdoc />
+	[JsonConverter(typeof(RealVariableSetConverter))]
+	public IVariableSet<float> ColorAlphaVariables { get; set; } = new FloatVariableSet();
+
+	/// <summary>
+	/// The raw sprite text color sets, read from the underlying JSON object.
+	/// You should use <see cref="SpriteTextColorSets"/> rather than this.
+	/// </summary>
+	[JsonProperty("SpriteTextColorSets")]
+	public Dictionary<string, Dictionary<string, string?>>? RawSpriteTextColorSets { get; set; }
+
 	/// <summary>
 	/// The raw sprite text colors read from the underlying JSON object.
-	/// You should use <see cref="SpriteTextColors"/> rather than this.
+	/// You should use <see cref="IndexedSpriteTextColors"/> rather than this.
 	/// </summary>
-	[JsonProperty("SpriteTextColors")]
-	public Dictionary<int, string>? RawSpriteTextColors { get; set; }
+	[JsonProperty(nameof(IndexedSpriteTextColors))]
+	public Dictionary<int, string>? RawIndexedSpriteTextColors { get; set; }
 
 	/// <summary>
 	/// The raw list of patches read from the underlying JSON object.
@@ -194,24 +217,51 @@ public class GameTheme : IGameTheme {
 	#region Inherited Values
 
 	[JsonIgnore]
+	internal Dictionary<string, Dictionary<string, string?>> InheritedSpriteTextColorSets {
+		get {
+			if (_InheritedSpriteTextColorSets is not null)
+				return _InheritedSpriteTextColorSets;
+
+			Dictionary<string, Dictionary<string, string?>> result;
+			Processing = true;
+
+			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
+				result = RawSpriteTextColorSets is not null ? new(RawSpriteTextColorSets) : new();
+				foreach (var entry in other.InheritedSpriteTextColorSets) {
+					if (result.TryGetValue(entry.Key, out var existing)) {
+						foreach (var pair in entry.Value)
+							existing.TryAdd(pair.Key, pair.Value);
+					} else
+						result.TryAdd(entry.Key, entry.Value);
+				}
+			} else
+				result = RawSpriteTextColorSets ?? new();
+
+			_InheritedSpriteTextColorSets = result;
+			Processing = false;
+			return _InheritedSpriteTextColorSets;
+		}
+	}
+
+	[JsonIgnore]
 	internal Dictionary<int, string> InheritedSpriteTextColors {
 		get {
-			if (_InheritedSpriteTextColors is not null)
-				return _InheritedSpriteTextColors;
+			if (_InheritedIndexedSpriteTextColors is not null)
+				return _InheritedIndexedSpriteTextColors;
 
 			Dictionary<int, string> result;
 			Processing = true;
 
-			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.TryGetTheme(Manifest.FallbackTheme, out var other) && !other.Processing) {
-				result = RawSpriteTextColors is not null ? new(RawSpriteTextColors) : new();
+			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
+				result = RawIndexedSpriteTextColors is not null ? new(RawIndexedSpriteTextColors) : new();
 				foreach (var entry in other.InheritedSpriteTextColors)
 					result.TryAdd(entry.Key, entry.Value);
 			} else
-				result = RawSpriteTextColors ?? new();
+				result = RawIndexedSpriteTextColors ?? new();
 
-			_InheritedSpriteTextColors = result;
+			_InheritedIndexedSpriteTextColors = result;
 			Processing = false;
-			return _InheritedSpriteTextColors;
+			return _InheritedIndexedSpriteTextColors;
 		}
 	}
 
@@ -224,7 +274,7 @@ public class GameTheme : IGameTheme {
 			List<string> result;
 			Processing = true;
 
-			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.TryGetTheme(Manifest.FallbackTheme, out var other) && !other.Processing) {
+			if (!string.IsNullOrEmpty(Manifest?.FallbackTheme) && ModEntry.Instance.GameThemeManager!.GetTheme(Manifest.FallbackTheme) is GameTheme other && !other.Processing) {
 				result = new(other.InheritedPatches);
 				if (RawPatches is not null)
 					foreach (string entry in RawPatches)
@@ -244,14 +294,56 @@ public class GameTheme : IGameTheme {
 
 	/// <inheritdoc />
 	[JsonIgnore]
-	public Dictionary<int, Color> SpriteTextColors {
+	public Dictionary<string, Dictionary<long, Color?>> SpriteTextColorSets {
 		get {
-			if (_SpriteTextColors is not null)
-				return _SpriteTextColors;
+			if (_SpriteTextColorSets is not null)
+				return _SpriteTextColorSets;
+
+			var result = new Dictionary<string, Dictionary<long, Color?>>();
+
+			foreach (var entry in InheritedSpriteTextColorSets) {
+				var subresult = new Dictionary<long, Color?>();
+				foreach (var pair in entry.Value) {
+					long key;
+					if (pair.Key is null || pair.Key.Equals("null", System.StringComparison.OrdinalIgnoreCase) || pair.Key.Equals("default", System.StringComparison.OrdinalIgnoreCase))
+						key = -1;
+					else if (CommonHelper.TryParseColor(pair.Key, out Color? ckey))
+						key = ckey.Value.PackedValue;
+					else {
+						ModEntry.Instance.Log($"Unable to parse color for theme {Manifest?.UniqueID}: {pair.Key}", LogLevel.Warn);
+						continue;
+					}
+
+					if (pair.Value is null || pair.Value.Equals("null", System.StringComparison.OrdinalIgnoreCase))
+						subresult[key] = null;
+					else if (pair.Value.StartsWith('$')) {
+						if (ColorVariables.TryGetValue(pair.Value[1..], out var color))
+							subresult[key] = color;
+					} else if (CommonHelper.TryParseColor(pair.Value, out var color))
+						subresult[key] = color.Value;
+					else
+						ModEntry.Instance.Log($"Unable to parse color for theme {Manifest?.UniqueID}: {pair.Value}", LogLevel.Warn);
+				}
+
+				if (subresult.Count > 0)
+					result.Add(entry.Key, subresult);
+			}
+
+			_SpriteTextColorSets = result;
+			return result;
+		}
+	}
+
+	/// <inheritdoc />
+	[JsonIgnore]
+	public Dictionary<int, Color> IndexedSpriteTextColors {
+		get {
+			if (_IndexedSpriteTextColors is not null)
+				return _IndexedSpriteTextColors;
 
 			var result = new Dictionary<int, Color>();
 
-			foreach(var entry in InheritedSpriteTextColors) {
+			foreach (var entry in InheritedSpriteTextColors) {
 				if (entry.Value.StartsWith('$')) {
 					if (ColorVariables.TryGetValue(entry.Value[1..], out var color))
 						result[entry.Key] = color;
@@ -261,7 +353,7 @@ public class GameTheme : IGameTheme {
 					ModEntry.Instance.Log($"Unable to parse color for theme {Manifest?.UniqueID}: {entry.Value}", LogLevel.Warn);
 			}
 
-			_SpriteTextColors = result;
+			_IndexedSpriteTextColors = result;
 			return result;
 		}
 	}
@@ -275,7 +367,7 @@ public class GameTheme : IGameTheme {
 
 			var result = new List<string>();
 
-			foreach(string entry in InheritedPatches) {
+			foreach (string entry in InheritedPatches) {
 				if (entry.StartsWith('-'))
 					result.Remove(entry[1..]);
 				else
@@ -292,6 +384,7 @@ public class GameTheme : IGameTheme {
 		_PatchFontVariables = null;
 		_PatchBmFontVariables = null;
 		_PatchTextureVariables = null;
+		_PatchColorAlphaVariables = null;
 	}
 
 	internal Dictionary<string, string> PatchColorVariables {
@@ -321,6 +414,37 @@ public class GameTheme : IGameTheme {
 			}
 
 			_PatchColorVariables = result;
+			return result;
+		}
+	}
+
+	internal Dictionary<string, string> PatchColorAlphaVariables {
+		get {
+			if (_PatchColorAlphaVariables is not null)
+				return _PatchColorAlphaVariables;
+
+			var result = new CaseInsensitiveDictionary<string>();
+
+			if (Patches.Count > 0) {
+				ModEntry.Instance.LoadPatchGroups();
+
+				foreach (string patch in Patches) {
+					if (ModEntry.Instance.PatchGroups.TryGetValue(patch, out var group)) {
+						if (group.CanUse && group.ColorAlphaVariables is not null) {
+							foreach (var entry in group.ColorAlphaVariables) {
+								// Make sure to strip the "$" from the start of
+								// variable keys.
+								result.TryAdd(
+									entry.Key.StartsWith('$') ? entry.Key[1..] : entry.Key,
+									entry.Value
+								);
+							}
+						}
+					}
+				}
+			}
+
+			_PatchColorAlphaVariables = result;
 			return result;
 		}
 	}

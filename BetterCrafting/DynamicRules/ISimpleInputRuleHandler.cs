@@ -37,6 +37,6 @@ public interface IOptionInputRuleHandler : IDynamicRuleHandler {
 	/// <summary>
 	/// A dictionary of options to display to the user.
 	/// </summary>
-	Dictionary<string, string> Options { get; }
+	IEnumerable<KeyValuePair<string, string>> GetOptions(bool cooking);
 
 }

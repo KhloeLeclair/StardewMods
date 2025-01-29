@@ -1,14 +1,19 @@
 #nullable enable
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
+using Leclair.Stardew.Common.Types;
+
 using Microsoft.Xna.Framework;
 
+using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
 
 using SColor = System.Drawing.Color;
@@ -27,7 +32,7 @@ public static class CommonHelper {
 
 		comparer ??= EqualityComparer<TValue>.Default;
 
-		for(int i = 0; i < input.Length; i++) {
+		for (int i = 0; i < input.Length; i++) {
 			if (!comparer.Equals(input[i], other[i]))
 				return false;
 		}
@@ -40,9 +45,11 @@ public static class CommonHelper {
 		if ((input == null) || (other == null)) return false;
 		if (input.Count != other.Count) return false;
 
-		comparer ??= EqualityComparer<TValue>.Default;
+		comparer ??= input is ValueEqualityList<TValue> vel
+			? vel.Comparer
+			: EqualityComparer<TValue>.Default;
 
-		for(int i = 0; i < input.Count; i++) {
+		for (int i = 0; i < input.Count; i++) {
 			if (!comparer.Equals(input[i], other[i]))
 				return false;
 		}
@@ -55,9 +62,11 @@ public static class CommonHelper {
 		if ((input == null) || (other == null)) return false;
 		if (input.Count != other.Count) return false;
 
-		comparer ??= EqualityComparer<TValue>.Default;
+		comparer ??= input is ValueEqualityDictionary<TKey, TValue> ved
+			? ved.ValueComparer
+			: EqualityComparer<TValue>.Default;
 
-		foreach(var entry in input) {
+		foreach (var entry in input) {
 			if (!other.TryGetValue(entry.Key, out TValue? value))
 				return false;
 			if (!comparer.Equals(entry.Value, value))
@@ -73,8 +82,12 @@ public static class CommonHelper {
 
 	#region Color Names
 
-	private static readonly Dictionary<string, Color> CSS4Colors = new(StringComparer.OrdinalIgnoreCase) {
+	/// <summary>
+	/// CSS4 colors, and JojaBlue from the base game.
+	/// </summary>
+	private static readonly Dictionary<string, Color> ExtraColors = new(StringComparer.OrdinalIgnoreCase) {
 		{ "rebeccapurple", new Color(102, 51, 153, 255) },
+		{ "jojablue", new Color(52, 50, 122) }
 	};
 
 	/// <summary>
@@ -136,7 +149,7 @@ public static class CommonHelper {
 				));
 		}
 
-		foreach (var entry in CSS4Colors) {
+		foreach (var entry in ExtraColors) {
 			AddColor(result, entry.Key, entry.Value);
 		}
 
@@ -144,6 +157,26 @@ public static class CommonHelper {
 	}
 
 	#endregion
+
+	public static Color PremultiplyAlpha(this Color input) {
+		if (input.A == 0)
+			return Color.Transparent;
+		if (input.A == 255)
+			return input;
+
+		float alpha = input.A / 255f;
+
+		return new Color(
+			input.R * alpha,
+			input.G * alpha,
+			input.B * alpha,
+			input.A
+		);
+	}
+
+	public static string ToHex(this Color input) {
+		return string.Format("#{0:X02}{1:X02}{2:X02}{3:X02}", input.R, input.G, input.B, input.A);
+	}
 
 	public static Color? ParseColor(string? input) {
 		if (TryParseColor(input, out Color? result))
@@ -153,6 +186,20 @@ public static class CommonHelper {
 	}
 
 	public static bool TryParseColor(string? input, [NotNullWhen(true)] out Color? result) {
+		bool premultiply = !string.IsNullOrEmpty(input) && input.StartsWith("premultiply:");
+		if (premultiply)
+			input = input![12..];
+
+		if (TryParseColorImpl(input, out result)) {
+			if (premultiply)
+				result = PremultiplyAlpha(result.Value);
+			return true;
+		}
+
+		return false;
+	}
+
+	private static bool TryParseColorImpl(string? input, [NotNullWhen(true)] out Color? result) {
 		if (!string.IsNullOrEmpty(input)) {
 			// Raw Format (Old)
 			if (char.IsDigit(input[0]))
@@ -513,13 +560,80 @@ public static class CommonHelper {
 		return result;
 	}
 
-	public static IEnumerable<T> GetValues<T>() {
-		return Enum.GetValues(typeof(T)).Cast<T>();
+	public static IEnumerable<TEnum> GetValues<TEnum>() where TEnum : struct, Enum {
+		return Enum.GetValues<TEnum>();
+		//return Enum.GetValues(typeof(T)).Cast<T>();
 	}
 
 	#endregion
 
 	#region Strings
+
+	/// <summary>
+	/// A more efficient version of the game's <see cref="ArgUtility.SplitQuoteAware(string, char, StringSplitOptions, bool)"/> method.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="delimiter"></param>
+	/// <param name="splitOptions"></param>
+	/// <param name="keepQuotesAndEscapes"></param>
+	/// <returns></returns>
+	internal static string[] SplitQuoteAware(string input, char delimiter, StringSplitOptions splitOptions = StringSplitOptions.None, bool keepQuotesAndEscapes = false) {
+		if (string.IsNullOrEmpty(input))
+			return [];
+
+		if (!input.Contains('"'))
+			return input.Split(delimiter, splitOptions);
+
+		bool trimEntries = splitOptions.HasFlag(StringSplitOptions.TrimEntries);
+		bool removeEmpty = splitOptions.HasFlag(StringSplitOptions.RemoveEmptyEntries);
+
+		var span = input.AsSpan();
+		if (trimEntries)
+			span = span.Trim();
+
+		List<string> values = [];
+
+		bool inQuotes = false;
+		bool escapeNext = false;
+
+		ValueStringBuilder vsb = new(stackalloc char[256]);
+
+		foreach (char c in span) {
+			if (escapeNext)
+				escapeNext = false;
+			else if (c == '\\') {
+				escapeNext = true;
+				if (!keepQuotesAndEscapes)
+					continue;
+
+			} else if (c == '"') {
+				inQuotes = !inQuotes;
+				if (!keepQuotesAndEscapes)
+					continue;
+			} else if (c == delimiter && !inQuotes) {
+				var segment = vsb.AsSpan();
+				if (trimEntries)
+					segment = segment.Trim();
+				if (!(removeEmpty && segment.IsEmpty))
+					values.Add(segment.ToString());
+				vsb.Clear();
+				continue;
+			}
+
+			vsb.Append(c);
+		}
+
+		if (vsb.Length > 0) {
+			var segment = vsb.AsSpan();
+			if (trimEntries)
+				segment = segment.Trim();
+			if (!(removeEmpty && segment.IsEmpty))
+				values.Add(segment.ToString());
+		}
+
+		return values.ToArray();
+	}
+
 
 	internal static int IndexOfWhitespace(this string text, int startIndex = 0) {
 		int i = startIndex;
@@ -563,6 +677,79 @@ public static class CommonHelper {
 
 	#endregion
 
+	internal static IEnumerable<NPC> EnumerateCharacters(IEnumerable<GameLocation>? locations = null, bool includeEventActors = false, bool? dateable = null) {
+		foreach (var location in locations ?? EnumerateLocations(true, true)) {
+			foreach (NPC npc in location.characters) {
+				if ((includeEventActors || !npc.EventActor) && (!dateable.HasValue || dateable.Value == npc.datable.Value))
+					yield return npc;
+			}
+		}
+	}
+
+	internal static IEnumerable<GameLocation> EnumerateLocations(bool includeInteriors = true, bool includeGenerated = false) {
+
+		GameLocation current = Game1.currentLocation;
+		string? currentName = current?.NameOrUniqueName;
+
+		foreach (var rawLocation in Game1.locations) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+
+			if (!includeInteriors)
+				continue;
+
+			foreach (var building in loc.buildings) {
+				if (building.GetIndoorsType() == StardewValley.Buildings.IndoorsType.Instanced) {
+					var indoors = building.GetIndoors();
+					if (indoors != null)
+						yield return indoors;
+				}
+			}
+		}
+
+		if (!includeGenerated)
+			yield break;
+
+		foreach (var rawLocation in MineShaft.activeMines) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+		}
+
+		foreach (var rawLocation in VolcanoDungeon.activeLevels) {
+			GameLocation loc = (rawLocation.NameOrUniqueName == currentName && current != null)
+				? current
+				: rawLocation;
+
+			yield return loc;
+		}
+	}
+
+	internal static Vector2 GetNearestPoint(this Rectangle rectangle, Vector2 position) {
+		float minX = rectangle.X;
+		float maxX = minX + rectangle.Width;
+		float minY = rectangle.Y;
+		float maxY = minY + rectangle.Height;
+
+		return new Vector2(
+			position.X < minX
+				? minX
+				: position.X > maxX
+					? maxX
+					: position.X,
+			position.Y < minY
+				? minY
+				: position.Y > maxY
+					? maxY
+					: position.Y
+		);
+	}
+
 	internal static xTile.Dimensions.Location ToLocation(this Vector2 pos) {
 		return new((int) pos.X, (int) pos.Y);
 	}
@@ -571,20 +758,43 @@ public static class CommonHelper {
 		return new((int) pos.X, (int) pos.Y);
 	}
 
-	public static void YeetMenu(IClickableMenu menu) {
+	private static Action<IClickableMenu?>? ActiveMenuSetter;
+
+	[MemberNotNull(nameof(ActiveMenuSetter))]
+	private static void LoadActiveMenuSetter() {
+		if (ActiveMenuSetter == null) {
+			var field = typeof(Game1).GetField("_activeClickableMenu", BindingFlags.Static | BindingFlags.NonPublic)
+				?? throw new ArgumentNullException("Could not get _activeClickableMenu field");
+
+			ActiveMenuSetter = field.CreateSetter<IClickableMenu?>();
+		}
+	}
+
+
+	/// <summary>
+	/// Call <see cref="IClickableMenu.exitThisMenu(bool)"/> without actually
+	/// modifying <see cref="Game1.activeClickableMenu"/>. This allows us to
+	/// ensure that any pending <see cref="Game1.nextClickableMenu"/> entries
+	/// aren't made active when we're replacing a menu with our own.
+	/// </summary>
+	/// <param name="menu">The menu being removed.</param>
+	public static void YeetMenu(this IClickableMenu menu) {
 		if (menu == null) return;
 
-		MethodInfo? CleanupMethod = menu.GetType().GetMethod("cleanupBeforeExit", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		menu.behaviorBeforeCleanup?.Invoke(menu);
+		IClickableMenu? active = Game1.activeClickableMenu;
 
-		if (CleanupMethod != null && CleanupMethod.GetParameters().Length == 0)
-			CleanupMethod.Invoke(menu, null);
+		bool is_active = menu == active;
+		bool is_game_menu_active = !is_active && active is GameMenu gm && gm.GetCurrentPage() == menu;
 
-		if (menu.exitFunction != null) {
-			IClickableMenu.onExit exitFunction = menu.exitFunction;
-			menu.exitFunction = null;
-			exitFunction();
+		if (is_active || is_game_menu_active) {
+			LoadActiveMenuSetter();
+			ActiveMenuSetter(null);
 		}
+
+		menu.exitThisMenu(playSound: false);
+
+		if (is_game_menu_active)
+			ActiveMenuSetter!(active);
 	}
 
 }

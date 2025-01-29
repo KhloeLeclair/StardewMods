@@ -1,10 +1,26 @@
 {
 	"ID": "ForgeMenu",
 
+	"ColorVariables": {
+		"$ForgeMenu:Text": "$Text"
+	},
+
+	"FontVariables": {
+		"$ForgeMenu:Small": "$Small"
+	},
+
 	"ColorPatches": {
 		"#ForgeMenu:draw(SpriteBatch)": {
 			"RawColors": {
 				"116, 11, 3": { "*": "$ForgeBackground" }
+			},
+
+			"ColorFields": {
+				"Game1:textColor": { "*": "$ForgeMenu:Text" }
+			},
+
+			"FontFields": {
+				"Game1:smallFont": { "*": "$ForgeMenu:Small" }
 			}
 		}
 	}

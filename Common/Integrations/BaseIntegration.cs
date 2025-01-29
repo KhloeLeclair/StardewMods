@@ -18,6 +18,7 @@ public abstract class BaseIntegration<M> where M : Mod {
 	[MemberNotNullWhen(true, nameof(Manifest))]
 	public virtual bool IsLoaded { get; protected set; }
 
+	public IModInfo? Other { get; }
 	public IManifest? Manifest { get; }
 
 	public BaseIntegration(M self, string modID, string? minVersion, string? maxVersion = null) {
@@ -27,7 +28,8 @@ public abstract class BaseIntegration<M> where M : Mod {
 		MaxVersion = maxVersion;
 
 		// Look up the mod.
-		Manifest = Self.Helper.ModRegistry.Get(ModID)?.Manifest;
+		Other = Self.Helper.ModRegistry.Get(ModID);
+		Manifest = Other?.Manifest;
 		if (Manifest == null)
 			return;
 

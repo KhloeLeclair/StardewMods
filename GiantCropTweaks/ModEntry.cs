@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 
 using HarmonyLib;
 
-using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
-using Leclair.Stardew.GiantCropTweaks.Integrations.GiantCropFertilizer;
 using Leclair.Stardew.GiantCropTweaks.Models;
 
 using Microsoft.Xna.Framework;
@@ -21,18 +17,18 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
 using StardewValley;
-using StardewValley.Locations;
+using StardewValley.GameData.Crops;
+using StardewValley.GameData.GiantCrops;
 using StardewValley.TerrainFeatures;
 
 namespace Leclair.Stardew.GiantCropTweaks;
 
-public class ModEntry : ModSubscriber {
+public class ModEntry : PintailModSubscriber {
 
-	public const string GIANT_CROP_DATA = @"Data\GiantCrops";
-	public const string GCT_CROP_DATA = @"Mods/leclair.giantcroptweaks/Data";
+	public const string CUSTOM_CROP_DATA = @"Mods/leclair.giantcroptweaks/Data";
 
-	public const string MD_ID = "leclair.giantcroptweaks/Id";
-	public const string MD_PROTECT = "leclair.giantcroptweaks/UnderCrop";
+	public const string MD_PROTECT = @"leclair.giantcroptweaks/UnderCrop";
+	public const string MD_COLOR = @"leclair.giantcroptweaks/Color";
 
 #nullable disable
 
@@ -41,19 +37,11 @@ public class ModEntry : ModSubscriber {
 
 #nullable enable
 
-	internal readonly Dictionary<IManifest, ModApi> ApiInstances = new();
+	internal Dictionary<string, ExtraGiantCropData>? CropData;
+	internal HashSet<string>? CropsWithRegrowthRestriction;
+	internal readonly Dictionary<string, KeyValuePair<string, CropData>?> UnderlyingCropCache = new();
 
-	internal readonly static MethodInfo OneTimeRandom_GetDouble = AccessTools.Method("StardewValley.OneTimeRandom:GetDouble");
-
-	internal readonly Dictionary<string, Lazy<Texture2D>> PackTextures = new();
-
-	internal Dictionary<string, List<string>>? CropsByHarvest;
-
-	internal Dictionary<string, GiantCrops>? CropData;
-
-	internal Dictionary<string, IGiantCropData>? ApiData;
-
-	internal Dictionary<int, int>? HarvestToCropMap;
+	internal readonly Dictionary<string, Texture2D?> TextureCache = new();
 
 	internal readonly PerScreen<bool> CanBreakCrops = new(() => true);
 
@@ -61,7 +49,6 @@ public class ModEntry : ModSubscriber {
 
 	// Integrations
 	internal GMCMIntegration<ModConfig, ModEntry>? intGMCM;
-	internal GCFIntegration? intGCF;
 
 	// Entry
 	public override void Entry(IModHelper helper) {
@@ -79,28 +66,26 @@ public class ModEntry : ModSubscriber {
 
 		// Read Config
 		Config = Helper.ReadConfig<ModConfig>();
+		Patches.Crop_Patches.AllowedLocations = Config.AllowedLocations;
 
 		// Other Init
 		I18n.Init(Helper.Translation);
 	}
 
 	public override object? GetApi(IModInfo mod) {
-		if (!ApiInstances.TryGetValue(mod.Manifest, out var api)) {
-			api = new ModApi(this, mod.Manifest);
-			ApiInstances.Add(mod.Manifest, api);
-		}
-
-		return api;
+		return new ModApi(this, mod.Manifest);
 	}
 
 	#region Configuration
 
 	public void SaveConfig() {
 		Helper.WriteConfig(Config);
+		Patches.Crop_Patches.AllowedLocations = Config.AllowedLocations;
 	}
 
 	public void ResetConfig() {
 		Config = new();
+		Patches.Crop_Patches.AllowedLocations = Config.AllowedLocations;
 	}
 
 	public void RegisterConfig() {
@@ -131,18 +116,23 @@ public class ModEntry : ModSubscriber {
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
-		intGCF = new(this);
 		RegisterConfig();
 
-		Helper.ConsoleCommands.Add("gct_update", "Reload our giant crop data from disk.", (_, _) => {
-			Helper.GameContent.InvalidateCache(@"Data\GiantCrops");
-			Helper.GameContent.InvalidateCache(asset => asset.Name.StartsWith(@"Mods/leclair.giantcroptweaks/Texture/"));
-
+		Helper.ConsoleCommands.Add("gct_update", "Reload our additional giant crop data.", (_, _) => {
+			Helper.GameContent.InvalidateCache(CUSTOM_CROP_DATA);
 			Log($"Invalidated cached content.", LogLevel.Info);
+		});
 
-			LoadCropData();
+		Helper.ConsoleCommands.Add("gct_newcolors", "Clear the colors on all giant crops on the current map.", (_, _) => {
+			int removed = 0;
 
-			Log($"Loaded {CropData.Count} giant crops.", LogLevel.Info);
+			if (Game1.currentLocation is not null)
+				foreach (var entry in Game1.currentLocation.resourceClumps) {
+					if (entry is GiantCrop crop && crop.modData.Remove(MD_COLOR))
+						removed++;
+				}
+
+			Log($"Reset cached color on {removed} crops.", LogLevel.Info);
 		});
 
 		Helper.ConsoleCommands.Add("gct_fixdirt", "Fix the protected dirt tiles on the current map.", (_, _) => {
@@ -155,14 +145,14 @@ public class ModEntry : ModSubscriber {
 			// Handle additions first.
 			HashSet<Vector2> valid = new();
 
-			foreach(var entry in Game1.currentLocation.resourceClumps) {
+			foreach (var entry in Game1.currentLocation.resourceClumps) {
 				if (entry is GiantCrop crop)
 					added += ProtectGiantCropDirt(Game1.currentLocation, crop, valid);
 			}
 
 			// Now, check every HoeDirt to see if it should be removed.
-			foreach(var entry in Game1.currentLocation.terrainFeatures.Pairs) {
-				if (entry.Value is HoeDirt dirt && ! valid.Contains(entry.Key) && dirt.modData.ContainsKey(MD_PROTECT)) {
+			foreach (var entry in Game1.currentLocation.terrainFeatures.Pairs) {
+				if (entry.Value is HoeDirt dirt && !valid.Contains(entry.Key) && dirt.modData.ContainsKey(MD_PROTECT)) {
 					removed++;
 					dirt.modData.Remove(MD_PROTECT);
 				}
@@ -174,46 +164,34 @@ public class ModEntry : ModSubscriber {
 
 	[Subscriber]
 	private void OnAssetInvalidated(object? sender, AssetsInvalidatedEventArgs e) {
-		foreach(var name in e.Names) {
-			if (name.IsEquivalentTo(@"Data\GiantCrops")) {
-				CropsByHarvest = null;
+		foreach (var name in e.Names) {
+			if (name.IsEquivalentTo(CUSTOM_CROP_DATA))
 				CropData = null;
-				ApiData = null;
-			}
 
-			if (name.IsEquivalentTo(@"Data\Crops")) {
-				HarvestToCropMap = null;
-				CropsByHarvest = null;
-			}
+			if (name.IsEquivalentTo(@"Data/Crops") || name.IsEquivalentTo(@"Data/GiantCrops"))
+				UnderlyingCropCache.Clear();
+
+			// Make sure we don't have a texture cached from this asset.
+			TextureCache.Remove(name.Name);
 		}
 	}
 
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
-		if (e.Name.IsEquivalentTo(@"Data\GiantCrops"))
-			e.LoadFrom(LoadAssetCrops, AssetLoadPriority.Low);
-
-		if (e.Name.StartsWith(@"Mods/leclair.giantcroptweaks/PackTexture/")) {
-			string key = e.Name.ToString()![41..];
-			if (PackTextures.ContainsKey(key))
-				e.LoadFrom(() => PackTextures[key].Value, AssetLoadPriority.Low);
-		}
-
-		if (e.Name.StartsWith(@"Mods/leclair.giantcroptweaks/Texture/"))
-			e.LoadFromModFile<Texture2D>($"assets/{e.Name.ToString()![37..]}", AssetLoadPriority.Low);
-
+		if (e.Name.IsEquivalentTo(CUSTOM_CROP_DATA))
+			e.LoadFrom(InternalLoadCropData, AssetLoadPriority.Exclusive);
 	}
 
 	[Subscriber]
 	private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e) {
-		CanBreakCrops.ResetAllScreens();
+		CanBreakCrops.Value = true;
 	}
 
 	[Subscriber]
 	private void OnTerrainFeaturesChanged(object? sender, TerrainFeatureListChangedEventArgs e) {
 		var features = e.Location.terrainFeatures;
 		int count = 0;
-		foreach(var entry in e.Removed) {
+		foreach (var entry in e.Removed) {
 			if (entry.Value is HoeDirt dirt && dirt.modData.ContainsKey(MD_PROTECT)) {
 				// Surely this is too stupid to work.
 				count++;
@@ -231,370 +209,35 @@ public class ModEntry : ModSubscriber {
 	#region Loading
 
 	[MemberNotNull(nameof(CropData))]
-	[MemberNotNull(nameof(ApiData))]
+	[MemberNotNull(nameof(CropsWithRegrowthRestriction))]
 	internal void LoadCropData() {
-		if (CropData is null || ApiData is null) {
-			CropData = Helper.GameContent.Load<Dictionary<string, GiantCrops>>(@"Data\GiantCrops");
-			ApiData = new();
-			foreach (var entry in CropData)
-				ApiData[entry.Key] = entry.Value;
+		if (CropData is null) {
+			CropData = Helper.GameContent.Load<Dictionary<string, ExtraGiantCropData>>(CUSTOM_CROP_DATA);
+			CropsWithRegrowthRestriction = null;
 		}
+
+		CropsWithRegrowthRestriction ??= CropData
+			.Where(pair => !pair.Value.CanGrowWhenNotFullyRegrown)
+			.Select(pair => pair.Key)
+			.ToHashSet();
 	}
 
-	private Dictionary<string, GiantCrops> LoadAssetCrops() {
-		Dictionary<string, GiantCrops>? result = null;
+	private Dictionary<string, ExtraGiantCropData> InternalLoadCropData() {
+		Dictionary<string, ExtraGiantCropData> result = new();
 
-		try {
-			result = Helper.ModContent.Load<Dictionary<string, GiantCrops>>(@"assets\crops.json");
+		// We don't have any built-in stuff yet. No texture pack support.
 
-		} catch(Exception ex) {
-			if (!ex.Message.Contains("path doesn't exist"))
-				Log($"crops.json is missing or invalid.", LogLevel.Warn, ex);
-		}
+		return result;
+	}
 
-		if (result is not null) {
-			foreach(var entry in result)
-				entry.Value.ID = entry.Key;
-		}
-
-		PackTextures.Clear();
-
-		// More Giant Crops flat asset support
-		string mgc_path = Path.Join(Helper.DirectoryPath, "MoreGiantCrops");
-		if (Directory.Exists(mgc_path)) {
-			List<string> ids = new();
-
-			foreach(string absolute in Directory.EnumerateFiles(mgc_path)) {
-				if (!string.Equals(Path.GetExtension(absolute), ".png", StringComparison.OrdinalIgnoreCase))
-					continue;
-
-				string relative = Path.GetRelativePath(Helper.DirectoryPath, absolute);
-				string id = Path.GetFileNameWithoutExtension(absolute);
-				string nid = $"MGC-{id}";
-
-				result ??= new();
-				if (result.ContainsKey(nid))
-					continue;
-
-				GiantCrops data = new() {
-					ID = nid,
-					FromItemId = id,
-					Texture = $"Mods/leclair.giantcroptweaks/PackTexture/{nid}"
-				};
-
-				data.HarvestItems.Add(new GiantCropHarvestItemData() {
-					ItemId = id
-				});
-
-				PackTextures[nid] = new(() => Helper.ModContent.Load<Texture2D>(relative));
-				result[nid] = data;
-
-				ids.Add(nid);
-			}
-
-			if (ids.Count > 0) {
-				ids.Sort((a,b) => {
-					if (int.TryParse(a, out int ai) && int.TryParse(b, out int bi))
-						return ai.CompareTo(bi);
-					return a.CompareTo(b);
-				});
-				Log($"Imported {ids.Count} giant crops from More Giant Crops format. (IDs: {string.Join(", ", ids)})", LogLevel.Debug);
-			}
-		}
-
-		// Content Packs
-		foreach(var pack in Helper.ContentPacks.GetOwned()) {
-			foreach(string absolute in Directory.EnumerateDirectories(pack.DirectoryPath)) {
-				string folder = Path.GetRelativePath(pack.DirectoryPath, absolute);
-				if (!pack.HasFile($"{folder}/crop.json"))
-					continue;
-
-				GiantCrops? data;
-
-				try {
-					data = pack.ReadJsonFile<GiantCrops>($"{folder}/crop.json");
-				} catch(Exception ex) {
-					Log($"Unable to load \"${folder}/crop.json\" from {pack.Manifest.Name} ({pack.Manifest.UniqueID}): {ex}", LogLevel.Warn);
-					continue;
-				}
-
-				if (data is null || string.IsNullOrEmpty(data.ID))
-					continue;
-
-				if (string.IsNullOrEmpty(data.Texture)) {
-					if (!pack.HasFile($"{folder}/crop.png")) {
-						Log($"Crop at \"${folder}/crop.json\" has no texture. Skipping from {pack.Manifest.Name} ({pack.Manifest.UniqueID})", LogLevel.Error);
-						continue;
-					}
-
-					PackTextures[data.ID] = new Lazy<Texture2D>(() => pack.ModContent.Load<Texture2D>($"{folder}/crop.png"));
-					data.Texture = $"Mods/leclair.giantcroptweaks/PackTexture/{data.ID}";
-				}
-
-				result ??= new();
-				result[data.ID] = data;
-			}
-		}
-
-		// Fix everything.
-		if (result is not null) {
-			foreach(var entry in result) {
-				var data = entry.Value;
-
-				if (data.ID != entry.Key) {
-					if (data.ID is not null)
-						Log($"Incorrect ID on model for giant crop with ID \"{entry.Key}\". Fixing.", LogLevel.Warn);
-					data.ID = entry.Key;
-				}
-
-				if (string.IsNullOrEmpty(data.FromItemId)) {
-					Log($"Fixing missing \"FromItemId\" on giant crop with ID \"{entry.Key}\".", LogLevel.Warn);
-					data.FromItemId = data.ID;
-				}
-
-				if (data.HarvestItems.Count == 0) {
-					Log($"Giant crop with ID \"{entry.Key}\" has no \"HarvestItems\". Adding default entry.", LogLevel.Debug);
-					data.HarvestItems.Add(new GiantCropHarvestItemData() {
-						ItemId = data.ID
-					});
-				}
-			}
-		}
-
-		return result ?? new();
+	public bool TryGetExtraData(string id, [NotNullWhen(true)] out ExtraGiantCropData? data) {
+		LoadCropData();
+		return CropData.TryGetValue(id, out data);
 	}
 
 	#endregion
 
 	#region Handler
-
-	/// <summary>
-	/// Get the <see cref="GiantCrops"/> data instance for a specific giant
-	/// crop, if one is available. This is likely to return <c>null</c> for
-	/// giant crops added by other mods.
-	/// </summary>
-	/// <param name="id">The harvest ID of the giant crop we want data on.</param>
-	public GiantCrops? GetGiantCropData(string id) {
-		LoadCropData();
-		if (CropData.TryGetValue(id, out var data))
-			return data;
-		return null;
-	}
-
-
-	public List<string> GetPossibleGiantCrops(string id) {
-		CropsByHarvest ??= new();
-		if (CropsByHarvest.TryGetValue(id, out List<string>? result))
-			return result;
-
-		result = new();
-
-		LoadCropData();
-		foreach(var entry in CropData) {
-			bool matches = entry.Value.FromItemId == id;
-			if (!matches) {
-				// TODO: Compare qualified item IDs.
-			}
-			if (matches)
-				result.Add(entry.Key);
-		}
-
-		CropsByHarvest[id] = result;
-		return result;
-	}
-
-
-	/// <summary>
-	/// Look up which crop provides the harvest product we have. Used for turning
-	/// giant crops back into not-so-big crops. This also only returns a value
-	/// for crops with regrowth times, to simplify things.
-	/// </summary>
-	/// <param name="harvest">The harvest ID.</param>
-	public int? GetCropIdFromHarvest(int harvest) {
-		if (HarvestToCropMap is null) {
-			HarvestToCropMap = new();
-			var crops = Helper.GameContent.Load<Dictionary<int, string>>(@"Data\Crops");
-			foreach (var entry in crops) {
-				string[] parts = entry.Value.Split('/');
-				if (parts.Length < 5 || !int.TryParse(parts[3], out int prod) || !int.TryParse(parts[4], out int days) || days < 0)
-					continue;
-
-				HarvestToCropMap.TryAdd(prod, entry.Key);
-			}
-		}
-
-		if (HarvestToCropMap.TryGetValue(harvest, out int val))
-			return val;
-
-		return null;
-	}
-
-	/// <summary>
-	/// Check to see if giant crops are allowed to grow in a given location.
-	/// This uses the same logic as the 1.6 update.
-	/// </summary>
-	/// <param name="location">The location to check.</param>
-	public GameLocation? IsGiantCropLocation(GameLocation location) {
-		// Vanilla 1.5.6 Behavior
-		if (location is Farm)
-			return location;
-
-		// Custom Behavior
-		if (Config.AllowedLocations == AllowedLocations.Anywhere)
-			return location;
-		if (Config.AllowedLocations == AllowedLocations.BaseAndIsland && location is IslandWest)
-			return location;
-
-		// Vanilla 1.6 Behavior
-		if (!string.IsNullOrEmpty(location.getMapProperty("AllowGiantCrops")))
-			return location;
-
-		return null;
-	}
-
-	/// <summary>
-	/// Check to see if a giant crop should grow at a specific position on
-	/// a specific day in a specific seed with a specific fertilizer. This
-	/// replicated the default logic, but with a customizable chance as
-	/// well as with support for the Giant Crop Fertilizer mod.
-	/// </summary>
-	/// <param name="chance">The percentage chance of a giant crop spawning, from 0 to 1</param>
-	/// <param name="fertilizer">The fertilizer being used on the <see cref="HoeDirt"/> where this crop is growing</param>
-	/// <param name="uniqueId">The unique ID of the save</param>
-	/// <param name="daysPlayed">The number of days played of the save</param>
-	/// <param name="x">The x coordinate within the map of the <see cref="HoeDirt"/></param>
-	/// <param name="y">The y coordinate within the map of the <see cref="HoeDirt"/></param>
-	public ShouldGrow ShouldGiantCropGrow(double chance, int fertilizer, ulong uniqueId, ulong daysPlayed, ulong x, ulong y) {
-		if (chance >= 1.0)
-			return ShouldGrow.True;
-
-		// Try to get the standard value.
-		if (OneTimeRandom_GetDouble!.Invoke(null, new object[] { uniqueId, daysPlayed, x, y }) is not double dbl)
-			return ShouldGrow.False;
-
-		// Did we succeed?
-		if (dbl < chance)
-			return ShouldGrow.True;
-
-		// Giant Crop Fertilizer Mod
-		if (fertilizer != -1 && fertilizer == (intGCF?.GiantCropFertilizerID ?? -1)) {
-			chance = Math.Max(chance, intGCF?.FertilizerChance ?? 0);
-
-			// Did we succeed now?
-			if (dbl < chance)
-				return ShouldGrow.WithFertilizer;
-		}
-
-		// ... we did not.
-		return ShouldGrow.False;
-	}
-
-	/// <summary>
-	/// Try growing a crop into a giant crop. This is called by the Crop
-	/// harmony patches.
-	/// </summary>
-	/// <param name="location">The location this is happening in</param>
-	/// <param name="crop">The crop we're trying to grow out</param>
-	/// <param name="state">Whether or not it was watered</param>
-	/// <param name="fertilizer">The fertilizer used on the crop</param>
-	/// <param name="xTile">The X tile position of the crop</param>
-	/// <param name="yTile">The Y tile position of the crop</param>
-	public void TryGrowingGiantCrop(GameLocation location, Crop crop, int state, int fertilizer, int xTile, int yTile, bool force = false) {
-		// If a giant crop was spawned some other way in 1.5, flag its dirt too.
-		if (location.resourceClumps.Count > 0 && location.resourceClumps.Last() is GiantCrop gc && gc.tile.X == xTile - 1 && gc.tile.Y == yTile - 1)
-			ProtectGiantCropDirt(location, gc);
-
-		// If the crop isn't in its last phase, or this isn't a giant crop location, don't continue. Skip if forced.
-		if (!force && (crop.currentPhase.Value != crop.phaseDays.Count - 1 || IsGiantCropLocation(location) is null))
-			return;
-
-		// For regrowing crops, only do this on the day they regrow. Skip if forced.
-		if (!force && crop.fullyGrown.Value && crop.dayOfCurrentPhase.Value > 0)
-			return;
-
-		// If there's no dirt there or it isn't our crop, don't continue.
-		if (!location.terrainFeatures.TryGetValue(new Vector2(xTile, yTile), out var tile) || tile is not HoeDirt hd || hd.crop != crop)
-			return;
-
-		// Get the data for this crop.
-		string key = crop.indexOfHarvest.Value.ToString();
-		List<string> possibleCrops = GetPossibleGiantCrops(key);
-		if (possibleCrops.Count == 0)
-			return;
-
-		ShouldGrow should = ShouldGrow.False;
-		string? sid = null;
-		IGiantCropData? selected = null;
-
-		LoadCropData();
-
-		foreach(string gid in possibleCrops) {
-			if (!CropData.TryGetValue(gid, out GiantCrops? data))
-				continue;
-
-			// Determine if this crop *should* grow to giant size. Always grow if force.
-			should = force ? ShouldGrow.True : ShouldGiantCropGrow(data.Chance, fertilizer, Game1.uniqueIDForThisGame, Game1.stats.daysPlayed, (ulong) xTile, (ulong) yTile);
-			if (should == ShouldGrow.False)
-				continue;
-
-			// If this crop has a game state query, check it.
-			if (!force && !string.IsNullOrEmpty(data.Condition) && !GameStateQuery.CheckConditions(data.Condition, location: location, monitor: Monitor))
-				continue;
-
-			// Check to see if we have a full grid of crops in the dimensions we need.
-			bool valid = true;
-			for (int x = xTile; x < xTile + data.TileSize.X; x++) {
-				for (int y = yTile; y < yTile + data.TileSize.Y; y++) {
-					Vector2 v = new(x, y);
-					if (!location.terrainFeatures.TryGetValue(v, out var tf) || tf is not HoeDirt hd2 || hd2.crop == null || hd2.crop.indexOfHarvest.Value != crop.indexOfHarvest.Value) {
-						valid = false;
-						break;
-					}
-				}
-				if (!valid)
-					break;
-			}
-
-			if (!valid)
-				continue;
-
-			// If we're still here, then this giant crop can grow.
-			sid = gid;
-			selected = data;
-			break;
-		}
-
-		if (selected is null)
-			return;
-
-		// Still here? Time to grow!
-
-		// Clear the existing crops from all tiles.
-		for (int x = xTile; x < xTile + selected.TileSize.X; x++) {
-			for (int y = yTile; y < yTile + selected.TileSize.Y; y++) {
-				Vector2 v = new(x, y);
-				if (location.terrainFeatures[v] is HoeDirt hd3) {
-					hd3.crop = null;
-
-					// Maybe remove our fertilizer?
-					if (should == ShouldGrow.WithFertilizer && x == xTile && y == yTile)
-						hd3.fertilizer.Value = HoeDirt.noFertilizer;
-				}
-			}
-		}
-
-		// And add the new GiantCrop
-		GiantCrop giant = new(crop.indexOfHarvest.Value, new Vector2(xTile, yTile));
-
-		// Set up appropriate data.
-		giant.modData[MD_ID] = sid;
-		giant.health.Value = selected.Health;
-		giant.width.Value = selected.TileSize.X;
-		giant.height.Value = selected.TileSize.Y;
-
-		location.resourceClumps.Add(giant);
-		ProtectGiantCropDirt(location, giant);
-	}
 
 	/// <summary>
 	/// Set mod data on each square of <see cref="HoeDirt"/> under a giant crop
@@ -606,8 +249,8 @@ public class ModEntry : ModSubscriber {
 	/// <returns>The number of tiles that had protection added.</returns>
 	public int ProtectGiantCropDirt(GameLocation location, GiantCrop crop, HashSet<Vector2>? tiles = null) {
 		// Where exactly did this happen?
-		int originX = (int) crop.tile.Value.X;
-		int originY = (int) crop.tile.Value.Y;
+		int originX = (int) crop.Tile.X;
+		int originY = (int) crop.Tile.Y;
 
 		int width = crop.width.Value;
 		int height = crop.height.Value;
@@ -633,6 +276,7 @@ public class ModEntry : ModSubscriber {
 		return count;
 	}
 
+
 	/// <summary>
 	/// Remove mod data on each square of <see cref="HoeDirt"/> under a giant
 	/// crop to allow the dirt to be removed again.
@@ -641,8 +285,8 @@ public class ModEntry : ModSubscriber {
 	/// <param name="crop">The giant crop to protect</param>
 	public void UnprotectGiantCropDirt(GameLocation location, GiantCrop crop) {
 		// Where exactly did this happen?
-		int originX = (int) crop.tile.Value.X;
-		int originY = (int) crop.tile.Value.Y;
+		int originX = (int) crop.Tile.X;
+		int originY = (int) crop.Tile.Y;
 
 		int width = crop.width.Value;
 		int height = crop.height.Value;
@@ -657,27 +301,62 @@ public class ModEntry : ModSubscriber {
 		}
 	}
 
+
+	public KeyValuePair<string, CropData>? GetUnderlyingCrop(GiantCropData? crop) {
+		string? idToMatch = crop?.FromItemId;
+		if (string.IsNullOrEmpty(idToMatch))
+			return null;
+
+		if (UnderlyingCropCache.TryGetValue(idToMatch, out var matched))
+			return matched;
+
+		string qualified_id = ItemRegistry.QualifyItemId(idToMatch);
+		foreach (var pair in DataLoader.Crops(Game1.content))
+			if (ItemRegistry.QualifyItemId(pair.Value.HarvestItemId) == qualified_id) {
+				UnderlyingCropCache[idToMatch] = pair;
+				return pair;
+			}
+
+		UnderlyingCropCache[idToMatch] = null;
+		return null;
+	}
+
+
 	/// <summary>
 	/// This method runs when a GiantCrop is removed, and is responsible for
 	/// restoring the dirt to its previous condition.
 	/// </summary>
 	/// <param name="location">The location where this is happening</param>
 	/// <param name="crop">The giant crop that was removed</param>
-	public void OnGiantCropRemoved(GameLocation location, GiantCrop crop) {
+	public void OnGiantCropRemoved(GiantCrop crop) {
 		// Where exactly did this happen?
-		int originX = (int) crop.tile.Value.X;
-		int originY = (int) crop.tile.Value.Y;
+		int originX = (int) crop.Tile.X;
+		int originY = (int) crop.Tile.Y;
 
-		Log($"Removed crop at {originX},{originY} in {location.NameOrUniqueName}: {crop.parentSheetIndex.Value}: {crop.which.Value}", LogLevel.Trace);
+		Log($"Removed crop at {originX},{originY} in {crop.Location.NameOrUniqueName}: {crop.Id}", LogLevel.Trace);
 
-		int? cval = GetCropIdFromHarvest(crop.parentSheetIndex.Value);
+		// Check the behavior.
+		ReplantBehavior behavior = ReplantBehavior.WhenRegrowing;
+		LoadCropData();
+		if (CropData.TryGetValue(crop.Id, out var extraData))
+			behavior = extraData.ShouldReplant;
+
+		string? matchingCrop = null;
+
+		// Try to get a matching crop.
+		if (behavior != ReplantBehavior.Never) {
+			var pair = GetUnderlyingCrop(crop.GetData());
+			if (pair != null && (behavior == ReplantBehavior.Always || (behavior == ReplantBehavior.WhenRegrowing && pair.Value.Value.RegrowDays > -1)))
+				matchingCrop = pair.Value.Key;
+		}
+
 		int width = crop.width.Value;
 		int height = crop.height.Value;
 
 		int i = -1;
 
-		for(int xOffset = 0; xOffset < width; xOffset++) {
-			for(int yOffset = 0; yOffset < height; yOffset++) {
+		for (int xOffset = 0; xOffset < width; xOffset++) {
+			for (int yOffset = 0; yOffset < height; yOffset++) {
 				i++;
 				int x = originX + xOffset;
 				int y = originY + yOffset;
@@ -686,7 +365,7 @@ public class ModEntry : ModSubscriber {
 				// Check to see if we have existing HoeDirt, or if there's some
 				// other terrain feature at that position already.
 				HoeDirt? dirt = null;
-				if (location.terrainFeatures.TryGetValue(pos, out var feature)) {
+				if (crop.Location.terrainFeatures.TryGetValue(pos, out var feature)) {
 					if (feature is HoeDirt hd)
 						dirt = hd;
 					else if (feature is not null) {
@@ -697,40 +376,40 @@ public class ModEntry : ModSubscriber {
 
 				// If we don't have existing dirt, make new dirt.
 				if (dirt is null) {
-					dirt = new HoeDirt(0, location);
-					if (Game1.IsRainingHere(location))
+					dirt = new HoeDirt(0, crop.Location);
+					if (Game1.IsRainingHere(crop.Location))
 						dirt.state.Value = 1;
 
-					Log($"Had to recreate dirt at {originX},{originY} in {location.NameOrUniqueName}.", LogLevel.Trace);
-					location.terrainFeatures[pos] = dirt;
+					Log($"Had to recreate dirt at {originX},{originY} in {crop.Location.NameOrUniqueName}.", LogLevel.Trace);
+					crop.Location.terrainFeatures[pos] = dirt;
 				}
 
 				// Make sure it isn't flagged for protection anymore.
 				dirt.modData.Remove(MD_PROTECT);
 
 				// Restore Crop
-				if (cval.HasValue && dirt.crop is null) {
+				if (matchingCrop != null && dirt.crop is null) {
 					// Create a new crop instance. Let it update once to see if it dies.
-					Crop c = new Crop(cval.Value, x, y);
-					c.newDay(dirt.state.Value, dirt.fertilizer.Value, x, y, location);
+					Crop c = new(matchingCrop, x, y, crop.Location);
+					int regrowDays = c.GetData()?.RegrowDays ?? -1;
+					c.newDay(dirt.state.Value);
 
-					// If the crop dies after a single day, then it can't live
-					// at the current time so don't plant it. If it doesn't die, then
-					// handle all the planting logic.
 					if (!c.dead.Value) {
-						// First, plant the crop.
+						// We did it! Let's recreate the planting logic.
 						dirt.crop = c;
+						dirt.applySpeedIncreases(Game1.MasterPlayer);
 						dirt.nearWaterForPaddy.Value = -1;
-						if (dirt.hasPaddyCrop() && dirt.paddyWaterCheck(location, pos)) {
+						if (dirt.hasPaddyCrop() && dirt.paddyWaterCheck()) {
 							dirt.state.Value = 1;
-							dirt.updateNeighbors(location, pos);
+							dirt.updateNeighbors();
 						}
 
-						// Now fast forward the crop so it's ready to regrow.
-						dirt.crop.fullyGrown.Value = true;
-						dirt.crop.currentPhase.Value = dirt.crop.phaseDays.Count - 1;
-						dirt.crop.dayOfCurrentPhase.Value = dirt.crop.regrowAfterHarvest.Value;
-						dirt.crop.updateDrawMath(pos);
+						// Now, fast forward the crop so it's ready to regrow.
+						if (regrowDays > -1) {
+							c.growCompletely();
+							c.dayOfCurrentPhase.Value = regrowDays;
+							c.updateDrawMath(c.tilePosition);
+						}
 					}
 				}
 			}
@@ -744,9 +423,3 @@ public class ModEntry : ModSubscriber {
 
 	#endregion
 }
-
-public enum ShouldGrow {
-	False = 0,
-	True = 1,
-	WithFertilizer = 2
-};

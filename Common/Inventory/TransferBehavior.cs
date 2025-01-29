@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_BCINVENTORY
 
 using Leclair.Stardew.Common.Enums;
 
@@ -14,3 +14,5 @@ public class TransferBehavior {
 		Quantity = quantity;
 	}
 }
+
+#endif

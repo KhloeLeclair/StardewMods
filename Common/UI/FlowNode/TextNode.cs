@@ -1,4 +1,4 @@
-#nullable enable
+#if COMMON_FLOW
 
 using System;
 using System.Collections.Generic;
@@ -7,12 +7,12 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.Menus;
 using StardewValley.BellsAndWhistles;
+using StardewValley.Menus;
 
 namespace Leclair.Stardew.Common.UI.FlowNode;
 
-public struct TextNode : IFlowNode {
+public class TextNode : IFlowNode {
 
 	public static readonly char[] SEPARATORS = new char[] {
             // Whitespace
@@ -30,7 +30,17 @@ public struct TextNode : IFlowNode {
 	};
 
 	public string Text { get; }
-	public TextStyle Style { get; }
+
+	private TextStyle _Style;
+	public TextStyle Style {
+		get => _Style;
+		set {
+			if (_Style.IsFancy() != value.IsFancy() || _Style.Scale != value.Scale || _Style.Font != value.Font || _Style.IsJunimo() != value.IsJunimo())
+				throw new ArgumentException("unable to assign style that would change size of output");
+			_Style = value;
+		}
+	}
+
 	public Alignment Alignment { get; }
 	public object? Extra { get; }
 	public string? UniqueId { get; }
@@ -52,7 +62,7 @@ public struct TextNode : IFlowNode {
 		string? id = null
 	) {
 		Text = text;
-		Style = style ?? TextStyle.EMPTY;
+		_Style = style ?? TextStyle.EMPTY;
 		Alignment = align ?? Alignment.None;
 		OnClick = onClick;
 		OnHover = onHover;
@@ -147,6 +157,15 @@ public struct TextNode : IFlowNode {
 				}
 			}
 
+			// This should not be the case?
+			if (snippet.Length <= 1)
+				continue;
+
+			// This word doesn't fit at all. We need to break it up.
+			var slice = TryPartial(font, length, start, remaining, spaceSize);
+			if (slice is not null)
+				return slice;
+
 			// Still doesn't fit. Just give up and return this bit.
 			if (snippet.Length > 1)
 				return new TextSlice(this, snippet, start, end, size.X, Math.Max(spaceSize.Y, size.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
@@ -167,8 +186,41 @@ public struct TextNode : IFlowNode {
 		if (finalSize.X > remaining && pending != null)
 			return new TextSlice(this, pending, start, pendingEnd, pendingSize.X + (pendingSpace ? spaceSize.X : 0), Math.Max(spaceSize.Y, pendingSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
 
+		// If we're dealing with a no-separators-at-all situation, attempt to slice the word.
+		var sliced = !had_new && start == 0 ? TryPartial(font, final.Length, start, remaining, spaceSize) : null;
+		if (sliced is not null)
+			return sliced;
+
 		// Just give up and send it.
 		return new TextSlice(this, final, start, start + final.Length + offset, finalSize.X, Math.Max(finalSize.Y, spaceSize.Y), had_new ? WrapMode.ForceAfter : WrapMode.None);
+	}
+
+	private TextSlice? TryPartial(SpriteFont font, int length, int start, float remaining, Vector2 spaceSize, WrapMode mode = WrapMode.None) {
+		// This word doesn't fit at all. We need to break it up.
+		int snipLength = 0;
+		Vector2 snipSize = Vector2.Zero;
+
+		while (snipLength <= length) {
+			snipLength++;
+			if (Text.Length < (start + snipLength)) {
+				snipLength--;
+				break;
+			}
+
+			var newSize = font.MeasureString(Text.Substring(start, snipLength));
+			if (newSize.X <= remaining)
+				snipSize = newSize;
+			else {
+				snipLength--;
+				break;
+			}
+		}
+
+		// Did we get some?
+		if (snipLength > 0)
+			return new TextSlice(this, Text.Substring(start, snipLength), start, start + snipLength, snipSize.X, Math.Max(spaceSize.Y, snipSize.Y), mode);
+
+		return null;
 	}
 
 	public void Draw(IFlowNodeSlice slice, SpriteBatch batch, Vector2 position, float scale, SpriteFont defaultFont, Color? defaultColor, Color? defaultShadowColor, CachedFlowLine line, CachedFlow flow) {
@@ -177,11 +229,15 @@ public struct TextNode : IFlowNode {
 
 		float s = scale * (Style.Scale ?? 1f);
 		SpriteFont font = Style.Font ?? defaultFont;
+		Color? stColor = Style.Color ?? defaultColor;
 		Color color = Style.Color ?? defaultColor ?? Game1.textColor;
 		Color background = Style.BackgroundColor ?? Color.Transparent;
 		Color? shadowColor = Style.ShadowColor ?? defaultShadowColor;
 		if (Style.IsPrismatic())
 			color = Utility.GetPrismaticColor();
+
+		if (Style.Opacity.HasValue)
+			color *= Style.Opacity.Value;
 
 		string text = tslice.Text;
 
@@ -207,7 +263,8 @@ public struct TextNode : IFlowNode {
 				text,
 				(int) position.X, (int) position.Y,
 				junimoText: Style.IsJunimo(),
-				color: color
+				color: stColor,
+				alpha: Style.Opacity ?? 1
 			);
 		else if (Style.IsBold())
 			Utility.drawBoldText(batch, text, font, position, color, s);
@@ -232,9 +289,9 @@ public struct TextNode : IFlowNode {
 		if (Style.IsUnderline())
 			Utility.drawLineWithScreenCoordinates(
 				(int) position.X,
-				(int) (position.Y + tslice.Height * 3/4),
+				(int) (position.Y + tslice.Height * 3 / 4),
 				(int) (position.X + tslice.Width),
-				(int) (position.Y + tslice.Height * 3/4),
+				(int) (position.Y + tslice.Height * 3 / 4),
 				batch,
 				color
 			);
@@ -324,3 +381,5 @@ public struct TextSlice : IFlowNodeSlice {
 		return !(left == right);
 	}
 }
+
+#endif

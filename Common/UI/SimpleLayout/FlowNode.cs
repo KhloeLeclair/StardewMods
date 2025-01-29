@@ -1,4 +1,5 @@
-#nullable enable
+#if COMMON_SIMPLELAYOUT
+#if COMMON_FLOW
 
 using System;
 using System.Collections.Generic;
@@ -57,3 +58,6 @@ public class FlowNode : ISimpleNode {
 		FlowHelper.RenderFlow(batch, flow, position, defaultColor, defaultShadowColor, lineOffset: 0);
 	}
 }
+
+#endif
+#endif

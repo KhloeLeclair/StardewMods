@@ -1,3 +1,5 @@
+#if COMMON_WIDGETS
+
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -132,3 +134,5 @@ public struct KSize : IEquatable<KSize> {
 		height = Height;
 	}
 }
+
+#endif

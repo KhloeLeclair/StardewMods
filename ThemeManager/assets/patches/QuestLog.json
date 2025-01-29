@@ -3,7 +3,21 @@
 
 	"ColorVariables": {
 		"$QuestLogText": "$Text",
-		"$QuestLogHover": "$Hover"
+		"$QuestLogHover": "$Hover",
+		"$QuestLog:TextShadowAlt": "$TextShadowAlt"
+	},
+
+	"FontVariables": {
+		"$QuestLog:Dialogue": "$Dialogue"
+	},
+
+	"BmFontVariables": {
+		"$QuestLog:ST:Font": "$ST:Font"
+	},
+
+	"TextureVariables": {
+		"$QuestLog:ST:Normal": "$ST:Normal",
+		"$QuestLog:ST:Colored": "$ST:Colored"
 	},
 
 	"Patches": {
@@ -19,7 +33,22 @@
 
 			"ColorFields": {
 				"Game1:textColor": { "*": "$QuestLogText" }
-			}
+			},
+
+			"FontFields": {
+				"Game1:dialogueFont": { "*": "$QuestLog:Dialogue" }
+			},
+
+			"SpriteTextDraw": {
+				"*": [
+					"$QuestLog:ST:Normal",
+					"$QuestLog:ST:Colored",
+					"$QuestLog:ST:Font",
+					"$QuestLog:Colors"
+				]
+			},
+
+			"DrawTextWithShadow": { "*": "$QuestLog:TextShadowAlt" }
 		}
 	}
 }

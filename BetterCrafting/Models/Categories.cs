@@ -17,8 +17,8 @@ public class Categories {
 
 public class CPCategories {
 
-	public Dictionary<string, Category> Cooking { get; set; }
+	public Dictionary<string, Category> Cooking { get; set; } = null!;
 
-	public Dictionary<string, Category> Crafting { get; set; }
+	public Dictionary<string, Category> Crafting { get; set; } = null!;
 
 }
