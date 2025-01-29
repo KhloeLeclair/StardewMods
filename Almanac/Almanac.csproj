@@ -7,6 +7,7 @@
 		<EnableHarmony>true</EnableHarmony>
 		<EnableTranslation>true</EnableTranslation>
 		<TargetFramework>net6.0</TargetFramework>
+    <UseCommon>Crafting;BCInventory;Inventory;GMCM;Mutex;Overlay;UI;SimpleLayout;Flow;SpookyAction;ThemeManager</UseCommon>
 	</PropertyGroup>
 
 	<ItemGroup>

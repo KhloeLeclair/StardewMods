@@ -1,3 +1,4 @@
+/*
 #nullable enable
 
 using System;
@@ -411,3 +412,4 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 	#endregion
 
 }
+*/

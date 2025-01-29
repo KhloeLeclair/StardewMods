@@ -21,7 +21,16 @@
 	"crop.last-day": "最后一天：",
 
 	"crop.toggle": "切换{{mode}}",
-	"crop.paddy": "水稻奖金",
+	"crop.paddy": "水稻灌溉加成",
+
+	"crop.crop.none": "没有作物符合你现在的筛选。",
+
+	"page.crop.seed-filter": "按种子筛选",
+	"page.crop.seed-filter.disabled": "关闭",
+	"page.crop.seed-filter.inventory": "背包中",
+	"page.crop.seed-filter.owned": "拥有的",
+
+	"crop.seed-filter": "只展示拥有的种子",
 
 	"crop.using-none": "以下的生长时间和日期假设你没有肥料或技能。",
 	"crop.using-agri": "以下的生长时间和日期假设你是一个{{agriculturist}}。",
@@ -54,9 +63,10 @@
 	"weather.sunny": "晴天",
 	"weather.rain": "雨天",
 	"weather.debris": "多云",
-	"weather.lightning": "雷雨天",
+	"weather.lightning": "雷雨",
 	"weather.festival": "晴天",
-	"weather.snow": "下雪天",
+	"weather.snow": "雪天",
+	"weather.green": "绿雨",
 
 	"page.train": "火车时刻表",
 	"page.train.about": "@B警告：@b 火车将在以下时间经过星露谷火车站。 为了您的安全，当有火车出现时，请保持与轨道的距离。",
@@ -124,8 +134,8 @@
 	"page.fish.size": "你钓到过的最大尺寸是@B{{big_cm}}\"厘米@b。",
 	"page.fish.size.range": "它的尺寸范围为@B{{min_cm}}\"厘米@b至@B{{max_cm}}\"厘米@b。",
 
-	"page.fish.weather.Sunny": "{{fish}}只在@Bsunny@b的天气可钓到。",
-	"page.fish.weather.Rainy": "{{fish}}只在@Brainy@b的天气可钓到。",
+	"page.fish.weather.Sunny": "{{fish}}只在@B晴朗@b的天气可钓到。",
+	"page.fish.weather.Rainy": "{{fish}}只在@B下雨@b的天气可钓到。",
 	"page.fish.weather.Any": "{{fish}}任何天气都能钓，风雨无阻。 ",
 	"page.fish.level": "你需要{{skill}}的@B{{level}}@b级别才能钓到这种鱼。",
 	"page.fish.legendary": "{{fish}}是传说鱼类。",
@@ -156,6 +166,13 @@
 	"page.fish.filter.now": "当季",
 	"page.fish.location.fresh": "{{fish}}生活在淡水区域。",
 	"page.fish.location.ocean": "{{fish}}生活在海水区域。",
+
+	"page.fish.filter.aquarium": "按水族馆捐赠筛选",
+	"page.fish.aquarium.true": "已捐赠",
+	"page.fish.aquarium.false": "未捐赠",
+
+	"page.fish.aquarium.donated": "你已经捐给了星露谷水族馆。",
+	"page.fish.aquarium.not-donated": "你还没有捐给星露谷水族馆。",
 
 	// Settings
 
@@ -272,7 +289,7 @@
 
 	// Locations
 
-	"location.WitchSwamp": "女巫的沼泽",
+	"location.WitchSwamp": "女巫沼泽",
 	"location.BugLand": "突变虫穴",
 
 	"location.Caldera": "姜岛（火山地牢）",
@@ -282,34 +299,43 @@
 	"location.IslandSouthEast": "姜岛东南部",
 	"location.IslandSouthEastCave": "姜岛东南部（洞穴）",
 	"location.IslandEast": "姜岛东部",
+	"location.Submarine": "潜艇",
 
 	"location.sub-any": "任何地点",
 	"location.sub-floor": "{{floor}}层",
 
 	"location.Forest.River": "河边",
 	"location.Forest.Pond": "池塘",
+	"location.Forest.Lake": "湖泊",
 
 	"location.Island.Ocean": "海边",
 	"location.Island.Freshwater": "淡水区",
+
+	"Location.Desert.TopPond": "池塘",
 
 	// Maps: Stardew Aquarium
 	"location.Custom_ExteriorMuseum": "星露谷水族馆",
 	"location.ExteriorMuseum": "星露谷水族馆",
 
 	// Maps: Stardew Valley Expanded
-	"location.Custom_AdventurerSummit": "冒险家公会",
+	"location.Custom_AdventurerSummit": "探险家山峰",
 	"location.Custom_BlueMoonVineyard": "蓝月亮葡萄园",
-	"location.Custom_BlueMoonVineyard.0": "海边",
-	"location.Custom_BlueMoonVineyard.1": "河边",
-	"location.Custom_CrimsonBadlands": "猩红荒地",
-	"location.Custom_FableReef": "寓言礁石",
+	"location.Custom_BlueMoonVineyard.Ocean": "海边",
+	"location.Custom_BlueMoonVineyard.River": "河边",
+	"location.Custom_CrimsonBadlands": "绯红荒地",
+	"location.Custom_FableReef": "寓言礁",
 	"location.Custom_ForestWest": "煤矿森林西",
 	"location.Custom_Highlands": "高地",
-	"location.Custom_Highlands.0": "废墟",
-	"location.Custom_Highlands.1": "河边",
-	"location.Custom_HighlandsCavern": "高地（洞穴）",
+	"location.Custom_Highlands.Pond": "池塘",
+	"location.Custom_Highlands.River": "河边",
+	"location.Custom_HighlandsCavern": "高地洞穴",
 	"location.Custom_JunimoWoods": "祝尼魔森林",
-	//"location.Custom_MorrisProperty": "",
-	"location.Custom_ShearwaterBridge": "海鸥栈桥",
-	"location.Custom_SpriteSpring2": "精灵温泉"
+	"location.Custom_MorrisProperty": "莫里斯地产",
+	"location.Custom_HenchmanBackyard": "仆从后院",
+	"location.Custom_ForbiddenMaze": "禁忌迷宫",
+	"location.Custom_DiamondCavern": "钻石洞穴",
+	"location.Custom_ShearwaterBridge": "海鸥桥",
+	"location.Custom_SpriteSpring2": "精灵泉",
+	"location.Custom_GrampletonSuburbs": "郊区",
+	"location.Custom_GrampletonSuburbsTrainStation": "郊区火车站"
 }
