@@ -29,7 +29,7 @@ internal static class Game1_Patches {
 			mod.Log("An error occurred while registering a harmony patch for Game1.", LogLevel.Error, ex);
 		}*/
 	}
-	/*
+	
 	public static void UpdateWeatherForNewDay_Postfix() {
 		try {
 			ModEntry.Instance.Weather.UpdateForNewDay();
@@ -39,5 +39,4 @@ internal static class Game1_Patches {
 			Monitor.Log($"Details:\n{ex}", LogLevel.Error);
 		}
 	}
-	*/
 }

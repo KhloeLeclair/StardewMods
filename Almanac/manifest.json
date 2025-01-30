@@ -10,10 +10,10 @@
   "UniqueID": "leclair.almanac",
   "Name": "Almanac",
   "Author": "Khloe Leclair",
-  "Version": "0.18.1",
+  "Version": "0.18.1-Debug",
   "Description": "Adds an Almanac for the player, with forecasts, planting dates, and other calendar information useful for a farmer.",
   "MinimumApiVersion": "4.1.0",
-  "MinimumGameVersion": "1.6.9",
+  "MinimumGameVersion": "1.6.15",
   "EntryDll": "Almanac.dll",
   "Dependencies": [
     {

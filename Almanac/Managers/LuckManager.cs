@@ -1,5 +1,5 @@
 #nullable enable
-/*
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -19,6 +19,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 
 using Leclair.Stardew.Almanac.Models;
+using StardewValley.TokenizableStrings;
 
 namespace Leclair.Stardew.Almanac.Managers;
 
@@ -183,7 +184,7 @@ public class LuckManager : BaseManager {
 	#region Luck Lookup
 
 	public double GetLuckForDate(ulong seed, WorldDate date) {
-		Random rnd = new(date.TotalDays + (int)seed / 2);
+		Random rnd = new(date.TotalDays + (int) seed / 2);
 
 		int prewarm = rnd.Next(0, 100);
 		for (int j = 0; j < prewarm; j++)
@@ -211,7 +212,7 @@ public class LuckManager : BaseManager {
 				// Lucky players have a 20% chance of maximum daily luck.
 				if (Mod.intLS.HasLucky(who)) {
 					// Don't use the seed, since we don't control that mod's seed.
-					Random rnd = new((int)Game1.uniqueIDForThisGame + date.TotalDays * 3);
+					Random rnd = new((int) Game1.uniqueIDForThisGame + date.TotalDays * 3);
 					if (rnd.NextDouble() <= 0.20)
 						result = 0.12;
 				}
@@ -229,7 +230,7 @@ public class LuckManager : BaseManager {
 
 	#region Events
 
-	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, GameStateQuery state, string? key = null) {
+	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, string? key = null) {
 		if (notice == null)
 			return null;
 
@@ -291,7 +292,7 @@ public class LuckManager : BaseManager {
 		// This will change in 1.6
 		if (!string.IsNullOrEmpty(notice.Item)) {
 			try {
-				item = InventoryHelper.CreateItemById(notice.Item, 1);
+				item = ItemRegistry.Create(notice.Item, 1);
 			} catch (Exception ex) {
 				Log($"Unable to get item instance for: {notice.Item}", LogLevel.Warn, ex);
 				item = null;
@@ -335,7 +336,7 @@ public class LuckManager : BaseManager {
 		if (notice.Translation != null && !string.IsNullOrEmpty(notice.I18nKey))
 			notice.Description = notice.Translation.Get(notice.I18nKey).ToString();
 
-		string? desc = string.IsNullOrEmpty(notice.Description) ? null : StringTokenizer.ParseString(notice.Description, state);
+		string? desc = string.IsNullOrEmpty(notice.Description) ? null : TokenParser.ParseText(notice.Description);
 		if (desc != null && Mod.Config.DebugMode && !string.IsNullOrEmpty(key))
 			desc = $"{desc} @C@c@h(#{key})";
 
@@ -353,21 +354,10 @@ public class LuckManager : BaseManager {
 
 		Load();
 
-		var state = new Common.GameStateQuery.GameState(
-			Random: Game1.random,
-			Date: date,
-			TimeOfDay: 600,
-			Ticks: 0,
-			Farmer: Game1.player,
-			Location: null,
-			Item: null,
-			Monitor: Mod.Monitor,
-			DoTrace: false
-		);
 
 		if (DataEvents != null)
 			foreach (var entry in DataEvents) {
-				IRichEvent? hydrated = HydrateEvent(entry.Value, date, state, entry.Key);
+				IRichEvent? hydrated = HydrateEvent(entry.Value, date, entry.Key);
 				if (hydrated != null)
 					yield return hydrated;
 			}
@@ -451,7 +441,7 @@ public class LuckManager : BaseManager {
 
 	public static IRichEvent? GetTrashEvent(ulong seed, WorldDate date) {
 		for (int i = 0; i < 8; i++) {
-			Random rnd = new((date.TotalDays + 1) + ((int)seed / 2) + 777 + i * 77);
+			Random rnd = new((date.TotalDays + 1) + ((int) seed / 2) + 777 + i * 77);
 
 			int prewarm = rnd.Next(0, 100);
 			for (int j = 0; j < prewarm; j++)
@@ -466,7 +456,7 @@ public class LuckManager : BaseManager {
 			if (rnd.NextDouble() >= 0.002)
 				continue;
 
-			Item? item = InventoryHelper.CreateItemById("(H)66", 1);
+			Item? item = ItemRegistry.Create("(H)66", 1);
 			SpriteInfo? sprite = SpriteHelper.GetSprite(item);
 
 			return new RichEvent(
@@ -485,7 +475,7 @@ public class LuckManager : BaseManager {
 		if (days == 31)
 			return null;
 
-		Random rnd = new(days + (int)seed / 2);
+		Random rnd = new(days + (int) seed / 2);
 
 		// Don't track any of the Community Center / Joja events because
 		// those all rely on game state and are not random based on the
@@ -536,9 +526,10 @@ public class LuckManager : BaseManager {
 				null,
 				SpriteHelper.GetSprite(new SObject(Vector2.Zero, 96))
 			);
+		*/
 
-		return null;
-	}
+		return null; 
+	}	
 
 	private static IRichEvent? GetLuckSkillEventForDate(ulong seed, WorldDate date) {
 		int days = date.TotalDays + 1 + 999999;
@@ -596,13 +587,10 @@ public class LuckManager : BaseManager {
 				SpriteHelper.GetSprite(new SObject(Vector2.Zero, "95"))
 			);
 
-		// Don't track Strange Capsule, because that relies on whether
-		// or not the player has already seen it.
-
 		return null;
 	}
 
-	#endregion
+#endregion
 
 }
-*/
+

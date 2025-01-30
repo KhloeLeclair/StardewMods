@@ -1,4 +1,4 @@
-/*
+
 #nullable enable
 
 using System;
@@ -87,7 +87,7 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 				double luck = Mod.Luck.GetModifiedLuckForDate(Seed, date);
 				sprite = Sprites![day - 1] = Mod.Luck.GetLuckSprite(luck);
 				Luck![day - 1] = luck;
-			} else 
+			} else
 				sprite = null;
 
 			FlowBuilder db = new();
@@ -105,7 +105,7 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 				if (has_line) {
 					db.Text("\n");
 					if (evt.Item != null)
-						onHover = (_,_,_) => {
+						onHover = (_, _, _) => {
 							Menu.HoveredItem = evt.Item;
 							return true;
 						};
@@ -208,7 +208,7 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 	}
 
 	public void DrawOverCell(SpriteBatch b, WorldDate date, Rectangle bounds) {
-		
+
 	}
 
 	public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
@@ -228,7 +228,7 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 	}
 
 	public void PerformCellHover(int x, int y, WorldDate date, Rectangle bounds) {
-		if (Luck == null || ! Luck[date.DayOfMonth - 1].HasValue)
+		if (Luck == null || !Luck[date.DayOfMonth - 1].HasValue)
 			return;
 
 		double luck = Luck[date.DayOfMonth - 1]!.Value;
@@ -236,11 +236,11 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 
 		Menu.HoverMagic = true;
 		Menu.HoverText = Mod.Config.ShowExactLuck
-			? $"{fortune} ({(luck*100):F1}%)"
+			? $"{fortune} ({(luck * 100):F1}%)"
 			: fortune;
 	}
 
 	#endregion
 
 }
-*/
+

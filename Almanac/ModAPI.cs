@@ -25,9 +25,9 @@ namespace Leclair.Stardew.Almanac {
 		/// itself doesn't have the ability.
 		/// </summary>
 		int DaysPerMonth { get; }
-		/*
-		#region Custom Pages
 
+		#region Custom Pages
+		/*
 		void RegisterPage(
 			IManifest manifest,
 			string id,
@@ -75,9 +75,10 @@ namespace Leclair.Stardew.Almanac {
 		);
 
 		void UnregisterPage(IManifest manifest, string id);
-
-		#endregion
 		*/
+		#endregion
+		
+
 
 		#region Crops Page
 
@@ -175,7 +176,7 @@ namespace Leclair.Stardew.Almanac {
 
 		#endregion
 
-		/*
+
 		#region Fortunes Page
 
 		/// <summary>
@@ -291,7 +292,7 @@ namespace Leclair.Stardew.Almanac {
 		string GetWeatherForDate(WorldDate date, string context = "Default");
 
 		#endregion
-		*/
+
 	}
 
 	public class ModAPI : IAlmanacAPI {
@@ -517,7 +518,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-		/*
+
 		#region Fortune Telling
 
 		public void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook) {
@@ -533,7 +534,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-		
+
 		#region Local Notices
 
 		public void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<string, Texture2D, Rectangle?, Item>>> hook) {
@@ -549,7 +550,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-		
+
 		#region Weather
 
 		public string GetWeatherForDate(WorldDate date, GameLocation location) {
@@ -571,7 +572,7 @@ namespace Leclair.Stardew.Almanac {
 
 		public string GetWeatherForDate(WorldDate date, string context = "Default") {
 			LocationContextData ctx;
-			switch(context) {
+			switch (context) {
 				case "Default":
 					ctx = Game1.locationContextData["Default"];
 					break;
@@ -587,9 +588,10 @@ namespace Leclair.Stardew.Almanac {
 
 			string weather = Mod.Weather.GetWeatherForDate(Mod.GetBaseWorldSeed(), date, ctx, context);
 			return weather;
+			
 		}
 
 		#endregion
-		*/
+
 	}
 }
