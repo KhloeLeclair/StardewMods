@@ -126,9 +126,9 @@
 	"setting.nearby.enable": "Enable Extended Workbench",
 
 	"setting.nearby.nearby": "Use Nearby Chests",
-	"setting.nearby.nearby.tip": "If this is set to more than zero, you will always be able to use items in chests up to this many tiles away.",
+	"setting.nearby.nearby.tip": "If this is set to more than zero, you will always be able to use items in chests up to this many tiles away. In \"World\" mode, this lets you use all chests everywhere so long as the location is being loaded. For multiplayer clients, that means your current location and the farm.",
 
-	"setting.nearby.nearby.active": "Everywhere",
+	"setting.nearby.nearby.active": "World",
 	"setting.nearby.nearby.map": "Full Map",
 	"setting.nearby.nearby.off": "Disabled",
 	"setting.nearby.nearby.tiles": "{{tiles}} Tiles",

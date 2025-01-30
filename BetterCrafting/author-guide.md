@@ -703,8 +703,10 @@ Example, to make a wide item: `{"X": 2, "Y": 1}`
 <td><code>Ingredients</code></td>
 <td>
 
-**Required.** A list of [ingredients](#ingredients). You can have as many
-as you'd like, though for obvious reasons you should keep the number small.
+*Optional.* A list of [ingredients](#ingredients). You can have as many
+as you'd like, though for obvious reasons you should keep the number small. If
+this isn't present, or if it's an empty list, then performing this craft will
+be free and consume nothing.
 
 </td>
 </tr>
@@ -735,6 +737,8 @@ in order, until one returns an item. That item will be the recipe's output.
 Each entry in the list uses the [item spawn fields](https://stardewvalleywiki.com/Modding:Item_queries#Item_spawn_fields)
 feature built into the base game, giving you a lot of control over what
 exactly a recipe will produce.
+
+> **Note:** This is optional if `ActionsOnCraft` is present and has a value.
 
 </td>
 </tr>

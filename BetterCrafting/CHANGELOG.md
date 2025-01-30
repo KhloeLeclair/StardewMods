@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.16.0
+Released January 30th, 2024 for Stardew Valley 1.6.15+
+
+### Added
+* You can now set "Use Nearby Chests" to "World" to use every chest within
+  the entire game world for crafting. Note that, for multiplayer users,
+  this setting will only access chests in active locations. The game doesn't
+  always keep every location in sync for multiplayer clients, so we're
+  unable to safely access some inventories in multiplayer. Basically, this
+  means you can only use chests in your current location and at the farm.
+
+### Fixed
+* Bug where Better Crafting would not correctly iterate over all game
+  locations in some situations.
+* Custom Crafting Stations integration was rewritten after Pathos refactored
+  how that mod stores its data internally.
+* Data recipes can now be defined with no output item so long as they
+  have trigger actions on craft.
+
+
 ## 2.15.1
 Released December 26th, 2024 for Stardew Valley 1.6.15+.
 

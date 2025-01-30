@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
@@ -34,7 +33,7 @@ public class JsonRecipeData {
 
 	// Cost to Craft
 
-	public JsonIngredientData[] Ingredients { get; set; } = Array.Empty<JsonIngredientData>();
+	public JsonIngredientData[] Ingredients { get; set; } = [];
 
 
 	// Crafting
@@ -45,7 +44,7 @@ public class JsonRecipeData {
 
 	// Output
 
-	public JsonRecipeOutput[] Output { get; set; } = Array.Empty<JsonRecipeOutput>();
+	public JsonRecipeOutput[] Output { get; set; } = [];
 
 
 }

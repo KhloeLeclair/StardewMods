@@ -693,12 +693,12 @@ internal static class ReflectionHelper {
 	/// <exception cref="ArgumentException">If the property is not static</exception>
 	/// <exception cref="InvalidCastException">If the provided <typeparamref name="T"/> is not the property's type</exception>
 	internal static Func<TOwner, TValue> CreateGetter<TOwner, TValue>(this PropertyInfo property) {
-		if (property is null)
+		if (property is null || property.DeclaringType is null)
 			throw new ArgumentNullException(nameof(property));
-		if (typeof(TValue) != property.PropertyType)
+		if (typeof(TValue) != typeof(object) && !property.PropertyType.IsAssignableTo(typeof(TValue)))
 			throw new InvalidCastException($"{typeof(TValue)} is not same as property type {property.PropertyType}");
-		if (typeof(TOwner) != property.DeclaringType)
-			throw new InvalidCastException($"{typeof(TOwner)} is not the same as declaring type {property.DeclaringType}");
+		if (typeof(TOwner) != typeof(object) && !property.DeclaringType.IsAssignableFrom(typeof(TOwner)))
+			throw new InvalidCastException($"{typeof(TOwner)} is not assignable to type {property.DeclaringType}");
 
 		if (!PropertyGetters.TryGetValue(property, out var getter)) {
 			var getMethod = property.GetGetMethod(nonPublic: true) ?? throw new ArgumentNullException("property has no getter");

@@ -275,13 +275,10 @@ public static class InventoryHelper {
 		int i = 0;
 		IInventoryProvider? provider;
 
-		IEnumerable<GameLocation> locations;
-		if (Game1.IsMasterGame)
-			locations = Game1.locations;
-		else
-			locations = Game1.Multiplayer.activeLocations();
+		foreach (var location in CommonHelper.EnumerateLocations()) {
+			if (!Game1.Multiplayer.isActiveLocation(location))
+				continue;
 
-		foreach (var location in locations) {
 			foreach (object obj in GetAllThingsInLocation(location, buildings: discover_buildings)) {
 				provider = getProvider(obj);
 				if (provider != null && provider.IsValid(obj, location, who))

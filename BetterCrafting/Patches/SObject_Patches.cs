@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using HarmonyLib;
 
@@ -11,8 +7,6 @@ using Leclair.Stardew.Common;
 using StardewModdingAPI;
 
 using StardewValley;
-using StardewValley.ItemTypeDefinitions;
-using StardewValley.Triggers;
 
 namespace Leclair.Stardew.BetterCrafting.Patches;
 
@@ -56,7 +50,7 @@ public static class SObject_Patches {
 			// Run the action.
 			__instance.Location.performAction(action, who, __instance.TileLocation.ToLocation());
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.Log("An error occurred while attempting to interact with an object.", LogLevel.Warn);
 			Monitor?.Log($"Details:\n{ex}", LogLevel.Warn);
 		}

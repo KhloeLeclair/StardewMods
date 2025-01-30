@@ -22,9 +22,9 @@ public static class Workbench_Patches {
 		try {
 			mod.Harmony!.Patch(
 				original: AccessTools.Method(typeof(Workbench), nameof(Workbench.checkForAction)),
-				prefix: new HarmonyMethod(typeof(Workbench_Patches), nameof(Workbench_Patches.checkForAction_Prefix))
+				prefix: new HarmonyMethod(typeof(Workbench_Patches), nameof(checkForAction_Prefix))
 			);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			mod.Log("An error occurred while registering a harmony patch for the Workbench.", LogLevel.Warn, ex);
 		}
 	}
@@ -48,7 +48,7 @@ public static class Workbench_Patches {
 				return false;
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.Log("An error occurred while attempting to interact with a Workbench.", LogLevel.Warn);
 			Monitor?.Log($"Details:\n{ex}", LogLevel.Warn);
 		}

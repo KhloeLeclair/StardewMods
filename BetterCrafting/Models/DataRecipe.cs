@@ -188,7 +188,9 @@ public class DataRecipe : IRecipe {
 		}
 	}
 
-	public int QuantityPerCraft => Data.Output.Select(x => x.MinStack == -1 ? 1 : x.MinStack).Min();
+	public int QuantityPerCraft => Data.Output == null || Data.Output.Length == 0
+		? 1
+		: Data.Output.Select(x => x.MinStack == -1 ? 1 : x.MinStack).Min();
 
 	public IIngredient[]? Ingredients { get; }
 
@@ -225,6 +227,7 @@ public class DataRecipe : IRecipe {
 		}
 
 		evt.Complete();
+
 	}
 
 	public int GetTimesCrafted(Farmer who) {

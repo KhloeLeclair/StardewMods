@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -50,7 +49,27 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 	[Subscriber]
 	private void OnAssetRequested(object? sender, AssetRequestedEventArgs e) {
 		if (e.Name.IsEquivalentTo(RECIPE_PATH))
-			e.LoadFrom(() => new Dictionary<string, JsonRecipeData>(), AssetLoadPriority.Exclusive);
+			e.LoadFrom(() => {
+				var output = new Dictionary<string, JsonRecipeData>();
+#if DEBUG
+				var recipe = new JsonRecipeData() {
+					Id = "leclair.bettercrafting_TestDataRecipe",
+					DisplayName = "Test Data Recipe",
+					Description = "This is some kind of description. Neat, huh?",
+					Ingredients = [],
+					ActionsOnCraft = [
+						"AddMoney 1000"
+						],
+					AllowBulk = false,
+					Default = true,
+					IsCooking = false,
+				};
+
+				output[recipe.Id] = recipe;
+#endif
+
+				return output;
+			}, AssetLoadPriority.Exclusive);
 		if (e.Name.IsEquivalentTo(RULES_PATH))
 			e.LoadFrom(() => new Dictionary<string, JsonDynamicRule>(), AssetLoadPriority.Exclusive);
 	}
@@ -81,10 +100,10 @@ public class DataRecipeManager : BaseManager, IRecipeProvider {
 			var recipe = pair.Value;
 			recipe.Id = pair.Key;
 
-			recipe.Ingredients ??= Array.Empty<JsonIngredientData>();
+			recipe.Ingredients ??= [];
 
-			if (recipe.Output == null || recipe.Output.Length < 1) {
-				Log($"Skipping recipe '{recipe.Id}' with no output.", StardewModdingAPI.LogLevel.Warn);
+			if ((recipe.Output == null || recipe.Output.Length < 1) && (recipe.ActionsOnCraft == null || recipe.ActionsOnCraft.Count < 1)) {
+				Log($"Skipping data recipe '{recipe.Id}' with no output and no ActionsOnCraft.", LogLevel.Warn);
 				continue;
 			}
 
