@@ -10,7 +10,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewValley;
-using StardewValley.ItemTypeDefinitions;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -31,7 +30,9 @@ public class BaseRecipe : IRecipe {
 	public virtual string QualifiedItemId {
 		get {
 			string idx = Recipe.getIndexOfMenuView();
-			return Recipe.bigCraftable ? $"(BC){idx}" : idx;
+			if (Recipe.bigCraftable)
+				return ItemRegistry.ManuallyQualifyItemId(idx, ItemRegistry.type_bigCraftable);
+			return idx;
 		}
 	}
 

@@ -2303,7 +2303,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					Game1.player,
 					Mod.GetInventoryProvider,
 					Mod.Config.MaxCheckedTiles,
-					Mod.Config.MaxInventories
+					1_000 //Mod.Config.MaxInventories
 				);
 
 			} else if (radius == -1) {
@@ -2312,7 +2312,7 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 					Game1.player,
 					Mod.GetInventoryProvider,
 					Mod.Config.MaxCheckedTiles,
-					Mod.Config.MaxInventories
+					500 //Mod.Config.MaxInventories
 				);
 
 			} else if (radius > 0)

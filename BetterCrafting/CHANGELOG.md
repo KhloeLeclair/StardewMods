@@ -1,7 +1,23 @@
 # Changelog
 
+## 2.16.1
+Released February 13th, 2025 for Stardew Valley 1.6.15+
+
+### Fixed
+* Issue where, when the use nearby chest radius was set to a Map or Everywhere,
+  it would hit a limit of chests to use and not discover any more leading to
+  an arbitrary selection of items being available.
+* Issue where some big craftable recipes did not display correctly.
+
+### Changed
+* Add items with the `category_weapon` context tag to the Rings & Combat
+  category by default. This catches the various shields, bow, and a sword
+  added by the Sword & Sorcery mod. Note that this change will not apply if
+  you have customized your categories at all.
+
+
 ## 2.16.0
-Released January 30th, 2024 for Stardew Valley 1.6.15+
+Released January 30th, 2025 for Stardew Valley 1.6.15+
 
 ### Added
 * You can now set "Use Nearby Chests" to "World" to use every chest within

@@ -288,6 +288,10 @@
 				{
 					"Id": "Category",
 					"Input": "-29"
+				},
+				{
+					"Id": "ContextTag",
+					"Input": "category_weapon"
 				}
 			],
 			"Recipes": [
