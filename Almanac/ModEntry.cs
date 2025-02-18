@@ -21,6 +21,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.BellsAndWhistles;
 
 using Leclair.Stardew.Almanac.Crops;
 using Leclair.Stardew.Almanac.Fish;
@@ -62,9 +63,9 @@ public class ModEntry : ModSubscriber {
 #nullable disable
 	public ModConfig Config;
 
-	public WeatherManager Weather;
-	public LuckManager Luck;
-	public NoticesManager Notices;
+	//public WeatherManager Weather;
+	//public LuckManager Luck;
+	//public NoticesManager Notices;
 	internal CropManager Crops;
 	internal FishManager Fish;
 	internal BookManager Books;
@@ -100,8 +101,8 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		// Patches
-		// Patches.GameMenu_Patches.Patch(this);
-		Common_SpriteText_Patches.Patch(Harmony, Monitor);
+		Patches.GameMenu_Patches.Patch(this);
+		//Patches.Workbench_Patches.Patch(this);
 
 		Assets = new(this);
 
@@ -112,9 +113,9 @@ public class ModEntry : ModSubscriber {
 
 		Crops = new(this);
 		Fish = new(this);
-		Weather = new(this);
-		Luck = new(this);
-		Notices = new(this);
+		//Weather = new(this);
+		//Luck = new(this);
+		//Notices = new(this);
 		Books = new(this);
 
 		ThemeManager = new(this, Config.Theme);
@@ -124,14 +125,14 @@ public class ModEntry : ModSubscriber {
 			// Init
 			RegisterBuilder(CoverPage.GetPage);
 			RegisterBuilder(CropPage.GetPage);
-			RegisterBuilder(WeatherPage.GetPage);
-			RegisterBuilder(WeatherPage.GetIslandPage);
+			//RegisterBuilder(WeatherPage.GetPage);
+			//RegisterBuilder(WeatherPage.GetIslandPage);
 			RegisterBuilder(TrainPage.GetPage);
-			RegisterBuilder(FortunePage.GetPage);
+			//RegisterBuilder(FortunePage.GetPage);
 			RegisterBuilder(MinesPage.GetPage);
-			RegisterBuilder(NoticesPage.GetPage);
+			//RegisterBuilder(NoticesPage.GetPage);
 			RegisterBuilder(FishingPage.GetPage);
-			RegisterBuilder(DebugItemsPage.GetPage);
+			//RegisterBuilder(DebugItemsPage.GetPage);
 		}
 
 	public override object GetApi() {
@@ -264,7 +265,7 @@ public class ModEntry : ModSubscriber {
 
 	[Subscriber]
 	[EventPriority(EventPriority.High)]
-	private void OnDayStarted(object? sender, DayStartedEventArgs e) {
+	/*private void OnDayStarted(object? sender, DayStartedEventArgs e) {
 		ulong seed = GetBaseWorldSeed();
 
 		if (Config.EnableDeterministicLuck && Game1.IsMasterGame) {
@@ -289,15 +290,15 @@ public class ModEntry : ModSubscriber {
 						.GetWeatherForDate(seed, tomorrow, ctx, "Island");
 			}
 		}
-	}
+	}*/
 
 	public void Invalidate() {
 		Assets.Invalidate();
 		Crops.Invalidate();
 		Fish.Invalidate();
-		Luck.Invalidate();
-		Notices.Invalidate();
-		Weather.Invalidate();
+		//Luck.Invalidate();
+		//Notices.Invalidate();
+		//Weather.Invalidate();
 	}
 
 	[Subscriber]
@@ -323,7 +324,7 @@ public class ModEntry : ModSubscriber {
 			string input = string.Join(' ', args);
 
 			Log($" Input: {input}");
-			Log($"Result: {StringTokenizer.ParseString(input, item: Game1.player?.CurrentItem, monitor: Monitor, trace: true)}");
+			// Log($"Result: {StringTokenizer.ParseString(input, item: Game1.player?.CurrentItem, monitor: Monitor, trace: true)}");
 		});
 
 		Helper.ConsoleCommands.Add("al_gsq", "Run a GameStateQuery", (name, args) => {
@@ -343,7 +344,7 @@ public class ModEntry : ModSubscriber {
 			Log($" Query: {query}");
 			if (seed != -1)
 				Log($"  Seed: {seed}");
-			Log($"Result: {Common.GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
+			//Log($"Result: {GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
 		});
 
 		Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
@@ -380,7 +381,7 @@ public class ModEntry : ModSubscriber {
 				Log($"DaysPlayed: {Game1.stats.DaysPlayed}", LogLevel.Info);
 			});
 
-			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
+			/*Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
 				ulong seed = GetBaseWorldSeed();
 				WorldDate date = new(Game1.Date);
 				for (int i = 0; i < 4 * 28; i++) {
@@ -388,7 +389,7 @@ public class ModEntry : ModSubscriber {
 					Log($"Date: {date.Localize()} -- Weather: {weather}");
 					date.TotalDays++;
 				}
-			});
+			});*/
 		}
 
 	[Subscriber]
@@ -883,7 +884,7 @@ public class ModEntry : ModSubscriber {
 	}
 
 	public bool DoesTranslationExist(string key) {
-		return Helper.Translation.ContainsKey(key);
+			return Helper.Translation.Get(key).HasValue();
 	}
 
 	public string GetSubLocationName(Models.SubLocation sub) {
@@ -904,6 +905,8 @@ public class ModEntry : ModSubscriber {
 					return I18n.Location_Forest_River();
 				if (sub.Area == "Pond")
 					return I18n.Location_Forest_Pond();
+				if (sub.Area == "Lake")
+					return I18n.Location_Forest_Lake();
 				break;
 
 			case "IslandWest":
@@ -911,6 +914,11 @@ public class ModEntry : ModSubscriber {
 					return I18n.Location_Island_Ocean();
 				if (sub.Area == "Freshwater")
 					return I18n.Location_Island_Freshwater();
+				break;
+
+			case "Desert":
+				if (sub.Area == "TopPond")
+					return I18n.Location_Desert_TopPond();
 				break;
 		}
 
@@ -1023,6 +1031,13 @@ public class ModEntry : ModSubscriber {
 				case "Deluxe Barn":
 				case "Deluxe Coop":
 				case "Farm":
+				case "Farm_Standard":
+				case "Farm_Forest":
+				case "Farm_FourCorners":
+				case "Farm_Hilltop":
+				case "Farm_Riverland":
+				case "Farm_Wilderness":
+				case "Farm_Beach":
 				case "FarmCave":
 				case "FarmHouse":
 				case "Greenhouse":

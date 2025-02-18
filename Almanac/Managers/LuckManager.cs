@@ -1,5 +1,5 @@
 #nullable enable
-
+/*
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -229,7 +229,7 @@ public class LuckManager : BaseManager {
 
 	#region Events
 
-	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, Common.GameStateQuery.GameState state, string? key = null) {
+	public IRichEvent? HydrateEvent(LocalNotice notice, WorldDate date, GameStateQuery state, string? key = null) {
 		if (notice == null)
 			return null;
 
@@ -280,7 +280,7 @@ public class LuckManager : BaseManager {
 		}
 
 		// Condition Validation
-		if (!string.IsNullOrEmpty(notice.Condition) && !Common.GameStateQuery.CheckConditions(notice.Condition, state))
+		if (!string.IsNullOrEmpty(notice.Condition) && !GameStateQuery.CheckConditions(notice.Condition))
 			return null;
 
 		// Get icon
@@ -535,7 +535,7 @@ public class LuckManager : BaseManager {
 				I18n.Page_Fortune_Event_Ufo(),
 				null,
 				SpriteHelper.GetSprite(new SObject(Vector2.Zero, 96))
-			);*/
+			);
 
 		return null;
 	}
@@ -605,3 +605,4 @@ public class LuckManager : BaseManager {
 	#endregion
 
 }
+*/
