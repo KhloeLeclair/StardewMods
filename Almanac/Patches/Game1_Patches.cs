@@ -18,7 +18,7 @@ internal static class Game1_Patches {
 
 	internal static void Patch(ModEntry mod) {
 		Monitor = mod.Monitor;
-
+		/*
 		try {
 			mod.Harmony.Patch(
 				original: AccessTools.Method(typeof(Game1), nameof(Game1.UpdateWeatherForNewDay)),
@@ -27,9 +27,9 @@ internal static class Game1_Patches {
 
 		} catch(Exception ex) {
 			mod.Log("An error occurred while registering a harmony patch for Game1.", LogLevel.Error, ex);
-		}
+		}*/
 	}
-
+	
 	public static void UpdateWeatherForNewDay_Postfix() {
 		try {
 			ModEntry.Instance.Weather.UpdateForNewDay();
