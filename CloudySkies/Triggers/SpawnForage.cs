@@ -118,7 +118,7 @@ public static partial class Triggers {
 				else
 					tiles = EnumerateAllTiles(loc);
 
-				ItemQueryContext ctx = new(loc, Game1.player, Game1.random);
+				ItemQueryContext ctx = new(loc, Game1.player, Game1.random, "");
 				Dictionary<SpawnForageData, IList<ItemQueryResult>> cachedQueryResults = [];
 
 				foreach (var pos in FilterEnumeratedTiles(loc, filters, tiles)) {
