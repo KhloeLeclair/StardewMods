@@ -201,7 +201,7 @@ public static partial class Triggers {
 			return false;
 
 		Vector2 tilePos = new Vector2(x * 64, y * 64);
-		ItemQueryContext ctx = new(location, who, Game1.random);
+		ItemQueryContext ctx = new(location, who, Game1.random, "");
 
 		Item item = ItemQueryResolver.TryResolveRandomItem(toSpawn, ctx, logError: (query, error) => {
 			Instance.Log($"Error parsing item query '{query}' for artifact spot: {error}", LogLevel.Error);
