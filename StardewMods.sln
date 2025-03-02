@@ -54,6 +54,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnfocusedCursor", "Unfocuse
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperGameQuery", "HyperGameQuery\HyperGameQuery.csproj", "{F404316E-FFBD-4254-AAC6-B8206A3C9842}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterGameMenu", "BetterGameMenu\BetterGameMenu.csproj", "{C3D886B5-E122-418C-AC26-A747B184D325}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -128,6 +130,10 @@ Global
 		{F404316E-FFBD-4254-AAC6-B8206A3C9842}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F404316E-FFBD-4254-AAC6-B8206A3C9842}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F404316E-FFBD-4254-AAC6-B8206A3C9842}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D886B5-E122-418C-AC26-A747B184D325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D886B5-E122-418C-AC26-A747B184D325}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D886B5-E122-418C-AC26-A747B184D325}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D886B5-E122-418C-AC26-A747B184D325}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -156,6 +162,7 @@ Global
 		Common\Common.projitems*{ad848aec-391d-41ac-af89-4024ba3c5806}*SharedItemsImports = 5
 		Common\Common.projitems*{b107224e-dcfb-437c-86b0-bf63d4b9324b}*SharedItemsImports = 5
 		Common\Common.projitems*{c1067058-fe50-4819-8d93-13ad37154543}*SharedItemsImports = 5
+		Common\Common.projitems*{c3d886b5-e122-418c-ac26-a747b184d325}*SharedItemsImports = 5
 		Common\Common.projitems*{f404316e-ffbd-4254-aac6-b8206a3c9842}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

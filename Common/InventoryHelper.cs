@@ -345,7 +345,7 @@ public static class InventoryHelper {
 				result.Add(new(obj, location));
 
 			i++;
-			if (i >= scanLimit || result.Count >= targetLimit)
+			if (/*i >= scanLimit ||*/ result.Count >= targetLimit)
 				return result;
 		}
 

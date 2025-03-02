@@ -1,0 +1,20 @@
+{
+	"mod.name": "Better Crafting Menu",
+
+	"error-page.try-again": "Try Again",
+	"error-page.message": "There was an error creating this menu page. See the log for more details.",
+
+	"config.advanced": "Advanced",
+	"config.advanced.about": "This section contains more advanced settings the average user shouldn't need.",
+
+	"config.providers": "Menu Providers",
+	"config.providers.about": "You can select which mod you want to use for each tab of the game menu here.",
+
+	"config.provider.automatic": "Automatic",
+	"config.provider.stardew": "Base Game",
+	"config.provider.unknown": "Unknown ({{key}})",
+
+	"config.developer": "Developer Mode",
+	"config.developer.about": "When this is enabled, additional performance data is logged and certain UI elements may be changed for developer convenience."
+
+}

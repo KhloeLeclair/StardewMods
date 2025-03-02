@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <BaseManifest>new</BaseManifest>
+    <AssemblyName>BetterGameMenu</AssemblyName>
+    <Version>1.0.0</Version>
+    <RootNamespace>Leclair.Stardew.BetterGameMenu</RootNamespace>
+
+    <EnableHarmony>true</EnableHarmony>
+    <EnableTranslation>true</EnableTranslation>
+
+    <UseCommon>GMCM;UI;SimpleLayout;Flow</UseCommon>
+
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BaseManifest>new</BaseManifest>
+
+    <Name>Better Game Menu</Name>
+    <UniqueID>leclair.bettergamemenu</UniqueID>
+    <Description>Replaces the vanilla game menu with an improved reimplementation that improves performance and provides an easy API for other mods.</Description>
+    <UpdateKeys></UpdateKeys>
+  </PropertyGroup>
+
+  <Import Project="..\Common\Common.projitems" Label="Shared" />
+  <Import Project="..\_build\common.targets" />
+
+  <ItemGroup>
+    <Reference Include="SMAPI.Toolkit">
+      <HintPath>$(GamePath)\smapi-internal\SMAPI.Toolkit.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Integrations\" />
+  </ItemGroup>
+</Project>
