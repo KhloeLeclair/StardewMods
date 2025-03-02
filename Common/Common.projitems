@@ -18,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)events\GSQCondition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\PintailModSubscriber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)events\TriggerAction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)extensions\CodeInstructionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NameValueCollectionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\RandomExtensions.cs" />

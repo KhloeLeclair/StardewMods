@@ -4,6 +4,8 @@ using System.Reflection.Emit;
 
 using HarmonyLib;
 
+using Leclair.Stardew.Common;
+
 using StardewModdingAPI;
 
 using StardewValley;
@@ -21,6 +23,11 @@ public static class SObject_Patches {
 		try {
 
 			mod.Harmony.Patch(
+				original: AccessTools.Method(typeof(SObject), nameof(SObject.checkForAction)),
+				postfix: new HarmonyMethod(typeof(SObject_Patches), nameof(checkForAction__Postfix))
+			);
+
+			mod.Harmony.Patch(
 				original: AccessTools.Method(typeof(SObject), nameof(SObject.performUseAction)),
 				prefix: new HarmonyMethod(typeof(SObject_Patches), nameof(performUseAction__Prefix))
 			);
@@ -36,6 +43,43 @@ public static class SObject_Patches {
 
 		}
 
+	}
+
+	private static void checkForAction__Postfix(SObject __instance, Farmer who, bool justCheckingForActivity, ref bool __result) {
+		try {
+			// If there was already an action, don't do more. Also don't do more if this
+			// isn't a big craftable.
+			if (__result || !__instance.bigCraftable.Value)
+				return;
+
+			// Let's try to find an action! Prioritize modData first.
+			if (!__instance.modData.TryGetValue("leclair.cloudyskies/PerformAction", out string? action) &&
+				Game1.bigCraftableData.TryGetValue(__instance.ItemId, out var data) && data.CustomFields is not null
+			) {
+				// Try to find it in CustomFields instead, with backup support for Better Crafting's field.
+				if (!data.CustomFields.TryGetValue("leclair.cloudyskies/PerformAction", out action)) {
+					if (Mod != null && !Mod.Helper.ModRegistry.IsLoaded("leclair.bettercrafting"))
+						data.CustomFields.TryGetValue("leclair.bettercrafting_PerformAction", out action);
+				}
+			}
+
+			// If we didn't find an action in all that, quit.
+			if (string.IsNullOrWhiteSpace(action))
+				return;
+
+			// Yes, we have an action.
+			__result = true;
+
+			// Don't perform our action if we're just checking.
+			if (justCheckingForActivity)
+				return;
+
+			// Run the action.
+			__instance.Location.performAction(action, who, __instance.TileLocation.ToLocation());
+
+		} catch (Exception ex) {
+			Mod?.Log($"Error while attempting to interact with an object: {ex}", LogLevel.Error);
+		}
 	}
 
 	private static void DigUpArtifactSpot(GameLocation location, int x, int y, Farmer who, SObject sobj) {

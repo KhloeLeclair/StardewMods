@@ -1,9 +1,7 @@
-using System.Collections.Generic;
-
 using Microsoft.Xna.Framework;
 
 using StardewValley;
-using StardewValley.TerrainFeatures;
+// ReSharper disable UnusedMember.Global
 
 namespace ItemExtensions;
 
@@ -13,7 +11,7 @@ public interface IItemExtensionsApi {
 	/// </summary>
 	/// <param name="id"></param>
 	/// <returns></returns>
-	bool IsStone(string id);
+	//bool IsStone(string id);
 
 	/// <summary>
 	/// Checks for resource data in the mod.
@@ -32,7 +30,7 @@ public interface IItemExtensionsApi {
 	bool IsClump(string qualifiedItemId);
 
 	//adding empty in the meantime
-	bool HasBehavior(string qualifiedItemId, string target);
+	//bool HasBehavior(string qualifiedItemId, string target);
 
 	/// <summary>
 	/// Tries to spawn a clump.
@@ -43,7 +41,7 @@ public interface IItemExtensionsApi {
 	/// <param name="error">Error string, if applicable.</param>
 	/// <param name="avoidOverlap">Avoid overlapping with other clumps.</param>
 	/// <returns>Whether spawning succeeded.</returns>
-	bool TrySpawnClump(string itemId, Vector2 position, string locationName, out string error, bool avoidOverlap = false);
+	//bool TrySpawnClump(string itemId, Vector2 position, string locationName, out string error, bool avoidOverlap = false);
 
 	/// <summary>
 	/// Tries to spawn a clump.
@@ -63,24 +61,37 @@ public interface IItemExtensionsApi {
 	/// <param name="includeSource">Include the main seed's crop in calculation.</param>
 	/// <param name="parseConditions">Whether to pase GSQs before adding to list.</param>
 	/// <returns>All possible seeds.</returns>
-	List<string> GetCustomSeeds(string itemId, bool includeSource, bool parseConditions = true);
+	//List<string> GetCustomSeeds(string itemId, bool includeSource, bool parseConditions = true);
 
 	/// <summary>
-	/// Gets drops for a clump.
+	/// Does checks for a clump's drops, including monster spawning and other behavior.
 	/// </summary>
 	/// <param name="clump">The clump instance.</param>
-	/// <param name="parseConditions">Whether to pase GSQs before adding to list.</param>
-	/// <returns>All possible drops, with %.</returns>
-	Dictionary<string, (double, int)> GetClumpDrops(ResourceClump clump, bool parseConditions = false);
+	/// <param name="remove">whether to remove the clump from the map.</param>
+	//void CheckClumpDrops(ResourceClump clump, bool remove = false);
 
 	/// <summary>
-	/// Gets drops for a node.
+	/// Does checks for a node's drops, including monster spawning and other behavior.
 	/// </summary>
 	/// <param name="node">The node instance.</param>
-	/// <param name="parseConditions">Whether to pase GSQs before adding to list.</param>
-	/// <returns>All possible drops, with %.</returns>
-	Dictionary<string, (double, int)> GetObjectDrops(SObject node, bool parseConditions = false);
+	/// <param name="remove">whether to remove the node from the map.</param>
+	//void CheckObjectDrops(Object node, bool remove = false);
 
-	bool GetResourceData(string id, bool isClump, out object data);
-	bool GetBreakingTool(string id, bool isClump, out string tool);
+	/// <summary>
+	/// Gets data for a specific resource.
+	/// </summary>
+	/// <param name="id">The ID if the resource.</param>
+	/// <param name="isClump">Whether it's a clump (instead of a node).</param>
+	/// <param name="data">The resource data.</param>
+	/// <returns>Whether the data was found.</returns>
+	//bool GetResourceData(string id, bool isClump, out object data);
+
+	/// <summary>
+	/// Gets breaking tool for a specific resource.
+	/// </summary>
+	/// <param name="id">The ID if the resource.</param>
+	/// <param name="isClump">Whether it's a clump (instead of a node).</param>
+	/// <param name="tool">The breaking tool.</param>
+	/// <returns>Whether the resource data was found.</returns>
+	//bool GetBreakingTool(string id, bool isClump, out string tool);
 }

@@ -6,6 +6,8 @@ using System.Reflection.Emit;
 
 using HarmonyLib;
 
+using Leclair.Stardew.Common.Extensions;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -82,6 +84,16 @@ public static class Game1_Patches {
 				transpiler: new HarmonyMethod(typeof(Game1_Patches), nameof(IndoorPot_DayUpdate__Transpiler))
 			);
 
+			// Green Rain fixes.
+			try {
+				mod.Harmony.Patch(
+					original: AccessTools.EnumeratorMoveNext(AccessTools.Method(typeof(Game1), "_newDayAfterFade")),
+					transpiler: new HarmonyMethod(typeof(Game1_Patches), nameof(_newDayAfterFade__Transpiler))
+				);
+			} catch (Exception ex) {
+				mod.Log($"Unable to apply the _newDayAfterFade patch to Game1. A weather type introduced in Stardew 1.6 may not work correctly in some locations.", StardewModdingAPI.LogLevel.Warn, ex);
+			}
+
 			// Weather nonsense that we can't target by name.
 			var newDayRainFix = new HarmonyMethod(typeof(Game1_Patches), nameof(NewDayRain__Transpiler));
 
@@ -126,6 +138,59 @@ public static class Game1_Patches {
 		}
 
 	}
+
+	#region Helper Methods
+
+	private static readonly Dictionary<string, bool> YesterdayWasGreenRain = [];
+
+	public static void SaveGreenRainHistory() {
+		YesterdayWasGreenRain.Clear();
+
+		foreach (string key in Game1.locationContextData.Keys) {
+			YesterdayWasGreenRain[key] = Game1.netWorldState.Value.GetWeatherForLocation(key).IsGreenRain;
+		}
+
+		Mod?.Log($"Saved green rain history for {YesterdayWasGreenRain.Count} location contexts.", StardewModdingAPI.LogLevel.Trace);
+	}
+
+	public static void UpdateGreenRainLocations() {
+		HashSet<string> toAdd = [];
+		HashSet<string> toRemove = [];
+
+		foreach (string key in Game1.locationContextData.Keys) {
+			bool isGreenRain = Game1.netWorldState.Value.GetWeatherForLocation(key).IsGreenRain;
+			bool wasGreenRain = YesterdayWasGreenRain.GetValueOrDefault(key);
+
+			if (isGreenRain && !wasGreenRain) {
+				toAdd.Add(key);
+			} else if (wasGreenRain && !isGreenRain) {
+				toRemove.Add(key);
+			}
+		}
+
+		if (toAdd.Count > 0 || toRemove.Count > 0) {
+			int added = 0;
+			int removed = 0;
+
+			Utility.ForEachLocation(delegate (GameLocation loc) {
+				string id = loc.GetLocationContextId();
+				if (toAdd.Contains(id)) {
+					loc.performGreenRainUpdate();
+					added++;
+				} else if (toRemove.Contains(id)) {
+					loc.performDayAfterGreenRainUpdate();
+					removed++;
+				}
+
+				return true;
+			});
+
+			if (added != 0 || removed != 0)
+				Mod?.Log($"Processed green rain additions for {added} locations across {toAdd.Count} contexts and removed them from {removed} locations across {toRemove.Count} contexts.", StardewModdingAPI.LogLevel.Debug);
+		}
+	}
+
+	#endregion
 
 	#region Drawing
 
@@ -317,6 +382,98 @@ public static class Game1_Patches {
 			else
 				yield return in0;
 		}
+	}
+
+	private static IEnumerable<CodeInstruction> _newDayAfterFade__Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase method) {
+
+		FieldInfo? yesterdayWasGreenRain = null;
+
+		if (method.DeclaringType != null)
+			foreach (var field in AccessTools.GetDeclaredFields(method.DeclaringType)) {
+				if (field.Name.StartsWith("<yesterdayWasGreenRain>")) {
+					yesterdayWasGreenRain = field;
+					break;
+				}
+			}
+
+		if (yesterdayWasGreenRain == null)
+			throw new Exception("could not find yesterdayWasGreenRain field");
+
+		var Game1_UpdateWeatherForNewDay = AccessTools.Method(typeof(Game1), nameof(Game1.UpdateWeatherForNewDay));
+		var Game1_IsMasterGame = AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.IsMasterGame));
+		var Game1_isGreenRain = AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.isGreenRain));
+
+		var mSaveGreenRainHistory = AccessTools.Method(typeof(Game1_Patches), nameof(SaveGreenRainHistory));
+		var mUpdateGreenRainLocations = AccessTools.Method(typeof(Game1_Patches), nameof(UpdateGreenRainLocations));
+
+		Label? afterYesterday = null;
+
+		var matcher = new CodeMatcher(instructions)
+			// Old Code: Game1.UpdateWeatherForNewDay();
+			// New Code: SaveGreenRainHistory();Game1.UpdateWeatherForNewDay();
+			.MatchStartForward(new CodeMatch(in0 => in0.Calls(Game1_UpdateWeatherForNewDay)))
+			.ThrowIfNotMatch("could not find Game1.UpdateWeatherForNewDay()")
+			.Insert(new CodeInstruction(OpCodes.Call, mSaveGreenRainHistory))
+
+			// Now, let's make sure we're in the "if (Game1.isGreenRain) {" block
+			.MatchStartForward(
+				new CodeMatch(in0 => in0.Calls(Game1_isGreenRain)),
+				new CodeMatch(in0 => in0.IsBranch())
+			)
+			.ThrowIfNotMatch("could not find if Game1.isGreenRain")
+
+			// Find the next check for IsMasterGame
+			.MatchStartForward(
+				new CodeMatch(in0 => in0.Calls(Game1_IsMasterGame)),
+				new CodeMatch(in0 => in0.IsBranch())
+			)
+			.ThrowIfNotMatch("could not find Game1.IsMasterGame")
+			// Old Code: "if (Game1.IsMasterGame) {"
+			// New Code: "if (Game1.IsMasterGame && false) {"
+			.Advance(1)
+			.Insert(
+				new CodeInstruction(OpCodes.Ldc_I4_0),
+				new CodeInstruction(OpCodes.And)
+			)
+
+			// Now, let's go forward until we find "else if (yesterdayWasGreenRain) {"
+			.MatchStartForward(
+				new CodeMatch(OpCodes.Ldarg_0),
+				new CodeMatch(in0 => in0.LoadsField(yesterdayWasGreenRain)),
+				// We need to store the address it jumps to after this so we can insert
+				// some logic to run after
+				new CodeMatch(in0 => in0.Branches(out afterYesterday))
+			)
+			.ThrowIfNotMatch("could not find else if yesterdayWasGreenRain")
+
+			// Find the next check for IsMasterGame
+			.MatchStartForward(
+				new CodeMatch(in0 => in0.Calls(Game1_IsMasterGame)),
+				new CodeMatch(in0 => in0.IsBranch())
+			)
+			.ThrowIfNotMatch("could not find Game1.IsMasterGame")
+			// Old Code: "if (Game1.IsMasterGame) {"
+			// New Code: "if (Game1.IsMasterGame && false) {"
+			.Advance(1)
+			.Insert(
+				new CodeInstruction(OpCodes.Ldc_I4_0),
+				new CodeInstruction(OpCodes.And)
+			)
+
+			// Now, find our branch.
+			.MatchStartForward(
+				new CodeMatch(in0 => afterYesterday.HasValue && in0.labels.Contains(afterYesterday.Value))
+			)
+			.ThrowIfNotMatch("could not find jump point after else if yesterdayWasGreenRain");
+
+		var instr = matcher.Instruction;
+
+		matcher = matcher
+			.Insert(
+				new CodeInstruction(OpCodes.Call, mUpdateGreenRainLocations).MoveLabelsFrom(instr)
+			);
+
+		return matcher.InstructionEnumeration();
 	}
 
 	private static IEnumerable<CodeInstruction> NewDayRain__Transpiler(IEnumerable<CodeInstruction> instructions) {

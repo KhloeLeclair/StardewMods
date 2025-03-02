@@ -47,16 +47,16 @@ internal static class ReflectionHelper {
 		Dictionary<string, List<string>> ByOwner = new();
 
 		foreach (var entry in patches) {
-			foreach (string owner in entry.Value.Owners) {
+			foreach (string owner in entry.Item2.Owners) {
 				if (shouldUnpatch(owner)) {
-					string name = ToTargetString(entry.Key, false) ?? entry.Key.Name;
+					string name = ToTargetString(entry.Item1, false) ?? entry.Item1.Name;
 					if (!ByOwner.TryGetValue(owner, out var list)) {
 						list = [];
 						ByOwner[owner] = list;
 					}
 
 					list.Add(name);
-					harmony.Unpatch(entry.Key, HarmonyLib.HarmonyPatchType.All, owner);
+					harmony.Unpatch(entry.Item1, HarmonyLib.HarmonyPatchType.All, owner);
 				}
 			}
 		}
@@ -81,12 +81,12 @@ internal static class ReflectionHelper {
 		StringBuilder builder = new();
 
 		foreach (var entry in patches) {
-			string name = ToTargetString(entry.Key) ?? entry.Key.Name;
+			string name = ToTargetString(entry.Item1) ?? entry.Item1.Name;
 			builder.AppendLine($"{indentation}{name}");
 
 			Dictionary<string, List<string>> ByOwner = new();
 
-			foreach (var patch in entry.Value.Prefixes) {
+			foreach (var patch in entry.Item2.Prefixes) {
 				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
 					list = [];
 					ByOwner[patch.owner] = list;
@@ -98,7 +98,7 @@ internal static class ReflectionHelper {
 					list.Add($"prefix: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
 			}
 
-			foreach (var patch in entry.Value.Transpilers) {
+			foreach (var patch in entry.Item2.Transpilers) {
 				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
 					list = [];
 					ByOwner[patch.owner] = list;
@@ -110,7 +110,7 @@ internal static class ReflectionHelper {
 					list.Add($"transpiler: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
 			}
 
-			foreach (var patch in entry.Value.Postfixes) {
+			foreach (var patch in entry.Item2.Postfixes) {
 				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
 					list = [];
 					ByOwner[patch.owner] = list;
@@ -122,7 +122,7 @@ internal static class ReflectionHelper {
 					list.Add($"postfix: {ToTargetString(patch.PatchMethod)}, priority: {patch.priority}");
 			}
 
-			foreach (var patch in entry.Value.Finalizers) {
+			foreach (var patch in entry.Item2.Finalizers) {
 				if (!ByOwner.TryGetValue(patch.owner, out var list)) {
 					list = [];
 					ByOwner[patch.owner] = list;
@@ -259,7 +259,14 @@ internal static class ReflectionHelper {
 		return $"{assembly}{type}:{memberName}{argumentList}";
 	}
 
-	public static Dictionary<MethodBase, HarmonyLib.Patches> GetPatchedMethodsInAssembly(Assembly? assembly = null) {
+	public static IEnumerable<(MethodBase, HarmonyLib.Patches)> GetPatchedMethodsInAssembly(Assembly? assembly = null) {
+		assembly ??= Assembly.GetCallingAssembly();
+		foreach (var method in HarmonyLib.PatchProcessor.GetAllPatchedMethods())
+			if (method.DeclaringType?.Assembly == assembly)
+				yield return (method, HarmonyLib.PatchProcessor.GetPatchInfo(method));
+	}
+
+	/*public static Dictionary<MethodBase, HarmonyLib.Patches> GetPatchedMethodsInAssembly(Assembly? assembly = null) {
 		assembly ??= Assembly.GetExecutingAssembly();
 		Dictionary<MethodBase, HarmonyLib.Patches> result = [];
 
@@ -271,7 +278,7 @@ internal static class ReflectionHelper {
 		}
 
 		return result;
-	}
+	}*/
 
 #endif
 

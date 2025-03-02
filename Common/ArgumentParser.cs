@@ -9,12 +9,21 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 
 using StardewValley;
+using StardewValley.GameData.LocationContexts;
 
 namespace Leclair.Stardew.Common;
 
 public record TargetTileFilter(string Property, string? Value);
 
 public record TargetPosition(GameLocation Location, Vector2? Position, int Radius);
+
+public record TargetLocationContext(string Key) {
+
+	[MemberNotNullWhen(false, nameof(Data))]
+	public bool IsValid => Game1.locationContextData.ContainsKey(Key);
+
+	public LocationContextData? Data => IsValid ? Game1.locationContextData[Key] : null;
+}
 
 public class ArgumentParser {
 
@@ -101,7 +110,8 @@ public class ArgumentParser {
 		RegisterConverter<Rectangle>(ParseRectangle, "<x:number> <y:number> <width:number> <height:number>");
 		RegisterConverter<Vector2>(ParseVector2, "<x:number> <y:number>");
 		RegisterConverter<string[]>(ParseRemainder);
-		RegisterConverter<IEnumerable<GameLocation>>(ParseLocationContext, "<Location/Locations/Context> <Any/Here/ID>");
+		RegisterConverter<IEnumerable<GameLocation>>(ParseLocations, "<Location/Locations/Context> <Any/Here/ID>");
+		RegisterConverter<IEnumerable<TargetLocationContext>>(ParseLocationContext, "<Any/Here/ID>");
 		RegisterConverter<Farmer>(ParseFarmer, "<Current/Host/Target/ID>");
 		RegisterConverter<ParsedFarmers>(ParseFarmers, "<Any/All/Current/Host/Target/ID>");
 		RegisterConverter<Color>(ParseColor, "<color>");
@@ -161,7 +171,7 @@ public class ArgumentParser {
 
 		// For Location and Context, we just fall back to LocationContext.
 		if (type == TargetType.Location || type == TargetType.Locations || type == TargetType.Context) {
-			if (!ParseLocationContext(input, index, out consumed, out error, out var val)) {
+			if (!ParseLocations(input, index, out consumed, out error, out var val)) {
 				value = default;
 				return false;
 			}
@@ -521,7 +531,42 @@ public class ArgumentParser {
 		return true;
 	}
 
-	private static bool ParseLocationContext(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out IEnumerable<GameLocation>? value) {
+	private static bool ParseLocationContext(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out IEnumerable<TargetLocationContext>? value) {
+		consumed = 1;
+
+		if (!ArgUtility.TryGet(input, index, out string? contextName, out error)) {
+			value = default;
+			return false;
+		}
+
+		if (contextName.Equals("Current", StringComparison.OrdinalIgnoreCase))
+			contextName = "Here";
+
+		if (contextName.Equals("Here", StringComparison.OrdinalIgnoreCase)) {
+			string? id = Game1.currentLocation?.GetLocationContextId();
+			if (string.IsNullOrEmpty(id))
+				value = [];
+			else
+				value = [new(id)];
+			return true;
+		}
+
+		if (contextName.Equals("All", StringComparison.OrdinalIgnoreCase) || contextName.Equals("Any", StringComparison.OrdinalIgnoreCase)) {
+			value = Game1.locationContextData.Keys.Select(x => new TargetLocationContext(x));
+			return true;
+		}
+
+		if (!Game1.locationContextData.ContainsKey(contextName)) {
+			error = $"Could not find location context with name '{contextName}'";
+			value = null;
+			return false;
+		}
+
+		value = [new TargetLocationContext(contextName)];
+		return true;
+	}
+
+	private static bool ParseLocations(string[] input, int index, out int consumed, [NotNullWhen(false)] out string? error, [NotNullWhen(true)] out IEnumerable<GameLocation>? value) {
 		consumed = 2;
 
 		if (!TryConvert<LocationOrContext>(input, index, out _, out error, out var target)) {

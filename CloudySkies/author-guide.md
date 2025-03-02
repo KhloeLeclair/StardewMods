@@ -2560,6 +2560,21 @@ The value should be `true` or `false`
 > model, but is only provided as an alternative for ease of use.
 
 
+### `leclair.cloudyskies/PerformAction`
+
+**Targets:**
+* `modData` on individual big craftable instances
+* `CustomFields` in `Data/BigCraftables`
+
+This can be used to add an action to a big craftable that's performed when
+the user interacts with it. This uses tile actions, similar to the `Action`
+property of tiles from the `Buildings` layer of a map.
+
+> Note: This also supports the `leclair.bettercrafting_PerformAction` key
+> for compatibility when Better Crafting is not loaded, since Better Crafting
+> is not going to be ported to Android while this should run on Android.
+
+
 ## Trigger Actions
 
 Cloudy Skies adds the following [trigger action actions](https://stardewvalleywiki.com/Modding:Trigger_actions#Actions)
@@ -3413,6 +3428,84 @@ want to affect less than 100% of trees.
 
 The `Input` item is the seed item that you plant to get this type of tree,
 if there is a valid seed item.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_SetWeather [options] <weather-id>`
+
+> Note: This action can currently only be run as the main player.
+
+> Note: This action will not affect some weather-related behaviors, including but
+> not limited to NPC schedules. This should be used sparingly and thoroughly
+> tested before releasing it for end users.
+
+Immediately change the weather in a location context to the provided
+weather type. This is primarily a graphical change, as most behaviors related
+to weather, such as for example the watering of crops, happen at the start of
+the day well before this trigger would be run.
+
+As an example, here's a command that will set the weather in Calico Desert to rain:
+```
+leclair.cloudyskies_SetWeather -t Desert Rain
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>-t &lt;All/Current/id&gt;</code>, <code>--target &lt;All/Current/id&gt;</code></td>
+<td>
+
+Specify a target location context where the weather should be changed.
+You can use `All` to affect all locations (though you really shouldn't),
+and you can use `Here` to affect the current location of the main player.
+
+</td>
+</tr>
+</table>
+
+
+### `leclair.cloudyskies_SetWeatherTomorrow [options] <weather-id>`
+
+Set the weather for tomorrow in a location context to the provided
+weather type. This cannot be used to override the weather on festival days.
+
+As an example, here's a command that will set the weather in Calico Desert tomorrow to rain:
+```
+leclair.cloudyskies_SetWeatherTomorrow -t Desert Rain
+```
+
+<table>
+<tr>
+<th>Option</th><th>Description</th>
+</tr>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>
+
+View usage information for this action.
+
+</td>
+</tr>
+<tr>
+<td><code>-t &lt;All/Current/id&gt;</code>, <code>--target &lt;All/Current/id&gt;</code></td>
+<td>
+
+Specify a target location context where the weather should be changed.
+You can use `All` to affect all locations (though you really shouldn't),
+and you can use `Here` to affect the current location of the main player.
 
 </td>
 </tr>

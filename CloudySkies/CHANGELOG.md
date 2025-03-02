@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.9.0
+Released February 24th, 2025.
+
+### Added
+* New trigger actions for changing the current weather as well as
+  tomorrow's weather.
+* New console command for changing the current weather.
+* Support for running tile actions when the user interacts with
+  a big craftable.
+* Support for using the new weather condition added in Stardew 1.6
+  in other location contexts than the `Default` while still having
+  maps update correctly.
+
+### Changed
+* Do not attempt to patch the normal UI when running on Android.
+
+### Fixed
+* Compatibility with recent versions of Item Extensions.
+
+
 ## 1.8.0
 Released November 4th, 2024.
 

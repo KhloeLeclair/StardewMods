@@ -9,6 +9,8 @@ using Leclair.Stardew.Common.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using StardewModdingAPI;
+
 using StardewValley;
 using StardewValley.Menus;
 
@@ -21,6 +23,11 @@ public static class DayTimeMoneyBox_Patches {
 	public static void Patch(ModEntry mod) {
 		Mod = mod;
 
+		if (Constants.TargetPlatform == GamePlatform.Android) {
+			mod.Log($"Not patching DayTimeMoneyBox while running on Android.", LogLevel.Debug);
+			return;
+		}
+
 		try {
 
 			mod.Harmony.Patch(
@@ -30,7 +37,7 @@ public static class DayTimeMoneyBox_Patches {
 			);
 
 		} catch (Exception ex) {
-			mod.Log($"Error patching DayTimeMoneyBox.", StardewModdingAPI.LogLevel.Error, ex);
+			mod.Log($"Error patching DayTimeMoneyBox.", LogLevel.Error, ex);
 		}
 
 	}
@@ -41,7 +48,7 @@ public static class DayTimeMoneyBox_Patches {
 			if (Mod is not null)
 				return Mod.DrawWeatherIcon(b, menu.Position + new Vector2(116, 68));
 		} catch (Exception ex) {
-			Mod?.Log($"Error drawing weather icon: {ex}", StardewModdingAPI.LogLevel.Error, once: true);
+			Mod?.Log($"Error drawing weather icon: {ex}", LogLevel.Error, once: true);
 		}
 
 		return false;
@@ -65,7 +72,7 @@ public static class DayTimeMoneyBox_Patches {
 			}
 
 		} catch (Exception ex) {
-			Mod?.Log($"Error drawing weather icon: {ex}", StardewModdingAPI.LogLevel.Error, once: true);
+			Mod?.Log($"Error drawing weather icon: {ex}", LogLevel.Error, once: true);
 		}
 	}
 

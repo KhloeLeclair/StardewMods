@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 using StardewModdingAPI;
 
@@ -9,7 +7,7 @@ namespace Leclair.Stardew.Common.Extensions;
 
 internal static class EventExtensions {
 
-	internal static void SafeInvoke(this EventHandler evt, object? sender, IMonitor? monitor = null, [CallerArgumentExpression("evt")] string name = "") {
+	internal static void SafeInvoke(this EventHandler evt, object? sender, IMonitor? monitor = null, [CallerArgumentExpression(nameof(evt))] string name = "") {
 		Delegate[]? handlers = evt?.GetInvocationList();
 		if (handlers?.Length is null or 0)
 			return;
@@ -25,12 +23,12 @@ internal static class EventExtensions {
 		}
 	}
 
-	internal static void SafeInvoke<T>(this EventHandler<T> evt, object? sender, T args, IMonitor? monitor = null, [CallerArgumentExpression("evt")] string name = "") {
+	internal static void SafeInvoke<T>(this EventHandler<T> evt, object? sender, T args, IMonitor? monitor = null, [CallerArgumentExpression(nameof(evt))] string name = "") {
 		Delegate[]? handlers = evt?.GetInvocationList();
 		if (handlers?.Length is null or 0)
 			return;
 
-		foreach(Delegate handler in handlers) {
+		foreach (Delegate handler in handlers) {
 			if (handler is EventHandler<T> thandler)
 				try {
 					thandler.Invoke(sender, args);
