@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 using Leclair.Stardew.BetterGameMenu.Menus;
 using Leclair.Stardew.BetterGameMenu.Models;
@@ -10,8 +9,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 
 using StardewValley;
+using StardewValley.Extensions;
 using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterGameMenu;
@@ -26,31 +27,69 @@ public class ModAPI : IBetterGameMenuApi {
 		Other = other;
 	}
 
-	public event EventHandler<IClickableMenu>? OnMenuInstantiated;
-	public event EventHandler<(IClickableMenu Menu, string Tab, string OldTab)>? OnTabChanged;
-	public event EventHandler<(IClickableMenu Menu, string Tab, string Source, IClickableMenu Page, IClickableMenu? OldPage)>? OnPageInstantiated;
+	private readonly List<(IBetterGameMenuApi.MenuCreatedDelegate Handler, EventPriority Priority)> _MenuCreated = [];
+	private readonly List<(IBetterGameMenuApi.TabChangedDelegate Handler, EventPriority Priority)> _TabChanged = [];
+	private readonly List<(IBetterGameMenuApi.PageCreatedDelegate Handler, EventPriority Priority)> _PageCreated = [];
 
-	internal void FireMenuInstantiated(IClickableMenu menu) {
+	private static int SortList<T>((T Handler, EventPriority Priority) first, (T Handler, EventPriority Priority) second) {
+		return -first.Priority.CompareTo(second.Priority);
+	}
+
+	public void OnMenuCreated(IBetterGameMenuApi.MenuCreatedDelegate handler, EventPriority priority = EventPriority.Normal) {
+		_MenuCreated.Add((handler, priority));
+		_MenuCreated.Sort(SortList);
+	}
+
+	public void OffMenuCreated(IBetterGameMenuApi.MenuCreatedDelegate handler) {
+		_MenuCreated.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	public void OnTabChanged(IBetterGameMenuApi.TabChangedDelegate handler, EventPriority priority) {
+		_TabChanged.Add((handler, priority));
+		_TabChanged.Sort(SortList);
+	}
+
+	public void OffTabChanged(IBetterGameMenuApi.TabChangedDelegate handler) {
+		_TabChanged.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	public void OnPageCreated(IBetterGameMenuApi.PageCreatedDelegate handler, EventPriority priority = EventPriority.Normal) {
+		_PageCreated.Add((handler, priority));
+		_PageCreated.Sort(SortList);
+	}
+
+	public void OffPageCreated(IBetterGameMenuApi.PageCreatedDelegate handler) {
+		_PageCreated.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	internal void FireMenuCreated(IClickableMenu menu) {
 		try {
-			OnMenuInstantiated?.Invoke(menu, menu);
+			foreach (var pair in _MenuCreated)
+				pair.Handler(menu);
+
 		} catch (Exception ex) {
-			Self.Log($"Error in OnMenuInstantiated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			Self.Log($"Error in OnMenuCreated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
 		}
 	}
 
-	internal void FireTabChanged(IClickableMenu menu, string tab, string oldTab) {
+	internal void FireTabChanged(BetterGameMenuImpl menu, string tab, string oldTab) {
 		try {
-			OnTabChanged?.Invoke(menu, (menu, tab, oldTab));
+			var evt = new TabChangedEvent(menu, tab, oldTab);
+			foreach (var pair in _TabChanged)
+				pair.Handler(evt);
 		} catch (Exception ex) {
 			Self.Log($"Error in OnTabChanged handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
 		}
 	}
 
-	internal void FirePageInstantiated(IClickableMenu menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
+	internal void FirePageCreated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
 		try {
-			OnPageInstantiated?.Invoke(menu, (menu, tab, source, page, oldPage));
+			var evt = new PageCreatedEvent(menu, tab, source, page, oldPage);
+			foreach (var pair in _PageCreated)
+				pair.Handler(evt);
+
 		} catch (Exception ex) {
-			Self.Log($"Error in OnPageInstantiated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			Self.Log($"Error in OnPageCreated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
 		}
 	}
 
@@ -63,11 +102,6 @@ public class ModAPI : IBetterGameMenuApi {
 			float width = rect.Width * scale;
 			float height = rect.Height * scale;
 
-			float s = scale; // Math.Min(scale, Math.Min(bounds.Width / width, bounds.Height / height));
-
-			//width *= s;
-			//height *= s;
-
 			batch.Draw(
 				texture,
 				new Vector2(
@@ -78,7 +112,7 @@ public class ModAPI : IBetterGameMenuApi {
 				Color.White,
 				0f,
 				Vector2.Zero,
-				s,
+				scale,
 				SpriteEffects.None,
 				1f
 			);
@@ -105,7 +139,8 @@ public class ModAPI : IBetterGameMenuApi {
 		Func<bool>? getMenuInvisible = null,
 		Func<int, int>? getWidth = null,
 		Func<int, int>? getHeight = null,
-		Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? onResize = null
+		Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? onResize = null,
+		Action<IClickableMenu>? onClose = null
 	) {
 		if (!Self.Tabs.ContainsKey(id))
 			throw new KeyNotFoundException(id);
@@ -119,7 +154,8 @@ public class ModAPI : IBetterGameMenuApi {
 			GetMenuInvisible: getMenuInvisible,
 			GetWidth: getWidth,
 			GetHeight: getHeight,
-			OnResize: onResize
+			OnResize: onResize,
+			OnClose: onClose
 		));
 	}
 
@@ -135,7 +171,8 @@ public class ModAPI : IBetterGameMenuApi {
 		Func<bool>? getMenuInvisible = null,
 		Func<int, int>? getWidth = null,
 		Func<int, int>? getHeight = null,
-		Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? onResize = null
+		Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? onResize = null,
+		Action<IClickableMenu>? onClose = null
 	) {
 		Self.AddTab(id, new TabDefinition(
 			Order: order,
@@ -150,31 +187,27 @@ public class ModAPI : IBetterGameMenuApi {
 			GetMenuInvisible: getMenuInvisible,
 			GetWidth: getWidth,
 			GetHeight: getHeight,
-			OnResize: onResize
+			OnResize: onResize,
+			OnClose: onClose
 		));
 	}
 
-	public bool TryGetActiveMenu([NotNullWhen(true)] out IBetterGameMenu? menu) {
-		if (Game1.activeClickableMenu is BetterGameMenuImpl bgm) {
-			menu = bgm;
-			return true;
-		}
+	public IBetterGameMenu? ActiveMenu => Game1.activeClickableMenu is BetterGameMenuImpl bgm ? bgm : null;
 
-		menu = null;
-		return false;
+	public IBetterGameMenu? AsMenu(IClickableMenu menu) {
+		return menu as BetterGameMenuImpl;
 	}
 
-	public bool TryGetMenu(IClickableMenu menu, [NotNullWhen(true)] out IBetterGameMenu? castMenu) {
-		if (menu is BetterGameMenuImpl bgm) {
-			castMenu = bgm;
-			return true;
+	public IBetterGameMenu? TryOpenMenu(string? defaultTab = null, bool playSound = false, bool closeExistingMenu = false) {
+		if (Game1.activeClickableMenu is not null) {
+			if (!closeExistingMenu || !Game1.activeClickableMenu.readyToClose())
+				return null;
+
+			CommonHelper.YeetMenu(Game1.activeClickableMenu);
 		}
 
-		castMenu = null;
-		return false;
-	}
-
-	public bool TryOpenMenu([NotNullWhen(true)] out IBetterGameMenu? menu, string? defaultTab = null, bool playSound = false, bool closeExistingMenu = false) {
-		throw new NotImplementedException();
+		var menu = new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
+		Game1.activeClickableMenu = menu;
+		return menu;
 	}
 }

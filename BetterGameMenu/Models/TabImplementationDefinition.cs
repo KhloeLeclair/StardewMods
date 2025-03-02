@@ -13,5 +13,6 @@ public record TabImplementationDefinition(
 	Func<bool>? GetMenuInvisible,
 	Func<int, int>? GetWidth,
 	Func<int, int>? GetHeight,
-	Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? OnResize
+	Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? OnResize,
+	Action<IClickableMenu>? OnClose
 );

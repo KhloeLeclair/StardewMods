@@ -38,7 +38,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 		AssertLoaded();
 
 		if (!IsRegistered)
-			API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue && ! allowInGameChanges.Value);
+			API.Register(Consumer, ResetConfig, SaveConfig, allowInGameChanges.HasValue && !allowInGameChanges.Value);
 
 		// Am I a joke to you?
 		IsRegistered = true;
@@ -177,7 +177,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 		AssertLoaded();
 
 		List<string> keys = new(labels.Count);
-		for(int i = 0; i < labels.Count; i++)
+		for (int i = 0; i < labels.Count; i++)
 			keys.Add(i.ToString());
 
 		API.AddTextOption(

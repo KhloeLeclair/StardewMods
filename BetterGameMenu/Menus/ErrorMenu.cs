@@ -119,8 +119,6 @@ public class ErrorMenu : IClickableMenu {
 	}
 
 	public override void draw(SpriteBatch batch) {
-		//base.draw(batch);
-
 		int w = width - IClickableMenu.borderWidth * 4;
 
 		Flow = FlowHelper.RenderFlow(

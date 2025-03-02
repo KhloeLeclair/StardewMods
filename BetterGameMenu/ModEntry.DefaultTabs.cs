@@ -57,7 +57,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: null,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -90,7 +91,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: width => width + ((LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru || LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.it) ? 64 : 0),
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -116,7 +118,8 @@ public partial class ModEntry {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			}
+			},
+			OnClose: null
 		));
 	}
 
@@ -138,7 +141,8 @@ public partial class ModEntry {
 			GetMenuInvisible: () => true,
 			GetWidth: width => width + 128,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -160,7 +164,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: null,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -182,7 +187,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -204,7 +210,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 
@@ -230,7 +237,8 @@ public partial class ModEntry {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			}
+			},
+			OnClose: null
 		));
 	}
 
@@ -259,7 +267,8 @@ public partial class ModEntry {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			}
+			},
+			OnClose: null
 		));
 	}
 
@@ -281,7 +290,8 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu)
+			OnResize: input => CreateInstance(input.Menu),
+			OnClose: null
 		));
 	}
 

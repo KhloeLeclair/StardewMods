@@ -75,7 +75,7 @@ public partial class ModEntry {
 				if (impl.Source == "stardew")
 					displayName = I18n.Config_Provider_Stardew;
 				else if (Helper.ModRegistry.Get(impl.Source) is IModInfo mod) {
-					displayName = () => mod.Manifest.Name;
+					displayName = () => Config.DeveloperMode ? $"{mod.Manifest.Name} ({impl.Priority})" : mod.Manifest.Name;
 				} else
 					displayName = () => I18n.Config_Provider_Unknown(impl.Source);
 

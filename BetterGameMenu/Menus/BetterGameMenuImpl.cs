@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using Leclair.Stardew.BetterGameMenu.Models;
-using Leclair.Stardew.Common.Extensions;
 using Leclair.Stardew.Common.UI;
 using Leclair.Stardew.Common.UI.SimpleLayout;
 
@@ -22,7 +21,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterGameMenu.Menus;
 
-public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
+public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDisposable {
 
 	private readonly ModEntry Mod;
 
@@ -59,7 +58,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		CurrentScreenSize = new(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);
 
 		// First, load all the tab definitions.
-		// TODO: Cache this, probably.
+		// TODO: Cache this, probably?
 		foreach (var (Key, Tab, Implementation) in mod.GetTabImplementations())
 			TabSources[Key] = (Tab, Implementation);
 
@@ -92,6 +91,40 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		// Finally, fire off an event because our menu was instantiated.
 		Mod.FireMenuInstantiated(this);
 	}
+
+	public void Dispose() {
+		foreach (var (id, page) in TabPages) {
+			if (DisposePage(id, page))
+				TabPages.Remove(id);
+		}
+	}
+
+	private bool DisposePage(string tab, IClickableMenu page) {
+		if (page is ErrorMenu ||
+			page is null ||
+			!TabSources.TryGetValue(tab, out var sources)
+		)
+			return false;
+
+		bool didSomething = false;
+
+		if (sources.Implementation.OnClose != null) {
+			try {
+				sources.Implementation.OnClose(page);
+			} catch (Exception ex) {
+				Mod.Log($"Error calling OnClose for tab '{tab}' using provider '{sources.Implementation.Source}': {ex}", LogLevel.Error);
+			}
+			didSomething = true;
+		}
+
+		if (page is IDisposable disposable && !page.HasDependencies()) {
+			disposable.Dispose();
+			didSomething = true;
+		}
+
+		return didSomething;
+	}
+
 
 	public void AddTabsToClickableComponents(IClickableMenu menu) {
 		menu.allClickableComponents.AddRange(TabComponentList);
@@ -172,19 +205,19 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 			Game1.exitActiveMenu();
 			Game1.playSound("bigDeSelect");
 
-		} else if (key == Keys.NumPad9) {
-			int target = mCurrent + 1;
-			if (target >= Tabs.Count)
-				target = 0;
+			/*} else if (key == Keys.NumPad9) {
+				int target = mCurrent + 1;
+				if (target >= Tabs.Count)
+					target = 0;
 
-			TryChangeTab(Tabs[target], playSound: true);
+				TryChangeTab(Tabs[target], playSound: true);
 
-		} else if (key == Keys.NumPad7) {
-			int target = mCurrent - 1;
-			if (target < 0)
-				target = Tabs.Count - 1;
+			} else if (key == Keys.NumPad7) {
+				int target = mCurrent - 1;
+				if (target < 0)
+					target = Tabs.Count - 1;
 
-			TryChangeTab(Tabs[target], playSound: true);
+				TryChangeTab(Tabs[target], playSound: true);*/
 
 		} else
 			CurrentPage?.receiveKeyPress(key);
@@ -419,7 +452,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		get => mInvisible;
 		set {
 			mInvisible = value;
-			// TODO: Logic for when the menu changes to invisible?
+			// TODO: Any logic for when the menu changes to invisible?
 		}
 	}
 
@@ -427,6 +460,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 
 	public string CurrentTab => mCurrent >= 0 && mCurrent < Tabs.Count ? Tabs[mCurrent] : string.Empty;
 
+	// TODO: Change this to a field backed property for performance?
 	public IClickableMenu? CurrentPage => TabPages.GetValueOrDefault(CurrentTab);
 
 	public bool CurrentTabHasErrored => CurrentPage is ErrorMenu;
@@ -502,6 +536,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		return true;
 	}
 
+	// TODO: Refactor stuff so this doesn't need so much duplicate logic.
 	internal void TryReloadPage(bool switchProvider = false) {
 		if (CurrentPage is not ErrorMenu || !TabSources.TryGetValue(CurrentTab, out var sources))
 			return;
@@ -584,6 +619,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 
 						// Remove our components from the old page, just in case.
 						RemoveTabsFromClickableComponents(oldPage);
+
+						// Dispose of the old page.
+						DisposePage(target, oldPage);
 
 						// Inject our tab components.
 						page.populateClickableComponentList();
@@ -690,15 +728,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		}
 	}
 
-
-	public event EventHandler<(string Tab, string OldTab)>? OnTabChanged;
-	public event EventHandler<(string Tab, string Source, IClickableMenu Page, IClickableMenu? OldPage)>? OnPageInstantiated;
-
 	internal void FireTabChanged(string tab, string? oldTab) {
 		if (string.IsNullOrEmpty(oldTab))
 			return;
 
-		OnTabChanged?.SafeInvoke(this, (tab, oldTab), Mod.Monitor);
 		Mod.FireTabChanged(this, tab, oldTab);
 	}
 
@@ -706,7 +739,6 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu {
 		if (page is ErrorMenu || page is null)
 			return;
 
-		OnPageInstantiated?.SafeInvoke(this, (tab, source, page, oldPage), Mod.Monitor);
 		Mod.FirePageInstantiated(this, tab, source, page, oldPage);
 	}
 

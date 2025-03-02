@@ -3529,11 +3529,20 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 	public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds) {
 		base.gameWindowSizeChanged(oldBounds, newBounds);
 
+		AfterGameWindowSizeChanged();
+	}
+
+	internal void AfterGameWindowSizeChanged() {
+
 		UpdateTabs();
 		LayoutRecipes();
 
-		inventory.xPositionOnScreen = xPositionOnScreen + spaceToClearSideBorder + borderWidth;
-		inventory.yPositionOnScreen = yPositionOnScreen + spaceToClearTopBorder + borderWidth + 320 - 16;
+		//inventory.xPositionOnScreen = xPositionOnScreen + spaceToClearSideBorder + borderWidth;
+		//inventory.yPositionOnScreen = yPositionOnScreen + spaceToClearTopBorder + borderWidth + 320 - 16;
+		inventory.SetPosition(
+			xPositionOnScreen + spaceToClearSideBorder + borderWidth,
+			yPositionOnScreen + height - inventory.rows * 17 * 4 - borderWidth + 4
+		);
 
 		if (upperRightCloseButton is not null) {
 			upperRightCloseButton.bounds.X = xPositionOnScreen + width - 36;

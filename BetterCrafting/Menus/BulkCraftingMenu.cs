@@ -685,6 +685,56 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 			Game1.playSound("smallSelect");
 	}
 
+	public bool NextPage(bool playSound = true) {
+		if (currentPage < totalPages) {
+			currentPage++;
+			UpdateLayout();
+			UpdateComponents();
+			if (playSound)
+				Game1.playSound("smallSelect");
+			return true;
+		}
+		return false;
+	}
+
+	public bool PrevPage(bool playSound = true) {
+		if (currentPage > 1) {
+			currentPage--;
+			UpdateLayout();
+			UpdateComponents();
+			if (playSound)
+				Game1.playSound("smallSelect");
+			return true;
+		}
+		return false;
+	}
+
+
+	public override void receiveGamePadButton(Buttons button) {
+		base.receiveGamePadButton(button);
+
+		if (txtQuantity.Selected) {
+			switch (button) {
+				case Buttons.DPadUp:
+				case Buttons.DPadDown:
+				case Buttons.DPadLeft:
+				case Buttons.DPadRight:
+				case Buttons.LeftThumbstickUp:
+				case Buttons.LeftThumbstickDown:
+				case Buttons.LeftThumbstickLeft:
+				case Buttons.LeftThumbstickRight:
+					txtQuantity.Selected = false;
+					break;
+			}
+		}
+
+		if (button == Buttons.LeftShoulder)
+			PrevPage();
+
+		else if (button == Buttons.RightShoulder)
+			NextPage();
+	}
+
 	public override void receiveLeftClick(int x, int y, bool playSound = true) {
 		base.receiveLeftClick(x, y, playSound);
 
@@ -695,38 +745,36 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 				amount *= 5;
 		}
 
+		if (Game1.options.gamepadControls && Game1.oldPadState.IsConnected) {
+			if (Game1.oldPadState.IsButtonDown(Buttons.LeftTrigger))
+				amount *= 5;
+			if (Game1.oldPadState.IsButtonDown(Buttons.RightTrigger))
+				amount *= 5;
+		}
+
 		if (btnLess.containsPoint(x, y)) {
-			if (ChangeQuantity(-amount))
+			if (ChangeQuantity(-amount) && playSound)
 				Game1.playSound("smallSelect");
-		}
 
-		if (btnMore.containsPoint(x, y)) {
-			if (ChangeQuantity(amount))
+		} else if (btnMore.containsPoint(x, y)) {
+			if (ChangeQuantity(amount) && playSound)
 				Game1.playSound("smallSelect");
-		}
 
-		if ((btnPrev?.containsPoint(x, y) ?? false) && currentPage > 1) {
-			currentPage--;
-			UpdateLayout();
-			UpdateComponents();
-			Game1.playSound("smallSelect");
+		} else if ((btnPrev?.containsPoint(x, y) ?? false)) {
+			PrevPage(playSound);
 			return;
-		}
 
-		if ((btnNext?.containsPoint(x, y) ?? false) && currentPage < totalPages) {
-			currentPage++;
-			UpdateLayout();
-			UpdateComponents();
-			Game1.playSound("smallSelect");
+		} else if ((btnNext?.containsPoint(x, y) ?? false)) {
+			NextPage(playSound);
 			return;
-		}
 
-		if (btnCraft.containsPoint(x, y) && Quantity > 0) {
+		} else if (btnCraft.containsPoint(x, y) && Quantity > 0) {
 			bool changed = CheckQuantities();
 			if (Quantity <= CraftingLimit) {
 				Menu.PerformCraft(Recipe, Quantity / Recipe.QuantityPerCraft);
 				exitThisMenu();
-				Game1.playSound("coin");
+				if (playSound)
+					Game1.playSound("coin");
 				return;
 			}
 

@@ -9,9 +9,12 @@
   "UniqueID": "leclair.bettergamemenu",
   "Name": "Better Game Menu",
   "Author": "Khloe Leclair",
-  "Version": "1.0.0-Debug",
+  "Version": "0.5.0",
   "Description": "Replaces the vanilla game menu with an improved reimplementation that improves performance and provides an easy API for other mods.",
   "MinimumApiVersion": "4.1.0",
   "MinimumGameVersion": "1.6.15",
-  "EntryDll": "BetterGameMenu.dll"
+  "EntryDll": "BetterGameMenu.dll",
+  "UpdateKeys": [
+    "Nexus:32032@Main"
+  ]
 }

@@ -13,6 +13,7 @@ using Leclair.Stardew.BetterCrafting.DynamicRules;
 using Leclair.Stardew.BetterCrafting.Managers;
 using Leclair.Stardew.BetterCrafting.Menus;
 using Leclair.Stardew.BetterCrafting.Models;
+using Leclair.Stardew.BetterGameMenu;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
@@ -65,7 +66,7 @@ public class ModEntry : PintailModSubscriber {
 	internal Harmony? Harmony;
 
 	private readonly PerScreen<IClickableMenu?> CurrentMenu = new();
-	private readonly PerScreen<Menus.BetterCraftingPage?> OldCraftingPage = new();
+	private readonly PerScreen<BetterCraftingPage?> OldCraftingPage = new();
 	private readonly PerScreen<bool> OldCraftingGameMenu = new();
 
 	internal readonly PerScreen<Inventory> TrashedItems = new(() => new());
@@ -103,7 +104,7 @@ public class ModEntry : PintailModSubscriber {
 	private Dictionary<string, (string, string)>? FloorMap;
 	private Dictionary<string, (string, string)>? FenceMap;
 
-	private GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
+	internal GMCMIntegration<ModConfig, ModEntry>? GMCMIntegration;
 
 	internal Integrations.ProducerFrameworkMod.PFMIntegration? intPFM;
 	//internal Integrations.RaisedGardenBeds.RGBIntegration? intRGB;
@@ -111,6 +112,7 @@ public class ModEntry : PintailModSubscriber {
 	internal Integrations.StackSplitRedux.SSRIntegration? intSSR;
 	internal Integrations.CookingSkill.CSIntegration? intCSkill;
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
+	internal Integrations.BetterGameMenu.BGMIntegration? intBetterGameMenu;
 	internal Integrations.CustomCraftingStation.CCSIntegration? intCCStation;
 
 	private bool? _UseGlobalSave;
@@ -230,6 +232,13 @@ public class ModEntry : PintailModSubscriber {
 			}
 		}
 
+		if (intBetterGameMenu != null && intBetterGameMenu.ActiveMenu is IBetterGameMenu bgm) {
+			if (bgm.TryGetPage(nameof(VanillaTabOrders.Crafting), out var p) && p is BetterCraftingPage bcp2) {
+				UpdateTextures(oldTex, Sprites.Buttons.Texture!, p);
+				bcp2.LoadTextures();
+			}
+		}
+
 		if (Game1.activeClickableMenu is BetterCraftingPage page) {
 			UpdateTextures(oldTex, Sprites.Buttons.Texture!, page);
 			page.LoadTextures();
@@ -261,6 +270,8 @@ public class ModEntry : PintailModSubscriber {
 		var page = Game1.activeClickableMenu;
 		if (page is GameMenu gm)
 			page = gm.GetCurrentPage();
+		else if (intBetterGameMenu != null && intBetterGameMenu.AsMenu(page) is IBetterGameMenu bgm)
+			page = bgm.CurrentPage;
 
 		int x = Game1.getOldMouseX(true);
 		int y = Game1.getOldMouseY(true);
@@ -314,7 +325,7 @@ public class ModEntry : PintailModSubscriber {
 					CommonHelper.YeetMenu(menu);
 
 					GameMenu? game = null;
-					if (OldCraftingGameMenu.Value) {
+					if (intBetterGameMenu == null && OldCraftingGameMenu.Value) {
 						game = new GameMenu(false);
 						menu = Game1.activeClickableMenu = game;
 					}
@@ -339,7 +350,12 @@ public class ModEntry : PintailModSubscriber {
 						areaOverride: OldCraftingPage.Value.DiscoverAreaOverride
 					);
 
-					if (game != null) {
+					if (intBetterGameMenu != null) {
+						intBetterGameMenu.pendingPage = bcm;
+						intBetterGameMenu.TryOpenMenu(defaultTab: nameof(VanillaTabOrders.Crafting));
+						intBetterGameMenu.pendingPage = null;
+
+					} else if (game != null) {
 						for (int i = 0; i < game.pages.Count; i++) {
 							if (game.pages[i] is CraftingPage cp) {
 								CommonHelper.YeetMenu(cp);
@@ -370,6 +386,9 @@ public class ModEntry : PintailModSubscriber {
 							bcp1.emergencyShutDown();
 					}
 				}
+			} else if (intBetterGameMenu != null && intBetterGameMenu.AsMenu(CurrentMenu.Value) is IBetterGameMenu bgm) {
+				if (bgm.CurrentTab is not nameof(VanillaTabOrders.Crafting) && bgm.TryGetPage(nameof(VanillaTabOrders.Crafting), out var page2) && page2 is BetterCraftingPage bcp2)
+					bcp2.emergencyShutDown();
 			}
 
 			CurrentMenu.Value = null;
@@ -518,6 +537,7 @@ public class ModEntry : PintailModSubscriber {
 		intCSkill = new(this);
 		intSCore = new(this);
 		intCCStation = new(this);
+		intBetterGameMenu = new(this);
 
 		// Commands
 		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
@@ -855,12 +875,17 @@ public class ModEntry : PintailModSubscriber {
 
 	public void OpenGMCM() {
 		if (HasGMCM()) {
-			if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is Menus.BetterCraftingPage p) {
+			if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is BetterCraftingPage p) {
 				OldCraftingPage.Value = p;
 				OldCraftingGameMenu.Value = true;
 			}
 
-			if (Game1.activeClickableMenu is Menus.BetterCraftingPage page)
+			if (intBetterGameMenu != null && intBetterGameMenu.ActiveMenu is IBetterGameMenu bgm && bgm.CurrentPage is BetterCraftingPage p2) {
+				OldCraftingPage.Value = p2;
+				OldCraftingGameMenu.Value = true;
+			}
+
+			if (Game1.activeClickableMenu is BetterCraftingPage page)
 				OldCraftingPage.Value = page;
 
 			GMCMIntegration.OpenMenu();

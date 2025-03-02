@@ -70,7 +70,7 @@ public partial class ModEntry : ModSubscriber {
 
 	internal void FireMenuInstantiated(BetterGameMenuImpl menu) {
 		foreach (var api in APIInstances.Values) {
-			api.FireMenuInstantiated(menu);
+			api.FireMenuCreated(menu);
 		}
 	}
 
@@ -82,7 +82,7 @@ public partial class ModEntry : ModSubscriber {
 
 	internal void FirePageInstantiated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
 		foreach (var api in APIInstances.Values) {
-			api.FirePageInstantiated(menu, tab, source, page, oldPage);
+			api.FirePageCreated(menu, tab, source, page, oldPage);
 		}
 	}
 

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Leclair.Stardew.Common.Crafting;
 
 using Microsoft.Xna.Framework;
@@ -16,7 +10,7 @@ namespace Leclair.Stardew.BetterCrafting.Models;
 internal class TestRecipe : IRecipe {
 
 	public TestRecipe() {
-		Ingredients = new IIngredient[] {
+		Ingredients = [
 			new ErrorIngredient(),
 			new BaseIngredient(-777, 1),
 			new BaseIngredient(-2, 1),
@@ -40,7 +34,7 @@ internal class TestRecipe : IRecipe {
 			new CurrencyIngredient(CurrencyType.FestivalPoints, 10),
 			new CurrencyIngredient(CurrencyType.ClubCoins, 10),
 			new CurrencyIngredient(CurrencyType.QiGems, 10),
-		};
+		];
 	}
 
 	public string SortValue => "42069";
@@ -70,7 +64,7 @@ internal class TestRecipe : IRecipe {
 	public bool Stackable => true;
 
 	public bool CanCraft(Farmer who) {
-		return false;
+		return true;
 	}
 
 	public Item? CreateItem() {

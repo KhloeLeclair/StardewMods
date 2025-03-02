@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.17.0
+Released March 2nd, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* When using the Bulk Crafting Menu, you can now hold the left and/or right
+  triggers to increase the amount the quantity is changed.
+* When using the Bulk Crafting Menu, you can now use the left and right
+  shoulder buttons to switch between pages when a recipe has too many
+  ingredients to display at once.
+
+### Fixed
+* Issue where the menu would not behave correctly if the game window is resized
+  while the menu is open.
+* Issue where the controller input was not able to move away from the quantity
+  input field of the Bulk Crafting Menu once it was focused.
+
+### Compatibility
+* Add support for the WIP Better Game Menu mod.
+
+
 ## 2.16.1
 Released February 13th, 2025 for Stardew Valley 1.6.15+
 

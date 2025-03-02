@@ -2,16 +2,18 @@ using System;
 
 using HarmonyLib;
 
+using Leclair.Stardew.BetterGameMenu.Menus;
+
 using StardewValley;
 
 namespace Leclair.Stardew.BetterGameMenu.Patches;
 
 internal static class GameLocation_Patches {
 
-	private static ModEntry? ModEntry;
+	private static ModEntry? Mod;
 
 	internal static void Patch(ModEntry mod) {
-		ModEntry = mod;
+		Mod = mod;
 
 		try {
 			mod.Harmony.Patch(
@@ -24,7 +26,17 @@ internal static class GameLocation_Patches {
 	}
 
 	private static bool openCraftingMenu_Prefix() {
-		return false;
+		if (Mod is not null)
+			try {
+				var menu = new BetterGameMenuImpl(Mod, nameof(VanillaTabOrders.Crafting));
+				Game1.activeClickableMenu = menu;
+				return false;
+
+			} catch (Exception ex) {
+				Mod?.Log($"Error in openCraftingMenu prefix: {ex}", StardewModdingAPI.LogLevel.Error);
+			}
+
+		return true;
 	}
 
 }

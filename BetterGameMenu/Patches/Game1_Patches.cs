@@ -53,14 +53,14 @@ public static class Game1_Patches {
 	#region Helper Methods
 
 	internal static IClickableMenu CreateMenuBasic(bool playOpeningSound) {
-		Mod?.Log($"Called CreateMenuBasic {playOpeningSound}", StardewModdingAPI.LogLevel.Warn);
+		//Mod?.Log($"Called CreateMenuBasic {playOpeningSound}", StardewModdingAPI.LogLevel.Warn);
 		if (Mod is not null) // && !Game1.oldKBState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift))
 			return new BetterGameMenuImpl(Mod, playOpeningSound: playOpeningSound);
 		return new GameMenu(playOpeningSound);
 	}
 
 	internal static IClickableMenu CreateMenuOther(int startingTab, int extra, bool playOpeningSound) {
-		Mod?.Log($"Called CreateMenuOther {startingTab} {extra} {playOpeningSound}", StardewModdingAPI.LogLevel.Warn);
+		//Mod?.Log($"Called CreateMenuOther {startingTab} {extra} {playOpeningSound}", StardewModdingAPI.LogLevel.Warn);
 		if (Mod is not null) // && !Game1.oldKBState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift))
 			return new BetterGameMenuImpl(Mod, startingTab switch {
 				0 => nameof(VanillaTabOrders.Inventory),

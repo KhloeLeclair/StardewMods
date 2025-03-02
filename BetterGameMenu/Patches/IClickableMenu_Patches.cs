@@ -36,7 +36,7 @@ internal static class IClickableMenu_Patches {
 	#region Helper Methods
 
 	private static bool IsCurrentPage(IClickableMenu menu) {
-		Mod?.Log($"Checking IsCurrentPage {menu.GetType().FullName}", StardewModdingAPI.LogLevel.Debug);
+		//Mod?.Log($"Checking IsCurrentPage {menu.GetType().FullName}", StardewModdingAPI.LogLevel.Debug);
 		return Game1.activeClickableMenu is Menus.BetterGameMenuImpl bgm && bgm.CurrentPage == menu;
 	}
 
