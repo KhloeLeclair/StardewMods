@@ -36,7 +36,6 @@ internal static class IClickableMenu_Patches {
 	#region Helper Methods
 
 	private static bool IsCurrentPage(IClickableMenu menu) {
-		//Mod?.Log($"Checking IsCurrentPage {menu.GetType().FullName}", StardewModdingAPI.LogLevel.Debug);
 		return Game1.activeClickableMenu is Menus.BetterGameMenuImpl bgm && bgm.CurrentPage == menu;
 	}
 
@@ -72,8 +71,6 @@ internal static class IClickableMenu_Patches {
 			.ThrowIfInvalid("could not find GameMenu check")
 			.Advance(1)
 			.CreateLabel(out var target);
-
-		//Mod?.Log($"Current Instruction: {matcher.Pos}=> {matcher.Instruction}", StardewModdingAPI.LogLevel.Warn);
 
 		return matcher
 			.Advance(-9)

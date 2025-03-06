@@ -5,13 +5,21 @@
 	"error-page.message": "There was an error creating this menu page. See the log for more details.",
 
 	"config.advanced": "Advanced",
-	"config.advanced.about": "This section contains more advanced settings the average user shouldn't need.",
+	"config.advanced.about": "This section contains more advanced settings, including developer tools.",
+
+	"config.enabled": "Menu Enabled",
+	"config.enabled.about": "If this isn't enabled, Better Game Menu won't replace the game menu, basically disabling Better Game Menu entirely. Potentially useful for testing.",
+
+	"config.hot-swap": "Allow Hot Swapping",
+	"config.hot-swap.about": "When this is enabled, you can change which menu provider is being used at any time by right-clicking a tab and choosing from the list.",
 
 	"config.providers": "Menu Providers",
 	"config.providers.about": "You can select which mod you want to use for each tab of the game menu here.",
 
 	"config.provider.automatic": "Automatic",
+	"config.provider.disable": "Disable",
 	"config.provider.stardew": "Base Game",
+	"config.provider.mod": "Mod: {{name}}",
 	"config.provider.unknown": "Unknown ({{key}})",
 
 	"config.developer": "Developer Mode",

@@ -51,12 +51,21 @@ internal static class SocialPage_Patches {
 
 		int position = page.slotPosition;
 		profile.exitFunction = () => {
-			var menu = new BetterGameMenuImpl(Mod, nameof(VanillaTabOrders.Social), playOpeningSound: false);
-			if (menu.CurrentPage is SocialPage sp) {
+			SocialPage? sp;
+			if (!Mod.IsEnabled) {
+				var gm = new GameMenu(GameMenu.socialTab, -1, playOpeningSound: false);
+				Game1.activeClickableMenu = gm;
+				sp = gm.GetCurrentPage() as SocialPage;
+			} else {
+				var bgm = new BetterGameMenuImpl(Mod, nameof(VanillaTabOrders.Social), playOpeningSound: false);
+				Game1.activeClickableMenu = bgm;
+				sp = bgm.CurrentPage as SocialPage;
+			}
+
+			if (sp is not null) {
 				sp.slotPosition = position;
 				GetSelectSlot()?.Invoke(sp, profile.Current);
 			}
-			Game1.activeClickableMenu = menu;
 		};
 	}
 

@@ -83,13 +83,13 @@ public class ErrorMenu : IClickableMenu {
 		if (btnReload?.containsPoint(x, y) ?? false) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			Menu.TryReloadPage();
+			Menu.TryReloadPage(Menu.CurrentTab);
 		}
 
 		if (btnUseVanilla?.containsPoint(x, y) ?? false) {
 			if (playSound)
 				Game1.playSound("smallSelect");
-			Menu.TryReloadPage(switchProvider: true);
+			Menu.TryReloadPage(Menu.CurrentTab, provider: "stardew");
 		}
 	}
 

@@ -26,7 +26,7 @@ internal static class GameLocation_Patches {
 	}
 
 	private static bool openCraftingMenu_Prefix() {
-		if (Mod is not null)
+		if (Mod is not null && Mod.IsEnabled)
 			try {
 				var menu = new BetterGameMenuImpl(Mod, nameof(VanillaTabOrders.Crafting));
 				Game1.activeClickableMenu = menu;

@@ -60,11 +60,9 @@ public partial class ModEntry {
 			if (!Implementations.TryGetValue(tab, out var impls))
 				continue;
 
-			if (impls.Count <= 1)
-				continue;
-
 			Dictionary<string, Func<string>> choices = new() {
-				{ "", I18n.Config_Provider_Automatic }
+				{ "", I18n.Config_Provider_Automatic },
+				{ "disable", I18n.Config_Provider_Disable },
 			};
 
 			var impList = impls.Values.ToList();
@@ -74,9 +72,13 @@ public partial class ModEntry {
 				Func<string> displayName;
 				if (impl.Source == "stardew")
 					displayName = I18n.Config_Provider_Stardew;
-				else if (Helper.ModRegistry.Get(impl.Source) is IModInfo mod) {
-					displayName = () => Config.DeveloperMode ? $"{mod.Manifest.Name} ({impl.Priority})" : mod.Manifest.Name;
-				} else
+
+				else if (Helper.ModRegistry.Get(impl.Source) is IModInfo mod)
+					displayName = () => I18n.Config_Provider_Mod(Config.DeveloperMode
+						? $"{mod.Manifest.Name} ({impl.Priority})"
+						: mod.Manifest.Name);
+
+				else
 					displayName = () => I18n.Config_Provider_Unknown(impl.Source);
 
 				choices[impl.Source] = displayName;
@@ -102,10 +104,24 @@ public partial class ModEntry {
 		intGMCM.AddParagraph(I18n.Config_Advanced_About);
 
 		intGMCM.Add(
+			I18n.Config_HotSwap,
+			I18n.Config_HotSwap_About,
+			c => c.AllowHotSwap,
+			(c, v) => c.AllowHotSwap = v
+		);
+
+		intGMCM.Add(
 			I18n.Config_Developer,
 			I18n.Config_Developer_About,
 			c => c.DeveloperMode,
 			(c, v) => c.DeveloperMode = v
+		);
+
+		intGMCM.Add(
+			I18n.Config_Enabled,
+			I18n.Config_Enabled_About,
+			c => c.Enabled,
+			(c, v) => c.Enabled = v
 		);
 
 		// Done!

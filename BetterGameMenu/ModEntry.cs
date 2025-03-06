@@ -11,6 +11,7 @@ using Leclair.Stardew.Common.Events;
 
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 
 using StardewValley.Menus;
 
@@ -22,6 +23,8 @@ public partial class ModEntry : ModSubscriber {
 
 	public ModConfig Config { get; private set; } = null!;
 	internal Harmony Harmony = null!;
+
+	private readonly PerScreen<bool> DisableTemporarily = new();
 
 	internal readonly Dictionary<string, TabDefinition> Tabs = [];
 	internal List<string> SortedTabs = [];
@@ -59,6 +62,8 @@ public partial class ModEntry : ModSubscriber {
 		RegisterDefaultTabs();
 	}
 
+	public bool IsEnabled => Config.Enabled && !DisableTemporarily.Value;
+
 	public override object? GetApi(IModInfo mod) {
 		if (!APIInstances.TryGetValue(mod.Manifest.UniqueID, out var api)) {
 			api = new ModAPI(this, mod);
@@ -86,21 +91,26 @@ public partial class ModEntry : ModSubscriber {
 		}
 	}
 
-	internal IEnumerable<ModAPI> EnumerateAPIs() {
-		return APIInstances.Values;
-	}
-
-	internal (TabDefinition Tab, TabImplementationDefinition Implementation)? GetVanillaImplementation(string target) {
-		if (!Tabs.TryGetValue(target, out var tab) || !Implementations.TryGetValue(target, out var impls) || !impls.TryGetValue("stardew", out var impl))
+	internal (TabDefinition Tab, TabImplementationDefinition Implementation)? GetTabImplementation(string target, string? provider = null) {
+		if (!Tabs.TryGetValue(target, out var tab))
 			return null;
+
+		TabImplementationDefinition? impl;
+		if (provider is null) {
+			if (!PreferredImplementation.TryGetValue(target, out impl))
+				return null;
+		} else {
+			if (!Implementations.TryGetValue(target, out var impls) || !impls.TryGetValue(provider, out impl))
+				return null;
+		}
+
 		return (tab, impl);
 	}
 
 	internal IEnumerable<(string Key, TabDefinition Tab, TabImplementationDefinition Implementation)> GetTabImplementations() {
 		foreach (string key in SortedTabs) {
-			if (!Tabs.TryGetValue(key, out var tab) || !PreferredImplementation.TryGetValue(key, out var impl))
-				continue;
-			yield return (key, tab, impl);
+			if (Tabs.TryGetValue(key, out var tab) && PreferredImplementation.TryGetValue(key, out var impl))
+				yield return (key, tab, impl);
 		}
 	}
 
@@ -155,8 +165,12 @@ public partial class ModEntry : ModSubscriber {
 
 	internal void UpdatePreferred(string key) {
 		Implementations.TryGetValue(key, out var impl);
+		string? source = Config.PreferredImplementation.GetValueOrDefault(key);
 
-		if (impl != null && Config.PreferredImplementation.TryGetValue(key, out string? source) &&
+		if (source == "disable") {
+			PreferredImplementation.Remove(key);
+
+		} else if (impl != null &&
 			!string.IsNullOrEmpty(source) &&
 			impl.TryGetValue(source, out var preferred)
 		) {
@@ -170,7 +184,7 @@ public partial class ModEntry : ModSubscriber {
 		} else if (impl != null && impl.Count == 1) {
 			PreferredImplementation[key] = impl.First().Value;
 
-		} else if (PreferredImplementation.ContainsKey(key))
+		} else
 			PreferredImplementation.Remove(key);
 	}
 
@@ -211,8 +225,10 @@ public partial class ModEntry : ModSubscriber {
 	[Subscriber]
 	private void OnMenuChanged(object? sender, MenuChangedEventArgs e) {
 		IClickableMenu? menu = e.NewMenu;
-		if (menu is null)
+		if (menu is null) {
+			DisableTemporarily.Value = false;
 			return;
+		}
 
 		Type type = menu.GetType();
 		string? name = type.FullName ?? type.Name;

@@ -37,7 +37,49 @@ public partial class ModEntry {
 		RegisterCollectionsTab();
 		RegisterOptionsTab();
 		RegisterExitTab();
+#if DEBUG
+		/*RegisterTestTab("1");
+		RegisterTestTab("2");
+		RegisterTestTab("3");
+		RegisterTestTab("4");
+		RegisterTestTab("5");
+		RegisterTestTab("6");
+		RegisterTestTab("7");
+		RegisterTestTab("8");
+		RegisterTestTab("9");
+		RegisterTestTab("10");
+		RegisterTestTab("11");*/
+#endif
 	}
+
+#if DEBUG
+	internal void RegisterTestTab(string key) {
+		static IClickableMenu CreateInstance(IClickableMenu menu) {
+			int i = 0;
+			i = 3 / i;
+			return new SkillsPage(0, 0, 0, 0);
+		}
+
+		AddTab($"test_{key}", new TabDefinition(
+			Order: (int) VanillaTabOrders.Exit + 10,
+			GetDisplayName: () => $"Test {key}",
+			GetIcon: () => (
+				ModAPI.CreateDrawImpl(Game1.objectSpriteSheet, Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, Game1.random.Next(100), 16, 16), 2f), true)
+		), new TabImplementationDefinition(
+			Source: "leclair.bettergamemenu",
+			Priority: 0,
+			GetPageInstance: CreateInstance,
+			GetDecoration: null,
+			GetTabVisible: null,
+			GetMenuInvisible: null,
+			GetWidth: null,
+			GetHeight: null,
+			OnResize: null,
+			OnClose: null
+		));
+
+	}
+#endif
 
 	internal void RegisterInventoryTab() {
 		static IClickableMenu CreateInstance(IClickableMenu menu) {
@@ -57,7 +99,11 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: null,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
+			OnResize: input => {
+				if (!input.OldPage.readyToClose())
+					input.OldPage.emergencyShutDown();
+				return CreateInstance(input.Menu);
+			},
 			OnClose: null
 		));
 	}
@@ -164,7 +210,11 @@ public partial class ModEntry {
 			GetMenuInvisible: null,
 			GetWidth: null,
 			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
+			OnResize: input => {
+				if (!input.OldPage.readyToClose())
+					input.OldPage.emergencyShutDown();
+				return CreateInstance(input.Menu);
+			},
 			OnClose: null
 		));
 	}

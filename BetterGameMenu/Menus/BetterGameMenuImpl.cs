@@ -58,7 +58,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		CurrentScreenSize = new(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);
 
 		// First, load all the tab definitions.
-		// TODO: Cache this, probably?
+		// TODO: Cache this, possibly?
 		foreach (var (Key, Tab, Implementation) in mod.GetTabImplementations())
 			TabSources[Key] = (Tab, Implementation);
 
@@ -205,20 +205,6 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			Game1.exitActiveMenu();
 			Game1.playSound("bigDeSelect");
 
-			/*} else if (key == Keys.NumPad9) {
-				int target = mCurrent + 1;
-				if (target >= Tabs.Count)
-					target = 0;
-
-				TryChangeTab(Tabs[target], playSound: true);
-
-			} else if (key == Keys.NumPad7) {
-				int target = mCurrent - 1;
-				if (target < 0)
-					target = Tabs.Count - 1;
-
-				TryChangeTab(Tabs[target], playSound: true);*/
-
 		} else
 			CurrentPage?.receiveKeyPress(key);
 	}
@@ -250,6 +236,15 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 	public override void receiveRightClick(int x, int y, bool playSound = true) {
+		if (!mInvisible && !GameMenu.forcePreventClose) {
+			foreach (var cmp in TabComponentList) {
+				if (cmp.containsPoint(x, y)) {
+					OpenContextMenu(cmp.name, playSound);
+					return;
+				}
+			}
+		}
+
 		CurrentPage?.receiveRightClick(x, y, playSound);
 	}
 
@@ -318,8 +313,71 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	#endregion
 
+	#region Context Menu
+
+	public void OpenContextMenu(string target, bool playSound = false) {
+		if (CurrentPage is not null && !CurrentPage.readyToClose())
+			return;
+
+		List<ContextMenuItem> options = [];
+
+		if (Mod.Config.DeveloperMode)
+			options.Add(new("Reload Tab", () => TryReloadPage(target)));
+
+		if (Mod.Config.AllowHotSwap &&
+			TabSources.TryGetValue(target, out var sources) &&
+			Mod.Implementations.TryGetValue(target, out var impls) &&
+			impls.Count > 1
+		) {
+			if (Mod.Config.DeveloperMode)
+				options.Add(new("-", null));
+
+			foreach (var (key, impl) in impls) {
+				bool active = sources.Implementation.Source == impl.Source;
+
+				string label;
+				if (impl.Source == "stardew")
+					label = I18n.Config_Provider_Stardew();
+				else if (Mod.Helper.ModRegistry.Get(impl.Source) is IModInfo info)
+					label = I18n.Config_Provider_Mod(info.Manifest.Name);
+				else
+					label = I18n.Config_Provider_Unknown(key);
+
+				IBetterGameMenuApi.DrawDelegate? icon = null;
+				if (active)
+					icon = ModAPI.CreateDrawImpl(Game1.mouseCursors, new Rectangle(236, 425, 9, 9), 2f);
+				else
+					icon = ModAPI.CreateDrawImpl(Game1.mouseCursors, new Rectangle(227, 425, 9, 9), 2f);
+
+				options.Add(new(label, active ? null : () => TryReloadPage(target, provider: key), icon));
+			}
+		}
+
+		if (options.Count == 0)
+			return;
+
+		var pos = Game1.getMousePosition(true);
+
+		var menu = new TabContextMenu(Mod, pos.X - 16, pos.Y - 16, options) {
+			exitFunction = () => {
+				if (Game1.options.SnappyMenus)
+					snapToDefaultClickableComponent();
+			}
+		};
+
+		SetChildMenu(menu);
+		performHoverAction(0, 0);
+
+	}
+
+	#endregion
+
 	public override void update(GameTime time) {
 		base.update(time);
+
+		if (CurrentTab != null && CurrentPage is null)
+			TryReloadPage(CurrentTab);
+
 		CurrentPage?.update(time);
 	}
 
@@ -330,6 +388,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 			// Draw Background
 			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, speaker: false, drawOnlyBox: true);
+
+			batch.End();
+			batch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
 
 			// Draw Tabs
 			foreach (var cmp in TabComponentList) {
@@ -346,17 +407,17 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 				if (stuff.DrawBackground)
 					batch.Draw(
 						Game1.mouseCursors,
-						new Vector2(
-							cmp.bounds.X,
-							cmp.bounds.Y + (isCurrent ? 8 : 0)
+						position: new Vector2(
+							bounds.X,
+							bounds.Y
 						),
-						new Rectangle(1 * 16, 368, 16, 16),
-						Color.White,
-						0f,
-						Vector2.Zero,
-						4f,
-						SpriteEffects.None,
-						0.0001f
+						sourceRectangle: new Rectangle(16, 368, 16, 16),
+						color: Color.White,
+						rotation: 0f,
+						origin: Vector2.Zero,
+						scale: 4f,
+						effects: SpriteEffects.None,
+						layerDepth: 0.0001f
 					);
 
 				stuff.DrawMethod(batch, bounds);
@@ -364,6 +425,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 				if (decoration is not null)
 					decoration(batch, bounds);
 			}
+
+			batch.End();
+			batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 		}
 
 		var page = CurrentPage;
@@ -407,15 +471,12 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		// Check that we have enough width for our buttons.
-		int realMin = 64 + 64 + (TabComponentList.Count * 64);
+		int realMin = 64 + 64 + (Math.Min(10, TabComponentList.Count) * 64);
 		if (newWidth < realMin)
 			newWidth = realMin;
 
 		int newX = Game1.uiViewport.Width / 2 - Math.Max(minWidth, newWidth) / 2;
 		int newY = Game1.uiViewport.Height / 2 - Math.Max(minHeight, newHeight) / 2;
-
-		//Mod.Log($"Old Size: {width} x {height}, Position: x:{xPositionOnScreen}, y:{yPositionOnScreen}", LogLevel.Debug);
-		//Mod.Log($"Upd Size: {newWidth} x {newHeight}, Position: x:{newX}, y:{newY}", LogLevel.Debug);
 
 		if (newWidth == width && newHeight == height && newX == xPositionOnScreen && newY == yPositionOnScreen)
 			return;
@@ -435,12 +496,20 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 	internal void RepositionTabs() {
-		int x = xPositionOnScreen + 64;
+		int x = xPositionOnScreen + 48;
 		int y = yPositionOnScreen + IClickableMenu.tabYPositionRelativeToMenuY + 64;
+
+		int i = 0;
 
 		foreach (var cmp in TabComponentList) {
 			cmp.bounds = new Rectangle(x, y, 64, 64);
 			x += 64;
+			i++;
+			if (i > 10) {
+				x = xPositionOnScreen + 48 + 32;
+				y -= 48;
+				i = 0;
+			}
 		}
 	}
 
@@ -536,28 +605,48 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		return true;
 	}
 
-	// TODO: Refactor stuff so this doesn't need so much duplicate logic.
-	internal void TryReloadPage(bool switchProvider = false) {
-		if (CurrentPage is not ErrorMenu || !TabSources.TryGetValue(CurrentTab, out var sources))
+	internal void TryReloadPage(string target, string? provider = null) {
+		if (!TabSources.TryGetValue(target, out var sources))
 			return;
 
-		// Clear state.
-		TabLastSize.Remove(CurrentTab);
-		TabPages.Remove(CurrentTab);
-		TabDecorations.Remove(CurrentTab);
+		if (TabPages.TryGetValue(target, out var page)) {
+			if (!page.readyToClose())
+				return;
 
-		if (switchProvider && sources.Implementation.Source != "stardew") {
-			var impl = Mod.GetVanillaImplementation(CurrentTab);
-			if (impl.HasValue) {
-				TabSources[CurrentTab] = impl.Value;
-				sources = impl.Value;
-			}
+			// On Close
+			if (page is not ErrorMenu)
+				DisposePage(target, page);
 		}
 
-		// Now do the change tab logic.
-		ResizeMenu(CurrentTab);
+		// Clear state.
+		TabLastSize.Remove(target);
+		TabPages.Remove(target);
+		TabDecorations.Remove(target);
 
-		if (!TryGetPage(CurrentTab, out var page, forceCreation: true))
+		// Set the new provider.
+		if (!string.IsNullOrEmpty(provider) &&
+			sources.Implementation.Source != provider &&
+			Mod.Implementations.TryGetValue(target, out var impls) &&
+			impls.TryGetValue(provider, out var impl)
+		)
+			TabSources[target] = sources = (sources.Tab, impl);
+
+		// If this isn't the current page, just handle the decoration and leave.
+		if (CurrentTab != target) {
+			var deco = sources.Implementation.GetDecoration?.Invoke();
+			if (deco != null)
+				TabDecorations[target] = deco;
+
+			return;
+		}
+
+		// We got here, so it IS the current page. Gotta do some stuff.
+		// TODO: Refactor stuff so this doesn't need so much duplicate logic?
+
+		// Now do the change tab logic.
+		ResizeMenu(target);
+
+		if (!TryGetPage(target, out page, forceCreation: true))
 			return;
 
 		bool isError = page is ErrorMenu;
@@ -567,7 +656,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		try {
 			Invisible = !isError && (sources.Implementation.GetMenuInvisible?.Invoke() ?? false);
 		} catch (Exception ex) {
-			Mod.Log($"Error calling GetMenuInvisible for tab '{CurrentTab}' using provider '{sources.Implementation.Source}': {ex}", LogLevel.Error);
+			Mod.Log($"Error calling GetMenuInvisible for tab '{target}' using provider '{sources.Implementation.Source}': {ex}", LogLevel.Error);
 			Invisible = false;
 		}
 
@@ -613,7 +702,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 					}
 
 					if (oldPage != null) {
-						Mod.Log($"Created new instance for tab '{target}' due to resize using provider '{sources.Implementation.Source}'", LogLevel.Debug);
+						Mod.Log($"Created new instance for tab '{target}' due to resize using provider '{sources.Implementation.Source}'", LogLevel.Trace);
 						TabPages[target] = page;
 						FirePageInstantiated(target, sources.Implementation.Source, page, oldPage);
 
@@ -626,6 +715,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 						// Inject our tab components.
 						page.populateClickableComponentList();
 						AddTabsToClickableComponents(page);
+
+						// Clear the tooltip, just in case.
+						LastTooltip = null;
+						Tooltip = null;
 					}
 
 				} else {
@@ -648,7 +741,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		} catch (Exception ex) {
 			Mod.Log($"Error creating page instance for tab '{target}' using provider '{sources.Implementation.Source}': {ex}", LogLevel.Error);
-			bool hasVanilla = sources.Implementation.Source != "stardew" && Mod.GetVanillaImplementation(target) is not null;
+			bool hasVanilla = sources.Implementation.Source != "stardew" && Mod.GetTabImplementation(target, "stardew") is not null;
 			page = new ErrorMenu(
 				Mod,
 				this,
@@ -666,9 +759,13 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			Mod.Log($"[Timing] GetPageInstance for tab '{target}' using '{sources.Implementation.Source} took {timer.ElapsedTicks} ticks.", LogLevel.Debug);
 		}
 
-		Mod.Log($"Created new instance for tab '{target}' using provider '{sources.Implementation.Source}'", LogLevel.Debug);
+		Mod.Log($"Created new instance for tab '{target}' using provider '{sources.Implementation.Source}'", LogLevel.Trace);
 		TabLastSize[target] = CurrentScreenSize;
 		TabPages[target] = page;
+
+		// Clear the tooltip, just in case.
+		LastTooltip = null;
+		Tooltip = null;
 
 		FirePageInstantiated(target, sources.Implementation.Source, page, null);
 
