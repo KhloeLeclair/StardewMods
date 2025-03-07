@@ -343,6 +343,15 @@ public interface IBetterGameMenuApi {
 	Type GetMenuType();
 
 	/// <summary>
+	/// The current page of the active screen's current Better Game Menu,
+	/// if one is open, else <c>null</c>. This exists as a quicker alternative
+	/// to <c>ActiveMenu?.CurrentPage</c> with the additional benefit that
+	/// you can prune <c>IBetterGameMenu</c> from your copy of the API
+	/// file if you're not using anything else from it.
+	/// </summary>
+	IClickableMenu? ActivePage { get; }
+
+	/// <summary>
 	/// The active screen's current Better Game Menu, if one is open,
 	/// else <c>null</c>.
 	/// </summary>
@@ -355,6 +364,14 @@ public interface IBetterGameMenuApi {
 	/// </summary>
 	/// <param name="menu">The menu to attempt to cast</param>
 	IBetterGameMenu? AsMenu(IClickableMenu menu);
+
+	/// <summary>
+	/// Get the current page of the provided Better Game Menu instance. If the
+	/// provided menu is not a Better Game Menu, or a page is not ready, then
+	/// return <c>null</c> instead.
+	/// </summary>
+	/// <param name="menu">The menu to get the page from.</param>
+	IClickableMenu? GetCurrentPage(IClickableMenu menu);
 
 	/// <summary>
 	/// Attempt to open a Better Game Menu. This will only work if a game menu can

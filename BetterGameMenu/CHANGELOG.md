@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.2
+Released March 7th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* API method for getting the currently active page of a menu
+  without using the `IBetterGameMenu` interface, for the purpose
+  of pairing down the API surface Pintail is responsible for.
+
+### Fixed
+* Use the child menu's size for drawing the background, in case it
+  is constructed with a different size than we expect.
+
+
 ## 0.5.1
 Released March 6th, 2025 for Stardew Valley 1.6.15+
 

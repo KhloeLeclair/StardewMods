@@ -194,8 +194,18 @@ public class ModAPI : IBetterGameMenuApi {
 
 	public IBetterGameMenu? ActiveMenu => Game1.activeClickableMenu is BetterGameMenuImpl bgm ? bgm : null;
 
+	public IClickableMenu? ActivePage => Game1.activeClickableMenu is BetterGameMenuImpl bgm ? bgm.CurrentPage : null;
+
 	public IBetterGameMenu? AsMenu(IClickableMenu menu) {
 		return menu as BetterGameMenuImpl;
+	}
+
+	public IClickableMenu? GetCurrentPage(IClickableMenu menu) {
+		return menu is BetterGameMenuImpl bgm ? bgm.CurrentPage : null;
+	}
+
+	public IBetterGameMenu? CreateMenu(string? defaultTab = null, bool playSound = false) {
+		return new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
 	}
 
 	public IBetterGameMenu? TryOpenMenu(string? defaultTab = null, bool playSound = false, bool closeExistingMenu = false) {

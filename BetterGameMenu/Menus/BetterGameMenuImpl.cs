@@ -382,12 +382,15 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 	public override void draw(SpriteBatch batch) {
+		var page = CurrentPage;
+
 		if (!mInvisible) {
 			if (!Game1.options.showMenuBackground && !Game1.options.showClearBackgrounds)
 				batch.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.4f);
 
 			// Draw Background
-			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, speaker: false, drawOnlyBox: true);
+			//Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, speaker: false, drawOnlyBox: true);
+			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, page?.width ?? width, page?.height ?? height, speaker: false, drawOnlyBox: true);
 
 			batch.End();
 			batch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
@@ -429,8 +432,6 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			batch.End();
 			batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 		}
-
-		var page = CurrentPage;
 
 		LastDraw = Mod.Config.DeveloperMode ? Stopwatch.StartNew() : null;
 		page?.draw(batch);
