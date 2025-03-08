@@ -4,6 +4,7 @@ using System.Linq;
 
 using HarmonyLib;
 
+using Leclair.Stardew.BetterGameMenu.Integrations.StarControl;
 using Leclair.Stardew.BetterGameMenu.Menus;
 using Leclair.Stardew.BetterGameMenu.Models;
 using Leclair.Stardew.Common;
@@ -23,6 +24,8 @@ public partial class ModEntry : ModSubscriber {
 
 	public ModConfig Config { get; private set; } = null!;
 	internal Harmony Harmony = null!;
+
+	internal StarControlIntegration? intStarControl;
 
 	private readonly PerScreen<bool> DisableTemporarily = new();
 
@@ -131,6 +134,8 @@ public partial class ModEntry : ModSubscriber {
 			return result;
 		});
 
+		intStarControl?.UpdateTab(key);
+
 		if (impl is not null)
 			AddImplementation(key, impl);
 
@@ -186,6 +191,8 @@ public partial class ModEntry : ModSubscriber {
 
 		} else
 			PreferredImplementation.Remove(key);
+
+		intStarControl?.UpdateTab(key);
 	}
 
 	internal static int CompareImplementations(TabImplementationDefinition first, TabImplementationDefinition second) {
@@ -204,10 +211,14 @@ public partial class ModEntry : ModSubscriber {
 		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
 		if (builder is not null)
 			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+
+		intStarControl?.AddAllTabs();
 	}
 
 	[Subscriber]
 	private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) {
+		intStarControl = new(this);
+
 		// Settings
 		RegisterSettings();
 		Helper.Events.Display.RenderingActiveMenu += OnDrawMenu;

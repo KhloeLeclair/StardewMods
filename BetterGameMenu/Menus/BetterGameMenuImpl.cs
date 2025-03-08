@@ -522,7 +522,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		get => mInvisible;
 		set {
 			mInvisible = value;
-			// TODO: Any logic for when the menu changes to invisible?
+
+			foreach (var cmp in TabComponentList) {
+				cmp.visible = !mInvisible;
+			}
 		}
 	}
 
@@ -572,6 +575,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			isError = true;
 			ResizeMenu(null);
 		}
+
+		if (upperRightCloseButton is not null)
+			upperRightCloseButton.visible = true;
 
 		// Should always be true, but we're playing things safe.
 		if (TabSources.TryGetValue(target, out var sources)) {
@@ -808,6 +814,8 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 					};
 					TabComponents[id] = component;
 				}
+
+				component.visible = !Invisible;
 
 				TabComponentList.Add(component);
 			}

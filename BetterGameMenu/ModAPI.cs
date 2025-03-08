@@ -94,31 +94,8 @@ public class ModAPI : IBetterGameMenuApi {
 	}
 
 	public static IBetterGameMenuApi.DrawDelegate CreateDrawImpl(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16) {
-		void Draw(SpriteBatch batch, Rectangle bounds) {
-			var rect = frames > 1
-				? SpriteInfo.GetFrame(source, -1, frames, int.MaxValue, frameTime)
-				: source;
-
-			float width = rect.Width * scale;
-			float height = rect.Height * scale;
-
-			batch.Draw(
-				texture,
-				new Vector2(
-					bounds.X + (float) Math.Floor((bounds.Width - width) / 2),
-					bounds.Y + (float) Math.Floor((bounds.Height - height) / 2)
-				),
-				rect,
-				Color.White,
-				0f,
-				Vector2.Zero,
-				scale,
-				SpriteEffects.None,
-				1f
-			);
-		}
-
-		return Draw;
+		var inst = new DrawMethod(texture, source, scale, frames, frameTime);
+		return inst.Draw;
 	}
 
 	public IBetterGameMenuApi.DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16) {
@@ -204,8 +181,11 @@ public class ModAPI : IBetterGameMenuApi {
 		return menu is BetterGameMenuImpl bgm ? bgm.CurrentPage : null;
 	}
 
-	public IBetterGameMenu? CreateMenu(string? defaultTab = null, bool playSound = false) {
-		return new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
+	public IClickableMenu CreateMenu(string? defaultTab = null, bool playSound = false) {
+		Game1.PushUIMode();
+		var result = new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
+		Game1.PopUIMode();
+		return result;
 	}
 
 	public IBetterGameMenu? TryOpenMenu(string? defaultTab = null, bool playSound = false, bool closeExistingMenu = false) {
@@ -216,7 +196,9 @@ public class ModAPI : IBetterGameMenuApi {
 			CommonHelper.YeetMenu(Game1.activeClickableMenu);
 		}
 
+		Game1.PushUIMode();
 		var menu = new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
+		Game1.PopUIMode();
 		Game1.activeClickableMenu = menu;
 		return menu;
 	}

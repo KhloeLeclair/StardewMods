@@ -197,9 +197,7 @@ public interface IBetterGameMenuApi {
 	/// </summary>
 	/// <param name="texture">The texture to draw from.</param>
 	/// <param name="source">The source rectangle to draw.</param>
-	/// <param name="scale">The scale to draw the source at. The scale
-	/// may be reduced if necessary to contain the drawn rectangle
-	/// within the provided bounds.</param>
+	/// <param name="scale">The scale to draw the source at.</param>
 	/// <param name="frames">The number of frames to draw.</param>
 	/// <param name="frameTime">The amount of time each frame should be displayed.</param>
 	DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale = 1f, int frames = 1, int frameTime = 16);
@@ -386,6 +384,16 @@ public interface IBetterGameMenuApi {
 		string? defaultTab = null,
 		bool playSound = false,
 		bool closeExistingMenu = false
+	);
+
+	/// <summary>
+	/// Create a new Better Game Menu instance and return it.
+	/// </summary>
+	/// <param name="defaultTab">The tab that the menu should be opened to.</param>
+	/// <param name="playSound">Whether or not a sound should play.</param>
+	IClickableMenu CreateMenu(
+		string? defaultTab = null,
+		bool playSound = false
 	);
 
 	#endregion

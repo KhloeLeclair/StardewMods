@@ -68,14 +68,7 @@ public partial class ModEntry {
 		), new TabImplementationDefinition(
 			Source: "leclair.bettergamemenu",
 			Priority: 0,
-			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
-			GetWidth: null,
-			GetHeight: null,
-			OnResize: null,
-			OnClose: null
+			GetPageInstance: CreateInstance
 		));
 
 	}
@@ -94,17 +87,11 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
-			GetWidth: null,
-			GetHeight: null,
 			OnResize: input => {
 				if (!input.OldPage.readyToClose())
 					input.OldPage.emergencyShutDown();
 				return CreateInstance(input.Menu);
-			},
-			OnClose: null
+			}
 		));
 	}
 
@@ -113,7 +100,7 @@ public partial class ModEntry {
 			return new SkillsPage(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height);
 		}
 
-		static void Draw(SpriteBatch batch, Rectangle bounds) {
+		static void DrawIcon(SpriteBatch batch, Rectangle bounds) {
 			Game1.player.FarmerRenderer.drawMiniPortrat(
 				batch,
 				position: new Vector2(bounds.X + 8, bounds.Y + 12),
@@ -127,18 +114,13 @@ public partial class ModEntry {
 		AddTab(nameof(VanillaTabOrders.Skills), new TabDefinition(
 			Order: (int) VanillaTabOrders.Skills,
 			GetDisplayName: () => Game1.content.LoadString(@"Strings\UI:GameMenu_Skills"),
-			GetIcon: () => (Draw, true) // GetDefaultIcon(TabIcon.Skills)
+			GetIcon: () => (DrawIcon, true)
 		), new TabImplementationDefinition(
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width + ((LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru || LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.it) ? 64 : 0),
-			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
-			OnClose: null
+			OnResize: input => CreateInstance(input.Menu)
 		));
 	}
 
@@ -155,17 +137,12 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width + 36,
-			GetHeight: null,
 			OnResize: input => {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			},
-			OnClose: null
+			}
 		));
 	}
 
@@ -182,13 +159,9 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
 			GetMenuInvisible: () => true,
 			GetWidth: width => width + 128,
-			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
-			OnClose: null
+			OnResize: input => CreateInstance(input.Menu)
 		));
 	}
 
@@ -205,17 +178,11 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
-			GetWidth: null,
-			GetHeight: null,
 			OnResize: input => {
 				if (!input.OldPage.readyToClose())
 					input.OldPage.emergencyShutDown();
 				return CreateInstance(input.Menu);
-			},
-			OnClose: null
+			}
 		));
 	}
 
@@ -232,13 +199,8 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
-			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
-			OnClose: null
+			OnResize: input => CreateInstance(input.Menu)
 		));
 	}
 
@@ -255,13 +217,8 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
-			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
-			OnClose: null
+			OnResize: input => CreateInstance(input.Menu)
 		));
 	}
 
@@ -278,17 +235,12 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
-			GetHeight: null,
 			OnResize: input => {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			},
-			OnClose: null
+			}
 		));
 	}
 
@@ -305,20 +257,15 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => {
 				int extraWidth = ((LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru) ? 96 : ((LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.tr || LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.fr) ? 192 : 0));
 				return width + extraWidth;
 			},
-			GetHeight: null,
 			OnResize: input => {
 				var result = CreateInstance(input.Menu);
 				result.postWindowSizeChange(input.OldPage);
 				return result;
-			},
-			OnClose: null
+			}
 		));
 	}
 
@@ -335,13 +282,8 @@ public partial class ModEntry {
 			Source: "stardew",
 			Priority: 0,
 			GetPageInstance: CreateInstance,
-			GetDecoration: null,
-			GetTabVisible: null,
-			GetMenuInvisible: null,
 			GetWidth: width => width - 64 - 16,
-			GetHeight: null,
-			OnResize: input => CreateInstance(input.Menu),
-			OnClose: null
+			OnResize: input => CreateInstance(input.Menu)
 		));
 	}
 

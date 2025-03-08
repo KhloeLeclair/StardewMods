@@ -3,14 +3,13 @@
   <PropertyGroup>
     <BaseManifest>new</BaseManifest>
     <AssemblyName>BetterGameMenu</AssemblyName>
-    <Version>0.5.2</Version>
+    <Version>0.5.3</Version>
     <RootNamespace>Leclair.Stardew.BetterGameMenu</RootNamespace>
 
     <EnableHarmony>true</EnableHarmony>
     <EnableTranslation>true</EnableTranslation>
 
     <UseCommon>GMCM;UI;SimpleLayout;Flow</UseCommon>
-
   </PropertyGroup>
 
   <PropertyGroup>
@@ -24,15 +23,4 @@
 
   <Import Project="..\Common\Common.projitems" Label="Shared" />
   <Import Project="..\_build\common.targets" />
-
-  <ItemGroup>
-    <Reference Include="SMAPI.Toolkit">
-      <HintPath>$(GamePath)\smapi-internal\SMAPI.Toolkit.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Integrations\" />
-  </ItemGroup>
 </Project>
