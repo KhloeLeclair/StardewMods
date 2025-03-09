@@ -12,6 +12,8 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 
+using StardewValley;
+
 namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 
 public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi, M> where T : new() where M : Mod {
@@ -24,7 +26,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 
 	private IManifest Consumer { get => Self.ModManifest; }
 
-	public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.8.0") {
+	public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.14.1") {
 		IsRegistered = false;
 
 		GetConfig = getConfig;
@@ -437,9 +439,12 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 
 	#region Current Menu Stuff
 
-	public GMCMIntegration<T, M> OpenMenu() {
+	public GMCMIntegration<T, M> OpenMenu(bool? asChild = null) {
 		AssertLoaded();
-		API.OpenModMenu(Consumer);
+		if (asChild ?? (Game1.activeClickableMenu != null))
+			API.OpenModMenuAsChildMenu(Consumer);
+		else
+			API.OpenModMenu(Consumer);
 		return this;
 	}
 

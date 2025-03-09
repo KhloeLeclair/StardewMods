@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.5.4
+Released March 9th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* Ability to open Better Game Menu's config from the context menu
+  when you right-click on the Options tab.
+* Easter egg at the bottom of the Options menu.
+
+### Changed
+* Set the `Allow Hot Swapping` setting to be enabled by default
+  since it is so potentially useful.
+* In the Menu Providers tab of the settings menu, the "Automatic"
+  entries now display the name of which provider will be used
+  when Automatic is selected.
+* Update to using the latest Generic Mod Config Menu.
+
+
+## 0.5.3
+Released March 8th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* Integration with the Star Control mod.
+* API method to simply instantiate a new Better Game Menu instance
+  without pushing it onto `Game1.activeClickableMenu`.
+
+### Fixed
+* When the menu is set to be invisible, set the tab components to
+  hidden to ensure that snapping works as expected.
+* When switching tabs, make sure the upper right close button's
+  visibility is as expected.
+
+
 ## 0.5.2
 Released March 7th, 2025 for Stardew Valley 1.6.15+
 

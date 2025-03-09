@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 
 using HarmonyLib;
 
@@ -300,9 +301,38 @@ public class ModEntry : PintailModSubscriber {
 
 		Helper.Input.Suppress(e.Button);
 
-		Game1.nextClickableMenu.Insert(0, Game1.activeClickableMenu);
-		Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
+		ActiveTrashMenu = new TrashGrabMenu(this, TrashedItems.Value);
+		//Game1.nextClickableMenu.Insert(0, Game1.activeClickableMenu);
+		//Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
 		Game1.playSound("trashcan");
+	}
+
+	internal static IClickableMenu? ActiveTrashMenu {
+		get {
+			var menu = Game1.activeClickableMenu;
+			while(menu?.GetChildMenu() is not null)
+				menu = menu.GetChildMenu();
+
+			return menu is TrashGrabMenu ? menu : null;
+		}
+		set {
+			if (Game1.activeClickableMenu is null)
+				Game1.activeClickableMenu = value;
+
+			else {
+				var menu = Game1.activeClickableMenu;
+				while (menu.GetChildMenu() is not null)
+					menu = menu.GetChildMenu();
+
+				if (menu is TrashGrabMenu) {
+					if (!menu.readyToClose())
+						throw new Exception("tried to remove TrashMenu that is not ready to close");
+					menu = menu.GetParentMenu();
+				}
+
+				menu.SetChildMenu(value);
+			}
+		}
 	}
 
 	private void HandleMenuChanged() {
@@ -314,7 +344,7 @@ public class ModEntry : PintailModSubscriber {
 		string? name = type?.FullName ?? type?.Name;
 
 		// Are we doing GMCM stuff?
-		if (OldCraftingPage.Value != null) {
+		/*if (OldCraftingPage.Value != null) {
 			if (menu != null) {
 				// If we're on the specific page for a mod, then
 				// everything is fine and we can continue.
@@ -374,7 +404,7 @@ public class ModEntry : PintailModSubscriber {
 			// Clear the old crafting page.
 			OldCraftingPage.Value = null;
 			OldCraftingGameMenu.Value = false;
-		}
+		}*/
 
 		// No menu?
 		if (menu == null) {
@@ -415,7 +445,7 @@ public class ModEntry : PintailModSubscriber {
 				CommonHelper.YeetMenu(page);
 
 				// And now create our own.
-				menu = Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
+				menu = Game1.activeClickableMenu = BetterCraftingPage.Open(
 					mod: this,
 					location: Game1.player.currentLocation,
 					position: where,
@@ -496,13 +526,6 @@ public class ModEntry : PintailModSubscriber {
 		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
 		if (builder is not null)
 			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
-
-		ReflectionHelper.UnpatchMe(this, Harmony!, source => {
-			if (source == "FlyingTNT.ResourceStorage")
-				return true;
-
-			return false;
-		});
 	}
 
 	[Subscriber]
@@ -562,10 +585,10 @@ public class ModEntry : PintailModSubscriber {
 		});
 
 		Helper.ConsoleCommands.Add("bc_trash", "Open the trash reclaimation menu.", (name, args) => {
-			if (!Context.IsWorldReady || Game1.activeClickableMenu is not null)
+			if (!Context.IsWorldReady)
 				return;
 
-			Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
+			ActiveTrashMenu = new TrashGrabMenu(this, TrashedItems.Value);
 		});
 
 		Helper.ConsoleCommands.Add("bc_stations", "List all custom crafting stations, or open one if you provide a name.", (name, args) => {
@@ -875,7 +898,7 @@ public class ModEntry : PintailModSubscriber {
 
 	public void OpenGMCM() {
 		if (HasGMCM()) {
-			if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is BetterCraftingPage p) {
+			/*if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is BetterCraftingPage p) {
 				OldCraftingPage.Value = p;
 				OldCraftingGameMenu.Value = true;
 			}
@@ -887,7 +910,7 @@ public class ModEntry : PintailModSubscriber {
 
 			if (Game1.activeClickableMenu is BetterCraftingPage page)
 				OldCraftingPage.Value = page;
-
+			*/
 			GMCMIntegration.OpenMenu();
 		}
 	}

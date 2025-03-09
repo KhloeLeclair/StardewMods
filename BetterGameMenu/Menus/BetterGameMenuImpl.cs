@@ -41,6 +41,8 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	public readonly List<ClickableComponent> TabComponentList = [];
 	private bool mInvisible = false;
 
+	private bool OpenSettings = false;
+
 	private int mNextId = 12340;
 
 	private string? mLastTab;
@@ -321,15 +323,15 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		List<ContextMenuItem> options = [];
 
-		if (Mod.Config.DeveloperMode)
-			options.Add(new("Reload Tab", () => TryReloadPage(target)));
+		if (Mod.Config.DeveloperMode && TabPages.ContainsKey(target))
+			options.Add(new(I18n.Tab_ReloadTab(), () => TryReloadPage(target)));
 
 		if (Mod.Config.AllowHotSwap &&
 			TabSources.TryGetValue(target, out var sources) &&
 			Mod.Implementations.TryGetValue(target, out var impls) &&
 			impls.Count > 1
 		) {
-			if (Mod.Config.DeveloperMode)
+			if (options.Count > 0)
 				options.Add(new("-", null));
 
 			foreach (var (key, impl) in impls) {
@@ -351,6 +353,12 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 				options.Add(new(label, active ? null : () => TryReloadPage(target, provider: key), icon));
 			}
+		}
+
+		if (target == nameof(VanillaTabOrders.Options) && Mod.HasGMCM()) {
+			if (options.Count > 0)
+				options.Add(new("-", null));
+			options.Add(new(I18n.Tab_OpenSettings(), () => OpenSettings = true));
 		}
 
 		if (options.Count == 0)
@@ -379,6 +387,11 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			TryReloadPage(CurrentTab);
 
 		CurrentPage?.update(time);
+
+		if (OpenSettings && GetChildMenu() is null) {
+			OpenSettings = false;
+			Mod.OpenGMCM();
+		}
 	}
 
 	public override void draw(SpriteBatch batch) {

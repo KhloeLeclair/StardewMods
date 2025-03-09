@@ -3,20 +3,19 @@
 	<PropertyGroup>
 		<BaseManifest>new</BaseManifest>
 		<AssemblyName>BetterCrafting</AssemblyName>
-		<Version>2.17.0</Version>
+		<Version>2.17.1</Version>
 		<RootNamespace>Leclair.Stardew.BetterCrafting</RootNamespace>
 		
 		<EnableHarmony>true</EnableHarmony>
 		<EnablePintail>true</EnablePintail>
 		<EnableTranslation>true</EnableTranslation>
 
-    <UseCommon>Crafting;BCInventory;Inventory;GMCM;Mutex;UI;SimpleLayout;Flow;SpookyAction;ThemeManager</UseCommon>
-    
+		<UseCommon>Crafting;BCInventory;Inventory;GMCM;Mutex;UI;SimpleLayout;Flow;SpookyAction;ThemeManager</UseCommon>
 	</PropertyGroup>
 
 	<PropertyGroup>
-    <BaseManifest>new</BaseManifest>
-    
+		<BaseManifest>new</BaseManifest>
+		
 		<Name>Better Crafting</Name>
 		<UniqueID>leclair.bettercrafting</UniqueID>
 		<Description>Replaces the vanilla crafting menu with an improved reimplementation with support for favorites, categories, and that doesn't lock nearby chests in multiplayer.</Description>

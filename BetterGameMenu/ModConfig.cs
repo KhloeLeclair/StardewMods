@@ -8,7 +8,7 @@ public class ModConfig {
 
 	public bool Enabled { get; set; } = true;
 
-	public bool AllowHotSwap { get; set; } = false;
+	public bool AllowHotSwap { get; set; } = true;
 
 	public bool DeveloperMode { get; set; } = false;
 

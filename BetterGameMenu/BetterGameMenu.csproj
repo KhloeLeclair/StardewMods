@@ -3,7 +3,7 @@
   <PropertyGroup>
     <BaseManifest>new</BaseManifest>
     <AssemblyName>BetterGameMenu</AssemblyName>
-    <Version>0.5.3</Version>
+    <Version>0.5.4</Version>
     <RootNamespace>Leclair.Stardew.BetterGameMenu</RootNamespace>
 
     <EnableHarmony>true</EnableHarmony>

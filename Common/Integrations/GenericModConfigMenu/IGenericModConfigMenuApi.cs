@@ -169,6 +169,10 @@ namespace GenericModConfigMenu {
 		/// <param name="mod">The mod's manifest.</param>
 		void OpenModMenu(IManifest mod);
 
+		/// <summary>Open the config UI for a specific mod, as a child menu if there is an existing menu.</summary>
+		/// <param name="mod">The mod's manifest.</param>
+		void OpenModMenuAsChildMenu(IManifest mod);
+
 		/// <summary>Get the currently-displayed mod config menu, if any.</summary>
 		/// <param name="mod">The manifest of the mod whose config menu is being shown, or <c>null</c> if not applicable.</param>
 		/// <param name="page">The page ID being shown for the current config menu, or <c>null</c> if not applicable. This may be <c>null</c> even if a mod config menu is shown (e.g. because the mod doesn't have pages).</param>

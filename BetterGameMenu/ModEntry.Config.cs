@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using Leclair.Stardew.BetterGameMenu.Models;
 using Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 
 using StardewModdingAPI;
@@ -39,6 +40,14 @@ public partial class ModEntry {
 		intGMCM.OpenMenu();
 	}
 
+	internal Func<string> GetDisplayName(TabImplementationDefinition definition, bool allowPriority = true) {
+		if (definition.Source == "stardew")
+			return I18n.Config_Provider_Stardew;
+		else if (Helper.ModRegistry.Get(definition.Source) is IModInfo modInfo)
+			return () => I18n.Config_Provider_Mod(allowPriority && Config.DeveloperMode ? $"{modInfo.Manifest.Name} ({definition.Priority})" : modInfo.Manifest.Name);
+		return () => I18n.Config_Provider_Unknown(definition.Source);
+	}
+
 	internal void RegisterSettings() {
 		intGMCM ??= new(this, () => Config, ResetConfig, SaveConfig);
 		if (!intGMCM.IsLoaded)
@@ -60,28 +69,19 @@ public partial class ModEntry {
 			if (!Implementations.TryGetValue(tab, out var impls))
 				continue;
 
-			Dictionary<string, Func<string>> choices = new() {
-				{ "", I18n.Config_Provider_Automatic },
-				{ "disable", I18n.Config_Provider_Disable },
-			};
-
 			var impList = impls.Values.ToList();
 			impList.Sort(CompareImplementations);
 
+			var first = impList.FirstOrDefault();
+			var firstFn = first is null ? () => I18n.Config_Provider_Unknown("?") : GetDisplayName(first, false);
+
+			Dictionary<string, Func<string>> choices = new() {
+				{ "", () => I18n.Config_Provider_Automatic(firstFn()) },
+				{ "disable", I18n.Config_Provider_Disable },
+			};
+
 			foreach (var impl in impList) {
-				Func<string> displayName;
-				if (impl.Source == "stardew")
-					displayName = I18n.Config_Provider_Stardew;
-
-				else if (Helper.ModRegistry.Get(impl.Source) is IModInfo mod)
-					displayName = () => I18n.Config_Provider_Mod(Config.DeveloperMode
-						? $"{mod.Manifest.Name} ({impl.Priority})"
-						: mod.Manifest.Name);
-
-				else
-					displayName = () => I18n.Config_Provider_Unknown(impl.Source);
-
-				choices[impl.Source] = displayName;
+				choices[impl.Source] = GetDisplayName(impl);
 			}
 
 			intGMCM.AddChoice(

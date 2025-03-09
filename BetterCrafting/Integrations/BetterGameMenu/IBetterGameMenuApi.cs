@@ -197,9 +197,7 @@ public interface IBetterGameMenuApi {
 	/// </summary>
 	/// <param name="texture">The texture to draw from.</param>
 	/// <param name="source">The source rectangle to draw.</param>
-	/// <param name="scale">The scale to draw the source at. The scale
-	/// may be reduced if necessary to contain the drawn rectangle
-	/// within the provided bounds.</param>
+	/// <param name="scale">The scale to draw the source at.</param>
 	/// <param name="frames">The number of frames to draw.</param>
 	/// <param name="frameTime">The amount of time each frame should be displayed.</param>
 	DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale = 1f, int frames = 1, int frameTime = 16);
@@ -343,6 +341,15 @@ public interface IBetterGameMenuApi {
 	Type GetMenuType();
 
 	/// <summary>
+	/// The current page of the active screen's current Better Game Menu,
+	/// if one is open, else <c>null</c>. This exists as a quicker alternative
+	/// to <c>ActiveMenu?.CurrentPage</c> with the additional benefit that
+	/// you can prune <c>IBetterGameMenu</c> from your copy of the API
+	/// file if you're not using anything else from it.
+	/// </summary>
+	IClickableMenu? ActivePage { get; }
+
+	/// <summary>
 	/// The active screen's current Better Game Menu, if one is open,
 	/// else <c>null</c>.
 	/// </summary>
@@ -357,6 +364,14 @@ public interface IBetterGameMenuApi {
 	IBetterGameMenu? AsMenu(IClickableMenu menu);
 
 	/// <summary>
+	/// Get the current page of the provided Better Game Menu instance. If the
+	/// provided menu is not a Better Game Menu, or a page is not ready, then
+	/// return <c>null</c> instead.
+	/// </summary>
+	/// <param name="menu">The menu to get the page from.</param>
+	IClickableMenu? GetCurrentPage(IClickableMenu menu);
+
+	/// <summary>
 	/// Attempt to open a Better Game Menu. This will only work if a game menu can
 	/// be opened for the active screen.
 	/// </summary>
@@ -369,6 +384,16 @@ public interface IBetterGameMenuApi {
 		string? defaultTab = null,
 		bool playSound = false,
 		bool closeExistingMenu = false
+	);
+
+	/// <summary>
+	/// Create a new Better Game Menu instance and return it.
+	/// </summary>
+	/// <param name="defaultTab">The tab that the menu should be opened to.</param>
+	/// <param name="playSound">Whether or not a sound should play.</param>
+	IClickableMenu CreateMenu(
+		string? defaultTab = null,
+		bool playSound = false
 	);
 
 	#endregion

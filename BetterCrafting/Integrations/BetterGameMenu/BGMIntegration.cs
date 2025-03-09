@@ -24,14 +24,6 @@ public class BGMIntegration : BaseAPIIntegration<IBetterGameMenuApi, ModEntry> {
 			getPageInstance: CreateInstance,
 			onResize: OnResize
 		);
-
-		API.OnPageCreated(API_OnPageInstantiated);
-
-	}
-
-	private void API_OnPageInstantiated(IPageCreatedEvent e) {
-		if (e.Page is OptionsPage page)
-			page.options.Add(new OptionsButton("Honk", () => Game1.playSound("Duck")));
 	}
 
 	internal IClickableMenu? OnResize((IClickableMenu Menu, IClickableMenu? OldPage) input) {

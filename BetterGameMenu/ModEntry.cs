@@ -14,6 +14,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 
+using StardewValley;
 using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterGameMenu;
@@ -92,6 +93,9 @@ public partial class ModEntry : ModSubscriber {
 		foreach (var api in APIInstances.Values) {
 			api.FirePageCreated(menu, tab, source, page, oldPage);
 		}
+
+		if (page is OptionsPage options)
+			options.options.Add(new OptionsButton(I18n.EasterEgg_Honk(), () => Game1.playSound("Duck")));
 	}
 
 	internal (TabDefinition Tab, TabImplementationDefinition Implementation)? GetTabImplementation(string target, string? provider = null) {

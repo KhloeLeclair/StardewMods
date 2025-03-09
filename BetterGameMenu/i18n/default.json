@@ -1,5 +1,9 @@
 {
-	"mod.name": "Better Crafting Menu",
+	"mod.name": "Better Game Menu",
+
+	"tab.reload-tab": "Reload Tab",
+	"tab.open-settings": "Open Better Game Menu Settings",
+	"easter-egg.honk": "Honk",
 
 	"error-page.try-again": "Try Again",
 	"error-page.message": "There was an error creating this menu page. See the log for more details.",
@@ -16,7 +20,7 @@
 	"config.providers": "Menu Providers",
 	"config.providers.about": "You can select which mod you want to use for each tab of the game menu here.",
 
-	"config.provider.automatic": "Automatic",
+	"config.provider.automatic": "Automatic ({{value}})",
 	"config.provider.disable": "Disable",
 	"config.provider.stardew": "Base Game",
 	"config.provider.mod": "Mod: {{name}}",

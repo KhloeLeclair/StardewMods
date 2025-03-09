@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.17.1
+Released March 9th, 2025 for Stardew Valley 1.6.15+
+
+### Changed
+* Use newer, child-menu based method to open Generic Mod Config Menu page
+  for Better Crafting when clicking the settings button.
+* Use newer, child-menu based method to open the trash can menu when
+  right-clicking on a menu trash can to recover items.
+
+### Fixed
+* Remove testing code that was accidentally left in the previous release.
+
+### Translation
+* Added updated Russian translations from Bromgek on NexusMods. Thank you!
+
+
 ## 2.17.0
 Released March 2nd, 2025 for Stardew Valley 1.6.15+
 
