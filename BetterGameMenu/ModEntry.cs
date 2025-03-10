@@ -78,24 +78,22 @@ public partial class ModEntry : ModSubscriber {
 	}
 
 	internal void FireMenuInstantiated(BetterGameMenuImpl menu) {
-		foreach (var api in APIInstances.Values) {
-			api.FireMenuCreated(menu);
-		}
+		ModAPI.FireMenuCreated(this, menu);
 	}
 
 	internal void FireTabChanged(BetterGameMenuImpl menu, string tab, string oldTab) {
-		foreach (var api in APIInstances.Values) {
-			api.FireTabChanged(menu, tab, oldTab);
-		}
+		ModAPI.FireTabChanged(this, menu, tab, oldTab);
 	}
 
-	internal void FirePageInstantiated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
-		foreach (var api in APIInstances.Values) {
-			api.FirePageCreated(menu, tab, source, page, oldPage);
-		}
+	internal void FirePageCreated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
+		ModAPI.FirePageCreated(this, menu, tab, source, page, oldPage);
 
 		if (page is OptionsPage options)
 			options.options.Add(new OptionsButton(I18n.EasterEgg_Honk(), () => Game1.playSound("Duck")));
+	}
+
+	internal void FireTabContextMenu(BetterGameMenuImpl menu, string tab, List<ITabContextMenuEntry> entries) {
+		ModAPI.FireTabContextMenu(this, menu, tab, entries);
 	}
 
 	internal (TabDefinition Tab, TabImplementationDefinition Implementation)? GetTabImplementation(string target, string? provider = null) {

@@ -37,12 +37,16 @@ public abstract class BaseAPIIntegration<T, M> : BaseIntegration<M> where M : Mo
 			throw new InvalidOperationException($"{ModID} integration is disabled.");
 	}
 
-	private T? GetAPI() {
-		try {
-			return Self.Helper.ModRegistry.GetApi<T>(ModID);
-		} catch (Exception ex) {
-			Log("An error occurred calling GetApi.", LogLevel.Debug, ex);
+	protected virtual T? GetAPI() {
+		return GetAPI<T>(logError: true);
+	}
 
+	protected TArg? GetAPI<TArg>(bool logError = true) where TArg : class, T {
+		try {
+			return Self.Helper.ModRegistry.GetApi<TArg>(ModID);
+		} catch(Exception ex) {
+			if (logError)
+				Log($"An error occurred calling GetApi<{typeof(TArg).Name}>(). Details: {ex}", LogLevel.Debug);
 			return null;
 		}
 	}

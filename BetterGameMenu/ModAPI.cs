@@ -27,16 +27,17 @@ public class ModAPI : IBetterGameMenuApi {
 		Other = other;
 	}
 
-	private readonly List<(IBetterGameMenuApi.MenuCreatedDelegate Handler, EventPriority Priority)> _MenuCreated = [];
-	private readonly List<(IBetterGameMenuApi.TabChangedDelegate Handler, EventPriority Priority)> _TabChanged = [];
-	private readonly List<(IBetterGameMenuApi.PageCreatedDelegate Handler, EventPriority Priority)> _PageCreated = [];
+	private static readonly List<(IBetterGameMenuApi.MenuCreatedDelegate Handler, EventPriority Priority, IModInfo Source)> _MenuCreated = [];
+	private static readonly List<(IBetterGameMenuApi.TabChangedDelegate Handler, EventPriority Priority, IModInfo Source)> _TabChanged = [];
+	private static readonly List<(IBetterGameMenuApi.PageCreatedDelegate Handler, EventPriority Priority, IModInfo Source)> _PageCreated = [];
+	private static readonly List<(IBetterGameMenuApi.TabContextMenuDelegate Handler, EventPriority Priority, IModInfo Source)> _TabContextMenu = [];
 
-	private static int SortList<T>((T Handler, EventPriority Priority) first, (T Handler, EventPriority Priority) second) {
+	private static int SortList<T>((T Handler, EventPriority Priority, IModInfo Source) first, (T Handler, EventPriority Priority, IModInfo Source) second) {
 		return -first.Priority.CompareTo(second.Priority);
 	}
 
 	public void OnMenuCreated(IBetterGameMenuApi.MenuCreatedDelegate handler, EventPriority priority = EventPriority.Normal) {
-		_MenuCreated.Add((handler, priority));
+		_MenuCreated.Add((handler, priority, Other));
 		_MenuCreated.Sort(SortList);
 	}
 
@@ -45,7 +46,7 @@ public class ModAPI : IBetterGameMenuApi {
 	}
 
 	public void OnTabChanged(IBetterGameMenuApi.TabChangedDelegate handler, EventPriority priority) {
-		_TabChanged.Add((handler, priority));
+		_TabChanged.Add((handler, priority, Other));
 		_TabChanged.Sort(SortList);
 	}
 
@@ -54,7 +55,7 @@ public class ModAPI : IBetterGameMenuApi {
 	}
 
 	public void OnPageCreated(IBetterGameMenuApi.PageCreatedDelegate handler, EventPriority priority = EventPriority.Normal) {
-		_PageCreated.Add((handler, priority));
+		_PageCreated.Add((handler, priority, Other));
 		_PageCreated.Sort(SortList);
 	}
 
@@ -62,34 +63,55 @@ public class ModAPI : IBetterGameMenuApi {
 		_PageCreated.RemoveWhere(entry => entry.Handler == handler);
 	}
 
-	internal void FireMenuCreated(IClickableMenu menu) {
-		try {
-			foreach (var pair in _MenuCreated)
-				pair.Handler(menu);
+	public void OnTabContextMenu(IBetterGameMenuApi.TabContextMenuDelegate handler, EventPriority priority = EventPriority.Normal) {
+		_TabContextMenu.Add((handler, priority, Other));
+		_TabContextMenu.Sort(SortList);
+	}
 
-		} catch (Exception ex) {
-			Self.Log($"Error in OnMenuCreated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
+	public void OffTabContextMenu(IBetterGameMenuApi.TabContextMenuDelegate handler) {
+		_TabContextMenu.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	internal static void FireMenuCreated(ModEntry mod, IClickableMenu menu) {
+		foreach (var (Handler, Priority, Source) in _MenuCreated) {
+			try {
+				Handler(menu);
+			} catch (Exception ex) {
+				mod.Log($"Error in OnMenuCreated handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
 		}
 	}
 
-	internal void FireTabChanged(BetterGameMenuImpl menu, string tab, string oldTab) {
-		try {
-			var evt = new TabChangedEvent(menu, tab, oldTab);
-			foreach (var pair in _TabChanged)
-				pair.Handler(evt);
-		} catch (Exception ex) {
-			Self.Log($"Error in OnTabChanged handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
+	internal static void FireTabChanged(ModEntry mod, BetterGameMenuImpl menu, string tab, string oldTab) {
+		var evt = new TabChangedEvent(menu, tab, oldTab);
+		foreach (var (Handler, Priority, Source) in _TabChanged) {
+			try {
+				Handler(evt);
+			} catch (Exception ex) {
+				mod.Log($"Error in OnTabChanged handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
 		}
 	}
 
-	internal void FirePageCreated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
-		try {
-			var evt = new PageCreatedEvent(menu, tab, source, page, oldPage);
-			foreach (var pair in _PageCreated)
-				pair.Handler(evt);
+	internal static void FirePageCreated(ModEntry mod, BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
+		var evt = new PageCreatedEvent(menu, tab, source, page, oldPage);
+		foreach (var (Handler, Priority, Source) in _PageCreated) {
+			try {
+				Handler(evt);
+			} catch (Exception ex) {
+				mod.Log($"Error in OnPageCreated handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
+		}
+	}
 
-		} catch (Exception ex) {
-			Self.Log($"Error in OnPageCreated handler for mod '{Other.Manifest.Name}' ({Other.Manifest.UniqueID}): {ex}", LogLevel.Error);
+	internal static void FireTabContextMenu(ModEntry mod, BetterGameMenuImpl menu, string tab, List<ITabContextMenuEntry> entries) {
+		var evt = new TabContextMenuEvent(menu, tab, entries);
+		foreach (var (Handler, Priority, Source) in _TabContextMenu) {
+			try {
+				Handler(evt);
+			} catch (Exception ex) {
+				mod.Log($"Error in OnTabContextMenu handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
 		}
 	}
 

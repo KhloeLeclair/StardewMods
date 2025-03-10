@@ -26,12 +26,23 @@ public partial class ModEntry {
 	}
 
 	[MemberNotNullWhen(true, nameof(intGMCM))]
-	internal bool HasGMCM() {
-		return intGMCM is not null && intGMCM.IsLoaded;
+	internal bool HasGMCM =>intGMCM is not null && intGMCM.IsLoaded;
+
+	internal bool CanOpenGMCM => HasGMCM && intGMCM.CanOpenMenu;
+	internal bool CanOpenGMCMList => HasGMCM && intGMCM.CanOpenListMenu;
+
+	internal void OpenGMCMList() {
+		if (!HasGMCM || !intGMCM.CanOpenListMenu)
+			return;
+
+		if (ConfigStale)
+			RegisterSettings();
+
+		intGMCM.OpenListMenu();
 	}
 
 	internal void OpenGMCM() {
-		if (!HasGMCM())
+		if (!HasGMCM || !intGMCM.CanOpenMenu)
 			return;
 
 		if (ConfigStale)

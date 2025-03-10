@@ -26,12 +26,20 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 
 	private IManifest Consumer { get => Self.ModManifest; }
 
-	public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig) : base(self, "spacechase0.GenericModConfigMenu", "1.14.1") {
+	public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig)
+		: base(self, "spacechase0.GenericModConfigMenu", "1.14.0"
+	) {
 		IsRegistered = false;
 
 		GetConfig = getConfig;
 		ResetConfig = resetConfig;
 		SaveConfig = saveConfig;
+	}
+
+	protected override IGenericModConfigMenuApi? GetAPI() {
+		return GetAPI<IGenericModConfigMenuV3>(false) ??
+			GetAPI<IGenericModConfigMenuV2>(false) ??
+			GetAPI<IGenericModConfigMenuApi>();
 	}
 
 	#region Registration
@@ -439,13 +447,26 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 
 	#region Current Menu Stuff
 
-	public GMCMIntegration<T, M> OpenMenu(bool? asChild = null) {
+	public bool CanOpenListMenu => API is IGenericModConfigMenuV3;
+
+	public void OpenListMenu() {
 		AssertLoaded();
-		if (asChild ?? (Game1.activeClickableMenu != null))
-			API.OpenModMenuAsChildMenu(Consumer);
+
+		if (API is IGenericModConfigMenuV3 v3)
+			v3.OpenListMenuAsChildMenu();
 		else
-			API.OpenModMenu(Consumer);
-		return this;
+			throw new InvalidOperationException("GMCM is out of date and does not support opening the list menu.");
+	}
+
+	public bool CanOpenMenu => API is IGenericModConfigMenuV2;
+
+	public void OpenMenu() {
+		AssertLoaded();
+
+		if (API is IGenericModConfigMenuV2 v2)
+			v2.OpenModMenuAsChildMenu(Consumer);
+		else
+			throw new InvalidOperationException("GMCM is out of date and does not support child menus.");
 	}
 
 	public bool TryGetCurrentMenu(out IManifest mod, out string page) {

@@ -42,6 +42,75 @@ public interface ITabChangedEvent {
 
 
 /// <summary>
+/// A tab context menu event is emitted whenever the user right-clicks
+/// on a tab in the game menu.
+/// </summary>
+public interface ITabContextMenuEvent {
+
+	/// <summary>
+	/// The Better Game Menu instance involved in the event. You
+	/// can use <see cref="IBetterGameMenuApi.AsMenu(IClickableMenu)"/>
+	/// to get a more useful interface for this menu.
+	/// </summary>
+	IClickableMenu Menu { get; }
+
+	/// <summary>
+	/// Whether or not the tab is the currently selected tab of
+	/// the game menu.
+	/// </summary>
+	bool IsCurrentTab { get; }
+
+	/// <summary>
+	/// The id of the tab the context menu is opening for.
+	/// </summary>
+	string Tab { get; }
+
+	/// <summary>
+	/// The page instance associated with the tab, if one has been
+	/// created. This may be <c>null</c> if the user hasn't visited
+	/// the tab yet.
+	/// </summary>
+	IClickableMenu? Page { get; }
+
+	/// <summary>
+	/// A list of context menu entries to display. You can freely add
+	/// or remove entries. An entry with a null <c>OnSelect</c> will
+	/// appear disabled.
+	/// </summary>
+	IList<ITabContextMenuEntry> Entries { get; }
+
+	/// <summary>
+	/// Create a new context menu entry.
+	/// </summary>
+	/// <param name="label">The string to display.</param>
+	/// <param name="onSelect">The action to perform when this entry is selected.</param>
+	/// <param name="icon">An icon to display alongside this entry.</param>
+	public ITabContextMenuEntry CreateEntry(string label, Action? onSelect, IBetterGameMenuApi.DrawDelegate? icon = null);
+
+}
+
+
+/// <summary>
+/// An entry in a tab context menu.
+/// </summary>
+public interface ITabContextMenuEntry {
+
+	/// <summary>The string to display for this entry.</summary>
+	string Label { get; }
+
+	/// <summary>
+	/// An action to perform when this entry is selected. If this is
+	/// <c>null</c>, the entry will be disabled.
+	/// </summary>
+	Action? OnSelect { get; }
+
+	/// <summary>An optional icon to display to the left of this entry.</summary>
+	IBetterGameMenuApi.DrawDelegate? Icon { get; }
+
+}
+
+
+/// <summary>
 /// A page created event is emitted whenever a new page
 /// is created for a tab by Better Game Menu.
 /// </summary>
@@ -402,6 +471,7 @@ public interface IBetterGameMenuApi {
 
 	public delegate void MenuCreatedDelegate(IClickableMenu menu);
 	public delegate void TabChangedDelegate(ITabChangedEvent evt);
+	public delegate void TabContextMenuDelegate(ITabContextMenuEvent evt);
 	public delegate void PageCreatedDelegate(IPageCreatedEvent evt);
 
 	/// <summary>
@@ -426,6 +496,17 @@ public interface IBetterGameMenuApi {
 	/// Unregister a handler for the TabChanged event.
 	/// </summary>
 	void OffTabChanged(TabChangedDelegate handler);
+
+	/// <summary>
+	/// This event fires whenever the user opens a context menu for a menu tab
+	/// by right-clicking on it.
+	/// </summary>
+	void OnTabContextMenu(TabContextMenuDelegate handler, EventPriority priority = EventPriority.Normal);
+
+	/// <summary>
+	/// Unregister a handler for the TabContextMenu event.
+	/// </summary>
+	void OffTabContextMenu(TabContextMenuDelegate handler);
 
 	/// <summary>
 	/// This event fires whenever a new page instance is created. This can happen

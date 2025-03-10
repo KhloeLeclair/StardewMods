@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.5
+Released March 9th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* New API event for adding custom tab context-menu entries.
+
+### Fixed
+* Event handler priorities not being sorted correctly when
+  multiple mods have registered event handlers.
+
+
 ## 0.5.4
 Released March 9th, 2025 for Stardew Valley 1.6.15+
 

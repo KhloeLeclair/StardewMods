@@ -14,18 +14,18 @@ namespace Leclair.Stardew.BetterGameMenu.Menus;
 
 public class TabContextMenu : IClickableMenu {
 
-	public const int DIVIDER_HEIGHT = 4;
+	public const int DIVIDER_HEIGHT = 8;
 
-	private readonly ModEntry Mod;
+	private readonly Action<Action> OnSelect;
 
 	public readonly List<ClickableComponent> Components = [];
-	public readonly List<ContextMenuItem> Items = [];
+	public readonly List<ITabContextMenuEntry> Items = [];
 
 	public readonly bool HasIcons;
 	public readonly int ItemHeight;
 
-	public TabContextMenu(ModEntry mod, int x, int y, IEnumerable<ContextMenuItem> items) : base() {
-		Mod = mod;
+	public TabContextMenu(ModEntry mod, int x, int y, IEnumerable<ITabContextMenuEntry> items, Action<Action> onSelect) : base() {
+		OnSelect = onSelect;
 
 		int max_width = 0;
 		int max_height = 0;
@@ -104,8 +104,11 @@ public class TabContextMenu : IClickableMenu {
 			var cmp = Components[i];
 			if (cmp.visible && cmp.containsPoint(x, y)) {
 				var item = Items[i];
-				item.OnSelect?.Invoke();
-				exitThisMenu();
+				if (item.OnSelect is not null)
+					OnSelect(item.OnSelect);
+
+				Game1.playSound("smallSelect");
+				exitThisMenu(playSound: false);
 				break;
 			}
 		}
@@ -179,10 +182,3 @@ public class TabContextMenu : IClickableMenu {
 	}
 
 }
-
-
-public record ContextMenuItem(
-	string Label,
-	Action? OnSelect,
-	IBetterGameMenuApi.DrawDelegate? Icon = null
-);

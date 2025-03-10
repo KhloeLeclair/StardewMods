@@ -41,7 +41,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	public readonly List<ClickableComponent> TabComponentList = [];
 	private bool mInvisible = false;
 
-	private bool OpenSettings = false;
+	private Action? PendingContextAction;
 
 	private int mNextId = 12340;
 
@@ -321,10 +321,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		if (CurrentPage is not null && !CurrentPage.readyToClose())
 			return;
 
-		List<ContextMenuItem> options = [];
+		List<ITabContextMenuEntry> options = [];
 
 		if (Mod.Config.DeveloperMode && TabPages.ContainsKey(target))
-			options.Add(new(I18n.Tab_ReloadTab(), () => TryReloadPage(target)));
+			options.Add(new TabContextMenuEntry(I18n.Tab_ReloadTab(), () => TryReloadPage(target)));
 
 		if (Mod.Config.AllowHotSwap &&
 			TabSources.TryGetValue(target, out var sources) &&
@@ -332,7 +332,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			impls.Count > 1
 		) {
 			if (options.Count > 0)
-				options.Add(new("-", null));
+				options.Add(new TabContextMenuEntry("-", null));
 
 			foreach (var (key, impl) in impls) {
 				bool active = sources.Implementation.Source == impl.Source;
@@ -351,14 +351,20 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 				else
 					icon = ModAPI.CreateDrawImpl(Game1.mouseCursors, new Rectangle(227, 425, 9, 9), 2f);
 
-				options.Add(new(label, active ? null : () => TryReloadPage(target, provider: key), icon));
+				options.Add(new TabContextMenuEntry(label, active ? null : () => TryReloadPage(target, provider: key), icon));
 			}
 		}
 
-		if (target == nameof(VanillaTabOrders.Options) && Mod.HasGMCM()) {
+		List<ITabContextMenuEntry> entries = [];
+		if (target == nameof(VanillaTabOrders.Options) && Mod.CanOpenGMCM)
+			entries.Add(new TabContextMenuEntry(I18n.Tab_OpenSettings(), Mod.OpenGMCM, null));
+
+		Mod.FireTabContextMenu(this, target, entries);
+
+		if (entries.Count > 0) {
 			if (options.Count > 0)
-				options.Add(new("-", null));
-			options.Add(new(I18n.Tab_OpenSettings(), () => OpenSettings = true));
+				options.Add(new TabContextMenuEntry("-", null));
+			options.AddRange(entries);
 		}
 
 		if (options.Count == 0)
@@ -366,7 +372,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		var pos = Game1.getMousePosition(true);
 
-		var menu = new TabContextMenu(Mod, pos.X - 16, pos.Y - 16, options) {
+		PendingContextAction = null;
+
+		var menu = new TabContextMenu(Mod, pos.X - 16, pos.Y - 16, options, action => PendingContextAction = action) {
 			exitFunction = () => {
 				if (Game1.options.SnappyMenus)
 					snapToDefaultClickableComponent();
@@ -388,9 +396,14 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		CurrentPage?.update(time);
 
-		if (OpenSettings && GetChildMenu() is null) {
-			OpenSettings = false;
-			Mod.OpenGMCM();
+		if (PendingContextAction != null && GetChildMenu() is null) {
+			try {
+				PendingContextAction();
+			} catch (Exception ex) {
+				Mod.Log($"Error executing context menu action: {ex}", LogLevel.Error);
+			}
+
+			PendingContextAction = null;
 		}
 	}
 
@@ -858,7 +871,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		if (page is ErrorMenu || page is null)
 			return;
 
-		Mod.FirePageInstantiated(this, tab, source, page, oldPage);
+		Mod.FirePageCreated(this, tab, source, page, oldPage);
 	}
 
 	public bool TryGetSource(string target, [NotNullWhen(true)] out string? source) {
