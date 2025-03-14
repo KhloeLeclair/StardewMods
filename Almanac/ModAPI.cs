@@ -25,10 +25,10 @@ namespace Leclair.Stardew.Almanac {
 		/// itself doesn't have the ability.
 		/// </summary>
 		int DaysPerMonth { get; }
-
+		/*
 		#region Custom Pages
 
-		/*void RegisterPage(
+		void RegisterPage(
 			IManifest manifest,
 			string id,
 			// State
@@ -74,9 +74,10 @@ namespace Leclair.Stardew.Almanac {
 			Action<IClickableMenu, int, int, WorldDate, Rectangle, Action<string>, Action<Item>> onCellHover = null
 		);
 
-		void UnregisterPage(IManifest manifest, string id);*/
+		void UnregisterPage(IManifest manifest, string id);
 
 		#endregion
+		*/
 
 		#region Crops Page
 
@@ -174,6 +175,7 @@ namespace Leclair.Stardew.Almanac {
 
 		#endregion
 
+		/*
 		#region Fortunes Page
 
 		/// <summary>
@@ -289,6 +291,7 @@ namespace Leclair.Stardew.Almanac {
 		string GetWeatherForDate(WorldDate date, string context = "Default");
 
 		#endregion
+		*/
 	}
 
 	public class ModAPI : IAlmanacAPI {
@@ -514,7 +517,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-
+		/*
 		#region Fortune Telling
 
 		public void SetFortuneHook(IManifest manifest, Func<ulong, WorldDate, IEnumerable<Tuple<bool, string, Texture2D, Rectangle?, Item>>> hook) {
@@ -530,7 +533,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-
+		
 		#region Local Notices
 
 		public void SetNoticesHook(IManifest manifest, Func<int, WorldDate, IEnumerable<Tuple<string, Texture2D, Rectangle?, Item>>> hook) {
@@ -546,7 +549,7 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-
+		
 		#region Weather
 
 		public string GetWeatherForDate(WorldDate date, GameLocation location) {
@@ -587,6 +590,6 @@ namespace Leclair.Stardew.Almanac {
 		}
 
 		#endregion
-
+		*/
 	}
 }

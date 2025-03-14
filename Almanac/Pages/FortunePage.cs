@@ -1,3 +1,4 @@
+/*
 #nullable enable
 
 using System;
@@ -86,7 +87,7 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 				double luck = Mod.Luck.GetModifiedLuckForDate(Seed, date);
 				sprite = Sprites![day - 1] = Mod.Luck.GetLuckSprite(luck);
 				Luck![day - 1] = luck;
-			} else
+			} else 
 				sprite = null;
 
 			FlowBuilder db = new();
@@ -242,3 +243,4 @@ public class FortunePage : BasePage<BaseState>, ICalendarPage {
 	#endregion
 
 }
+*/
