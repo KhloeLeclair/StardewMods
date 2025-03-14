@@ -115,9 +115,13 @@ public class ModAPI : IBetterGameMenuApi {
 		}
 	}
 
-	public static IBetterGameMenuApi.DrawDelegate CreateDrawImpl(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16) {
-		var inst = new DrawMethod(texture, source, scale, frames, frameTime);
+	public static IBetterGameMenuApi.DrawDelegate CreateDrawImpl(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16, Vector2? offset = null) {
+		var inst = new DrawMethod(texture, source, scale, frames, frameTime, offset);
 		return inst.Draw;
+	}
+
+	public IBetterGameMenuApi.DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16, Vector2? offset = null) {
+		return CreateDrawImpl(texture, source, scale, frames, frameTime, offset);
 	}
 
 	public IBetterGameMenuApi.DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16) {
@@ -141,9 +145,6 @@ public class ModAPI : IBetterGameMenuApi {
 		Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>? onResize = null,
 		Action<IClickableMenu>? onClose = null
 	) {
-		if (!Self.Tabs.ContainsKey(id))
-			throw new KeyNotFoundException(id);
-
 		Self.AddImplementation(id, new TabImplementationDefinition(
 			Source: Other.Manifest.UniqueID,
 			Priority: priority,
@@ -156,6 +157,10 @@ public class ModAPI : IBetterGameMenuApi {
 			OnResize: onResize,
 			OnClose: onClose
 		));
+	}
+
+	public void UnregisterImplementation(string id) {
+		Self.RemoveImplementation(id, Other.Manifest.UniqueID);
 	}
 
 	public void RegisterTab(
@@ -199,6 +204,10 @@ public class ModAPI : IBetterGameMenuApi {
 		return menu as BetterGameMenuImpl;
 	}
 
+	public bool IsMenu(IClickableMenu menu) {
+		return menu is BetterGameMenuImpl;
+	}
+
 	public IClickableMenu? GetCurrentPage(IClickableMenu menu) {
 		return menu is BetterGameMenuImpl bgm ? bgm.CurrentPage : null;
 	}
@@ -206,6 +215,27 @@ public class ModAPI : IBetterGameMenuApi {
 	public IClickableMenu CreateMenu(string? defaultTab = null, bool playSound = false) {
 		Game1.PushUIMode();
 		var result = new BetterGameMenuImpl(Self, defaultTab, playOpeningSound: playSound);
+		Game1.PopUIMode();
+		return result;
+	}
+
+	public IClickableMenu CreateMenu(string? defaultTab = null, int extra = -1, bool playSound = false) {
+		Game1.PushUIMode();
+		var result = new BetterGameMenuImpl(Self, defaultTab, extra: extra, playOpeningSound: playSound);
+		Game1.PopUIMode();
+		return result;
+	}
+
+	public IClickableMenu CreateMenu(int startingTab, bool playSound = false) {
+		Game1.PushUIMode();
+		var result = Self.CreateMenuFromTabId(startingTab, playOpeningSound: playSound);
+		Game1.PopUIMode();
+		return result;
+	}
+
+	public IClickableMenu CreateMenu(int startingTab, int extra = -1, bool playSound = false) {
+		Game1.PushUIMode();
+		var result = Self.CreateMenuFromTabId(startingTab, extra: extra, playOpeningSound: playSound);
 		Game1.PopUIMode();
 		return result;
 	}

@@ -269,7 +269,7 @@ public interface IBetterGameMenuApi {
 	/// <param name="scale">The scale to draw the source at.</param>
 	/// <param name="frames">The number of frames to draw.</param>
 	/// <param name="frameTime">The amount of time each frame should be displayed.</param>
-	DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale = 1f, int frames = 1, int frameTime = 16);
+	DrawDelegate CreateDraw(Texture2D texture, Rectangle source, float scale = 1f, int frames = 1, int frameTime = 16, Vector2? offset = null);
 
 	#endregion
 
@@ -399,6 +399,16 @@ public interface IBetterGameMenuApi {
 		Action<IClickableMenu>? onClose = null
 	);
 
+	/// <summary>
+	/// Un-register a tab implementation. This does nothing if your mod does
+	/// not already have a registered implementation for a tab. If you simply
+	/// want to replace your existing implementation with a different one, you
+	/// can call <c>RegisterImplementation</c> again without needing to call
+	/// this method first.
+	/// </summary>
+	/// <param name="id">The id of the tab to un-register your implementation for.</param>
+	void UnregisterImplementation(string id);
+
 	#endregion
 
 	#region Menu Class Access
@@ -433,6 +443,14 @@ public interface IBetterGameMenuApi {
 	IBetterGameMenu? AsMenu(IClickableMenu menu);
 
 	/// <summary>
+	/// Just check to see if the provided menu is a Better Game Menu,
+	/// without actually casting it. This can be useful if you want to remove
+	/// the menu interface from the API surface you use.
+	/// </summary>
+	/// <param name="menu">The menu to check</param>
+	bool IsMenu(IClickableMenu menu);
+
+	/// <summary>
 	/// Get the current page of the provided Better Game Menu instance. If the
 	/// provided menu is not a Better Game Menu, or a page is not ready, then
 	/// return <c>null</c> instead.
@@ -462,6 +480,19 @@ public interface IBetterGameMenuApi {
 	/// <param name="playSound">Whether or not a sound should play.</param>
 	IClickableMenu CreateMenu(
 		string? defaultTab = null,
+		bool playSound = false
+	);
+
+	/// <summary>
+	/// Create a new Better Game Menu instance and return it.
+	/// </summary>
+	/// <param name="startingTab">The tab that the menu should be opened to.
+	/// This accepts the default tab IDs from <see cref="GameMenu"/>. If you
+	/// want to open to a custom tab, you should use the method that takes
+	/// a string key instead.</param>
+	/// <param name="playSound">Whether or not a sound should play.</param>
+	IClickableMenu CreateMenu(
+		int startingTab,
 		bool playSound = false
 	);
 

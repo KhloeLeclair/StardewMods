@@ -77,6 +77,24 @@ public partial class ModEntry : ModSubscriber {
 		return api;
 	}
 
+
+	public IClickableMenu CreateMenuFromTabId(int startingTab, int extra = -1, bool playOpeningSound = false) {
+		return new BetterGameMenuImpl(this, startingTab switch {
+			0 => nameof(VanillaTabOrders.Inventory),
+			1 => nameof(VanillaTabOrders.Skills),
+			2 => nameof(VanillaTabOrders.Social),
+			3 => nameof(VanillaTabOrders.Map),
+			4 => nameof(VanillaTabOrders.Crafting),
+			5 => nameof(VanillaTabOrders.Animals),
+			6 => nameof(VanillaTabOrders.Powers),
+			7 => nameof(VanillaTabOrders.Collections),
+			8 => nameof(VanillaTabOrders.Options),
+			9 => nameof(VanillaTabOrders.Exit),
+			_ => null
+		}, extra: extra, playOpeningSound: playOpeningSound);
+	}
+
+
 	internal void FireMenuInstantiated(BetterGameMenuImpl menu) {
 		ModAPI.FireMenuCreated(this, menu);
 	}

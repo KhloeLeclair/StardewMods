@@ -38,7 +38,16 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	private int mCurrent = -1;
 
+	// Tabs
+	public ClickableTextureComponent? btnTabsPrev;
+	public ClickableTextureComponent? btnTabsNext;
+	private int TabScroll = 0;
+	private int VisibleTabComponents = 1;
+
 	public readonly List<ClickableComponent> TabComponentList = [];
+	private readonly List<ClickableComponent> FirstTabRow = [];
+	private readonly List<ClickableComponent> SecondTabRow = [];
+
 	private bool mInvisible = false;
 
 	private Action? PendingContextAction;
@@ -50,14 +59,17 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	private ISimpleNode? Tooltip;
 	private string? LastTooltip;
-	private Stopwatch? LastDraw;
+
+	private PerformanceTracker? HoverTimer;
+	private PerformanceTracker? UpdateTimer;
+	private PerformanceTracker? DrawTimer;
 
 	public BetterGameMenuImpl(ModEntry mod, string? startingTab = null, int extra = -1, bool playOpeningSound = false)
 		: base(0, 0, 0, 0, false) {
 
 		Mod = mod;
 
-		CurrentScreenSize = new(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);
+		CurrentScreenSize = new(Game1.uiViewport.X, Game1.uiViewport.Y, Game1.uiViewport.Width, Game1.uiViewport.Height);
 
 		// First, load all the tab definitions.
 		// TODO: Cache this, possibly?
@@ -129,12 +141,21 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 
 	public void AddTabsToClickableComponents(IClickableMenu menu) {
+		if (btnTabsPrev is not null)
+			menu.allClickableComponents.Add(btnTabsPrev);
 		menu.allClickableComponents.AddRange(TabComponentList);
+		if (btnTabsNext is not null)
+			menu.allClickableComponents.Add(btnTabsNext);
 	}
 
 	public void RemoveTabsFromClickableComponents(IClickableMenu menu) {
-		if (menu?.allClickableComponents is not null)
+		if (menu?.allClickableComponents is not null) {
 			menu.allClickableComponents.RemoveWhere(TabComponentList.Contains);
+			if (btnTabsPrev is not null)
+				menu.allClickableComponents.Remove(btnTabsPrev);
+			if (btnTabsNext is not null)
+				menu.allClickableComponents.Remove(btnTabsNext);
+		}
 	}
 
 	#region Game Menu Event Forwarding
@@ -185,14 +206,16 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			if (target < 0)
 				target = Tabs.Count - 1;
 
-			TryChangeTab(Tabs[target], playSound: true);
+			if (TryChangeTab(Tabs[target], playSound: true))
+				CenterTab();
 
 		} else if (button == Buttons.RightTrigger) {
 			int target = mCurrent + 1;
 			if (target >= Tabs.Count)
 				target = 0;
 
-			TryChangeTab(Tabs[target], playSound: true);
+			if (TryChangeTab(Tabs[target], playSound: true))
+				CenterTab();
 
 		} else
 			CurrentPage?.receiveGamePadButton(button);
@@ -216,6 +239,18 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			base.receiveLeftClick(x, y, playSound);
 
 		if (!mInvisible && !GameMenu.forcePreventClose) {
+			if (btnTabsPrev?.containsPoint(x, y) ?? false) {
+				btnTabsPrev.scale = btnTabsPrev.baseScale;
+				if (ScrollTabs(-1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
+			if (btnTabsNext?.containsPoint(x, y) ?? false) {
+				btnTabsNext.scale = btnTabsNext.baseScale;
+				if (ScrollTabs(1) && playSound)
+					Game1.playSound("shiny4");
+			}
+
 			foreach (var cmp in TabComponentList) {
 				if (cmp.containsPoint(x, y)) {
 					TryChangeTab(cmp.name, playSound: true);
@@ -252,12 +287,28 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	public override void receiveScrollWheelAction(int direction) {
 		base.receiveScrollWheelAction(direction);
+
+		if (!mInvisible && !GameMenu.forcePreventClose) {
+			int y = Game1.getOldMouseY();
+			if (y < (yPositionOnScreen + IClickableMenu.tabYPositionRelativeToMenuY + 64 + 64)) {
+				if (ScrollTabs(direction > 0 ? -1 : 1))
+					Game1.playSound("shwip");
+				return;
+			}
+		}
+
 		CurrentPage?.receiveScrollWheelAction(direction);
 	}
 
 	public override void performHoverAction(int x, int y) {
 		base.performHoverAction(x, y);
+
+		HoverTimer?.Start();
 		CurrentPage?.performHoverAction(x, y);
+		HoverTimer?.Stop();
+
+		btnTabsPrev?.tryHover(x, TabScroll > 0 ? y : -1);
+		btnTabsNext?.tryHover(x, (TabScroll + VisibleTabComponents) >= TabComponentList.Count ? -1 : y);
 
 		string? tt = null;
 
@@ -293,8 +344,14 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 							.Text("class", Game1.textColor * 0.75f, shadow: false);
 					if (page is null)
 						builder = builder.Text("null", Game1.textColor * 0.75f, shadow: false);
-					else
-						builder = builder.Text(page.GetType().FullName);
+					else {
+						var pageType = page.GetType();
+						string? typeName = pageType.Namespace == typeof(GameMenu).Namespace
+							? pageType.Name
+							: pageType.FullName;
+
+						builder = builder.Text(typeName);
+					}
 
 					builder = builder
 						.EndGroup();
@@ -308,9 +365,12 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds) {
 		//base.gameWindowSizeChanged(oldBounds, newBounds);
-		CurrentScreenSize = newBounds;
-		ResizeMenu(CurrentTabHasErrored ? null : CurrentTab);
-		TryGetPage(CurrentTab, out _);
+		var newSize = new Rectangle(Game1.uiViewport.X, Game1.uiViewport.Y, Game1.uiViewport.Width, Game1.uiViewport.Height);
+		if (newSize != CurrentScreenSize) {
+			CurrentScreenSize = newSize;
+			ResizeMenu(CurrentTabHasErrored ? null : CurrentTab);
+			TryGetPage(CurrentTab, out _);
+		}
 	}
 
 	#endregion
@@ -394,7 +454,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		if (CurrentTab != null && CurrentPage is null)
 			TryReloadPage(CurrentTab);
 
+		UpdateTimer?.Start();
 		CurrentPage?.update(time);
+		UpdateTimer?.Stop();
 
 		if (PendingContextAction != null && GetChildMenu() is null) {
 			try {
@@ -405,6 +467,39 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 			PendingContextAction = null;
 		}
+	}
+
+	private void DrawTab(SpriteBatch batch, ClickableComponent cmp) {
+		if (!TabDrawing.TryGetValue(cmp.name, out var stuff))
+			return;
+
+		TabDecorations.TryGetValue(cmp.name, out var decoration);
+
+		bool isCurrent = CurrentTab == cmp.name;
+		var bounds = isCurrent
+			? new Rectangle(cmp.bounds.X, cmp.bounds.Y + 8, cmp.bounds.Width, cmp.bounds.Height)
+			: cmp.bounds;
+
+		if (stuff.DrawBackground)
+			batch.Draw(
+				Game1.mouseCursors,
+				position: new Vector2(
+					bounds.X,
+					bounds.Y
+				),
+				sourceRectangle: new Rectangle(16, 368, 16, 16),
+				color: Color.White,
+				rotation: 0f,
+				origin: Vector2.Zero,
+				scale: 4f,
+				effects: SpriteEffects.None,
+				layerDepth: 0.0001f
+			);
+
+		stuff.DrawMethod(batch, bounds);
+
+		if (decoration is not null)
+			decoration(batch, bounds);
 	}
 
 	public override void draw(SpriteBatch batch) {
@@ -422,57 +517,56 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			batch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
 
 			// Draw Tabs
-			foreach (var cmp in TabComponentList) {
-				if (!TabDrawing.TryGetValue(cmp.name, out var stuff))
-					continue;
+			foreach (var cmp in FirstTabRow)
+				DrawTab(batch, cmp);
 
-				TabDecorations.TryGetValue(cmp.name, out var decoration);
+			foreach (var cmp in SecondTabRow)
+				DrawTab(batch, cmp);
 
-				bool isCurrent = CurrentTab == cmp.name;
-				var bounds = isCurrent
-					? new Rectangle(cmp.bounds.X, cmp.bounds.Y + 8, cmp.bounds.Width, cmp.bounds.Height)
-					: cmp.bounds;
+			if (btnTabsPrev is not null) {
+				if (TabScroll == 0)
+					btnTabsPrev.draw(batch, Color.Gray, 0.89f);
+				else
+					btnTabsPrev.draw(batch);
+			}
 
-				if (stuff.DrawBackground)
-					batch.Draw(
-						Game1.mouseCursors,
-						position: new Vector2(
-							bounds.X,
-							bounds.Y
-						),
-						sourceRectangle: new Rectangle(16, 368, 16, 16),
-						color: Color.White,
-						rotation: 0f,
-						origin: Vector2.Zero,
-						scale: 4f,
-						effects: SpriteEffects.None,
-						layerDepth: 0.0001f
-					);
-
-				stuff.DrawMethod(batch, bounds);
-
-				if (decoration is not null)
-					decoration(batch, bounds);
+			if (btnTabsNext is not null) {
+				if (TabScroll + VisibleTabComponents >= TabComponentList.Count)
+					btnTabsNext.draw(batch, Color.Gray, 0.89f);
+				else
+					btnTabsNext.draw(batch);
 			}
 
 			batch.End();
 			batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 		}
 
-		LastDraw = Mod.Config.DeveloperMode ? Stopwatch.StartNew() : null;
+		DrawTimer?.Start();
 		page?.draw(batch);
-		LastDraw?.Stop();
+		DrawTimer?.Stop();
 
 		if (Tooltip is not null) {
 			var tt = Tooltip;
-			if (LastDraw is not null && LastTooltip == CurrentTab)
-				tt = SimpleHelper.Builder()
-					.Add(tt)
-					.Group(12)
+			if (DrawTimer is not null && LastTooltip == CurrentTab) {
+				var builder = SimpleHelper.Builder().Add(tt);
+				if (UpdateTimer is not null)
+					builder = builder.Group(12)
+						.Text("update ticks", Game1.textColor * 0.75f, shadow: false)
+						.Text(UpdateTimer.StatString)
+					.EndGroup();
+
+				if (HoverTimer is not null)
+					builder = builder.Group(12)
+						.Text("hover ticks", Game1.textColor * 0.75f, shadow: false)
+						.Text(HoverTimer.StatString)
+					.EndGroup();
+
+				tt = builder.Group(12)
 						.Text("draw ticks", Game1.textColor * 0.75f, shadow: false)
-						.Text(LastDraw.ElapsedTicks.ToString())
+						.Text(DrawTimer.StatString)
 					.EndGroup()
 					.GetLayout();
+			}
 
 			tt.DrawHover(batch, Game1.smallFont);
 		}
@@ -492,15 +586,17 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		int minWidth = newWidth + 192;
 		int minHeight = newHeight;
 
+		bool invis = false;
+
 		if (tab != null && TabSources.TryGetValue(tab, out var source)) {
 			newWidth = source.Implementation.GetWidth?.Invoke(newWidth) ?? newWidth;
 			newHeight = source.Implementation.GetHeight?.Invoke(newHeight) ?? newHeight;
+			invis = source.Implementation.GetMenuInvisible?.Invoke() ?? false;
 		}
 
-		// Check that we have enough width for our buttons.
-		int realMin = 64 + 64 + (Math.Min(10, TabComponentList.Count) * 64);
-		if (newWidth < realMin)
-			newWidth = realMin;
+		// Don't allow the menu to get narrower than 800.
+		if (newWidth < 800)
+			newWidth = 800;
 
 		int newX = Game1.uiViewport.Width / 2 - Math.Max(minWidth, newWidth) / 2;
 		int newY = Game1.uiViewport.Height / 2 - Math.Max(minHeight, newHeight) / 2;
@@ -516,28 +612,145 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		// Move all our components.
 		RepositionTabs();
+
+		// Stabilize the position of the upper right close button.
+		if (!invis)
+			width = 800 + IClickableMenu.borderWidth * 2;
+
 		initializeUpperRightCloseButton();
+		width = newWidth;
 
 		if (Game1.options.SnappyMenus)
 			snapCursorToCurrentSnappedComponent();
 	}
 
+	internal bool ScrollTabs(int direction) {
+		int old = TabScroll;
+		int maxScroll = TabComponentList.Count - VisibleTabComponents;
+
+		TabScroll += (direction > 0) ? 1 : -1;
+		if (TabScroll < 0)
+			TabScroll = 0;
+		if (TabScroll > maxScroll)
+			TabScroll = maxScroll;
+
+		if (old == TabScroll)
+			return false;
+
+		RepositionTabs();
+		return true;
+	}
+
+	internal bool CenterTab() {
+		string current = CurrentTab;
+		for (int i = 0; i < TabComponentList.Count; i++) {
+			var cmp = TabComponentList[i];
+			if (cmp.name == current)
+				return CenterTab(i);
+		}
+		return false;
+	}
+
+	internal bool CenterTab(int index) {
+		int old = TabScroll;
+		int maxScroll = TabComponentList.Count - VisibleTabComponents;
+
+		TabScroll = index - (VisibleTabComponents / 2);
+		if (TabScroll < 0)
+			TabScroll = 0;
+		if (TabScroll > maxScroll)
+			TabScroll = maxScroll;
+
+		if (old == TabScroll)
+			return false;
+
+		RepositionTabs();
+		return true;
+	}
+
 	internal void RepositionTabs() {
+		var menu = CurrentPage;
+		if (menu is not null)
+			RemoveTabsFromClickableComponents(menu);
+
+		// TODO: Rewrite this code to use multiple staggered rows.
+
+		FirstTabRow.Clear();
+		SecondTabRow.Clear();
+
 		int x = xPositionOnScreen + 48;
 		int y = yPositionOnScreen + IClickableMenu.tabYPositionRelativeToMenuY + 64;
 
-		int i = 0;
+		// First, we need to determine how many tabs we can fit in our width.
+		int visibleTabs = ((800 + IClickableMenu.borderWidth * 2) - (48 * 2)) / 64;
 
-		foreach (var cmp in TabComponentList) {
+		// Do we have enough space to fit all our tabs?
+		bool needPagination = visibleTabs < TabComponentList.Count;
+
+		if (needPagination)
+			visibleTabs--;
+
+		VisibleTabComponents = Math.Min(TabComponentList.Count, visibleTabs);
+
+		//Mod.Log($"Pos: {x},{y} -- visible: {visibleTabs} -- needPagination: {needPagination}", LogLevel.Debug);
+
+		if (needPagination && btnTabsPrev is null) {
+			btnTabsPrev = new ClickableTextureComponent(
+				bounds: Rectangle.Empty,
+				texture: Game1.mouseCursors,
+				sourceRect: new Rectangle(352, 495, 12, 11),
+				scale: 3.2f
+			) {
+				myID = 12338,
+				rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+			};
+
+			btnTabsNext = new ClickableTextureComponent(
+				bounds: Rectangle.Empty,
+				texture: Game1.mouseCursors,
+				sourceRect: new Rectangle(365, 495, 12, 11),
+				scale: 3.2f
+			) {
+				myID = 12339,
+				leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+				downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+			};
+
+		} else if (!needPagination && btnTabsPrev is not null) {
+			btnTabsPrev = null;
+			btnTabsNext = null;
+		}
+
+		if (btnTabsPrev is not null) {
+			x -= 36;
+			btnTabsPrev.bounds = new(x, y + 16, 48, 48);
+			x += btnTabsPrev.bounds.Width + 2;
+		}
+
+		for (int i = 0; i < visibleTabs; i++) {
+			int j = i + TabScroll;
+			if (j < 0 || j >= TabComponentList.Count)
+				continue;
+
+			var cmp = TabComponentList[j];
 			cmp.bounds = new Rectangle(x, y, 64, 64);
 			x += 64;
-			i++;
-			if (i > 10) {
-				x = xPositionOnScreen + 48 + 32;
-				y -= 48;
-				i = 0;
-			}
+
+			FirstTabRow.Add(cmp);
 		}
+
+		if (btnTabsNext is not null) {
+			x += 2;
+			btnTabsNext.bounds = new(x, y + 16, 48, 48);
+			x += btnTabsNext.bounds.Width;
+		}
+
+		// TODO: Update snapping?
+		// TODO: Enable / disable our prev/next buttons.
+
+		if (menu is not null)
+			AddTabsToClickableComponents(menu);
 	}
 
 	#region IBetterGameMenu
@@ -566,6 +779,14 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 	public bool TryChangeTab(string target, bool playSound = true) {
 		return TryChangeTabImpl(target, playSound: playSound);
+	}
+
+	private void ResetPerformanceTracking() {
+		bool useTimers = Mod.Config.DeveloperMode;
+
+		UpdateTimer = useTimers ? new() : null;
+		HoverTimer = useTimers ? new() : null;
+		DrawTimer = useTimers ? new() : null;
 	}
 
 	internal bool TryChangeTabImpl(string target, bool performSnap = true, bool playSound = true) {
@@ -623,6 +844,8 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		// Clear any existing decoration.
 		TabDecorations.Remove(target);
 
+		ResetPerformanceTracking();
+
 		// Update the current tab and fire the event.
 		mCurrent = tIndex;
 		mLastTab = string.IsNullOrEmpty(oldTab) ? null : oldTab;
@@ -655,6 +878,8 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		TabLastSize.Remove(target);
 		TabPages.Remove(target);
 		TabDecorations.Remove(target);
+
+		ResetPerformanceTracking();
 
 		// Set the new provider.
 		if (!string.IsNullOrEmpty(provider) &&
