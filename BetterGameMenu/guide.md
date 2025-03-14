@@ -93,7 +93,9 @@ this.BetterGameMenuApi = this.Helper.ModRegistry.GetApi<IBetterGameMenuApi>("lec
 
 // somewhere in your methods
 public bool IsGameMenu(IClickableMenu menu) {
-    return GetGameMenuPage(menu) is not null;
+    if (Game1.activeClickableMenu is GameMenu)
+        return true;
+    return this.BetterGameMenuApi?.IsMenu(Game1.activeClickableMenu) ?? false;
 }
 
 public IClickableMenu? GetGameMenuPage(IClickableMenu menu) {
@@ -103,19 +105,14 @@ public IClickableMenu? GetGameMenuPage(IClickableMenu menu) {
 }
 ```
 
-Basically, we're making the assumption here that if a game menu is open, then
-it will have a current page. Both `GameMenu` and Better Game Menu create their
-current page within their constructors, so this should always be safe, so long
-as you aren't doing things to a Better Game Menu during its construction.
+These methods allow you to both check if the current menu is a game menu, and
+get the current menu page. As a bonus, neither method requires fancy
+interfaces so the amount of API surface you need to consume is very small if
+this is all you're doing.
 
-If you *are*, then you should be using the `AsMenu()` method from
-Better Game Menu's API instead. That method also gives you a few other methods
-for working with our menu instance.
-
-Why, then, do I recommend just using `GetCurrentPage()`? Because if that's all
-you're doing, then you can dramatically limit the amount of Better Game Menu's
-API you're consuming, and doing that makes it all the less likely that any
-future updates might break your integration.
+If you need to get more details about the game menu, or access pages that
+aren't currently active, you'll need to look into the `AsMenu()` method from
+the API and the `IBetterGameMenu` interface.
 
 
 ### Opening the Menu
@@ -193,6 +190,260 @@ register an implementation. I'll quickly go over the various arguments
 of `RegisterTab()` here before covering the arguments shared by
 `RegisterImplementation()` below.
 
+<table>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td>
 
-# TODO: THIS! Sorry
+*string*
 
+The unique id of the tab to register.
+
+The built-in tabs use the keys provided in the `VanillaTabOrders` enum,
+so you can use them with code like `nameof(VanillaTabOrders.Skills)`.
+
+> Note: If another mod has already registered this tab, the existing tab
+> registration will be overwritten. This behavior may change in the future,
+> so you shouldn't rely on it.
+
+</td>
+</tr>
+<tr>
+<td><code>order</code></td>
+<td>
+
+*int*
+
+The order of this tab relative to other tabs. See the `VanillaTabOrders`
+enum to see the order values of the built-in tabs.
+
+You can also use code like `(int) VanillaTabOrders.Skills + 5` to place
+your tab relative to another tab. The built-in tabs have a degree of
+separation in their orders to allow modded tabs to be inserted.
+
+</td>
+</tr>
+<tr>
+<td><code>getDisplayName</code></td>
+<td>
+
+*Func<string>*
+
+A method that returns the display name of this tab, to be displayed in
+a tool-tip to the user. This string is not further processed, so you
+should handle any processing yourself.
+
+</td>
+</tr>
+<tr>
+<td><code>getIcon</code></td>
+<td>
+
+*(DrawDelegate DrawMethod, bool DrawBackground)*
+
+A method that returns drawing instructions for this tab's icon. You
+must provide both a `DrawDelegate` (which can be created using the
+helper method `CreateDraw`) and a boolean indicating whether or not
+you want a blank tab background to be drawn for you behind the output
+of your draw delegate.
+
+</td>
+</tr>
+</table>
+
+And that's it. Everything else is associated with an implementation
+rather than the generic tab itself.
+
+
+### New Implementations
+
+When registering a new tab or implementation, you can provide the
+following arguments to configure the behavior of your implementation.
+
+> Note: A given mod can only register one implementation for a given tab.
+
+<table>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+<tr><th colspan="2">Required</th></tr>
+<tr>
+<td><code>priority</code></td>
+<td>
+
+*int*
+
+The priority of this implementation. When multiple implementations for a
+tab are registered, and the user hasn't explicitly chosen one, then the
+implementation with the highest priority is used.
+
+</td>
+</tr>
+<tr>
+<td><code>getPageInstance</code></td>
+<td>
+
+*Func<IClickableMenu, IClickableMenu>*
+
+A method that returns a new page instance for this tab. When this method
+is called, the `IClickableMenu` passed to it is the Better Game Menu
+instance that the page is being created for.
+
+</td>
+</tr>
+<tr><th colspan="2">Optional</th></tr>
+<tr>
+<td><code>getDecoration</code></td>
+<td>
+
+*Func<DrawDelegate?>?*
+
+A method that may return a decoration if one should be displayed.
+
+A decoration is a draw delegate that's called to draw on top of a tab, so long
+as the tab has not been accessed. When the user switches to a tab, its
+decoration is cleared.
+
+This feature is intended for use in drawing things on top of a tab such as
+a sparkle indicating there is new/unread content available within the menu.
+
+Please be careful when drawing outside the bounds of the tab, because tabs
+may be positioned at the top of the screen, and there may be an additional
+row of tabs above your tab.
+
+</td>
+</tr>
+<tr>
+<td><code>getTabVisible</code></td>
+<td>
+
+*Func<bool>?*
+
+A method that returns whether or not this tab should be included in the
+menu at the current time. This can be used to, for example, hide a tab until
+the user encounters content that would appear in the tab.
+
+</td>
+</tr>
+<tr>
+<td><code>getMenuInvisible</code></td>
+<td>
+
+*Func<bool>?*
+
+A method that returns whether or not the Better Game Menu should set its
+`Invisible` flag when this is the active tab. When `Invisible` is true,
+the game menu will not draw itself or its tabs, nor will the tabs be
+accessible via mouse controls. The upper right close button, however,
+will still be visible by default.
+
+This is the flag used by the built-in map page to appear as it does.
+
+</td>
+</tr>
+<tr>
+<td><code>getWidth</code></td>
+<td>
+
+*Func<int, int>?*
+
+A method to get the width to use for the game menu when this is the
+active tab. The method is called with an argument containing the menu's
+default width. If you need your menu to be 64 pixels wider, for example,
+your method may look like this:
+
+`getWidth: width => width + 64`
+
+</td>
+</tr>
+<tr>
+<td><code>getHeight</code></td>
+<td>
+
+*Func<int, int>?*
+
+A method to get the height to use for the game menu when this is the
+active tab. The method is called with an argument containing the menu's
+default height. If you need your menu to be 64 pixels shorter, for example,
+your method may look like this:
+
+`getHeight: height => height - 64`
+
+> Note: It's not recommended to use menus of non-standard heights.
+
+</td>
+</tr>
+<tr>
+<td><code>onResize</code></td>
+<td>
+
+*Func<(IClickableMenu Menu, IClickableMenu OldPage), IClickableMenu?>?*
+
+This method is called whenever the game menu is resized, either as a result
+of the game window being resized or the UI scale changing. You can use this
+method to either alter your existing page instance, or to return a new
+page instance that should replace the existing one.
+
+When this method is used to replace an existing page instance, Better Game Menu
+still fires all applicable events, including `PageCreated` and `onClose`, and
+calling `Dispose` if the menu is disposable.
+
+</td>
+</tr>
+<tr>
+<td><code>onClose</code></td>
+<td>
+
+*Action<IClickableMenu>?*
+
+This method is called whenever a page instance is being closed. This can be
+because the Better Game Menu was closed, or because the page instance was
+replaced through `onResize` or by the user choosing a different implementation.
+
+</td>
+</tr>
+</table>
+
+
+## Available Events
+
+### Menu Created
+
+The menu created event is fired whenever a Better Game Menu instance is
+created, before the menu is assigned to `Game1.activeClickableMenu`.
+
+The event fires after the tab UI and current page have been created.
+
+
+### Tab Changed
+
+The tab changed event is fired whenever a Better Game Menu's current tab
+changes, except when the game menu is first created.
+
+
+### Tab Context Menu
+
+The tab context menu event is fired whenever a user right-clicks on a tab.
+This can be used to display quick actions, such as opening your mod's
+settings in Generic Mod Config Menu. As an example:
+```cs
+this.BetterGameMenuApi?.OnTabContextMenu(evt => {
+    if (evt.Tab == nameof(VanillaTabOrder.Options))
+        evt.Entries.Add(evt.CreateEntry(
+            "Open Settings",
+            () => this.GenericModConfigMenu.OpenModMenuAsChildMenu(this.ModManifest)
+        ));
+});
+```
+
+
+### Page Created
+
+The page created event is fired whenever a new page instance is created
+using an implementation. You can use this to apply modifications to an
+instance or set up state if your mod requires doing so.

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.6
+Released March 14th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* New API method for unregistering implementations.
+* New API method for quickly checking if an `IClickableMenu` is an instance
+  of a Better Game Menu.
+* New API method for creating an instance of Better Game Menu that's open to
+  a specific page, using the built-in `GameMenu`'s tab indexes.
+
+### Changed
+* Added an optional Vector2 offset parameter to the `CreateDraw` helper method.
+* Implement single-row scrolling for tabs.
+* Improve the timing information available in developer tool-tips.
+
+### Fixed
+* Pages not being resized properly when the ui viewport size changes due to
+  a change of the UI scale.
+
+
 ## 0.5.5
 Released March 9th, 2025 for Stardew Valley 1.6.15+
 
