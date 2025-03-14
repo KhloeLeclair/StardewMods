@@ -40,15 +40,15 @@ public class MinesPage : BasePage<BaseState>, ICalendarPage {
 		Sprites = new();
 
 		Sprites[LevelType.Mushroom] = SpriteHelper.GetSprite(
-			InventoryHelper.CreateItemById("(O)420", 1) // Red Mushroom
+			ItemRegistry.Create("(O)420", 1) // Red Mushroom
 		);
 
 		Sprites[LevelType.InfestedMonster] = SpriteHelper.GetSprite(
-			InventoryHelper.CreateItemById("(W)0", 1) // Rusty Sword
+			ItemRegistry.Create("(W)0", 1) // Rusty Sword
 		);
 
 		Sprites[LevelType.InfestedSlime] = SpriteHelper.GetSprite(
-			InventoryHelper.CreateItemById("(O)766", 1) // Slime
+			ItemRegistry.Create("(O)766", 1) // Slime
 		);
 
 		Sprites[LevelType.Quarry] = new SpriteInfo(
@@ -62,7 +62,7 @@ public class MinesPage : BasePage<BaseState>, ICalendarPage {
 		);
 
 		Sprites[LevelType.Dino] = SpriteHelper.GetSprite(
-			InventoryHelper.CreateItemById("(O)107", 1) // Dino Egg
+			ItemRegistry.Create("(O)107", 1) // Dino Egg
 		);
 
 		Update();
