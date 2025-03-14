@@ -29,9 +29,21 @@ keeping chests locked when playing in multiplayer.
 * [Example ContentPack](https://github.com/KhloeLeclair/StardewMods/tree/main/BetterCrafting.Example)
 
 
-## Cloudy Skies (WIP)
+## Better Game Menu (*1.6+*)
 
-Unreleased. Cloudy Skies is a framework mod for adding custom weather types to
+Better Game Menu is a replacement for the base game's pause menu that is
+designed for better performance and compatibility between multiple mods
+that want to modify the pause menu.
+
+* [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/32032/)
+* [Changelog](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterGameMenu/CHANGELOG.md)
+* [Implementation Guide](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterGameMenu/guide.md)
+* [API](https://github.com/KhloeLeclair/StardewMods/blob/main/BetterGameMenu/IBetterGameMenu.cs)
+
+
+## Cloudy Skies (*1.6+*)
+
+Cloudy Skies is a framework mod for adding custom weather types to
 the game, with their own rendering and sound effects.
 
 

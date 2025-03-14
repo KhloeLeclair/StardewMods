@@ -19,11 +19,18 @@ indent_style = space
 [i18n.cs]
 generated_code = true
 
+[*.md]
+indent_style = space
+indent_size = 2
+
 ###################
 ## C# Formatting ##
 ###################
 
 [*.cs]
+
+# Namespaces are fun
+csharp_style_namespace_declarations = file_scoped:error
 
 # Organize Using
 dotnet_sort_system_directives_first = true
