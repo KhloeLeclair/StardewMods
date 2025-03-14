@@ -1,167 +1,458 @@
 {
 	// Settings
-	"setting.show-adv": "显示高级. 制作信息",
-	"setting.show-adv.tip": "显示高级制作信息，例如您有多少成分以及您以前制作过多少次配方. 这与原版设置相同，为方便起见在此复制.",
+	"setting.show-adv": "显示高级制作信息",
+	"setting.show-adv.tip": "显示高级制作信息，例如您有多少原料以及您以前制作过多少次配方。这与原版设置相同，为方便起见在此复制。",
 
-	"setting.general": "常规选项",
+	"setting.use-per-save": "存档隔离",
+	"setting.use-per-save.tip": "启用此选项后，不同存档中您的分类和收藏将不互通。禁用此选项将对所有存档使用相同的数据。请注意，已发现的配方始终是独立于存档的。",
 
-	"setting.alphabetic": "按字母顺序排序",
-	"setting.alphabetic.tip": "启用此选项后，食谱将按字母顺序排序，而不是使用默认顺序.",
+	"setting.general": "常规",
 
-	"setting.replace-crafting": "替换制作配方",
-	"setting.replace-crafting.tip": "启用后，制作配方将替换为重新使用.",
+	"setting.priority": "处理优先级",
+	"setting.priority.tip": "更改处理优先级可能提高Better Crafting与其他模组的兼容性。设置为低时，Better Crafting将在其他模组之后执行其菜单逻辑。设置为高时，Better Crafting将在其他模组之前执行其逻辑。",
 
-	"setting.replace-cooking": "更换烹饪菜单",
-	"setting.replace-cooking.tip": "启用后，烹饪菜单将替换为重新使用.",
+	"setting.priority.low": "低",
+	"setting.priority.normal": "普通",
+	"setting.priority.high": "高",
 
-	"setting.enable-categories": "启用类别",
-	"setting.enable-categories.tip": "在制作菜单中显示类别选项键，而不是所有内容的一大列表.",
+	"setting.theme": "UI主题",
+	"setting.theme-desc": "这个用户界面主题将用于Better Crafting的按钮。请注意，Better Crafting的大部分用户界面都是从标准游戏纹理中绘制的。",
+
+	"setting.use-full-height": "屏幕全高",
+	"setting.use-full-height.tip": "启用后，当在游戏外菜单中打开时，Better Crafting菜单将扩展以填满屏幕的整个高度。",
+
+	"theme.automatic": "自动",
+	"theme.default": "默认",
+
+	"setting.gift-taste-style": "礼物喜好风格",
+	"setting.gift-taste-style.heads": "头像",
+	"setting.gift-taste-style.names": "名字",
+	"setting.gift-taste-style.tip": "设置为头像时，将使用每个角色的头像来表示礼物喜好。设置为名字时，将显示他们的名字。",
+
+	"setting.gift-taste": "显示礼物喜好",
+	"setting.gift-taste.tip": "启用此功能后，已知的礼物喜好将显示在物品工具提示中以方便查看。搜索时总是显示匹配的礼物喜好。",
+	"setting.gift-taste.never": "从不",
+	"setting.gift-taste.shift": "按住Shift",
+	"setting.gift-taste.always": "总是",
+
+	"setting.gift-taste-all": "显示未发现的礼物喜好",
+	"setting.gift-taste-all.tip": "启用此功能后，Better Crafting将显示所有礼物喜好。包括你在游戏中尚未发现的那些。这可能被认为是作弊，默认情况禁用。",
+
+	"setting.alphabetic": "按字母排序",
+	"setting.alphabetic.tip": "启用后，合成表将按字母顺序排序。",
+
+	"setting.replace-crafting": "替换制作菜单",
+	"setting.replace-crafting.tip": "启用后，旧制造菜单将替换为改进菜单。",
+
+	"setting.replace-cooking": "替换烹饪菜单",
+	"setting.replace-cooking.tip": "启用后，旧烹饪菜单将替换为改进菜单。",
+
+	"setting.enable-categories": "启用分类",
+	"setting.enable-categories.tip": "在制作菜单中显示类别选项键，而不是一个页面包含所有制作选项。",
+
+	"setting.new-recipes": "突出显示新配方",
+	"setting.new-recipes.tip": "启用此选项后，新配方上将显示“NEW”标签。",
+	"setting.new-recipes.uncrafted": "尚未制作",
+	"setting.new-recipes.unseen": "尚未发现",
+	"setting.new-recipes.disabled": "已禁用",
+
+	"setting.new-recipes.prismatic": "五彩显示",
+	"setting.new-recipes.prismatic.tip": "启用此选项后，配方上的“NEW”标签将以变化的颜色显示。",
 
 	"setting.settings": "显示设置按钮",
-	"setting.settings.tip": "启用后，打开 更好的制作 设置的按钮将添加到 更好的制作 菜单中.",
+	"setting.settings.tip": "启用后，打开Better Crafting设置的按钮将添加到菜单中。",
 
-	"setting.bindings": "热键和操作",
-	"setting.bindings.tip": "与输入和键绑定相关的设置.",
+	"setting.show-edit": "显示编辑分类按钮",
+	"setting.show-edit.tip": "启用后，在可以编辑分类时回出现一个编辑分类的按钮。",
 
-	"setting.suppress": "禁用键",
-	"setting.suppress.tip": "按住此键并打开制作菜单时，更好的制作 不会替换它.",
+	"setting.bindings": "快捷键",
+	"setting.bindings.tip": "与输入和按键绑定定相关的设置。",
 
-	"setting.key.search": "搜索键",
-	"setting.key.search.tip": "按此键打开搜索以过滤显示的食谱.",
+	"setting.suppress": "禁用",
+	"setting.suppress.tip": "按住此键并打开制作菜单时，Better Crafting不会替换原本菜单。",
 
-	"setting.key.favorite": "惯用键",
-	"setting.key.favorite.tip": "在食谱上按此键以收藏或取消收藏该食谱.",
+	"setting.key.modifier": "修改",
+	"setting.key.modifier.tip": "按住此键可修改另一个键（如果可用）执行的操作。",
 
-	"setting.key.bulk": "批量设置按键",
-	"setting.key.bulk.tip": "在配方上按此键以打开该配方的批量制作.",
+	"setting.key.search": "搜索",
+	"setting.key.search.tip": "按此键打开搜索以过滤显示的配方。",
 
-	"setting.key.behavior.left": "左键单击/A 行为",
-	"setting.key.behavior.left.tip": "当左键单击（或在控制器上按 A）配方时，将执行此操作.",
-	"setting.key.behavior.right": "右键单击/B 行为",
-	"setting.key.behavior.right.tip": "当右键单击（或在控制器上按 B）配方时，将执行此操作.",
+	"setting.key.favorite": "收藏",
+	"setting.key.favorite.tip": "选中配方时按此键将收藏或取消收藏该配方。",
 
-	"setting.key.tooltip": "在工具提示中显示热键",
-	"setting.key.tooltip.tip": "启用后，热键将显示在 更好的制作 工具提示的底部.",
+	"setting.key.bulk": "批量设置",
+	"setting.key.bulk.tip": "选中配方时按此键将打开该配方的批量制作。",
 
-	"setting.ttwhen.Never": "绝不",
-	"setting.ttwhen.ForController": "使用控制器时",
+	"setting.key.behavior.left": "左键单击/A键",
+	"setting.key.behavior.left.tip": "当左键单击（或在手柄上按 A）配方时，将执行此操作。",
+	"setting.key.behavior.right": "右键单击/A键",
+	"setting.key.behavior.right.tip": "当右键单击（或在手柄上按 B）配方时，将执行此操作。",
+
+	"setting.key.tooltip": "提示中显示",
+	"setting.key.tooltip.tip": "启用后，热键将显示在Better Crafting工具提示的底部。",
+
+	"setting.show-matching-items": "显示匹配物品",
+	"setting.show-matching-items.never": "从不",
+	"setting.show-matching-items.always": "总是",
+	"setting.show-matching-items.fuzzy": "模糊匹配",
+	"setting.show-matching-items.fuzzy-quality": "模糊匹配/高品质",
+	"setting.show-matching-items.tip": "在Better Crafting的工具提示中显示制作物品时将被消耗的物品。这里的”模糊匹配”指的是可以匹配多个物品的成分，例如”鸡蛋（任意）”。高品质指任何品质高于基础品质的物品。",
+
+	"setting.source-mod": "提示中显示来源",
+	"setting.source-mod.tip": "启用后，将在Better Crafting的提示底部显示添加特定物品的模组。",
+
+	"setting.enforce-multiplayer": "强制多人游戏平衡",
+	"setting.enforce-multiplayer.tip": "当启用此选项时，一些可能被视为'作弊'的设置只能由多人游戏的主持人控制。这适用于回收垃圾、回收利用以及显示礼物喜好。",
+
+	"setting.ttwhen.Never": "从不",
+	"setting.ttwhen.ForController": "使用手柄时",
 	"setting.ttwhen.Always": "总是",
 
-	"setting.action.None": "没有",
-	"setting.action.Craft": "工艺",
-	"setting.action.Favorite": "切换收藏夹",
-	"setting.action.BulkCraft": "散装工艺",
+	"setting.action.None": "无",
+	"setting.action.Craft": "制作",
+	"setting.action.Favorite": "切换收藏",
+	"setting.action.BulkCraft": "批量制作",
+	"setting.action.BulkCook": "批量烹饪",
 
-	"setting.nearby": "扩展工作台",
-	"setting.nearby.tip": "此功能允许 工作台 和您的厨房一次连接到更多箱子，从而改进游戏默认的一个街区范围。 您可以创建连接的箱子链，或使用允许的连接器来弥合间隙.",
+	"setting.invalid-storage-types": "不允许的存储类型",
+	"setting.invalid-storage-types.tip": "这允许您禁用某些类型的存储对象（箱子、漏斗等）的使用。",
 
-	"setting.nearby.enable": "启用扩展工作台",
+	"setting.disable-fish-sources": "禁止使用鱼缸和池塘",
+	"setting.disable-fish-sources.tip": "当启用此选项时，Better Crafting将尝试不使用从鱼缸或池塘中获得的物品进行制作。请注意，这在某些情况下可能会失效，这取决于其他模组的代码。",
 
-	"setting.nearby.diagonal": "允许对角线连接",
-	"setting.nearby.diagonal.tip": "启用后，箱子和连接器可以对角放置并且仍然连接.",
+	"setting.nearby": "延展工作台",
+	"setting.nearby.tip": "此功能允许工作台/厨房一次连接到更多箱子。您可以创建连接的箱子链，或使用允许的连接器来弥合间隙。",
 
-	"setting.nearby.performance": "表现",
-	"setting.nearby.performance.tip": "限制扩展工作台范围以提高性能的设置.",
+	"setting.nearby.enable": "启用延展",
 
-	"setting.nearby.max-chests": "最大库存",
-	"setting.nearby.max-chests.tip": "工作台将使用的最大库存数量.",
+	"setting.nearby.nearby": "邻近箱子范围",
+	"setting.nearby.nearby.tip": "如果这个设置为大于零，您将始终能够使用您选择的范围内箱子里的物品。",
 
-	"setting.nearby.max-distance": "最大距离",
-	"setting.nearby.max-distance.tip": "库存可以与工作台的最大距离.",
+	"setting.nearby.nearby.active": "任何地方",
+	"setting.nearby.nearby.map": "全地图",
+	"setting.nearby.nearby.off": "禁用",
+	"setting.nearby.nearby.tiles": "{{tiles}}格",
 
-	"setting.nearby.max-check": "最大检查",
-	"setting.nearby.max-check.tip": "发现附近库存时要检查的最大瓷砖数量.",
+	"setting.nearby.diagonal": "允许对角连接",
+	"setting.nearby.diagonal.tip": "启用后，箱子和连接器可以对角放置并且连接。",
 
-	"setting.nearby.connectors": "允许的连接器",
-	"setting.nearby.connectors.tip": "可用作连接器的可放置对象。 您应该避免添加不必要的连接器类型以保持性能。 请注意，这些条目是示例，您可以手动编辑配置文件以添加其他对象和地形特征.",
+	"setting.nearby.performance": "性能",
+	"setting.nearby.performance.tip": "限制扩展工作台范围以提高性能。",
+
+	"setting.nearby.max-chests": "物品上限",
+	"setting.nearby.max-chests.tip": "工作台将使用的最大物品数量。",
+
+	"setting.nearby.max-distance": "距离上限",
+	"setting.nearby.max-distance.tip": "物品可以与工作台间隔的最大距离。",
+
+	"setting.nearby.max-check": "检查上限",
+	"setting.nearby.max-check.tip": "检查玩家背包的最大范围（格）。",
+
+	"setting.nearby.connectors": "连接器类型",
+	"setting.nearby.connectors.tip": "设置可看作连接器的对象。您应该避免添加不必要的连接器类型以保持性能。请注意，以下为部分示例，您可以手动编辑配置文件以添加其他对象和地形特征。",
 
 	"setting.nearby.floors": "地板",
-	"setting.nearby.other": "其他例子",
+	"setting.nearby.fences": "围栏",
+	"setting.nearby.other": "其他示例",
+
+	"setting.recover-trash": "恢复垃圾",
+	"setting.recover-trash.about": "启用时，您可以右键点击垃圾桶打开一个菜单，用于恢复已删除的物品。请注意，该菜单一次最多只能记住36个物品。",
+
+	"setting.recycle": "回收",
+	"setting.recycle.about": "启用时，您可以使用制作菜单回收物品并取回原料。",
+
+	"setting.recycle.higher-quality": "允许更高品质",
+	"setting.recycle.higher-quality.tip": "启用时，如果回收的物品品质高于配方产出的品质，您可以进行回收。您永远不能回收品质低于配方产出的物品。",
+
+	"setting.recycle.fuzzy": "模糊物品匹配",
+	"setting.recycle.fuzzy.tip": "一些制作配方不需要特定物品，而是需要像“鸡蛋（任何）”这样的东西。默认情况下，这些不会被退回。启用此功能将在这种情况下退回最廉价的匹配物品。",
+
+	"setting.recycle.unknown": "允许未知配方",
+	"setting.recycle.unknown.tip": "启用时，即使您没有解锁它们的制作配方，您也可以回收物品。",
+
+	"setting.recycle.crafting": "制作回收",
+	"setting.recycle.crafting.tip": "允许在制作时进行回收。",
+
+	"setting.recycle.cooking": "烹饪回收",
+	"setting.recycle.cooking.tip": "允许在烹饪时进行回收。",
+
+	"setting.recycle-mode.enabled": "始终",
+	"setting.recycle-mode.disabled": "从不",
+	"setting.recycle-mode.automatic": "自动（当持有可回收物品时）",
+
+	"setting.recycle.click-toggle": "点击切换",
+	"setting.recycle.click-toggle.tip": "启用时，点击制作菜单中的垃圾桶将切换回收的开启或关闭。仅在不持有物品时有效。",
+
+	"setting.transfer": "物品转移",
+	"setting.transfer.about": "此功能允许您快速将物品从您的背包转移到与工作台或厨房连接的箱子中。匹配的物品会被放置在适当的箱子中，类似于添加到现有堆叠。",
+
+	"setting.transfer.enable": "启用物品转移",
+
+	"setting.transfer.action": "动作（{{binding}}）",
+	"setting.transfer.action-modifier": "带修饰的动作",
+	"setting.transfer.use-tool": "使用工具（{{binding}}）",
+	"setting.transfer.use-tool-modifier": "使用带修饰的工具",
+
+	"setting.transfer.behavior": "模式",
+
+	"setting.transfer.behavior.none": "不执行任何操作",
+	"setting.transfer.behavior.all": "全部转移",
+	"setting.transfer.behavior.all-quantity": "留下数量",
+	"setting.transfer.behavior.quantity": "转移数量",
+	"setting.transfer.behavior.half": "转移一半",
+
+	"setting.transfer.quantity": "数量",
+	"setting.transfer.quantity.tip": "如果使用“转移数量”，则为转移的数量；如果使用“流线数量”，则为留下的数量。",
+
+	"setting.cookout": "野炊工具调整",
+	"setting.cookout.about": "这些设置调整野炊工具的行为，使它们的行为更像工作台。",
+
+	"setting.cookout.workbench": "类似工作台的连接性",
+	"setting.cookout.workbench.tip": "当启用时，野炊工具将像工作台一样从附近的容器中获取材料。",
+
+	"setting.cookout.durable": "持久的工具",
+	"setting.cookout.durable.tip": "当启用时，野炊工具不会在一夜之间消失，也不会在您破坏它们时消失。",
+
+	"setting.cookout.expensive": "昂贵的工具",
+	"setting.cookout.expensive.tip": "当启用时，野炊工具的制作配方将被调整，使它们稍微贵一些，以帮助平衡游戏，增加游戏的持久性。",
 
 	// Quality
 
 	"setting.quality": "质量",
-	"setting.quality.tip": "请注意，由于 API 限制，其他来源（例如 SpaceCore）添加的某些配方可能不遵守这些设置.",
+	"setting.quality.tip": "请注意，由于API限制，其他来源（例如 SpaceCore）添加的某些配方可能不遵守这些设置。",
 
 	"setting.enable-quality": "启用质量限制",
-	"setting.enable-quality.tip": "启用后，将显示一个按钮，让您选择在制作时使用的最高质量物品.",
+	"setting.enable-quality.tip": "启用后，将显示一个按钮，让您选择在制作时使用的最高质量物品。",
 
-	"setting.sort-quality": "首先使用低质量",
-	"setting.sort-quality.tip": "启用后，将首先使用较低质量的物品制作食谱.",
+	"setting.sort-quality": "优先使用低质量",
+	"setting.sort-quality.tip": "启用后，将首先使用较低质量的物品制作配方。",
 
 	// Crafting
 	"setting.crafting": "制作",
-	"setting.crafting.tip": "这些设置专门适用于重新实现的制作菜单.",
+	"setting.crafting.tip": "这些设置专门适用于改进后的制作菜单。",
 
 	"setting.uniform-grid": "强制统一尺寸",
-	"setting.uniform-grid.tip": "启用后，大型手工艺品将被挤压成一行.",
+	"setting.uniform-grid.tip": "启用后，大型制品图标将被缩成一行。",
 
-	"setting.big-craftables-last": "最后对大手工艺品进行排序",
-	"setting.big-craftables-last.tip": "启用后，大型手工艺品将全部放在列表末尾.",
+	"setting.big-craftables-last": "最后排序大型制品",
+	"setting.big-craftables-last.tip": "启用后，大型制品将全部放在列表末尾。",
 
 	// Cooking
 	"setting.cooking": "烹饪",
-	"setting.cooking.tip": "这些设置专门适用于重新实现的烹饪菜单.",
+	"setting.cooking.tip": "这些设置专门适用于改进后的烹饪菜单。",
 
 	"setting.seasoning": "使用调味料",
-	"setting.seasoning.tip": "是否应使用调味料来增强熟食。 当设置为“仅库存”时，调味料只会从您的库存中使用，而不是来自冰箱或任何其他来源.",
+	"setting.seasoning.tip": "是否使用调味料来增强熟食。当设置为“仅背包”时，调味料只会从您的背包中使用，而不是来自冰箱或任何其他来源。",
 
 	"seasoning.disabled": "绝不",
-	"seasoning.enabled": "随时",
-	"seasoning.inventory": "仅库存",
+	"seasoning.enabled": "一直",
+	"seasoning.inventory": "仅背包",
 
-	"setting.hide-unknown": "隐藏未知食谱",
-	"setting.hide-unknown.tip": "启用后，您尚未学习的食谱将不会显示在菜单中.",
+	"seasoning.used-last": "您已经用完了所有的{{item}}。",
+	"seasoning.generic": "调味料",
 
-	// Tooltips
-	"tooltip.crafted": "制作 {{count}} 次数",
+	"setting.show-unknown": "显示未知配方",
+	"setting.show-unknown.tip": "启用后，您尚未学会的配方将显示在菜单中，类似于未知烹饪配方的显示方式。",
 
-	"tooltip.toggle-recipe": "在类别中切换",
+	"setting.hide-unknown": "隐藏未知配方",
+	"setting.hide-unknown.tip": "启用后，您尚未学习的配方将不会显示在菜单中。",
+
+	// Tool-tips
+	"tooltip.loves": "最爱：{{npcs}}",
+	"tooltip.likes": "喜欢：{{npcs}}",
+
+	"tooltip.copy-cat": "复制分类到剪贴板",
+	"tooltip.paste-cat": "从剪贴板粘贴分类",
+	"tooltip.trash-cat": "删除分类",
+	"tooltip.trash-cat.confirm": "您确定要删除分类“{{name}}”吗？",
+
+	"tooltip.trash-all": "重置分类为默认",
+	"tooltip.trash-all.confirm": "您确定要将所有分类重置为默认吗？",
+
+	"tooltip.move-up": "将分类上移",
+	"tooltip.move-down": "将分类下移",
+
+	"tooltip.crafted": "制作了{{count}}次",
+	"tooltip.cooked": "烹饪了{{count}}次",
+
+	"tooltip.toggle-recipe": "在分类中切换",
 	"tooltip.use-as-icon": "用作图标",
+
+	"tooltip.transfer.to": "将物品添加到存储",
+	"tooltip.transfer.to-item": "将持有的物品添加到存储",
+
+	"tooltip.transfer.from": "从存储中填充物品",
+	"tooltip.transfer.from-item": "从存储中填充持有的物品",
+
+	"tooltip.transfer.all": "全部转移",
+	"tooltip.transfer.but-quantity": "留下{{count}}",
+	"tooltip.transfer.half": "转移一半",
+	"tooltip.transfer.quantity": "转移{{count}}",
+
+	"tooltip.edit-filter-locked": "当使用动态规则进行分类时，无法单独启用或禁用配方。请调整您的规则，或禁用动态规则。",
+
+	// Recycling
+	"tooltip.recycle": "回收{{item}}",
+	"tooltip.recycle.invalid": "您不能回收此物品。",
+	"tooltip.recycle.insufficient": "您至少需要{{count}}个此物品才能回收。",
+	"tooltip.recycle.returns": "返还：",
+	"tooltip.recycle.not-returned": "不返还：",
+	"tooltip.recycle.all": "全部回收({{amount}})",
+	"tooltip.recycle.once": "部分回收({{amount}})",
 
 	// Buttons
 	"tooltip.edit-mode": "编辑类别",
 	"tooltip.favorites": "只显示收藏夹",
 	"tooltip.seasoning": "使用调味料",
-	"tooltip.uniform": "使用统一网格",
+	"tooltip.uniform": "使用统一排版",
 	"tooltip.settings": "打开设置",
 
+	"tooltip.filter.enabled": "动态规则: 已启用",
+	"tooltip.filter.disabled": "动态规则: 已禁用",
+	"tooltip.filter.about": "这允许您根据规则创建分类，而不是手动选择单个配方。",
+
+	"tooltip.include-in-misc": "包含在杂项中: 已启用",
+	"tooltip.include-in-misc.disabled": "包含在杂项中: 已禁用",
+	"tooltip.include-in-misc.about": "通常，如果一个配方在另一个分类中，它就不会显示在杂项分类中。启用此选项以允许此分类中的配方也出现在杂项分类中。",
+
 	"tooltip.search": "搜索配方",
-	"tooltip.search.tip": "提示：使用 \"@B{{prefix}}@b\" 开始搜索，也可以按成分搜索.",
+	"tooltip.search.old-tip": "提示：以\"@B{{prefix}}@b\"开始搜索，也可以通过成分搜索。以\"@B{{likes}}@b\"开始搜索，也可以通过喜欢该物品的角色搜索，或以\"@B{{loves}}@b\"开始搜索，也可以通过最爱该物品的角色搜索。",
+	"tooltip.search.tip": "提示词：以以下字符开始搜索，也可以通过以下方式搜索：\n\n \"@B{{prefix}}@b\"：成分\n \"@B{{likes}}@b\"：角色喜欢\n \"@B{{loves}}@b\"：角色最爱",
 
 	"search.ingredient-prefix": "!",
+	"search.like-prefix": "#",
+	"search.love-prefix": "^",
 
-	"search.none": "没有匹配的配方.",
-	"search.none.category": "此类别中没有匹配的配方.",
+	"search.none": "没有匹配的配方。",
+	"search.none.category": "此分类中没有匹配的配方。",
 
 	"tooltip.select-icon": "选择图标",
 
-	"tooltip.quality.none": "只使用劣质物品.",
-	"tooltip.quality.silver": "仅使用低质量和银色质量的物品.",
-	"tooltip.quality.gold": "仅使用低品质、银品质和金品质的物品.",
-	"tooltip.quality.iridium": "使用任何优质物品.",
+	"tooltip.quality.none": "只使用普通品质物品。",
+	"tooltip.quality.silver": "只使用普通和银星品质物品。",
+	"tooltip.quality.gold": "只使用普通、银星和金星品质物品。",
+	"tooltip.quality.iridium": "使用任何品质的物品。",
 
-	"tooltip.quality-unsupported": "此配方不支持质量设置.",
+	"tooltip.quality-unsupported": "这个配方不支持品质设置。",
+
+	"ingredient.error": "无效的成分",
+
+	"error.locking": "无法访问一些库存。",
+	"error.crafting": "尝试制作时发生了错误。",
+	"error.crafting.source": "在尝试制作时，模组“{{source}}”发生了错误。",
+	"error.pasting": "无法粘贴分类。",
 
 	// Bulk Crafting
 	"bulk.crafting": "批量制作",
-	"bulk.craftable": "{{count}} 个可制作的",
-	"bulk.craft": "制作 {{count}} 个 {{name}}",
+	"bulk.craftable": "可制作{{count}}个",
+	"bulk.craft": "制作{{count}}个{{name}}",
+	"bulk.cooking": "批量烹饪",
+	"bulk.cookable": "可烹饪{{count}}个",
+	"bulk.cook": "烹饪{{count}}个{{name}}",
 
 	// Categories
-	"category.new": "新类别",
+	"category.new": "新分类",
 	"category.favorites": "收藏夹",
-	"category.combat_rings": "战斗和戒指",
+	"category.combat_rings": "战斗与戒指",
 	"category.consumables": "消耗品",
 	"category.decoration": "装饰",
-	"category.fertilizer_seeds": "肥料和种子",
-	"category.fishing": "鱼类",
+	"category.fertilizer_seeds": "肥料与种子",
+	"category.fishing": "钓鱼",
 	"category.machinery": "机械",
 	"category.misc": "杂项",
 
-	"category.food.farming": "农业和觅食",
-	"category.food.mining": "采矿和磁性",
+	"category.food.farming": "农业与采摘",
+	"category.food.mining": "采矿与磁力",
 	"category.food.fishing": "钓鱼",
 	"category.food.combat": "战斗",
-	"category.food.other": "运气、速度和其他"
+	"category.food.other": "运气、速度等其他",
+
+	// Currencies
+	"currency.gold": "金币",
+	"currency.festival-points": "积分",
+	"currency.club-coins": "俱乐部硬币",
+	"currency.qi-gems": "齐钻",
+
+	// Ingredient / Item Categories
+	"item.category.equipment": "装备",
+	"item.category.cooking": "烹饪（任意）",
+	"item.category.crafting": "制作（任意）",
+	"item.category.mineral": "矿物（任意）",
+	"item.category.meat": "肉类（任意）",
+	"item.category.fertilizer": "肥料（任意）",
+	"item.category.junk": "垃圾（任意）",
+	"item.category.seeds": "种子（任意）",
+	"item.category.fruit": "水果（任意）",
+	"item.category.flower": "花卉（任意）",
+
+	// Dynamic Filters
+	"filter.add-new": "添加新规则",
+	"filter.from-rule": "由规则启用",
+
+	"filter.include-toggle": "包含在分类中",
+	"filter.include-toggle.about": "匹配此规则的配方应该被包含在分类中还是从分类中排除。",
+
+	"filter.storage": "存储",
+	"filter.storage.about": "此规则匹配充当存储的物品，如箱子或漏斗。",
+
+	"filter.everything": "全部",
+	"filter.everything.about": "此规则匹配每个配方。",
+
+	"filter.new-buff": "增益",
+	"filter.new-buff.about": "此规则匹配在消耗时给予特定增益的物品。",
+
+	"filter.uncrafted": "尚未制作",
+	"filter.uncrafted.about": "此规则匹配您尚未制作的物品。",
+
+	"filter.search": "搜索",
+	"filter.search.about": "此规则使用与制作菜单相同的规则对物品进行搜索匹配。",
+
+	"filter.provider": "配方提供者",
+	"filter.provider.about": "这个规则将匹配由特定提供者处理的所有配方。这主要用于开发者/调试用途。",
+
+	"filter.mod": "模组物品",
+	"filter.mod.about": "此规则将尝试匹配特定模组添加的所有配方。",
+
+	"filter.gift-taste": "礼物喜好：{{taste}}",
+	"filter.gift-taste.about": "此规则将尝试匹配NPC{{taste}}的物品。除非您启用了“显示未发现的礼物喜好”，否则这只显示已知的口味。",
+	"filter.gift-taste.likes": "喜欢",
+	"filter.gift-taste.loves": "最爱",
+	"filter.gift-taste.dislikes": "不喜欢",
+	"filter.gift-taste.hates": "讨厌",
+
+	"filter.machine": "机器",
+	"filter.machine.about": "此规则匹配充当机器的物品，处理物品或执行其他功能。",
+
+	"filter.sprinkler": "洒水器",
+	"filter.sprinkler.about": "此规则匹配洒水器。",
+
+	"filter.floors": "地板和小径",
+	"filter.floors.about": "此规则匹配所有地板和小径物品。",
+
+	"filter.fences": "围栏",
+	"filter.fences.about": "此规则匹配所有围栏物品。",
+
+	"filter.furniture": "家具",
+	"filter.furniture.about": "此规则匹配所有家具物品。",
+
+	"filter.light": "光源",
+	"filter.light.about": "此规则匹配可放置的光源。",
+
+	"filter.error": "无效规则",
+	"filter.error.about": "此规则ID无效或未注册，可能来自已移除的模组。",
+
+	"filter.category": "分类",
+	"filter.category.about": "此规则匹配特定分类内的物品。",
+
+	"filter.context-tag": "上下文标签",
+	"filter.context-tag.about": "此规则匹配具有特定上下文标签的物品。",
+
+	"filter.edible": "可食用",
+	"filter.edible.about": "此规则匹配可食用物品。",
+
+	"filter.recipe-count": "{{count}}个配方",
+
+	// 厨房
+	"station.kitchen": "厨房"
+
 }
