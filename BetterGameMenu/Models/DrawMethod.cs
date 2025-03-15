@@ -33,7 +33,7 @@ public sealed record DrawMethod(Texture2D Texture, Rectangle Source, float Scale
 			Vector2.Zero,
 			Scale,
 			SpriteEffects.None,
-			1f
+			0.1f
 		);
 	}
 

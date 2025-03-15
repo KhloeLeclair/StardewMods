@@ -9,7 +9,7 @@
   "UniqueID": "leclair.bettergamemenu",
   "Name": "Better Game Menu",
   "Author": "Khloe Leclair",
-  "Version": "0.5.6",
+  "Version": "0.5.7",
   "Description": "Replaces the vanilla game menu with an improved reimplementation that improves performance and provides an easy API for other mods.",
   "MinimumApiVersion": "4.1.0",
   "MinimumGameVersion": "1.6.15",

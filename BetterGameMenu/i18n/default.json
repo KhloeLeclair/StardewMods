@@ -8,11 +8,17 @@
 	"error-page.try-again": "Try Again",
 	"error-page.message": "There was an error creating this menu page. See the log for more details.",
 
-	"config.advanced": "Advanced",
-	"config.advanced.about": "This section contains more advanced settings, including developer tools.",
-
 	"config.enabled": "Menu Enabled",
 	"config.enabled.about": "If this isn't enabled, Better Game Menu won't replace the game menu, basically disabling Better Game Menu entirely. Potentially useful for testing.",
+
+	"config.second-row": "Second Row",
+	"config.second-row.about": "When you have a lot of tabs, Better Game Menu can place some of them in a second row to allow more to be seen at once. By default, it does so based on available screen space, but you can override that behavior here.",
+	"config.second-row.automatic": "If There's Room",
+	"config.second-row.always": "Always",
+	"config.second-row.never": "Never",
+
+	"config.advanced": "Advanced",
+	"config.advanced.about": "This section contains more advanced settings, including developer tools.",
 
 	"config.hot-swap": "Allow Hot Swapping",
 	"config.hot-swap.about": "When this is enabled, you can change which menu provider is being used at any time by right-clicking a tab and choosing from the list.",
@@ -27,6 +33,9 @@
 	"config.provider.unknown": "Unknown ({{key}})",
 
 	"config.developer": "Developer Mode",
-	"config.developer.about": "When this is enabled, additional performance data is logged and certain UI elements may be changed for developer convenience."
+	"config.developer.about": "When this is enabled, additional performance data is logged and certain UI elements may be changed for developer convenience.",
+
+	"config.fake-tabs": "Register Fake Tabs",
+	"config.fake-tabs.about": "When this is enabled, a number of fake tabs are registered with the menu for testing pagination."
 
 }

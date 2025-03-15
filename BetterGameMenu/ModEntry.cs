@@ -106,7 +106,7 @@ public partial class ModEntry : ModSubscriber {
 	internal void FirePageCreated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
 		ModAPI.FirePageCreated(this, menu, tab, source, page, oldPage);
 
-		if (page is OptionsPage options)
+		if (tab == nameof(VanillaTabOrders.Options) && page is OptionsPage options)
 			options.options.Add(new OptionsButton(I18n.EasterEgg_Honk(), () => Game1.playSound("Duck")));
 	}
 

@@ -44,9 +44,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	private int TabScroll = 0;
 	private int VisibleTabComponents = 1;
 
-	public readonly List<ClickableComponent> TabComponentList = [];
-	private readonly List<ClickableComponent> FirstTabRow = [];
-	private readonly List<ClickableComponent> SecondTabRow = [];
+	private readonly List<ClickableComponent> TabComponentList = [];
+	public readonly List<ClickableComponent> FirstTabRow = [];
+	public readonly List<ClickableComponent> SecondTabRow = [];
 
 	private bool mInvisible = false;
 
@@ -60,6 +60,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	private ISimpleNode? Tooltip;
 	private string? LastTooltip;
 
+	private PerformanceTracker? EntireDraw;
 	private PerformanceTracker? HoverTimer;
 	private PerformanceTracker? UpdateTimer;
 	private PerformanceTracker? DrawTimer;
@@ -102,6 +103,9 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		if (Game1.options.SnappyMenus)
 			snapToDefaultClickableComponent();
 
+		//if (Mod.Config.DeveloperMode)
+		//	EntireDraw = new();
+
 		// Finally, fire off an event because our menu was instantiated.
 		Mod.FireMenuInstantiated(this);
 	}
@@ -143,14 +147,15 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	public void AddTabsToClickableComponents(IClickableMenu menu) {
 		if (btnTabsPrev is not null)
 			menu.allClickableComponents.Add(btnTabsPrev);
-		menu.allClickableComponents.AddRange(TabComponentList);
+		menu.allClickableComponents.AddRange(FirstTabRow);
+		menu.allClickableComponents.AddRange(SecondTabRow);
 		if (btnTabsNext is not null)
 			menu.allClickableComponents.Add(btnTabsNext);
 	}
 
 	public void RemoveTabsFromClickableComponents(IClickableMenu menu) {
 		if (menu?.allClickableComponents is not null) {
-			menu.allClickableComponents.RemoveWhere(TabComponentList.Contains);
+			menu.allClickableComponents.RemoveWhere(x => FirstTabRow.Contains(x) || SecondTabRow.Contains(x));
 			if (btnTabsPrev is not null)
 				menu.allClickableComponents.Remove(btnTabsPrev);
 			if (btnTabsNext is not null)
@@ -252,7 +257,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			}
 
 			foreach (var cmp in TabComponentList) {
-				if (cmp.containsPoint(x, y)) {
+				if (cmp.visible && cmp.containsPoint(x, y)) {
 					TryChangeTab(cmp.name, playSound: true);
 					return;
 				}
@@ -275,7 +280,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	public override void receiveRightClick(int x, int y, bool playSound = true) {
 		if (!mInvisible && !GameMenu.forcePreventClose) {
 			foreach (var cmp in TabComponentList) {
-				if (cmp.containsPoint(x, y)) {
+				if (cmp.visible && cmp.containsPoint(x, y)) {
 					OpenContextMenu(cmp.name, playSound);
 					return;
 				}
@@ -314,7 +319,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		if (!Invisible) {
 			foreach (var cmp in TabComponentList) {
-				if (cmp.containsPoint(x, y)) {
+				if (cmp.visible && cmp.containsPoint(x, y)) {
 					tt = cmp.name;
 					break;
 				}
@@ -469,7 +474,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 	}
 
-	private void DrawTab(SpriteBatch batch, ClickableComponent cmp) {
+	private void DrawTab(SpriteBatch batch, ClickableComponent cmp, bool secondRow = false) {
 		if (!TabDrawing.TryGetValue(cmp.name, out var stuff))
 			return;
 
@@ -496,6 +501,19 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 				layerDepth: 0.0001f
 			);
 
+		if (secondRow)
+			batch.Draw(
+				Game1.mouseCursors,
+				position: new Vector2(bounds.X, bounds.Y + 48),
+				sourceRectangle: new Rectangle(16, 376, 16, 8),
+				color: Color.White,
+				rotation: 0f,
+				origin: Vector2.Zero,
+				scale: 4f,
+				effects: SpriteEffects.None,
+				layerDepth: 0.0001f
+			);
+
 		stuff.DrawMethod(batch, bounds);
 
 		if (decoration is not null)
@@ -503,6 +521,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 	public override void draw(SpriteBatch batch) {
+		EntireDraw?.Start();
 		var page = CurrentPage;
 
 		if (!mInvisible) {
@@ -513,14 +532,19 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			//Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, speaker: false, drawOnlyBox: true);
 			Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, page?.width ?? width, page?.height ?? height, speaker: false, drawOnlyBox: true);
 
-			batch.End();
-			batch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
-
 			// Draw Tabs
-			foreach (var cmp in FirstTabRow)
-				DrawTab(batch, cmp);
+			if (SecondTabRow.Count > 0) {
+				batch.End();
+				batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 
-			foreach (var cmp in SecondTabRow)
+				foreach (var cmp in SecondTabRow)
+					DrawTab(batch, cmp, true);
+			}
+
+			batch.End();
+			batch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
+
+			foreach (var cmp in FirstTabRow)
 				DrawTab(batch, cmp);
 
 			if (btnTabsPrev is not null) {
@@ -544,6 +568,11 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		DrawTimer?.Start();
 		page?.draw(batch);
 		DrawTimer?.Stop();
+
+		if (!GameMenu.forcePreventClose && (page?.shouldDrawCloseButton() ?? true))
+			base.draw(batch);
+
+		EntireDraw?.Stop();
 
 		if (Tooltip is not null) {
 			var tt = Tooltip;
@@ -571,11 +600,15 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			tt.DrawHover(batch, Game1.smallFont);
 		}
 
-		if (!GameMenu.forcePreventClose && (page?.shouldDrawCloseButton() ?? true))
-			base.draw(batch);
-
 		if ((!Game1.options.SnappyMenus || (page as CollectionsPage)?.letterviewerSubMenu == null) && !Game1.options.hardwareCursor)
 			drawMouse(batch, ignore_transparency: true);
+
+		if (EntireDraw is not null) {
+			SimpleHelper.Builder()
+				.Text(EntireDraw.StatString)
+				.GetLayout()
+				.DrawHover(batch, Game1.smallFont, overrideX: 0, overrideY: 0);
+		}
 	}
 
 	internal void ResizeMenu(string? tab) {
@@ -628,7 +661,11 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		int old = TabScroll;
 		int maxScroll = TabComponentList.Count - VisibleTabComponents;
 
-		TabScroll += (direction > 0) ? 1 : -1;
+		int magnitude = SecondTabRow.Count > 0 ? 2 : 1;
+
+		TabScroll += magnitude * ((direction > 0) ? 1 : -1);
+		TabScroll -= TabScroll % magnitude;
+
 		if (TabScroll < 0)
 			TabScroll = 0;
 		if (TabScroll > maxScroll)
@@ -654,8 +691,11 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	internal bool CenterTab(int index) {
 		int old = TabScroll;
 		int maxScroll = TabComponentList.Count - VisibleTabComponents;
+		int magnitude = SecondTabRow.Count > 0 ? 2 : 1;
 
 		TabScroll = index - (VisibleTabComponents / 2);
+		TabScroll -= TabScroll % magnitude;
+
 		if (TabScroll < 0)
 			TabScroll = 0;
 		if (TabScroll > maxScroll)
@@ -668,12 +708,20 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		return true;
 	}
 
+	/// <summary>
+	/// Whether or not to allow two rows of tabs to be displayed. This depends
+	/// on the y position of the menu.
+	/// </summary>
+	internal bool ShouldAllowSecondRow => Mod.Config.AllowSecondRow switch {
+		AllowSecondRow.Automatic => yPositionOnScreen + IClickableMenu.tabYPositionRelativeToMenuY >= -16,
+		AllowSecondRow.Always => true,
+		_ => false
+	};
+
 	internal void RepositionTabs() {
 		var menu = CurrentPage;
 		if (menu is not null)
 			RemoveTabsFromClickableComponents(menu);
-
-		// TODO: Rewrite this code to use multiple staggered rows.
 
 		FirstTabRow.Clear();
 		SecondTabRow.Clear();
@@ -682,15 +730,25 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		int y = yPositionOnScreen + IClickableMenu.tabYPositionRelativeToMenuY + 64;
 
 		// First, we need to determine how many tabs we can fit in our width.
-		int visibleTabs = ((800 + IClickableMenu.borderWidth * 2) - (48 * 2)) / 64;
+		int visibleFirstRow = ((800 + IClickableMenu.borderWidth) - (48 * 2)) / 64;
+
+		// Next, do we need a second row? Can we even fit a second row?
+		// TODO: y value check
+		bool needSecondRow = ShouldAllowSecondRow && visibleFirstRow < TabComponentList.Count;
+
+		// Alright, if we're using a second row, we need to determine how many items
+		// are going on the second row vs the first.
+		int rowItems = TabComponentList.Count / 2;
+		int secondRowItems = Math.Max(0, TabComponentList.Count - Math.Max(rowItems, visibleFirstRow));
+
+		int visibleSecondRow = needSecondRow ? Math.Max(0, Math.Min(secondRowItems, visibleFirstRow - 1)) : 0;
 
 		// Do we have enough space to fit all our tabs?
-		bool needPagination = visibleTabs < TabComponentList.Count;
+		bool needPagination = (visibleFirstRow + visibleSecondRow) < TabComponentList.Count;
 
-		if (needPagination)
-			visibleTabs--;
+		// TODO: Math to ensure there's never 
 
-		VisibleTabComponents = Math.Min(TabComponentList.Count, visibleTabs);
+		VisibleTabComponents = Math.Min(TabComponentList.Count, visibleFirstRow + visibleSecondRow);
 
 		//Mod.Log($"Pos: {x},{y} -- visible: {visibleTabs} -- needPagination: {needPagination}", LogLevel.Debug);
 
@@ -723,21 +781,53 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		if (btnTabsPrev is not null) {
-			x -= 36;
+			x -= 50;
 			btnTabsPrev.bounds = new(x, y + 16, 48, 48);
 			x += btnTabsPrev.bounds.Width + 2;
 		}
 
-		for (int i = 0; i < visibleTabs; i++) {
-			int j = i + TabScroll;
-			if (j < 0 || j >= TabComponentList.Count)
+		int scroll = TabScroll;
+		int first = 0;
+		int second = 0;
+		bool isFirst = false;
+
+		foreach (var cmp in TabComponentList) {
+			isFirst = !isFirst;
+			if (!isFirst && second >= visibleSecondRow)
+				isFirst = true;
+
+			if (scroll > 0 || (isFirst ? first >= visibleFirstRow : second >= visibleSecondRow)) {
+				scroll--;
+				cmp.visible = false;
 				continue;
+			}
 
-			var cmp = TabComponentList[j];
-			cmp.bounds = new Rectangle(x, y, 64, 64);
-			x += 64;
+			// Make absolutely sure we aren't drawing the second tab row first.
+			if (!isFirst && FirstTabRow.Count == 0) {
+				second++;
+				cmp.visible = false;
+				continue;
+			}
 
-			FirstTabRow.Add(cmp);
+			cmp.visible = true;
+			// Reset our neighbors while we're at it, in case they were altered.
+			cmp.leftNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+			cmp.rightNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+			cmp.upNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+			cmp.downNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+
+			if (isFirst) {
+				first++;
+				cmp.bounds = new Rectangle(x, y, 64, 64);
+				x += 64;
+
+				FirstTabRow.Add(cmp);
+
+			} else {
+				second++;
+				cmp.bounds = new Rectangle(x - 32, y - 60, 64, 60);
+				SecondTabRow.Add(cmp);
+			}
 		}
 
 		if (btnTabsNext is not null) {
@@ -745,9 +835,6 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			btnTabsNext.bounds = new(x, y + 16, 48, 48);
 			x += btnTabsNext.bounds.Width;
 		}
-
-		// TODO: Update snapping?
-		// TODO: Enable / disable our prev/next buttons.
 
 		if (menu is not null)
 			AddTabsToClickableComponents(menu);
@@ -762,9 +849,18 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		set {
 			mInvisible = value;
 
-			foreach (var cmp in TabComponentList) {
+			foreach (var cmp in FirstTabRow) {
 				cmp.visible = !mInvisible;
 			}
+			foreach (var cmp in SecondTabRow) {
+				cmp.visible = !mInvisible;
+			}
+
+			if (btnTabsNext != null)
+				btnTabsNext.visible = !mInvisible;
+
+			if (btnTabsPrev != null)
+				btnTabsPrev.visible = !mInvisible;
 		}
 	}
 
@@ -798,6 +894,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		string oldTab = CurrentTab;
 		var oldPage = CurrentPage;
+		ClickableComponent? oldSnapped = oldPage?.currentlySnappedComponent;
 
 		if (oldPage is not null) {
 			if (!oldPage.readyToClose())
@@ -855,8 +952,16 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			Game1.playSound("smallSelect");
 
 		// And move the cursor last.
-		if (performSnap && Game1.options.SnappyMenus)
-			snapToDefaultClickableComponent();
+		if (performSnap && Game1.options.SnappyMenus) {
+			int extras = page.allClickableComponents.Count - (FirstTabRow.Count + SecondTabRow.Count);
+			if (btnTabsPrev is not null) extras--;
+			if (btnTabsNext is not null) extras--;
+
+			if (extras > 0)
+				snapToDefaultClickableComponent();
+			else if (page.allClickableComponents.Contains(oldSnapped))
+				page.currentlySnappedComponent = oldSnapped;
+		}
 
 		return true;
 	}
@@ -975,8 +1080,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 						AddTabsToClickableComponents(page);
 
 						// Clear the tooltip, just in case.
-						LastTooltip = null;
-						Tooltip = null;
+						if (Mod.Config.DeveloperMode) {
+							LastTooltip = null;
+							Tooltip = null;
+						}
 					}
 
 				} else {
@@ -1022,8 +1129,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		TabPages[target] = page;
 
 		// Clear the tooltip, just in case.
-		LastTooltip = null;
-		Tooltip = null;
+		if (Mod.Config.DeveloperMode) {
+			LastTooltip = null;
+			Tooltip = null;
+		}
 
 		FirePageInstantiated(target, sources.Implementation.Source, page, null);
 
@@ -1061,6 +1170,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 						myID = mNextId++,
 						leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 						rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+						upNeighborID = ClickableComponent.SNAP_AUTOMATIC,
 						downNeighborID = ClickableComponent.SNAP_AUTOMATIC
 					};
 					TabComponents[id] = component;

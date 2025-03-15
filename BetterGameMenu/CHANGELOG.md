@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.7
+Released March 15th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* When the user has too many tabs to fit in one row, a second row may
+  be displayed. This row can be disabled in settings.
+
+### Fixed
+* Issue where tab components weren't moved correctly when scrolling due
+  to pagination.
+* Issue where components weren't hidden correctly due to invisibility.
+* The easter egg button being added to `OptionsPage` instances other
+  than the Options tab itself.
+
+
 ## 0.5.6
 Released March 14th, 2025 for Stardew Valley 1.6.15+
 

@@ -18,6 +18,10 @@ public partial class ModEntry {
 	internal void ResetConfig() {
 		Config = new ModConfig();
 		UpdatePreferred();
+		if (Config.ShowFakeTabs)
+			RegisterFakeTabs();
+		else
+			UnregisterFakeTabs();
 	}
 
 	internal void SaveConfig() {
@@ -26,7 +30,7 @@ public partial class ModEntry {
 	}
 
 	[MemberNotNullWhen(true, nameof(intGMCM))]
-	internal bool HasGMCM =>intGMCM is not null && intGMCM.IsLoaded;
+	internal bool HasGMCM => intGMCM is not null && intGMCM.IsLoaded;
 
 	internal bool CanOpenGMCM => HasGMCM && intGMCM.CanOpenMenu;
 	internal bool CanOpenGMCMList => HasGMCM && intGMCM.CanOpenListMenu;
@@ -69,6 +73,14 @@ public partial class ModEntry {
 		intGMCM.Register(true);
 
 		// Main Menu
+
+		intGMCM.Add(
+			I18n.Config_Enabled,
+			I18n.Config_Enabled_About,
+			c => c.Enabled,
+			(c, v) => c.Enabled = v
+		);
+
 		intGMCM.AddLabel(I18n.Config_Providers, I18n.Config_Providers_About, shortcut: "providers");
 		intGMCM.AddLabel(I18n.Config_Advanced, I18n.Config_Advanced_About, shortcut: "advanced");
 
@@ -76,8 +88,8 @@ public partial class ModEntry {
 		intGMCM.StartPage("providers", I18n.Config_Providers);
 		intGMCM.AddParagraph(I18n.Config_Providers_About);
 
-		foreach (var (tab, info) in Tabs) {
-			if (!Implementations.TryGetValue(tab, out var impls))
+		foreach (string tab in SortedTabs) {
+			if (!Tabs.TryGetValue(tab, out var info) || !Implementations.TryGetValue(tab, out var impls))
 				continue;
 
 			var impList = impls.Values.ToList();
@@ -114,6 +126,20 @@ public partial class ModEntry {
 		intGMCM.StartPage("advanced", I18n.Config_Advanced);
 		intGMCM.AddParagraph(I18n.Config_Advanced_About);
 
+		Dictionary<AllowSecondRow, Func<string>> options = new() {
+			{ AllowSecondRow.Automatic, I18n.Config_SecondRow_Automatic },
+			{ AllowSecondRow.Always, I18n.Config_SecondRow_Always },
+			{ AllowSecondRow.Never, I18n.Config_SecondRow_Never },
+		};
+
+		intGMCM.AddChoice(
+			I18n.Config_SecondRow,
+			I18n.Config_SecondRow_About,
+			c => c.AllowSecondRow,
+			(c, v) => c.AllowSecondRow = v,
+			options
+		);
+
 		intGMCM.Add(
 			I18n.Config_HotSwap,
 			I18n.Config_HotSwap_About,
@@ -129,10 +155,16 @@ public partial class ModEntry {
 		);
 
 		intGMCM.Add(
-			I18n.Config_Enabled,
-			I18n.Config_Enabled_About,
-			c => c.Enabled,
-			(c, v) => c.Enabled = v
+			I18n.Config_FakeTabs,
+			I18n.Config_FakeTabs_About,
+			c => c.ShowFakeTabs,
+			(c, v) => {
+				c.ShowFakeTabs = v;
+				if (c.ShowFakeTabs)
+					RegisterFakeTabs();
+				else
+					UnregisterFakeTabs();
+			}
 		);
 
 		// Done!

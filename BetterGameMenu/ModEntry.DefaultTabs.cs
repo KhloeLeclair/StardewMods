@@ -37,42 +37,44 @@ public partial class ModEntry {
 		RegisterCollectionsTab();
 		RegisterOptionsTab();
 		RegisterExitTab();
-#if DEBUG
-		/*RegisterTestTab("1");
-		RegisterTestTab("2");
-		RegisterTestTab("3");
-		RegisterTestTab("4");
-		RegisterTestTab("5");
-		RegisterTestTab("6");
-		RegisterTestTab("7");
-		RegisterTestTab("8");
-		RegisterTestTab("9");
-		RegisterTestTab("10");
-		RegisterTestTab("11");*/
-#endif
+
+		if (Config.ShowFakeTabs)
+			RegisterFakeTabs();
 	}
 
-#if DEBUG
-	internal void RegisterTestTab(string key) {
+	internal void RegisterFakeTabs() {
+		for (int i = 1; i <= 11; i++) {
+			RegisterFakeTab($"{i}");
+		}
+	}
+
+	internal void UnregisterFakeTabs() {
+		for (int i = 1; i <= 11; i++) {
+			RemoveImplementation($"fake_{i}", ModManifest.UniqueID);
+		}
+	}
+
+	internal void RegisterFakeTab(string key) {
 		static IClickableMenu CreateInstance(IClickableMenu menu) {
 			int i = 0;
 			i = 3 / i;
 			return new SkillsPage(0, 0, 0, 0);
 		}
 
-		AddTab($"test_{key}", new TabDefinition(
+		int icon = Game1.random.Next(100);
+
+		AddTab($"fake_{key}", new TabDefinition(
 			Order: (int) VanillaTabOrders.Exit + 10,
 			GetDisplayName: () => $"Test {key}",
 			GetIcon: () => (
-				ModAPI.CreateDrawImpl(Game1.objectSpriteSheet, Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, Game1.random.Next(100), 16, 16), 2f), true)
+				ModAPI.CreateDrawImpl(Game1.objectSpriteSheet, Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, icon, 16, 16), 2f), true)
 		), new TabImplementationDefinition(
-			Source: "leclair.bettergamemenu",
+			Source: ModManifest.UniqueID,
 			Priority: 0,
 			GetPageInstance: CreateInstance
 		));
 
 	}
-#endif
 
 	internal void RegisterInventoryTab() {
 		static IClickableMenu CreateInstance(IClickableMenu menu) {
