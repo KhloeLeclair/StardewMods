@@ -1,4 +1,4 @@
-#nullable enable
+/*#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -805,3 +805,4 @@ public class NoticesManager : BaseManager {
 	#endregion
 
 }
+*/

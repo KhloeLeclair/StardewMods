@@ -101,7 +101,7 @@ internal class BookCollectionMenu : IClickableMenu {
 			if (value == null || !value.Enable)
 				continue;
 
-			bool locked = !string.IsNullOrEmpty(value.Condition) && !Common.GameStateQuery.CheckConditions(value.Condition);
+			bool locked = !string.IsNullOrEmpty(value.Condition) && !GameStateQuery.CheckConditions(value.Condition);
 			if (value.Secret && locked)
 				continue;
 
@@ -520,7 +520,7 @@ internal class BookCollectionMenu : IClickableMenu {
 				if (LockedBooks[book])
 					continue;
 
-				var sprite = SpriteHelper.GetSprite(InventoryHelper.CreateItemById($"(O){idx}", 1));
+				var sprite = SpriteHelper.GetSprite(ItemRegistry.Create($"(O){idx}"));
 				idx++;
 
 				float scale = cmp.scale - 1;
