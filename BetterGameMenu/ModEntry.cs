@@ -19,7 +19,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterGameMenu;
 
-public partial class ModEntry : ModSubscriber {
+public partial class ModEntry : PintailModSubscriber {
 
 	public static ModEntry Instance { get; private set; } = null!;
 
@@ -99,15 +99,23 @@ public partial class ModEntry : ModSubscriber {
 		ModAPI.FireMenuCreated(this, menu);
 	}
 
-	internal void FireTabChanged(BetterGameMenuImpl menu, string tab, string oldTab) {
-		ModAPI.FireTabChanged(this, menu, tab, oldTab);
-	}
-
 	internal void FirePageCreated(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
 		ModAPI.FirePageCreated(this, menu, tab, source, page, oldPage);
 
 		if (tab == nameof(VanillaTabOrders.Options) && page is OptionsPage options)
-			options.options.Add(new OptionsButton(I18n.EasterEgg_Honk(), () => Game1.playSound("Duck")));
+			options.options.Add(new OptionsButton(I18n.EasterEgg_Honk(), static () => Game1.playSound("Duck")));
+	}
+
+	internal List<IPageOverlay> FirePageOverlayCreation(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page) {
+		return ModAPI.FirePageOverlayCreation(this, menu, tab, source, page);
+	}
+
+	internal bool FirePageReadyToClose(BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, PageReadyToCloseReason reason, bool defaultValue = true) {
+		return ModAPI.FirePageReadyToClose(this, menu, tab, source, page, reason, defaultValue);
+	}
+
+	internal void FireTabChanged(BetterGameMenuImpl menu, string tab, string oldTab) {
+		ModAPI.FireTabChanged(this, menu, tab, oldTab);
 	}
 
 	internal void FireTabContextMenu(BetterGameMenuImpl menu, string tab, List<ITabContextMenuEntry> entries) {

@@ -3,10 +3,11 @@
   <PropertyGroup>
     <BaseManifest>new</BaseManifest>
     <AssemblyName>BetterGameMenu</AssemblyName>
-    <Version>0.5.7</Version>
+    <Version>0.5.8</Version>
     <RootNamespace>Leclair.Stardew.BetterGameMenu</RootNamespace>
 
     <EnableHarmony>true</EnableHarmony>
+    <EnablePintail>true</EnablePintail>
     <EnableTranslation>true</EnableTranslation>
 
     <UseCommon>GMCM;UI;SimpleLayout;Flow</UseCommon>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.8
+Released March 19th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* New API event for checking if a page is ready to close.
+* New API for registering menu page overlays.
+
+
 ## 0.5.7
 Released March 15th, 2025 for Stardew Valley 1.6.15+
 

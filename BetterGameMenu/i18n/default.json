@@ -2,6 +2,8 @@
 	"mod.name": "Better Game Menu",
 
 	"tab.reload-tab": "Reload Tab",
+	"tab.reload-overlays": "Reload Overlays",
+
 	"tab.open-settings": "Better Game Menu Settings",
 	"easter-egg.honk": "Honk",
 

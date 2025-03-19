@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -584,6 +585,72 @@ internal static class ReflectionHelper {
 		}
 
 		return caller;
+	}
+
+	private static bool DoesMatch(ParameterInfo source, ParameterInfo target, [NotNullWhen(false)] out string? error) {
+		var sourceType = source.ParameterType.IsByRef ? source.ParameterType.GetElementType() : source.ParameterType;
+		var targetType = target.ParameterType.IsByRef ? target.ParameterType.GetElementType() : target.ParameterType;
+
+		if (sourceType != typeof(object) && !targetType!.IsAssignableFrom(sourceType))
+			error = $"cannot assign {sourceType} to {targetType}";
+		else if (source.IsIn != target.IsIn)
+			error = "in does not match";
+		else if (source.IsOut != target.IsOut)
+			error = "out does not match";
+		else {
+			error = null;
+			return true;
+		}
+		return false;
+	}
+
+
+	[return: NotNullIfNotNull(nameof(method))]
+	internal static TDelegate? CreateFlexibleDelegate<TDelegate>(this MethodInfo method, bool? callVirt = null) where TDelegate : Delegate {
+		if (method is null)
+			return null;
+
+		Type type = typeof(TDelegate);
+		if (method.IsStatic)
+			return (TDelegate) Delegate.CreateDelegate(type, method);
+
+		var invokeMethod = type.GetMethod("Invoke");
+		var delParms = invokeMethod!.GetParameters();
+		var parms = method.GetParameters();
+
+		if (delParms.Length != (parms.Length + 1))
+			throw new InvalidCastException("incorrect number of parameters");
+
+		if (delParms[0].ParameterType != typeof(object) && !method.DeclaringType!.IsAssignableFrom(delParms[0].ParameterType))
+			throw new InvalidCastException($"{delParms[0].ParameterType} is not assignable as declaring type {method.DeclaringType}");
+
+		if (!DoesMatch(method.ReturnParameter, invokeMethod.ReturnParameter, out string? error))
+			throw new InvalidCastException($"{error} for return value");
+
+		for (int i = 0; i < parms.Length; i++) {
+			var delParm = delParms[i + 1];
+			var parm = parms[i];
+			if (!DoesMatch(delParm, parm, out error))
+				throw new InvalidCastException($"{error} for parameter {delParm.Name}");
+		}
+
+		Type[] finalTypes = delParms.Select(x => x.ParameterType).ToArray();
+
+		DynamicMethod dm = new(MakeAccessorName("Call", method), method.ReturnType, finalTypes, true);
+		var generator = dm.GetILGenerator();
+
+		if (delParms[0].ParameterType.IsValueType)
+			generator.Emit(OpCodes.Ldarga_S, (byte) 0);
+		else
+			generator.Emit(OpCodes.Ldarg_0);
+
+		for (byte i = 1; i <= parms.Length; i++)
+			generator.Emit(OpCodes.Ldarg_S, i);
+
+		generator.Emit((callVirt ?? method.IsVirtual) ? OpCodes.Callvirt : OpCodes.Call, method);
+		generator.Emit(OpCodes.Ret);
+
+		return (TDelegate) dm.CreateDelegate(type);
 	}
 
 

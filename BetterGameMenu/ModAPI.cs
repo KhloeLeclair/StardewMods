@@ -28,8 +28,10 @@ public class ModAPI : IBetterGameMenuApi {
 	}
 
 	private static readonly List<(IBetterGameMenuApi.MenuCreatedDelegate Handler, EventPriority Priority, IModInfo Source)> _MenuCreated = [];
-	private static readonly List<(IBetterGameMenuApi.TabChangedDelegate Handler, EventPriority Priority, IModInfo Source)> _TabChanged = [];
 	private static readonly List<(IBetterGameMenuApi.PageCreatedDelegate Handler, EventPriority Priority, IModInfo Source)> _PageCreated = [];
+	private static readonly List<(IBetterGameMenuApi.PageOverlayCreationDelegate Handler, EventPriority Priority, IModInfo Source)> _PageOverlayCreation = [];
+	private static readonly List<(IBetterGameMenuApi.PageReadyToCloseDelegate Handler, EventPriority Priority, IModInfo Source)> _PageReadyToClose = [];
+	private static readonly List<(IBetterGameMenuApi.TabChangedDelegate Handler, EventPriority Priority, IModInfo Source)> _TabChanged = [];
 	private static readonly List<(IBetterGameMenuApi.TabContextMenuDelegate Handler, EventPriority Priority, IModInfo Source)> _TabContextMenu = [];
 
 	private static int SortList<T>((T Handler, EventPriority Priority, IModInfo Source) first, (T Handler, EventPriority Priority, IModInfo Source) second) {
@@ -45,15 +47,6 @@ public class ModAPI : IBetterGameMenuApi {
 		_MenuCreated.RemoveWhere(entry => entry.Handler == handler);
 	}
 
-	public void OnTabChanged(IBetterGameMenuApi.TabChangedDelegate handler, EventPriority priority) {
-		_TabChanged.Add((handler, priority, Other));
-		_TabChanged.Sort(SortList);
-	}
-
-	public void OffTabChanged(IBetterGameMenuApi.TabChangedDelegate handler) {
-		_TabChanged.RemoveWhere(entry => entry.Handler == handler);
-	}
-
 	public void OnPageCreated(IBetterGameMenuApi.PageCreatedDelegate handler, EventPriority priority = EventPriority.Normal) {
 		_PageCreated.Add((handler, priority, Other));
 		_PageCreated.Sort(SortList);
@@ -61,6 +54,33 @@ public class ModAPI : IBetterGameMenuApi {
 
 	public void OffPageCreated(IBetterGameMenuApi.PageCreatedDelegate handler) {
 		_PageCreated.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	public void OnPageOverlayCreation(IBetterGameMenuApi.PageOverlayCreationDelegate handler, EventPriority priority = EventPriority.Normal) {
+		_PageOverlayCreation.Add((handler, priority, Other));
+		_PageOverlayCreation.Sort(SortList);
+	}
+
+	public void OffPageOverlayCreation(IBetterGameMenuApi.PageOverlayCreationDelegate handler) {
+		_PageOverlayCreation.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	public void OnPageReadyToClose(IBetterGameMenuApi.PageReadyToCloseDelegate handler, EventPriority priority = EventPriority.Normal) {
+		_PageReadyToClose.Add((handler, priority, Other));
+		_PageReadyToClose.Sort(SortList);
+	}
+
+	public void OffPageReadyToClose(IBetterGameMenuApi.PageReadyToCloseDelegate handler) {
+		_PageReadyToClose.RemoveWhere(entry => entry.Handler == handler);
+	}
+
+	public void OnTabChanged(IBetterGameMenuApi.TabChangedDelegate handler, EventPriority priority) {
+		_TabChanged.Add((handler, priority, Other));
+		_TabChanged.Sort(SortList);
+	}
+
+	public void OffTabChanged(IBetterGameMenuApi.TabChangedDelegate handler) {
+		_TabChanged.RemoveWhere(entry => entry.Handler == handler);
 	}
 
 	public void OnTabContextMenu(IBetterGameMenuApi.TabContextMenuDelegate handler, EventPriority priority = EventPriority.Normal) {
@@ -93,6 +113,17 @@ public class ModAPI : IBetterGameMenuApi {
 		}
 	}
 
+	internal static void FireTabContextMenu(ModEntry mod, BetterGameMenuImpl menu, string tab, List<ITabContextMenuEntry> entries) {
+		var evt = new TabContextMenuEvent(menu, tab, entries);
+		foreach (var (Handler, Priority, Source) in _TabContextMenu) {
+			try {
+				Handler(evt);
+			} catch (Exception ex) {
+				mod.Log($"Error in OnTabContextMenu handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
+		}
+	}
+
 	internal static void FirePageCreated(ModEntry mod, BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, IClickableMenu? oldPage) {
 		var evt = new PageCreatedEvent(menu, tab, source, page, oldPage);
 		foreach (var (Handler, Priority, Source) in _PageCreated) {
@@ -104,15 +135,31 @@ public class ModAPI : IBetterGameMenuApi {
 		}
 	}
 
-	internal static void FireTabContextMenu(ModEntry mod, BetterGameMenuImpl menu, string tab, List<ITabContextMenuEntry> entries) {
-		var evt = new TabContextMenuEvent(menu, tab, entries);
-		foreach (var (Handler, Priority, Source) in _TabContextMenu) {
+	internal static bool FirePageReadyToClose(ModEntry mod, BetterGameMenuImpl menu, string tab, string source, IClickableMenu page, PageReadyToCloseReason reason, bool defaultValue = true) {
+		var evt = new PageReadyToCloseEvent(menu, tab, source, page, reason, defaultValue: defaultValue);
+		foreach (var (Handler, Priority, Source) in _PageReadyToClose) {
 			try {
 				Handler(evt);
 			} catch (Exception ex) {
-				mod.Log($"Error in OnTabContextMenu handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+				mod.Log($"Error in OnPageReadyToClose handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 		}
+		return evt.ReadyToClose;
+	}
+
+	internal static List<IPageOverlay> FirePageOverlayCreation(ModEntry mod, BetterGameMenuImpl menu, string tab, string source, IClickableMenu page) {
+		var evt = new PageOverlayCreationEvent(mod, menu, tab, source, page);
+		foreach (var (Handler, Priority, Source) in _PageOverlayCreation) {
+			try {
+				evt.ModSource = Source;
+				Handler(evt);
+				evt.ModSource = null;
+			} catch (Exception ex) {
+				mod.Log($"Error in OnPageOverlayCreation handler for mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
+		}
+
+		return evt.Overlays;
 	}
 
 	public static IBetterGameMenuApi.DrawDelegate CreateDrawImpl(Texture2D texture, Rectangle source, float scale, int frames = 1, int frameTime = 16, Vector2? offset = null) {
