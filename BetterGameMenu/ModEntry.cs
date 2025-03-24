@@ -32,6 +32,8 @@ public partial class ModEntry : PintailModSubscriber {
 
 	internal readonly Dictionary<string, TabDefinition> Tabs = [];
 	internal List<string> SortedTabs = [];
+	private KeyValuePair<string, (TabDefinition Tab, TabImplementationDefinition Implementation)>[]? CachedImplementations;
+
 	internal readonly Dictionary<string, TabImplementationDefinition> PreferredImplementation = [];
 	internal readonly Dictionary<string, Dictionary<string, TabImplementationDefinition>> Implementations = [];
 
@@ -138,11 +140,22 @@ public partial class ModEntry : PintailModSubscriber {
 		return (tab, impl);
 	}
 
-	internal IEnumerable<(string Key, TabDefinition Tab, TabImplementationDefinition Implementation)> GetTabImplementations() {
-		foreach (string key in SortedTabs) {
-			if (Tabs.TryGetValue(key, out var tab) && PreferredImplementation.TryGetValue(key, out var impl))
-				yield return (key, tab, impl);
+	internal KeyValuePair<string, (TabDefinition Tab, TabImplementationDefinition Implementation)>[] GetTabImplementations() {
+		if (CachedImplementations is null) {
+			CachedImplementations = new KeyValuePair<string, (TabDefinition Tab, TabImplementationDefinition Implementation)>[SortedTabs.Count];
+			int i = 0;
+			foreach (string key in SortedTabs) {
+				if (Tabs.TryGetValue(key, out var tab) && PreferredImplementation.TryGetValue(key, out var impl)) {
+					CachedImplementations[i] = new(key, (tab, impl));
+					i++;
+				}
+			}
+
+			if (i < CachedImplementations.Length)
+				Array.Resize(ref CachedImplementations, i);
 		}
+
+		return CachedImplementations;
 	}
 
 	internal void AddTab(string key, TabDefinition definition, TabImplementationDefinition? impl = null) {
@@ -199,6 +212,7 @@ public partial class ModEntry : PintailModSubscriber {
 	internal void UpdatePreferred(string key) {
 		Implementations.TryGetValue(key, out var impl);
 		string? source = Config.PreferredImplementation.GetValueOrDefault(key);
+		CachedImplementations = null;
 
 		if (source == "disable") {
 			PreferredImplementation.Remove(key);

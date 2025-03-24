@@ -14,11 +14,14 @@ Better Game Menu within their own mods.
 * [Custom Menu Tabs](#custom-menu-tabs)
   * [New Tabs](#new-tabs)
   * [New Implementations](#new-implementations)
+* [Overlays](#overlays)
 * [Available Events](#available-events)
   * [Menu Created](#menu-created)
   * [Tab Changed](#tab-changed)
   * [Tab Context Menu](#tab-context-menu)
   * [Page Created](#page-created)
+  * [Page Overlay Creation](#page-overlay-creation)
+  * [Page Ready to Close](#page-ready-to-close)
 
 
 ## What is Better Game Menu?
@@ -410,6 +413,85 @@ replaced through `onResize` or by the user choosing a different implementation.
 </table>
 
 
+## Overlays
+
+An overlay is an encapsulation of logic that runs over top of an existing
+menu page instance, allowing you to run additional behavior without relying
+on imprecise events or harmony patches.
+
+Using an overlay, you can process and override input events, prevent the
+page from closing if your overlay is not ready to close, and perform your
+own updates and drawing.
+
+The interface file has a sample `IPageOverlay` class that defines every
+available method you can use in an overlay. However, it's recommended that
+you don't use `IPageOverlay`. Better Game Menu will detect your compatible
+methods at runtime from whatever `IDisposable` you supply.
+
+This can be used to, for example, add a new clickable component to an
+existing page and respond to events targeting it.
+
+Here's a very simple example of an overlay in action. Not a useful overlay,
+but I feel it gets the idea across:
+```cs
+public class TestOverlay : IDisposable {
+    private readonly InventoryPage Page;
+    private int SinceClick = 0;
+
+    public TestOverlay(InventoryPage page) {
+        Page = page;
+    }
+
+    public void Dispose() {
+        // Do nothing
+    }
+
+    public bool ReadyToClose() {
+        return SinceClick <= 0;
+    }
+
+    public void Update(GameTime time, out bool suppressEvent) {
+        suppressEvent = false;
+        if (SinceClick > 0)
+            SinceClick--;
+    }
+
+    public void ReceiveLeftClick(int x, int y, bool playSound, out bool suppressEvent) {
+        suppressEvent = false;
+        if (y > Game1.uiViewport.Height / 2) {
+            suppressEvent = true;
+            SinceClick = 300;
+            if (playSound)
+                Game1.playSound("Duck");
+        }
+    }
+
+    public void PerformHoverAction(int x, int y, out bool suppressEvent) {
+        suppressEvent = false;
+        if (y > Game1.uiViewport.Height / 2) {
+            suppressEvent = true;
+            Page.performHoverAction(-100, -100);
+        }
+    }
+
+    public void Draw(SpriteBatch batch) {
+        SpriteText.drawString(batch, "Hello world!", 0, 0);
+    }
+}
+
+// later
+API.OnPageOverlayCreation(evt => {
+    if (evt.Tab == nameof(VanillaTabOrders.Inventory) && evt.Page is InventoryPage inv)
+        evt.AddOverlay(new TestOverlay(inv));
+});
+```
+
+This overlay is pretty useless. It draws "Hello world!" on the screen, and
+plays a duck sound if you click on the lower half of the screen. It also
+prevents the actual page instance from receiving those click events, and
+stops you from closing the menu for 5 seconds after it happens.
+
+
 ## Available Events
 
 ### Menu Created
@@ -447,3 +529,24 @@ this.BetterGameMenuApi?.OnTabContextMenu(evt => {
 The page created event is fired whenever a new page instance is created
 using an implementation. You can use this to apply modifications to an
 instance or set up state if your mod requires doing so.
+
+
+### Page Overlay Creation
+
+The page overlay creation event is fired whenever a user is about to view
+a page instance for a first time in a given menu session. This can be
+because they're opening that page for the first time, or it can be
+because the previous page instance was replaced for some reason.
+
+See [Overlays](#overlays) for more information.
+
+
+### Page Ready to Close
+
+The page ready to close event is fired whenever Better Game Menu is checking
+if a page is ready to be closed, either because the menu is closing, because
+the page instance is going to be replaced, or because current page is about
+to change.
+
+This can be used to override the behavior of the base page's `readyToClose()`
+method, so please be careful if you use it.

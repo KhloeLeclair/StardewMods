@@ -243,7 +243,7 @@ public interface IPageOverlayCreationEvent {
 	IClickableMenu Page { get; }
 
 	/// <summary>
-	/// Add an overlay to the menu page.
+	/// Add an overlay to the menu page. Overlays are executed in the order they're added.
 	/// </summary>
 	/// <param name="overlay">The overlay to add. Note that this isn't an <see cref="IPageOverlay"/>
 	/// since we do special proxying for performance. All methods are optional.</param>
@@ -285,14 +285,14 @@ public interface IPageOverlay : IDisposable {
 	/// This is called when checking if the overlayed page is ready to close.
 	/// Returning <c>false</c> prevents the page from closing.
 	/// </summary>
-	bool ReadyToClose(); // done
+	bool ReadyToClose();
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.update(GameTime)"/>
 	/// </summary>
 	/// <param name="time">The current time.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void Update(GameTime time, out bool suppressEvent); // done
+	void Update(GameTime time, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called after the overlayed page changes position or size
@@ -301,6 +301,12 @@ public interface IPageOverlay : IDisposable {
 	/// <param name="oldSize">The old window size.</param>
 	/// <param name="newSize">The new window size.</param>
 	void PageSizeChanged(Rectangle oldSize, Rectangle newSize);
+
+	/// <summary>
+	/// This is called after <see cref="IClickableMenu.populateClickableComponentList"/>,
+	/// assuming the overlayed page calls the base method. It may be called twice.
+	/// </summary>
+	void PopulateClickableComponents();
 
 	#endregion
 
@@ -313,21 +319,21 @@ public interface IPageOverlay : IDisposable {
 	/// <param name="y">The mouse's y position.</param>
 	/// <param name="playSound">Whether or not sounds should be played.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void ReceiveLeftClick(int x, int y, bool playSound, out bool suppressEvent); // done
+	void ReceiveLeftClick(int x, int y, bool playSound, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.leftClickHeld(int, int)"/>
 	/// </summary>
 	/// <param name="x">The mouse's x position.</param>
 	/// <param name="y">The mouse's y position.</param>
-	void LeftClickHeld(int x, int y); // done
+	void LeftClickHeld(int x, int y);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.releaseLeftClick(int, int)"/>
 	/// </summary>
 	/// <param name="x">The mouse's x position</param>
 	/// <param name="y">The mouse's y position</param>
-	void ReleaseLeftClick(int x, int y); // done
+	void ReleaseLeftClick(int x, int y);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.receiveRightClick(int, int, bool)"/>
@@ -336,14 +342,14 @@ public interface IPageOverlay : IDisposable {
 	/// <param name="y">The mouse's y position.</param>
 	/// <param name="playSound">Whether or not sounds should be played.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void ReceiveRightClick(int x, int y, bool playSound, out bool suppressEvent); // done
+	void ReceiveRightClick(int x, int y, bool playSound, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.receiveScrollWheelAction(int)"/>
 	/// </summary>
 	/// <param name="direction">The direction the scroll was performed in.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void ReceiveScrollWheelAction(int direction, out bool suppressEvent); // done
+	void ReceiveScrollWheelAction(int direction, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.performHoverAction(int, int)"/>
@@ -351,28 +357,28 @@ public interface IPageOverlay : IDisposable {
 	/// <param name="x">The mouse's x position.</param>
 	/// <param name="y">The mouse's y position.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void PerformHoverAction(int x, int y, out bool suppressEvent); // done
+	void PerformHoverAction(int x, int y, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.receiveKeyPress(Keys)"/>
 	/// </summary>
 	/// <param name="key">The key(s) that was pressed.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void ReceiveKeyPress(Keys key, out bool suppressEvent); // done
+	void ReceiveKeyPress(Keys key, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.receiveGamePadButton(Buttons)"/>
 	/// </summary>
 	/// <param name="button">The button(s) that was pressed.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void ReceiveGamePadButton(Buttons button, out bool suppressEvent); // done
+	void ReceiveGamePadButton(Buttons button, out bool suppressEvent);
 
 	/// <summary>
 	/// This is called before <see cref="IClickableMenu.gamePadButtonHeld(Buttons)"/>
 	/// </summary>
 	/// <param name="button">The button(s) that was held.</param>
 	/// <param name="suppressEvent">Whether or not to allow the relevant method on <see cref="IClickableMenu"/> to run.</param>
-	void GamePadButtonHeld(Buttons button, out bool suppressEvent); // done
+	void GamePadButtonHeld(Buttons button, out bool suppressEvent);
 
 	#endregion
 

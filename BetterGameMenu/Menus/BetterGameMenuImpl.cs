@@ -31,7 +31,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	private readonly Dictionary<string, IClickableMenu> TabPages = [];
 	private readonly Dictionary<string, List<IPageOverlay>?> TabOverlays = [];
 	private readonly Dictionary<string, Rectangle> TabLastSize = [];
-	private readonly Dictionary<string, (TabDefinition Tab, TabImplementationDefinition Implementation)> TabSources = [];
+	private readonly Dictionary<string, (TabDefinition Tab, TabImplementationDefinition Implementation)> TabSources;
 	private readonly Dictionary<string, (IBetterGameMenuApi.DrawDelegate DrawMethod, bool DrawBackground)> TabDrawing = [];
 	private readonly Dictionary<string, IBetterGameMenuApi.DrawDelegate> TabDecorations = [];
 
@@ -61,7 +61,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	private ISimpleNode? Tooltip;
 	private string? LastTooltip;
 
-	private readonly PerformanceTracker? EntireDraw;
+	//private readonly PerformanceTracker? EntireDraw;
 	private PerformanceTracker? HoverTimer;
 	private PerformanceTracker? UpdateTimer;
 	private PerformanceTracker? DrawTimer;
@@ -74,9 +74,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		CurrentScreenSize = new(Game1.uiViewport.X, Game1.uiViewport.Y, Game1.uiViewport.Width, Game1.uiViewport.Height);
 
 		// First, load all the tab definitions.
-		// TODO: Cache this, possibly?
-		foreach (var (Key, Tab, Implementation) in mod.GetTabImplementations())
-			TabSources[Key] = (Tab, Implementation);
+		TabSources = new(mod.GetTabImplementations());
 
 		// Call UpdateTabs() to determine which tabs are visible and
 		// to update the tab components.
@@ -87,7 +85,8 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 			startingTab = Tabs.First();
 
 		// Now, change to the starting tab.
-		TryChangeTabImpl(startingTab, performSnap: false);
+		TryChangeTabImpl(startingTab, performSnap: false, playSound: false);
+		CenterTab();
 
 		// Now, duplicate all the logic of the GameMenu as it finishes initializing.
 		if (Game1.activeClickableMenu == null && playOpeningSound)
@@ -152,13 +151,21 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 
-	public void AddTabsToClickableComponents(IClickableMenu menu) {
+	public void AddTabsToClickableComponents(IClickableMenu menu, string? target = null) {
 		if (btnTabsPrev is not null)
 			menu.allClickableComponents.Add(btnTabsPrev);
 		menu.allClickableComponents.AddRange(FirstTabRow);
 		menu.allClickableComponents.AddRange(SecondTabRow);
 		if (btnTabsNext is not null)
 			menu.allClickableComponents.Add(btnTabsNext);
+
+		if (target is null && CurrentPage == menu)
+			target = CurrentTab;
+
+		if (target is not null && TabOverlays.TryGetValue(target, out var overlays) && overlays is not null) {
+			foreach (var overlay in overlays)
+				overlay.PopulateClickableComponents();
+		}
 	}
 
 	public void RemoveTabsFromClickableComponents(IClickableMenu menu) {
@@ -262,9 +269,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		base.gamePadButtonHeld(button);
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.GamePadButtonHeld(button, out bool suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].GamePadButtonHeld(button, out bool suppress);
 				if (suppress)
 					return;
 			}
@@ -293,9 +301,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		} else {
 			var overlays = CurrentOverlays;
-			if (overlays is not null && overlays.Count > 0) {
-				foreach (var overlay in overlays) {
-					overlay.ReceiveGamePadButton(button, out bool suppress);
+			if (overlays is not null) {
+				int c = overlays.Count;
+				for (int i = 0; i < c; i++) {
+					overlays[i].ReceiveGamePadButton(button, out bool suppress);
 					if (suppress)
 						return;
 				}
@@ -318,9 +327,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		} else {
 			var overlays = CurrentOverlays;
-			if (overlays is not null && overlays.Count > 0) {
-				foreach (var overlay in overlays) {
-					overlay.ReceiveKeyPress(key, out bool suppress);
+			if (overlays is not null) {
+				int c = overlays.Count;
+				for (int i = 0; i < c; i++) {
+					overlays[i].ReceiveKeyPress(key, out bool suppress);
 					if (suppress)
 						return;
 				}
@@ -369,9 +379,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.ReceiveLeftClick(x, y, playSound, out bool suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].ReceiveLeftClick(x, y, playSound, out bool suppress);
 				if (suppress)
 					return;
 			}
@@ -384,9 +395,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		base.releaseLeftClick(x, y);
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.ReleaseLeftClick(x, y);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].ReleaseLeftClick(x, y);
 			}
 		}
 
@@ -397,9 +409,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		base.leftClickHeld(x, y);
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.LeftClickHeld(x, y);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].LeftClickHeld(x, y);
 			}
 		}
 
@@ -417,9 +430,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.ReceiveRightClick(x, y, playSound, out bool suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].ReceiveRightClick(x, y, playSound, out bool suppress);
 				if (suppress)
 					return;
 			}
@@ -441,9 +455,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.ReceiveScrollWheelAction(direction, out bool suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].ReceiveScrollWheelAction(direction, out bool suppress);
 				if (suppress)
 					return;
 			}
@@ -457,9 +472,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		var overlays = CurrentOverlays;
 		bool suppress = false;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.PerformHoverAction(x, y, out suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].PerformHoverAction(x, y, out suppress);
 				if (suppress)
 					break;
 			}
@@ -623,9 +639,10 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		var overlays = CurrentOverlays;
 		bool suppress = false;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays) {
-				overlay.Update(time, out suppress);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++) {
+				overlays[i].Update(time, out suppress);
 				if (suppress)
 					break;
 			}
@@ -695,7 +712,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 	}
 
 	public override void draw(SpriteBatch batch) {
-		EntireDraw?.Start();
+		//EntireDraw?.Start();
 		var page = CurrentPage;
 
 		if (!mInvisible) {
@@ -740,24 +757,26 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		}
 
 		var overlays = CurrentOverlays;
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays)
-				overlay.PreDraw(batch);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++)
+				overlays[i].PreDraw(batch);
 		}
 
 		DrawTimer?.Start();
 		page?.draw(batch);
 		DrawTimer?.Stop();
 
-		if (overlays is not null && overlays.Count > 0) {
-			foreach (var overlay in overlays)
-				overlay.Draw(batch);
+		if (overlays is not null) {
+			int c = overlays.Count;
+			for (int i = 0; i < c; i++)
+				overlays[i].Draw(batch);
 		}
 
 		if (!GameMenu.forcePreventClose && (page?.shouldDrawCloseButton() ?? true))
 			base.draw(batch);
 
-		EntireDraw?.Stop();
+		//EntireDraw?.Stop();
 
 		if (Tooltip is not null) {
 			var tt = Tooltip;
@@ -788,12 +807,12 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 		if ((!Game1.options.SnappyMenus || (page as CollectionsPage)?.letterviewerSubMenu == null) && !Game1.options.hardwareCursor)
 			drawMouse(batch, ignore_transparency: true);
 
-		if (EntireDraw is not null) {
+		/*if (EntireDraw is not null) {
 			SimpleHelper.Builder()
 				.Text(EntireDraw.StatString)
 				.GetLayout()
 				.DrawHover(batch, Game1.smallFont, overrideX: 0, overrideY: 0);
-		}
+		}*/
 	}
 
 	internal void ResizeMenu(string? tab) {
@@ -1130,7 +1149,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		// Inject our tab components.
 		page.populateClickableComponentList();
-		AddTabsToClickableComponents(page);
+		AddTabsToClickableComponents(page, target);
 
 		// Clear any existing decoration.
 		TabDecorations.Remove(target);
@@ -1250,7 +1269,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 		// Inject our tab components.
 		page.populateClickableComponentList();
-		AddTabsToClickableComponents(page);
+		AddTabsToClickableComponents(page, target);
 
 		// Create our tab overlays.
 		if (!TabOverlays.TryGetValue(target, out var overlays) || overlays is null)
@@ -1308,7 +1327,7 @@ public sealed class BetterGameMenuImpl : IClickableMenu, IBetterGameMenu, IDispo
 
 						// Inject our tab components.
 						page.populateClickableComponentList();
-						AddTabsToClickableComponents(page);
+						AddTabsToClickableComponents(page, target);
 
 						// See if we need to recreate our page overlays.
 						if (CurrentTab == target) {

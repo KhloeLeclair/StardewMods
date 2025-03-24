@@ -17,7 +17,7 @@ internal sealed class PageOverlayWrapper {
 
 	#region Delegate Types
 
-	internal delegate void ActivationDelegate(object target);
+	internal delegate void BasicDelegate(object target);
 	internal delegate void PageSizeChangedDelegate(object target, Rectangle oldSize, Rectangle newSize);
 	internal delegate bool ReadyToCloseDelegate(object target);
 	internal delegate void UpdateDelegate(object target, GameTime time, out bool suppressEvent);
@@ -31,9 +31,10 @@ internal sealed class PageOverlayWrapper {
 
 	#endregion
 
-	internal readonly ActivationDelegate? OnActivate;
-	internal readonly ActivationDelegate? OnDeactivate;
+	internal readonly BasicDelegate? OnActivate;
+	internal readonly BasicDelegate? OnDeactivate;
 	internal readonly PageSizeChangedDelegate? PageSizeChanged;
+	internal readonly BasicDelegate? PopulateClickableComponents;
 	internal readonly ReadyToCloseDelegate? ReadyToClose;
 	internal readonly UpdateDelegate? Update;
 	internal readonly ClickDelegate? ReceiveLeftClick;
@@ -51,14 +52,14 @@ internal sealed class PageOverlayWrapper {
 	internal PageOverlayWrapper(Type type) {
 		var method = AccessTools.Method(type, nameof(IPageOverlay.OnActivate));
 		try {
-			OnActivate = method.CreateFlexibleDelegate<ActivationDelegate>();
+			OnActivate = method.CreateFlexibleDelegate<BasicDelegate>();
 		} catch (Exception ex) {
 			throw new InvalidCastException(nameof(IPageOverlay.OnActivate), ex);
 		}
 
 		method = AccessTools.Method(type, nameof(IPageOverlay.OnDeactivate));
 		try {
-			OnDeactivate = method.CreateFlexibleDelegate<ActivationDelegate>();
+			OnDeactivate = method.CreateFlexibleDelegate<BasicDelegate>();
 		} catch (Exception ex) {
 			throw new InvalidCastException(nameof(IPageOverlay.OnDeactivate), ex);
 		}
@@ -82,6 +83,13 @@ internal sealed class PageOverlayWrapper {
 			PageSizeChanged = method.CreateFlexibleDelegate<PageSizeChangedDelegate>();
 		} catch (Exception ex) {
 			throw new InvalidCastException(nameof(IPageOverlay.PageSizeChanged), ex);
+		}
+
+		method = AccessTools.Method(type, nameof(IPageOverlay.PopulateClickableComponents));
+		try {
+			PopulateClickableComponents = method.CreateFlexibleDelegate<BasicDelegate>();
+		} catch (Exception ex) {
+			throw new InvalidCastException(nameof(IPageOverlay.PopulateClickableComponents), ex);
 		}
 
 		method = AccessTools.Method(type, nameof(IPageOverlay.ReceiveLeftClick));
@@ -191,7 +199,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 		try {
 			Actual.Dispose();
 		} catch (Exception ex) {
-			ModEntry.Instance.Log($"Error in overlay Dispose from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+			ModEntry.Instance.Log($"Error in overlay Dispose from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 		}
 	}
 
@@ -202,7 +210,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.OnActivate(Actual);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay OnActivate from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay OnActivate from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -211,7 +219,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.OnDeactivate(Actual);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay OnDeactivate from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay OnDeactivate from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -220,7 +228,16 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.PageSizeChanged(Actual, oldSize, newSize);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay PageSizeChanged from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay PageSizeChanged from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
+			}
+	}
+
+	public void PopulateClickableComponents() {
+		if (Wrapper.PopulateClickableComponents is not null)
+			try {
+				Wrapper.PopulateClickableComponents(Actual);
+			} catch (Exception ex) {
+				ModEntry.Instance.Log($"Error in overlay PopulateClickableComponents from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -229,7 +246,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				return Wrapper.ReadyToClose(Actual);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReadyToClose from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReadyToClose from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 		return true;
 	}
@@ -240,7 +257,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.Update(Actual, time, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay Update from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay Update from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -254,7 +271,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReceiveLeftClick(Actual, x, y, playSound, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReceiveLeftClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReceiveLeftClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -263,7 +280,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.LeftClickHeld(Actual, x, y);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay LeftClickHeld from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay LeftClickHeld from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -272,7 +289,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReleaseLeftClick(Actual, x, y);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReleaseLeftClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReleaseLeftClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -282,7 +299,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReceiveRightClick(Actual, x, y, playSound, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReceiveRightClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReceiveRightClick from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -292,7 +309,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReceiveScrollWheelAction(Actual, direction, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReceiveScrollWheelAction from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReceiveScrollWheelAction from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -302,7 +319,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.PerformHoverAction(Actual, x, y, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay PerformHoverAction from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay PerformHoverAction from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -312,7 +329,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReceiveKeyPress(Actual, key, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReceiveKeyPress from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReceiveKeyPress from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -322,7 +339,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.ReceiveGamePadButton(Actual, button, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay ReceiveGamePadButton from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay ReceiveGamePadButton from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -332,7 +349,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.GamePadButtonHeld(Actual, button, out suppressEvent);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay GamePadButtonHeld from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay GamePadButtonHeld from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -345,7 +362,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.PreDraw(Actual, batch);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay PreDraw from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay PreDraw from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
@@ -354,7 +371,7 @@ internal sealed class WrappedPageOverlay : IPageOverlay {
 			try {
 				Wrapper.Draw(Actual, batch);
 			} catch (Exception ex) {
-				ModEntry.Instance.Log($"Error in overlay Draw from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}: {ex}", LogLevel.Error);
+				ModEntry.Instance.Log($"Error in overlay Draw from mod '{Source.Manifest.Name}' ({Source.Manifest.UniqueID}): {ex}", LogLevel.Error);
 			}
 	}
 
