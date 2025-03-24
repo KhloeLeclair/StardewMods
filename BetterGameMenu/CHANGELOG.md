@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.9
+Released March 24th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* Overlays now have a method for populating clickable components.
+
+### Changed
+* Minor performance optimizations.
+
+
 ## 0.5.8
 Released March 19th, 2025 for Stardew Valley 1.6.15+
 
