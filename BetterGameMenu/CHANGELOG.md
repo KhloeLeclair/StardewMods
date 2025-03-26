@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.10
+Released March 26th, 2025 for Stardew Valley 1.6.15+
+
+### Fixed
+* Stop unnecessary error logging when loading Generic Mod Config Menu's API
+  on the latest SMAPI version.
+
+
 ## 0.5.9
 Released March 24th, 2025 for Stardew Valley 1.6.15+
 
