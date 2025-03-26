@@ -7,7 +7,10 @@
 	"CustomMouse": false,
 	"CustomScroll": true,
 	"CustomTooltip": true,
-	
+
+	"ShopLabelColor": "white",
+	"ShopHoverColor": "#B8DCF5",
+
 	"TextColor": "#B8DCF5",
 	"TextShadowColor": "#1F1B4A"
 }

@@ -21,7 +21,7 @@ public static class Torch_Patches {
 				original: AccessTools.Method(typeof(Torch), nameof(Torch.checkForAction)),
 				prefix: new HarmonyMethod(typeof(Torch_Patches), nameof(checkForAction_Prefix))
 			);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			mod.Log("An error occurred while registering a harmony patch for the Cookout Kit.", LogLevel.Warn, ex);
 		}
 	}
@@ -33,7 +33,7 @@ public static class Torch_Patches {
 				return true;
 
 			ModEntry mod = ModEntry.Instance;
-			if (mod.Config.EnableCookoutWorkbench && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
+			if (mod.Config.EnableCookoutWorkbench && mod.Config.ReplaceCooking && !(mod.Config.SuppressBC?.IsDown() ?? false)) {
 				// If we're not just checking, open the menu.
 				if (!justCheckingForActivity && Game1.activeClickableMenu is null)
 					Game1.activeClickableMenu = Menus.BetterCraftingPage.Open(
@@ -50,7 +50,7 @@ public static class Torch_Patches {
 				return false;
 			}
 
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Monitor?.Log("An error occurred while attempting to interact with a Torch.", LogLevel.Warn);
 			Monitor?.Log($"Details:\n{ex}", LogLevel.Warn);
 		}

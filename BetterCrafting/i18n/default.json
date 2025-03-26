@@ -110,7 +110,9 @@
 
 	"setting.action.None": "Nothing",
 	"setting.action.Craft": "Craft",
+	"setting.action.Purchase": "Purchase",
 	"setting.action.Favorite": "Toggle Favorite",
+	"setting.action.BulkPurchase": "Bulk Purchase",
 	"setting.action.BulkCraft": "Bulk Craft",
 	"setting.action.BulkCook": "Bulk Cook",
 
@@ -258,6 +260,8 @@
 	"setting.hide-unknown.tip": "When enabled, recipes you haven't learned yet won't be displayed in the menu.",
 
 	// Tool-tips
+	"tooltip.cost": "Purchase Cost:",
+
 	"tooltip.loves": "Loves: {{npcs}}",
 	"tooltip.likes": "Likes: {{npcs}}",
 
@@ -343,6 +347,7 @@
 	"error.pasting": "Unable to paste category.",
 
 	// Bulk Crafting
+	"bulk.purchase": "Bulk Purchase",
 	"bulk.crafting": "Bulk Crafting",
 	"bulk.craftable": "{{count}} Craftable",
 	"bulk.craft": "Craft {{count}} of {{name}}",

@@ -37,8 +37,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 	}
 
 	protected override IGenericModConfigMenuApi? GetAPI() {
-		return GetAPI<IGenericModConfigMenuV3>(false) ??
-			GetAPI<IGenericModConfigMenuV2>(false) ??
+		return GetAPI<IGenericModConfigMenuV2>(false) ??
 			GetAPI<IGenericModConfigMenuApi>();
 	}
 
@@ -446,17 +445,6 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 	#endregion
 
 	#region Current Menu Stuff
-
-	public bool CanOpenListMenu => API is IGenericModConfigMenuV3;
-
-	public void OpenListMenu() {
-		AssertLoaded();
-
-		if (API is IGenericModConfigMenuV3 v3)
-			v3.OpenListMenuAsChildMenu();
-		else
-			throw new InvalidOperationException("GMCM is out of date and does not support opening the list menu.");
-	}
 
 	public bool CanOpenMenu => API is IGenericModConfigMenuV2;
 

@@ -16,7 +16,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class RulePickerDialog : MenuSubscriber<ModEntry> {
+public class RulePickerDialog : MenuSubscriber<ModEntry>, IChildMenu {
 
 	public readonly Action<DynamicRuleData?, bool> OnPick;
 

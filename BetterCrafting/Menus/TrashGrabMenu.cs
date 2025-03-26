@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 using HarmonyLib;
 
+using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.UI;
 
@@ -15,7 +16,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class TrashGrabMenu : ItemGrabMenu {
+public class TrashGrabMenu : ItemGrabMenu, IChildMenu {
 
 	private static Action<ItemGrabMenu, SpriteBatch>? DrawMenu;
 

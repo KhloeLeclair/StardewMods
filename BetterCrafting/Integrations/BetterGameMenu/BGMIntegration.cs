@@ -45,6 +45,8 @@ public class BGMIntegration : BaseAPIIntegration<IBetterGameMenuApi, ModEntry> {
 		return null;
 	}
 
+	internal IClickableMenu? GetCurrentPage(IClickableMenu menu) => IsLoaded ? API.GetCurrentPage(menu) : null;
+
 	internal IBetterGameMenu? AsMenu(IClickableMenu? input) {
 		if (IsLoaded && input != null && API.AsMenu(input) is IBetterGameMenu menu)
 			return menu;

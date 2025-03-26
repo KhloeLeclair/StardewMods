@@ -22,7 +22,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class RuleEditorDialog : MenuSubscriber<ModEntry> {
+public class RuleEditorDialog : MenuSubscriber<ModEntry>, IChildMenu {
 
 	public delegate void FinishedDelegate(bool save, bool delete, DynamicRuleData data);
 

@@ -14,13 +14,6 @@ using StardewValley;
 namespace GenericModConfigMenu;
 
 
-public interface IGenericModConfigMenuV3 : IGenericModConfigMenuV2 {
-
-	/// <summary>Open the config UI to the mod selection list, as a child menu if there is an existing menu.</summary>
-	void OpenListMenuAsChildMenu();
-
-}
-
 public interface IGenericModConfigMenuV2 : IGenericModConfigMenuApi {
 
 	/// <summary>Open the config UI for a specific mod, as a child menu if there is an existing menu.</summary>
@@ -31,8 +24,7 @@ public interface IGenericModConfigMenuV2 : IGenericModConfigMenuApi {
 
 
 /// <summary>The API which lets other mods add a config UI through Generic Mod Config Menu.</summary>
-public interface IGenericModConfigMenuApi
-{
+public interface IGenericModConfigMenuApi {
 	/*********
 	** Methods
 	*********/

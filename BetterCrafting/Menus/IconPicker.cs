@@ -2,14 +2,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 
 using Leclair.Stardew.BetterCrafting.Models;
 using Leclair.Stardew.Common;
 using Leclair.Stardew.Common.Enums;
 using Leclair.Stardew.Common.Events;
 using Leclair.Stardew.Common.UI;
-using Leclair.Stardew.Common.UI.FlowNode;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -19,7 +17,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class IconPicker : MenuSubscriber<ModEntry> {
+public class IconPicker : MenuSubscriber<ModEntry>, IChildMenu {
 
 	public static readonly int[] OBJECT_SPRITES = new int[] {
 		0,  // Weeds
@@ -57,7 +55,7 @@ public class IconPicker : MenuSubscriber<ModEntry> {
 
 		var builder = FlowHelper.Builder();
 
-		foreach(int id in OBJECT_SPRITES) { 
+		foreach (int id in OBJECT_SPRITES) {
 			Rectangle rect = Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, id, 16, 16);
 			SpriteInfo sprite = new(Game1.objectSpriteSheet, rect);
 
@@ -67,18 +65,18 @@ public class IconPicker : MenuSubscriber<ModEntry> {
 			});
 		}
 
-		for(int i = 0; i < 17; i++) {
+		for (int i = 0; i < 17; i++) {
 			Rectangle rect = new(10 * i, 428, 10, 10);
 			SpriteInfo sprite = new(Game1.mouseCursors, rect);
 
-			builder.Sprite(sprite, scale: 3, onClick: (_,_,_) => {
+			builder.Sprite(sprite, scale: 3, onClick: (_, _, _) => {
 				Pick(GameTexture.MouseCursors, rect);
 				return true;
 			});
 		}
 
-		for(int iy = 0; iy < 5; iy++) {
-			for(int ix = 0; ix < 6; ix++) {
+		for (int iy = 0; iy < 5; iy++) {
+			for (int ix = 0; ix < 6; ix++) {
 				Rectangle rect = new(ix * 16, 624 + iy * 16, 16, 16);
 				SpriteInfo sprite = new(Game1.mouseCursors, rect);
 
@@ -106,10 +104,10 @@ public class IconPicker : MenuSubscriber<ModEntry> {
 
 		Dictionary<string, Texture2D?> extraTextures = new();
 
-		foreach(var api in Mod.APIInstances) {
+		foreach (var api in Mod.APIInstances) {
 			var icons = api.Value.EmitDiscoverIcons();
 			if (icons is not null)
-				foreach(var (texName, source) in icons) {
+				foreach (var (texName, source) in icons) {
 					if (!extraTextures.TryGetValue(texName, out Texture2D? texture)) {
 						try {
 							texture = Mod.Helper.GameContent.Load<Texture2D>(texName);

@@ -16,6 +16,9 @@
 
 	"SearchHighlightColor": "#FFD70050",
 
+	"ShopLabelColor": null,
+	"ShopHoverColor": "wheat",
+
 	"QuantityCriticalTextColor": "red",
 	"QuantityCriticalShadowColor": null,
 

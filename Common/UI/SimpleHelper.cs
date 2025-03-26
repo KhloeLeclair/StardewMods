@@ -23,8 +23,8 @@ public static class SimpleHelper {
 		Color? defaultShadowColor = null,
 		int offsetX = 0,
 		int offsetY = 0,
-		int overrideX = -1,
-		int overrideY = -1,
+		int overrideX = int.MinValue,
+		int overrideY = int.MinValue,
 		float alpha = 1f,
 		bool drawBG = true,
 		Texture2D? bgTexture = null,
@@ -58,41 +58,49 @@ public static class SimpleHelper {
 		int mx = Game1.getOldMouseX();
 		int my = Game1.getOldMouseY();
 
-		int x = overrideX == -1 ? mx + 32 + offsetX : overrideX;
-		int y = overrideY == -1 ? my + 32 + offsetY : overrideY;
+		bool shouldOverrideX = overrideX != int.MinValue;
+		bool shouldOverrideY = overrideY != int.MinValue;
+
+		int x = !shouldOverrideX ? mx + 32 + offsetX : overrideX;
+		int y = !shouldOverrideY ? my + 32 + offsetY : overrideY;
 
 		Rectangle safeArea = Utility.getSafeArea();
 
 		// Make sure we're in the safe area.
-		if (x + width > safeArea.Right) {
+		if (!shouldOverrideX && x + width > safeArea.Right) {
 			x = safeArea.Right - width;
-			y += 16;
+			if (!shouldOverrideY)
+				y += 16;
 		}
 
-		if (y + height > safeArea.Bottom) {
+		if (!shouldOverrideY && y + height > safeArea.Bottom) {
 			y = safeArea.Bottom - height;
-			x += 16;
+			if (!shouldOverrideX) {
+				x += 16;
 
-			if (x + width > safeArea.Right)
-				x = safeArea.Right - width;
+				if (x + width > safeArea.Right)
+					x = safeArea.Right - width;
+			}
 		}
 
-		if (x < safeArea.Left)
+		if (!shouldOverrideX && x < safeArea.Left)
 			x = safeArea.Left;
 
-		if (y < safeArea.Top) {
+		if (!shouldOverrideY && y < safeArea.Top) {
 			y = safeArea.Top;
-			x += 16 + 32;
+			if (!shouldOverrideX) {
+				x += 16 + 32;
 
-			if (x + width > safeArea.Right) {
-				x = safeArea.Right - width;
-				y += 16 + 32;
+				if (x + width > safeArea.Right) {
+					x = safeArea.Right - width;
+					y += 16 + 32;
+				}
 			}
 		}
 
 		// Flip to the other side?
 		// Don't flip if we have override coordinates.
-		if (overrideX < 0 && overrideY < 0 && x < mx + 32 + offsetX && y < my + 32 + offsetY) {
+		if (!(shouldOverrideX || shouldOverrideY) && x < mx + 32 + offsetX && y < my + 32 + offsetY) {
 			int tx = mx - width - 16;
 			bool moved = false;
 			if (tx < safeArea.Left) {

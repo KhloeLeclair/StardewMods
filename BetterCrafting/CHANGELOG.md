@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.18.0
+Released March 26th, 2025 for Stardew Valley 1.6.15+
+
+### Added
+* Custom crafting stations can now be changed to emulate a shop,
+  displaying items similarly to a shop and changing certain strings
+  to emphasize purchasing rather than crafting.
+
+### Fixed
+* Do not open the cooking menu if Replace Cooking is disabled when
+  interacting with a cookout kit.
+* Some UI elements not being repositioned correctly when the game
+  window size is changed.
+
+
 ## 2.17.1
 Released March 9th, 2025 for Stardew Valley 1.6.15+
 

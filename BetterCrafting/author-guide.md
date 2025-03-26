@@ -284,6 +284,7 @@ Stations, as well as one drawback.
 * You can make a crafting menu that lets users craft recipes they don't
   have unlocked.
 * Better Crafting supports almost all features of Custom Crafting Stations.
+* Better Crafting allows you to create shop-style menus.
 
 #### Drawbacks:
 * You cannot make a crafting station with mixed crafting and cooking recipes.
@@ -350,12 +351,56 @@ this crafting station (or another custom crafting station) to craft them.
 </td>
 </tr>
 <tr>
+<td><code>DisplayAsShop</code></td>
+<td>
+
+When this is set to true, the menu will be displayed more similarly to
+a shop menu than to the crafting menu. The following changes are
+triggered by this:
+
+1. The recycling feature is not available from this station.
+2. Items will be displayed one item per line, with a fancy border and
+   list of ingredients.
+3. If a user clicks an item they can't afford, an error sound will play.
+4. Various strings say "Purchase" instead of "Craft".
+5. The default behavior of several other crafting station settings changes.
+6. The menu size changes, becoming wider and taller to accomodate more entries.
+
+</td>
+</tr>
+<tr>
 <td><code>DisplayUnknownRecipes</code></td>
 <td>
 
 If this is set to true, recipes that a user does not have unlocked
 will be made available as if the user knew them when using this
 crafting station. 
+
+By default, this is `true` if `DisplayAsShop` is enabled
+and `false` otherwise.
+
+</td>
+</tr>
+<tr>
+<td><code>IncludeUnknownRecipes</code></td>
+<td>
+
+If this is set to true, recipes that a user does not have unlocked
+will still be listed in this crafting station, but will be hidden
+with the name `???` unless `DisplayUnknownRecipes` is also set. This
+is similar to how the cooking menu displays unknown recipes.
+
+</td>
+</tr>
+<tr>
+<td><code>IncrementCrafted</code></td>
+<td>
+
+When this is true, crafting an item from this crafting station will result
+in the player's crafted items count being incremented. Further, any achievements
+that require items to be crafted will be updated as a result.
+
+By default, this is `false` if `DisplayAsShop` is enabled and `true` otherwise.
 
 </td>
 </tr>
@@ -365,6 +410,18 @@ crafting station.
 
 Whether or not this station is a cooking station. You can only display
 crafting recipes OR cooking recipes.
+
+</td>
+</tr>
+<tr>
+<td><code>ProcessQuests</code></td>
+<td>
+
+When this is true, crafting an item from this crafting station will result
+in a quest item crafted event being emitted, which can cause quests where the
+player has to craft an item to be completed.
+
+By default, this is `false` if `DisplayAsShop` is enabled and `true` otherwise.
 
 </td>
 </tr>

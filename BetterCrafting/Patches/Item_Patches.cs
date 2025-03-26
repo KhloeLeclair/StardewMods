@@ -8,7 +8,6 @@ using HarmonyLib;
 using StardewModdingAPI;
 
 using StardewValley;
-using StardewValley.Objects;
 
 namespace Leclair.Stardew.BetterCrafting.Patches;
 
@@ -39,7 +38,7 @@ public static class Item_Patches {
 
 		var ours = AccessTools.Method(typeof(Item_Patches), nameof(GetMaximumStackSize));
 
-		foreach(var instr in instructions) {
+		foreach (var instr in instructions) {
 			if (instr.opcode == OpCodes.Callvirt && instr.operand is MethodInfo minfo && (minfo == method || minfo == method_two))
 				yield return new CodeInstruction(instr) {
 					opcode = OpCodes.Call,

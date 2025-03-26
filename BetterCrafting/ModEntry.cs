@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
 
 using HarmonyLib;
 
@@ -67,8 +66,6 @@ public class ModEntry : PintailModSubscriber {
 	internal Harmony? Harmony;
 
 	private readonly PerScreen<IClickableMenu?> CurrentMenu = new();
-	private readonly PerScreen<BetterCraftingPage?> OldCraftingPage = new();
-	private readonly PerScreen<bool> OldCraftingGameMenu = new();
 
 	internal readonly PerScreen<Inventory> TrashedItems = new(() => new());
 
@@ -271,8 +268,8 @@ public class ModEntry : PintailModSubscriber {
 		var page = Game1.activeClickableMenu;
 		if (page is GameMenu gm)
 			page = gm.GetCurrentPage();
-		else if (intBetterGameMenu != null && intBetterGameMenu.AsMenu(page) is IBetterGameMenu bgm)
-			page = bgm.CurrentPage;
+		else if (intBetterGameMenu != null && page != null)
+			page = intBetterGameMenu.GetCurrentPage(page) ?? page;
 
 		int x = Game1.getOldMouseX(true);
 		int y = Game1.getOldMouseY(true);
@@ -301,20 +298,21 @@ public class ModEntry : PintailModSubscriber {
 
 		Helper.Input.Suppress(e.Button);
 
-		ActiveTrashMenu = new TrashGrabMenu(this, TrashedItems.Value);
+		ActiveChildMenu = new TrashGrabMenu(this, TrashedItems.Value);
 		//Game1.nextClickableMenu.Insert(0, Game1.activeClickableMenu);
 		//Game1.activeClickableMenu = new TrashGrabMenu(this, TrashedItems.Value);
 		Game1.playSound("trashcan");
 	}
 
-	internal static IClickableMenu? ActiveTrashMenu {
+	internal static IClickableMenu? ActiveChildMenu {
 		get {
 			var menu = Game1.activeClickableMenu;
-			while(menu?.GetChildMenu() is not null)
+			while (menu?.GetChildMenu() is not null)
 				menu = menu.GetChildMenu();
 
-			return menu is TrashGrabMenu ? menu : null;
+			return menu is IChildMenu ? menu : null;
 		}
+
 		set {
 			if (Game1.activeClickableMenu is null)
 				Game1.activeClickableMenu = value;
@@ -324,9 +322,9 @@ public class ModEntry : PintailModSubscriber {
 				while (menu.GetChildMenu() is not null)
 					menu = menu.GetChildMenu();
 
-				if (menu is TrashGrabMenu) {
+				if (menu is IChildMenu) {
 					if (!menu.readyToClose())
-						throw new Exception("tried to remove TrashMenu that is not ready to close");
+						throw new Exception("tried to remove child menu that is not ready to close");
 					menu = menu.GetParentMenu();
 				}
 
@@ -342,69 +340,6 @@ public class ModEntry : PintailModSubscriber {
 
 		Type? type = menu?.GetType();
 		string? name = type?.FullName ?? type?.Name;
-
-		// Are we doing GMCM stuff?
-		/*if (OldCraftingPage.Value != null) {
-			if (menu != null) {
-				// If we're on the specific page for a mod, then
-				// everything is fine and we can continue.
-				if (name!.Equals("GenericModConfigMenu.Framework.SpecificModConfigMenu"))
-					return;
-
-				if (name!.Equals("GenericModConfigMenu.Framework.ModConfigMenu")) {
-					CommonHelper.YeetMenu(menu);
-
-					GameMenu? game = null;
-					if (intBetterGameMenu == null && OldCraftingGameMenu.Value) {
-						game = new GameMenu(false);
-						menu = Game1.activeClickableMenu = game;
-					}
-
-					var bcm = BetterCraftingPage.Open(
-						mod: this,
-						location: OldCraftingPage.Value.BenchLocation,
-						position: OldCraftingPage.Value.BenchPosition,
-						width: game?.width ?? -1,
-						height: game?.height ?? -1,
-						x: game?.xPositionOnScreen ?? -1,
-						y: game?.yPositionOnScreen ?? -1,
-						area: OldCraftingPage.Value.BenchArea,
-						cooking: OldCraftingPage.Value.cooking,
-						standalone_menu: !OldCraftingGameMenu.Value,
-						material_containers: OldCraftingPage.Value.MaterialContainers,
-						silent_open: true,
-						discover_containers: OldCraftingPage.Value.DiscoverContainers,
-						discover_buildings: OldCraftingPage.Value.DiscoverBuildings,
-						listed_recipes: OldCraftingPage.Value.GetListedRecipes(),
-						station: OldCraftingPage.Value.Station?.Id,
-						areaOverride: OldCraftingPage.Value.DiscoverAreaOverride
-					);
-
-					if (intBetterGameMenu != null) {
-						intBetterGameMenu.pendingPage = bcm;
-						intBetterGameMenu.TryOpenMenu(defaultTab: nameof(VanillaTabOrders.Crafting));
-						intBetterGameMenu.pendingPage = null;
-
-					} else if (game != null) {
-						for (int i = 0; i < game.pages.Count; i++) {
-							if (game.pages[i] is CraftingPage cp) {
-								CommonHelper.YeetMenu(cp);
-
-								game.pages[i] = bcm;
-								game.changeTab(i, false);
-								break;
-							}
-						}
-
-					} else
-						Game1.activeClickableMenu = bcm;
-				}
-			}
-
-			// Clear the old crafting page.
-			OldCraftingPage.Value = null;
-			OldCraftingGameMenu.Value = false;
-		}*/
 
 		// No menu?
 		if (menu == null) {
@@ -588,7 +523,7 @@ public class ModEntry : PintailModSubscriber {
 			if (!Context.IsWorldReady)
 				return;
 
-			ActiveTrashMenu = new TrashGrabMenu(this, TrashedItems.Value);
+			ActiveChildMenu = new TrashGrabMenu(this, TrashedItems.Value);
 		});
 
 		Helper.ConsoleCommands.Add("bc_stations", "List all custom crafting stations, or open one if you provide a name.", (name, args) => {
@@ -897,24 +832,9 @@ public class ModEntry : PintailModSubscriber {
 	}
 
 	public void OpenGMCM() {
-		if (HasGMCM()) {
-			/*if (Game1.activeClickableMenu is GameMenu gm && gm.GetCurrentPage() is BetterCraftingPage p) {
-				OldCraftingPage.Value = p;
-				OldCraftingGameMenu.Value = true;
-			}
-
-			if (intBetterGameMenu != null && intBetterGameMenu.ActiveMenu is IBetterGameMenu bgm && bgm.CurrentPage is BetterCraftingPage p2) {
-				OldCraftingPage.Value = p2;
-				OldCraftingGameMenu.Value = true;
-			}
-
-			if (Game1.activeClickableMenu is BetterCraftingPage page)
-				OldCraftingPage.Value = page;
-			*/
+		if (HasGMCM() && GMCMIntegration.CanOpenMenu)
 			GMCMIntegration.OpenMenu();
-		}
 	}
-
 
 	private void RegisterSettings() {
 		GMCMIntegration = new(this, () => Config, () => Config = new ModConfig(), () => SaveConfig());

@@ -1,10 +1,10 @@
 #nullable enable
 
-using Newtonsoft.Json;
+using Leclair.Stardew.Common.Serialization.Converters;
 
 using Microsoft.Xna.Framework;
 
-using Leclair.Stardew.Common.Serialization.Converters;
+using Newtonsoft.Json;
 
 namespace Leclair.Stardew.BetterCrafting.Models;
 
@@ -25,6 +25,11 @@ public class Theme {
 	[JsonConverter(typeof(ColorConverter))]
 	public Color? QuantityWarningShadowColor { get; set; }
 
+	[JsonConverter(typeof(ColorConverter))]
+	public Color? ShopLabelColor { get; set; }
+
+	[JsonConverter(typeof(ColorConverter))]
+	public Color? ShopHoverColor { get; set; }
 
 	public bool CustomTooltip { get; set; }
 	public bool CustomScroll { get; set; }

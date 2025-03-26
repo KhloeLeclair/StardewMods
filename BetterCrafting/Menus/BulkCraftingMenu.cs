@@ -21,7 +21,7 @@ using StardewValley.Menus;
 
 namespace Leclair.Stardew.BetterCrafting.Menus;
 
-public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
+public class BulkCraftingMenu : MenuSubscriber<ModEntry>, IChildMenu {
 
 	public readonly IRecipe Recipe;
 	public readonly BetterCraftingPage Menu;
@@ -309,7 +309,7 @@ public class BulkCraftingMenu : MenuSubscriber<ModEntry> {
 
 		var builder = SimpleHelper
 			.Builder(minSize: new Vector2(4 * 80, 0))
-			.Text(Menu.cooking ? I18n.Bulk_Cooking() : I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
+			.Text(Menu.DisplayAsShop ? I18n.Bulk_Purchase() : Menu.cooking ? I18n.Bulk_Cooking() : I18n.Bulk_Crafting(), font: Game1.dialogueFont, align: Alignment.HCenter)
 			//.Divider()
 			.Group(margin: 8)
 				.Space()
