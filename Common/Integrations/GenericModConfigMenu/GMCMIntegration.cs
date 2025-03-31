@@ -18,6 +18,8 @@ namespace Leclair.Stardew.Common.Integrations.GenericModConfigMenu;
 
 public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi, M> where T : new() where M : Mod {
 
+	public const string UNIQUE_ID = "spacechase0.GenericModConfigMenu";
+
 	private readonly Func<T> GetConfig;
 	private readonly Action ResetConfig;
 	private readonly Action SaveConfig;
@@ -27,7 +29,7 @@ public class GMCMIntegration<T, M> : BaseAPIIntegration<IGenericModConfigMenuApi
 	private IManifest Consumer { get => Self.ModManifest; }
 
 	public GMCMIntegration(M self, Func<T> getConfig, Action resetConfig, Action saveConfig)
-		: base(self, "spacechase0.GenericModConfigMenu", "1.14.0"
+		: base(self, UNIQUE_ID, "1.14.0"
 	) {
 		IsRegistered = false;
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+Released March 31st, 2025 for Stardew Valley 1.6.15+
+
+This is the initial public release.
+
+### Compatibility
+* Add internal compatibility for Generic Mod Config Menu and SpaceCore, to
+  be used until casey has time to review the relevant PRs.
+
+
 ## 0.5.10
 Released March 26th, 2025 for Stardew Valley 1.6.15+
 

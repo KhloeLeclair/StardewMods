@@ -16,6 +16,7 @@ public abstract class BaseIntegration<M> where M : Mod {
 	public string? MaxVersion { get; }
 
 	[MemberNotNullWhen(true, nameof(Manifest))]
+	[MemberNotNullWhen(true, nameof(Other))]
 	public virtual bool IsLoaded { get; protected set; }
 
 	public IModInfo? Other { get; }

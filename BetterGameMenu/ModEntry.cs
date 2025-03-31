@@ -4,6 +4,7 @@ using System.Linq;
 
 using HarmonyLib;
 
+using Leclair.Stardew.BetterGameMenu.Integrations;
 using Leclair.Stardew.BetterGameMenu.Integrations.StarControl;
 using Leclair.Stardew.BetterGameMenu.Menus;
 using Leclair.Stardew.BetterGameMenu.Models;
@@ -253,6 +254,9 @@ public partial class ModEntry : PintailModSubscriber {
 		var builder = ReflectionHelper.WhatPatchesMe(this, "  ", false);
 		if (builder is not null)
 			Log($"Detected Harmony Patches:\n{builder}", LogLevel.Trace);
+
+		SpaceCoreCompat.MaybeAdd(this);
+		GenericModConfigMenuCompat.MaybeAdd(this);
 
 		intStarControl?.AddAllTabs();
 	}
