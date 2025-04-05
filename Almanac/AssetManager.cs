@@ -146,18 +146,18 @@ public class AssetManager {
 		Locale = locale;
 	}
 
-public struct EventData {
-	public static readonly Regex I18N_SPLITTER = new(@"{{(.+?)}}", RegexOptions.Compiled);
+	public struct EventData {
+		public static readonly Regex I18N_SPLITTER = new(@"{{(.+?)}}", RegexOptions.Compiled);
 
-	public string Id { get; set; }
-	public string[] Conditions { get; set; }
-	public string[] Script { get; set; }
+		public string Id { get; set; }
+		public string[] Conditions { get; set; }
+		public string[] Script { get; set; }
 
-	public string Key => $"{Id}/{string.Join("/", Conditions)}";
-	public string RealScript => string.Join("/", Script);
+		public string Key => $"{Id}/{string.Join("/", Conditions)}";
+		public string RealScript => string.Join("/", Script);
 
-	public string Localize(ITranslationHelper helper) {
-		string id = Id;
+		public string Localize(ITranslationHelper helper) {
+			string id = Id;
 
 			return I18N_SPLITTER.Replace(RealScript, match => {
 				string key = match.Groups[1].Value;
