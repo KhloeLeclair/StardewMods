@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1
+Released April 9th, 2025 for Stardew Valley 1.6.15+
+
+### Fixed
+* Bug where calling `IClickableMenu.exitThisMenu()` would not exhibit the
+  expected behavior when the current menu is a Better Game Menu instance,
+  causing minor issues including being unable to close the game map by
+  pressing M, and the local co-op menu not opening correctly.
+
+
 ## 1.0.0
 Released March 31st, 2025 for Stardew Valley 1.6.15+
 
