@@ -1,7 +1,5 @@
 using System;
 
-using Leclair.Stardew.CloudySkies.Models;
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -10,6 +8,17 @@ using StardewValley;
 namespace Leclair.Stardew.CloudySkies.Layers;
 
 public class RainLayer : IWeatherLayer {
+
+	public struct DropInfo {
+		public int Frame;
+		public int Accumulator;
+		public Vector2 Position;
+		public DropInfo(int x, int y, int frame, int accumulator) {
+			Position = new Vector2(x, y);
+			Frame = frame;
+			Accumulator = accumulator;
+		}
+	}
 
 	private readonly ModEntry Mod;
 
@@ -37,7 +46,7 @@ public class RainLayer : IWeatherLayer {
 
 	private bool IsDisposed;
 
-	private readonly RainDrop[] Drops;
+	private readonly DropInfo[] Drops;
 
 	#region Life Cycle
 
@@ -68,7 +77,7 @@ public class RainLayer : IWeatherLayer {
 		Opacity = data.Opacity;
 		Vibrancy = data.Vibrancy;
 
-		Drops = new RainDrop[data.Count];
+		Drops = new DropInfo[data.Count];
 		RandomizeDrops();
 	}
 
@@ -97,8 +106,9 @@ public class RainLayer : IWeatherLayer {
 	#endregion
 
 	private void RandomizeDrops() {
-		for (int i = 0; i < Drops.Length; i++) {
-			Drops[i] = new RainDrop(
+		int length = Drops.Length;
+		for (int i = 0; i < length; i++) {
+			Drops[i] = new DropInfo(
 				Game1.random.Next(Game1.viewport.Width),
 				Game1.random.Next(Game1.viewport.Height),
 				Game1.random.Next(Frames),
@@ -113,19 +123,19 @@ public class RainLayer : IWeatherLayer {
 		int maxX = Game1.viewport.Width + 64;
 
 		for (int i = 0; i < Drops.Length; i++) {
-			RainDrop drop = Drops[i];
-			drop.position.X -= offsetX;
-			drop.position.Y -= offsetY;
+			DropInfo drop = Drops[i];
+			drop.Position.X -= offsetX;
+			drop.Position.Y -= offsetY;
 
-			if (drop.position.Y > maxY)
-				drop.position.Y = -64f;
-			else if (drop.position.Y < -64f)
-				drop.position.Y = maxY;
+			if (drop.Position.Y > maxY)
+				drop.Position.Y = -64f;
+			else if (drop.Position.Y < -64f)
+				drop.Position.Y = maxY;
 
-			if (drop.position.X > maxX)
-				drop.position.X = -64f;
-			else if (drop.position.X < -64f)
-				drop.position.X = maxX;
+			if (drop.Position.X > maxX)
+				drop.Position.X = -64f;
+			else if (drop.Position.X < -64f)
+				drop.Position.X = maxX;
 
 			Drops[i] = drop;
 		}
@@ -134,41 +144,29 @@ public class RainLayer : IWeatherLayer {
 
 	public void Draw(SpriteBatch batch, GameTime time, RenderTarget2D targetScreen) {
 
+		int length = Drops.Length;
 		Rectangle source = Source;
 		Color color = Color * Opacity;
+		int white_offset = Color == Color.White ? 0 : 4;
 
-		for (int i = 0; i < Drops.Length; i++) {
-			RainDrop drop = Drops[i];
+		for (int i = 0; i < length; i++) {
+			DropInfo drop = Drops[i];
+			Rectangle src = Texture != null
+				? new(source.X + (drop.Frame * source.Width), source.Y, source.Width, source.Height)
+				: Game1.getSourceRectForStandardTileSheet(Game1.rainTexture, drop.Frame + white_offset, 16, 16);
+
 			for (int v = 0; v < Vibrancy; v++) {
-				if (Texture != null)
-					batch.Draw(
-						Texture,
-						drop.position,
-						new Rectangle(
-							source.X + (drop.frame * source.Width),
-							source.Y,
-							source.Width,
-							source.Height
-						),
-						color,
-						0f,
-						Vector2.Zero,
-						Scale,
-						Effects,
-						1f
-					);
-				else
-					batch.Draw(
-						Game1.rainTexture,
-						drop.position,
-						Game1.getSourceRectForStandardTileSheet(Game1.rainTexture, drop.frame + (Color == Color.White ? 0 : 4), 16, 16),
-						color,
-						0f,
-						Vector2.Zero,
-						Scale,
-						Effects,
-						1f
-					);
+				batch.Draw(
+					Texture ?? Game1.rainTexture,
+					drop.Position,
+					src,
+					color,
+					0f,
+					Vector2.Zero,
+					Scale,
+					Effects,
+					1f
+				);
 			}
 		}
 
@@ -182,30 +180,30 @@ public class RainLayer : IWeatherLayer {
 		int length = Drops.Length;
 
 		for (int i = 0; i < length; i++) {
-			RainDrop drop = Drops[i];
-			drop.accumulator += time.ElapsedGameTime.Milliseconds;
+			DropInfo drop = Drops[i];
+			drop.Accumulator += time.ElapsedGameTime.Milliseconds;
 
-			if (drop.accumulator > 70) {
-				drop.accumulator = 0;
+			if (drop.Accumulator > 70) {
+				drop.Accumulator = 0;
 
-				if (drop.frame == 0) {
-					drop.position += new Vector2(Speed.X + i * (Speed.X < 0 ? 8 : -8) / length, Speed.Y + i * (Speed.Y < 0 ? 8 : -8) / length);
+				if (drop.Frame == 0) {
+					drop.Position += new Vector2(Speed.X + i * (Speed.X < 0 ? 8 : -8) / length, Speed.Y + i * (Speed.Y < 0 ? 8 : -8) / length);
 
-					if (drop.position.Y > (Game1.viewport.Height + 64))
-						drop.position.Y = -64f;
+					if (drop.Position.Y > (Game1.viewport.Height + 64))
+						drop.Position.Y = -64f;
 
-					if (drop.position.X > (Game1.viewport.Width + 64))
-						drop.position.X = -64f;
-					else if (drop.position.X < -64f)
-						drop.position.X = Game1.viewport.Width + 64f;
+					if (drop.Position.X > (Game1.viewport.Width + 64))
+						drop.Position.X = -64f;
+					else if (drop.Position.X < -64f)
+						drop.Position.X = Game1.viewport.Width + 64f;
 
 					if (Game1.random.NextDouble() < 0.1)
-						drop.frame++;
+						drop.Frame++;
 
 				} else {
-					drop.frame = (drop.frame + 1) % Frames;
-					if (drop.frame == 0)
-						drop.position = new Vector2(Game1.random.Next(Game1.viewport.Width), Game1.random.Next(Game1.viewport.Height));
+					drop.Frame = (drop.Frame + 1) % Frames;
+					if (drop.Frame == 0)
+						drop.Position = new Vector2(Game1.random.Next(Game1.viewport.Width), Game1.random.Next(Game1.viewport.Height));
 				}
 			}
 

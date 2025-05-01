@@ -100,12 +100,12 @@ public class ArgumentParser {
 	}
 
 	static ArgumentParser() {
-		RegisterConverter<int>(ParseInt, "<number>");
-		RegisterConverter<long>(ParseLong, "<number>");
-		RegisterConverter<float>(ParseFloat, "<number>");
-		RegisterConverter<double>(ParseDouble, "<number>");
+		RegisterConverter<int>(ParseInt, "<{name}number>");
+		RegisterConverter<long>(ParseLong, "<{name}number>");
+		RegisterConverter<float>(ParseFloat, "<{name}number>");
+		RegisterConverter<double>(ParseDouble, "<{name}number>");
 		RegisterConverter<bool>(ParseBool, "<true/false>");
-		RegisterConverter<string>(ParseString, "<string>");
+		RegisterConverter<string>(ParseString, "<{name}string>");
 		RegisterConverter<Point>(ParsePoint, "<x:number> <y:number>");
 		RegisterConverter<Rectangle>(ParseRectangle, "<x:number> <y:number> <width:number> <height:number>");
 		RegisterConverter<Vector2>(ParseVector2, "<x:number> <y:number>");
@@ -114,7 +114,7 @@ public class ArgumentParser {
 		RegisterConverter<IEnumerable<TargetLocationContext>>(ParseLocationContext, "<Any/Here/ID>");
 		RegisterConverter<Farmer>(ParseFarmer, "<Current/Host/Target/ID>");
 		RegisterConverter<ParsedFarmers>(ParseFarmers, "<Any/All/Current/Host/Target/ID>");
-		RegisterConverter<Color>(ParseColor, "<color>");
+		RegisterConverter<Color>(ParseColor, "<{name}color>");
 		RegisterConverter<IEnumerable<TargetPosition>>(ParseTargetPosition, "<target>");
 		RegisterConverter<TargetTileFilter>(ParseTargetTileFilter, "<target-filter>");
 		RegisterConverter<Regex>(ParseRegularExpression, "<regex-or-glob>");
@@ -1104,6 +1104,9 @@ public class ArgumentParser {
 					if (arg.LongName is not null)
 						name = $"{name}, {arg.LongName}";
 
+					if (!string.IsNullOrEmpty(argument))
+						argument = argument.Replace("{name}", string.Empty);
+
 					options.AppendLine($"    {name} {argument}\t{arg.Description}");
 
 					if (arg.IsRequired)
@@ -1121,6 +1124,9 @@ public class ArgumentParser {
 						argument = "<" + string.Join('/', Enum.GetNames(arg.Type)) + ">";
 					else
 						argument = "<argument>";
+
+					if (!string.IsNullOrEmpty(argument))
+						argument = argument.Replace("{name}", string.IsNullOrEmpty(arg.Name) ? string.Empty : $"{arg.Name}:");
 
 					if (arg.AllowMultiple)
 						argument += " +";

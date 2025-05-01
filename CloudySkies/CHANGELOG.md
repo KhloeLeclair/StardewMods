@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.1
+Released May 1st, 2025.
+
+### Changed
+* Improve rain layer logic to run slightly faster.
+* Minor change to help output from commands.
+
+### Fixed
+* Rewrite the rain layer type to not use a built-in game type that
+  differs between Android and PC, to hopefully fix an issue experienced
+  by Android players.
+
+
 ## 1.9.0
 Released February 24th, 2025.
 

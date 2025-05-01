@@ -232,21 +232,28 @@ public partial class ModEntry {
 		string? weatherId = null;
 
 		var parser = ArgumentParser.New()
+			.AddHelpFlag()
 			.Add<IEnumerable<TargetLocationContext>>("-t", "--target", val => targets.AddRange(val))
-			.AllowMultiple()
+				.WithDescription("The location context to change the weather in, defaults to your current location.")
+				.AllowMultiple()
 			.AddPositional<string>("WeatherId", val => weatherId = val)
-			.IsRequired()
-			.IsFinal();
+				.IsRequired()
+				.IsFinal();
 
 		if (!parser.TryParse(args, out string? error)) {
 			Log(error, LogLevel.Error);
 			return;
 		}
 
+		if (parser.WantsHelp) {
+			Log($"Usage: {name} {parser.Usage}", LogLevel.Info);
+			return;
+		}
+
 		weatherId ??= "Sun";
 
 		if (!VANILLA_WEATHER.Contains(weatherId) && !TryGetWeather(weatherId, out var weatherData)) {
-			Log($"Invalid weather id '{weatherId}'.", LogLevel.Warn);
+			Log($"Invalid weather id '{weatherId}'. Use cs_list for a list of all valid weather IDs.", LogLevel.Warn);
 			return;
 		}
 
