@@ -1,3 +1,4 @@
+
 #nullable enable
 
 using System;
@@ -37,7 +38,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 	#region Lifecycle
 
 	public static NoticesPage? GetPage(AlmanacMenu menu, ModEntry mod) {
-		if (! mod.Config.ShowNotices)
+		if (!mod.Config.ShowNotices)
 			return null;
 
 		return new(menu, mod);
@@ -67,7 +68,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 		Texture2D texture;
 		try {
 			texture = Game1.content.Load<Texture2D>(@"Characters\" + npc.getTextureName());
-		} catch(Exception) {
+		} catch (Exception) {
 			texture = npc.Sprite.Texture;
 		}
 
@@ -147,7 +148,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 		List<NPC>? chars = null;
 		try {
 			chars = Utility.getAllCharacters();
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			Mod.Log($"Unable to load list of characters: {ex}", StardewModdingAPI.LogLevel.Error);
 			builder
 				.Text("\n\n")
@@ -187,11 +188,11 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 			date.DayOfMonth = day;
 			List<SpriteInfo> sprites = new();
 
-			foreach(var evt in Mod.Notices.GetEventsForDate(0, date)) {
+			foreach (var evt in Mod.Notices.GetEventsForDate(0, date)) {
 				if (evt == null)
 					continue;
 
-				bool has_simple = ! string.IsNullOrEmpty(evt.SimpleLabel);
+				bool has_simple = !string.IsNullOrEmpty(evt.SimpleLabel);
 				bool has_line = has_simple || evt.AdvancedLabel != null;
 
 				Func<IFlowNodeSlice, int, int, bool>? onHover = null;
@@ -199,7 +200,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 				if (has_line) {
 					db.Text("\n");
 					if (evt.Item != null)
-						onHover = (_,_,_) => {
+						onHover = (_, _, _) => {
 							Menu.HoveredItem = evt.Item;
 							return true;
 						};
@@ -339,7 +340,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 
 			} else {
 				int to_show = Math.Min(sprites.Count, bdays == null ? 3 : 1);
-				int idx = (int) (ms / Mod.Config.CycleTime) % (int)Math.Ceiling(sprites.Count / (float) to_show) * to_show;
+				int idx = (int) (ms / Mod.Config.CycleTime) % (int) Math.Ceiling(sprites.Count / (float) to_show) * to_show;
 
 				for (int i = 0; i < to_show; i++) {
 					if (i + idx >= sprites.Count)
@@ -376,7 +377,7 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 	}
 
 	public void DrawOverCell(SpriteBatch b, WorldDate date, Rectangle bounds) {
-		
+
 	}
 
 	public bool ReceiveCellLeftClick(int x, int y, WorldDate date, Rectangle bounds) {
@@ -411,3 +412,4 @@ public class NoticesPage : BasePage<BaseState>, ICalendarPage {
 	#endregion
 
 }
+

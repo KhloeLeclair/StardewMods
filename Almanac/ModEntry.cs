@@ -21,6 +21,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.BellsAndWhistles;
 
 using Leclair.Stardew.Almanac.Crops;
 using Leclair.Stardew.Almanac.Fish;
@@ -100,8 +101,8 @@ public class ModEntry : ModSubscriber {
 		Harmony = new Harmony(ModManifest.UniqueID);
 
 		// Patches
-		// Patches.GameMenu_Patches.Patch(this);
-		Common_SpriteText_Patches.Patch(Harmony, Monitor);
+		Patches.GameMenu_Patches.Patch(this);
+		//Patches.Workbench_Patches.Patch(this);
 
 		Assets = new(this);
 
@@ -323,7 +324,7 @@ public class ModEntry : ModSubscriber {
 			string input = string.Join(' ', args);
 
 			Log($" Input: {input}");
-			Log($"Result: {StringTokenizer.ParseString(input, item: Game1.player?.CurrentItem, monitor: Monitor, trace: true)}");
+			// Log($"Result: {StringTokenizer.ParseString(input, item: Game1.player?.CurrentItem, monitor: Monitor, trace: true)}");
 		});
 
 		Helper.ConsoleCommands.Add("al_gsq", "Run a GameStateQuery", (name, args) => {
@@ -343,7 +344,7 @@ public class ModEntry : ModSubscriber {
 			Log($" Query: {query}");
 			if (seed != -1)
 				Log($"  Seed: {seed}");
-			Log($"Result: {Common.GameStateQuery.CheckConditions(query, rnd: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
+			//Log($"Result: {GameStateQuery.CheckConditions(query, random: rnd, item: Game1.player.CurrentItem, monitor: Monitor, trace: true)}");
 		});
 
 		Helper.ConsoleCommands.Add("al_update", "Invalidate cached data.", (name, args) => {
@@ -371,25 +372,25 @@ public class ModEntry : ModSubscriber {
 			}
 		});
 
-			Helper.ConsoleCommands.Add("al_now", "Print information about the in-game time.", (_, _) => {
-				Log($"Date: {Game1.Date.Localize()}", LogLevel.Info);
-				Log($"-   Year: {Game1.year}", LogLevel.Info);
-				Log($"- Season: {Game1.currentSeason}", LogLevel.Info);
-				Log($"-  DayOf: {Game1.dayOfMonth}", LogLevel.Info);
-				Log($"-  TDays: {Game1.Date.TotalDays}", LogLevel.Info);
-				Log($"DaysPlayed: {Game1.stats.DaysPlayed}", LogLevel.Info);
-			});
+		Helper.ConsoleCommands.Add("al_now", "Print information about the in-game time.", (_, _) => {
+			Log($"Date: {Game1.Date.Localize()}", LogLevel.Info);
+			Log($"-   Year: {Game1.year}", LogLevel.Info);
+			Log($"- Season: {Game1.currentSeason}", LogLevel.Info);
+			Log($"-  DayOf: {Game1.dayOfMonth}", LogLevel.Info);
+			Log($"-  TDays: {Game1.Date.TotalDays}", LogLevel.Info);
+			Log($"DaysPlayed: {Game1.stats.DaysPlayed}", LogLevel.Info);
+		});
 
-			Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
-				ulong seed = GetBaseWorldSeed();
-				WorldDate date = new(Game1.Date);
-				for (int i = 0; i < 4 * 28; i++) {
-					string weather = Weather.GetWeatherForDate(seed, date, Game1.locationContextData["Default"], "Default");
-					Log($"Date: {date.Localize()} -- Weather: {weather}");
-					date.TotalDays++;
-				}
-			});
-		}
+		Helper.ConsoleCommands.Add("al_forecast", "Get the forecast for the loaded save.", (name, args) => {
+			ulong seed = GetBaseWorldSeed();
+			WorldDate date = new(Game1.Date);
+			for (int i = 0; i < 4 * 28; i++) {
+				string weather = Weather.GetWeatherForDate(seed, date, Game1.locationContextData["Default"], "Default");
+				Log($"Date: {date.Localize()} -- Weather: {weather}");
+				date.TotalDays++;
+			}
+		});
+	}
 
 	[Subscriber]
 	private void OnMenuChanged(object sender, MenuChangedEventArgs e) {
@@ -883,7 +884,7 @@ public class ModEntry : ModSubscriber {
 	}
 
 	public bool DoesTranslationExist(string key) {
-		return Helper.Translation.ContainsKey(key);
+			return Helper.Translation.Get(key).HasValue();
 	}
 
 	public string GetSubLocationName(Models.SubLocation sub) {
@@ -904,6 +905,8 @@ public class ModEntry : ModSubscriber {
 					return I18n.Location_Forest_River();
 				if (sub.Area == "Pond")
 					return I18n.Location_Forest_Pond();
+				if (sub.Area == "Lake")
+					return I18n.Location_Forest_Lake();
 				break;
 
 			case "IslandWest":
@@ -911,6 +914,11 @@ public class ModEntry : ModSubscriber {
 					return I18n.Location_Island_Ocean();
 				if (sub.Area == "Freshwater")
 					return I18n.Location_Island_Freshwater();
+				break;
+
+			case "Desert":
+				if (sub.Area == "TopPond")
+					return I18n.Location_Desert_TopPond();
 				break;
 		}
 
@@ -1023,6 +1031,13 @@ public class ModEntry : ModSubscriber {
 				case "Deluxe Barn":
 				case "Deluxe Coop":
 				case "Farm":
+				case "Farm_Standard":
+				case "Farm_Forest":
+				case "Farm_FourCorners":
+				case "Farm_Hilltop":
+				case "Farm_Riverland":
+				case "Farm_Wilderness":
+				case "Farm_Beach":
 				case "FarmCave":
 				case "FarmHouse":
 				case "Greenhouse":

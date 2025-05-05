@@ -1,3 +1,4 @@
+
 #nullable enable
 
 using System;
@@ -23,11 +24,11 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 
 	public static readonly Rectangle WEATHER_ICON = new(384, 352, 16, 16);
 
-		private readonly ulong Seed;
-		private IFlowNode[] Nodes;
-		private string[] Forecast;
-		private bool[] Festivals;
-		private bool[] Pirates;
+	private readonly ulong Seed;
+	private IFlowNode[] Nodes;
+	private string[] Forecast;
+	private bool[] Festivals;
+	private bool[] Pirates;
 
 	readonly bool IsIsland;
 	readonly bool IsDesert;
@@ -112,13 +113,13 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 		for (int day = 1; day <= ModEntry.DaysPerMonth; day++) {
 			date.DayOfMonth = day;
 			bool shown = forecastLength == -1 || date.TotalDays - today <= forecastLength;
-			string weather = Forecast[day - 1] = shown ? Mod.Weather.GetWeatherForDate(Seed, date, context, contextID): "";
+			string weather = Forecast[day - 1] = shown ? Mod.Weather.GetWeatherForDate(Seed, date, context, contextID) : "";
 			if (IsIsland) {
-				bool pirates = Pirates![day - 1] = shown && day % 2 == 0 && ! WeatherHelper.IsRainOrSnow(weather);
+				bool pirates = Pirates![day - 1] = shown && day % 2 == 0 && !WeatherHelper.IsRainOrSnow(weather);
 				if (pirates)
 					pirateDays!.Add(day);
 
-			} else if ( Utility.isFestivalDay(day, date.Season)) {
+			} else if (Utility.isFestivalDay(day, date.Season)) {
 				SDate sdate = new(day, date.Season);
 
 				var data = Game1.temporaryContent.Load<Dictionary<string, string>>("Data\\Festivals\\" + date.Season + day);
@@ -142,7 +143,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 					}
 				}
 
-				foreach(GameLocation loc in Game1.locations) {
+				foreach (GameLocation loc in Game1.locations) {
 					if (loc?.Name == where) {
 						where = Mod.GetLocationName(loc);
 						break;
@@ -155,7 +156,7 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 						font: Game1.dialogueFont,
 						shadow: true
 					),
-					onClick: (_,_,_) => false
+					onClick: (_, _, _) => false
 				);
 
 				Nodes[day - 1] = node;
@@ -333,3 +334,4 @@ public class WeatherPage : BasePage<BaseState>, ICalendarPage {
 	#endregion
 
 }
+
