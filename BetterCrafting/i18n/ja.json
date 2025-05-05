@@ -1,0 +1,449 @@
+{
+	// Settings
+	"setting.show-adv": "高度な生産情報を表示",
+	"setting.show-adv.tip": "クラフト可能な残り回数や過去にクラフトした回数などの追加の情報を表示します。これはバニラの設定項目にあるものと同じですが、便宜上ここからも設定可能にしています。",
+
+	"setting.use-per-save": "個別セーブの利用",
+	"setting.use-per-save.tip": "有効にすると、カテゴリとお気に入りの保存をセーブデータ毎に別々にします。すべてのセーブデータでそれらを共有する場合は無効にしてください。レシピの取得状況は常に個別であり、共有されることはありません。",
+
+	"setting.general": "標準オプション",
+
+	"setting.priority": "メニューハンドラ優先度",
+	"setting.priority.tip": "メニューハンドラの優先度を変更することで、Better Craftingと他のMODの互換性が向上する場合があります。Better Craftingのメニューロジックは、低に設定すると他のMODの後に、高に設定すると先に実行されます。",
+
+	"setting.priority.low": "低",
+	"setting.priority.normal": "中",
+	"setting.priority.high": "高",
+
+	"setting.theme": "UIテーマ",
+	"setting.theme-desc": "このUIテーマは、Better Craftingのボタンに使用されます。なお、Better Crafting のUIのほとんどは、標準のゲームのテクスチャを元にしています。",
+
+	"setting.use-full-height": "メニューの高さ最大化",
+	"setting.use-full-height.tip": "有効にすると、ゲームメニュー以外(冷蔵庫、作業台など)から開いたBetter Craftingのメニューをゲーム画面の高さの最大に合わせます。",
+
+	"theme.automatic": "自動",
+	"theme.default": "デフォルト",
+
+	"setting.gift-taste-style": "プレゼントの好みの表示形式",
+	"setting.gift-taste-style.heads": "アイコン",
+	"setting.gift-taste-style.names": "名前",
+	"setting.gift-taste-style.tip": "アイコンに設定すると、各住人のプレゼントの好みが顔のアイコンで表示されます。名前に設定した場合は、住人の名前が表示されます。",
+
+	"setting.gift-taste": "プレゼントの好みの表示",
+	"setting.gift-taste.tip": "有効にすると、アイテムのツールチップにプレゼントの好みが表示されるようになります。検索機能で好みのレシピを検索した時は、この設定が無効でも常にマッチします。",
+	"setting.gift-taste.never": "無効",
+	"setting.gift-taste.shift": "Shiftを押している間",
+	"setting.gift-taste.always": "常に",
+
+	"setting.gift-taste-all": "未発見のプレゼントの表示",
+	"setting.gift-taste-all.tip": "有効にすると、まだゲーム内で発見していないものを含めたすべてのプレゼントの好みを表示します。バランスを壊さないために、デフォルトでは無効になっています。",
+
+	"setting.alphabetic": "アルファベット順ソート",
+	"setting.alphabetic.tip": "有効にすると、レシピはデフォルトの並び順ではなく、アルファベット順に並べられます。",
+
+	"setting.replace-crafting": "クラフトメニューの置換",
+	"setting.replace-crafting.tip": "有効にすると、クラフトメニューがこのModで再実装されたものに置き換わります。",
+
+	"setting.replace-cooking": "料理メニューの置換",
+	"setting.replace-cooking.tip": "有効にすると、料理メニューがこのModで再実装されたものに置き換わります。",
+
+	"setting.enable-categories": "カテゴリの有効化",
+	"setting.enable-categories.tip": "クラフトメニューにカテゴリタブを表示し、1つの大きなリストではなく、カテゴリごとに区分します。",
+
+	"setting.new-recipes": "新しいレシピの強調",
+	"setting.new-recipes.tip": "有効にすると、新しいレシピに'NEW'のラベルが表示されます。",
+	"setting.new-recipes.uncrafted": "作成していないレシピ",
+	"setting.new-recipes.unseen": "未確認のレシピ",
+	"setting.new-recipes.disabled": "無効",
+
+	"setting.new-recipes.prismatic": "ゲーミングNEWラベル",
+	"setting.new-recipes.prismatic.tip": "有効にすると、レシピの'NEW'ラベルの色が変化し続けるようになります。",
+
+	"setting.settings": "設定ボタンの表示",
+	"setting.settings.tip": "有効にすると、置き換えられたメニューにBetter Craftingの設定を開くボタンを表示します。",
+
+	"setting.show-edit": "カテゴリ編集ボタンの表示",
+	"setting.show-edit.tip": "有効にすると、カテゴリが編集可能な場合にそのカテゴリの編集を開始するボタンを表示します。",
+
+	"setting.bindings": "ホットキー/アクション機能",
+	"setting.bindings.tip": "入力やキーバインドに関する設定です。",
+
+	"setting.suppress": "無効キー",
+	"setting.suppress.tip": "このキーを押したままクラフトメニューを開くと、Better Craftingによるメニューの置換を一時的に無効化します。",
+
+	"setting.key.modifier": "修飾キー",
+	"setting.key.modifier.tip": "このキーを押したままにすると、他の一部のキーで実行する動作を変更することができます。",
+
+	"setting.key.search": "検索キー",
+	"setting.key.search.tip": "このキーを押すと、表示されたレシピをフィルタリングするための検索を開始します。",
+
+	"setting.key.favorite": "お気に入りキー",
+	"setting.key.favorite.tip": "レシピ上でこのキーを押すと、そのレシピのお気に入り設定を切り替えます。",
+
+	"setting.key.bulk": "一括クラフトキー",
+	"setting.key.bulk.tip": "レシピ上でこのキーを押すと、一括クラフト/料理画面を表示します。",
+
+	"setting.key.behavior.left": "左クリック / Aボタンの動作",
+	"setting.key.behavior.left.tip": "レシピ上で左クリック（またはコントローラのAボタンを押下）した時の動作を設定します。",
+	"setting.key.behavior.right": "右クリック / Xボタンの動作",
+	"setting.key.behavior.right.tip": "レシピ上で右クリック（またはコントローラのXボタンを押下）した時の動作を設定します。",
+
+	"setting.key.tooltip": "ホットキーの表示",
+	"setting.key.tooltip.tip": "有効にすると、Better Craftingのツールチップの下にホットキーが表示されるようになります。",
+
+	"setting.show-matching-items": "マッチするアイテムの表示",
+	"setting.show-matching-items.never": "無効",
+	"setting.show-matching-items.always": "常に",
+	"setting.show-matching-items.fuzzy": "あいまいな材料",
+	"setting.show-matching-items.fuzzy-quality": "あいまい/高品質な材料",
+	"setting.show-matching-items.tip": "Better Craftingのツールチップに、アイテムの製作によって消費するアイテムの一覧を表示するかどうかを設定します。「あいまい」は、「卵（なんでも）」のように複数のアイテムにマッチすることがある材料です。「高品質」は、通常品質よりも高い品質のアイテムです。",
+
+	"setting.source-mod": "ツールチップにMod名の表示",
+	"setting.source-mod.tip": "有効にすると、Modによって追加されたアイテムがある場合、そのMod名をBetter Craftingのツールチップに表示します",
+
+	"setting.enforce-multiplayer": "マルチプレイヤーのバランス調整",
+	"setting.enforce-multiplayer.tip": "有効にすると、「チート」かもしれないいくつかの設定が、マルチプレイヤーのホストからのみ操作できるようになります。これは「ゴミ箱の回収」「リサイクル」「好みの表示」などの機能に適用されます。",
+
+	"setting.ttwhen.Never": "無効",
+	"setting.ttwhen.ForController": "コントローラ操作時のみ",
+	"setting.ttwhen.Always": "常に",
+
+	"setting.action.None": "なし",
+	"setting.action.Craft": "作る",
+	"setting.action.Favorite": "お気に入りの切り替え",
+	"setting.action.BulkCraft": "一括クラフト画面の表示",
+	"setting.action.BulkCook": "一括料理画面の表示",
+
+	"setting.invalid-storage-types": "許可しないストレージタイプ",
+	"setting.invalid-storage-types.tip": "特定のタイプのストレージオブジェクト（箱、ホッパーなど）を使用できないようにすることができます。",
+
+	"setting.nearby": "作業台の拡張",
+	"setting.nearby.tip": "作業台やキッチンが、デフォルトである1ブロックの範囲内よりも多くの箱と接続できるようになります。箱同士を連鎖させたり、隙間を埋めるためのコネクターを使用することもできます。",
+
+	"setting.nearby.enable": "作業台拡張の有効化",
+
+	"setting.nearby.nearby": "近くの箱を利用する",
+	"setting.nearby.nearby.tip": "0以上に設定すると、このタイル数までの距離の箱にあるアイテムを常に利用できるようになります。",
+
+	"setting.nearby.nearby.active": "全世界",
+	"setting.nearby.nearby.map": "マップ全体",
+	"setting.nearby.nearby.off": "無効",
+	"setting.nearby.nearby.tiles": "{{tiles}} タイル",
+
+	"setting.nearby.diagonal": "斜め接続の有効化",
+	"setting.nearby.diagonal.tip": "有効にすると、箱とコネクターが斜めに配置されても接続されるようになります。",
+
+	"setting.nearby.performance": "パフォーマンス",
+	"setting.nearby.performance.tip": "作業台拡張の範囲を制限して、パフォーマンスを向上させる設定です。",
+
+	"setting.nearby.max-chests": "インベントリの最大数",
+	"setting.nearby.max-chests.tip": "作業台が使用するインベントリの最大数です。",
+
+	"setting.nearby.max-distance": "最大距離",
+	"setting.nearby.max-distance.tip": "作業台からインベントリを利用できる最大距離です。",
+
+	"setting.nearby.max-check": "最大チェック数",
+	"setting.nearby.max-check.tip": "近くのインベントリを探す際に確認するタイルの最大数です。",
+
+	"setting.nearby.connectors": "コネクターの有効化",
+	"setting.nearby.connectors.tip": "コネクターとして使用できる配置可能なオブジェクトです。パフォーマンスを維持するために、不必要なコネクタータイプを追加することは避けてください。これらの項目は例であり、他のオブジェクトや地形を追加するために、設定ファイルを手動で編集することも可能です。",
+
+	"setting.nearby.floors": "床",
+	"setting.nearby.fences": "柵",
+	"setting.nearby.other": "その他の例",
+
+	"setting.recover-trash": "ゴミ箱の回収",
+	"setting.recover-trash.about": "有効にすると、ゴミ箱を右クリックすることで、捨てたアイテムを復元できるメニューを開きます。過去に捨てたアイテムは36個まで保存されます。",
+
+	"setting.recycle": "リサイクル",
+	"setting.recycle.about": "有効にすると、クラフトメニューでアイテムをリサイクルして、クラフトに使用したアイテムを取り戻すことができます。",
+
+	"setting.recycle.higher-quality": "高品質の許可",
+	"setting.recycle.higher-quality.tip": "有効にすると、アイテムの品質がレシピよりも高いときのみリサイクル可能になり、レシピの品質より低いアイテムはリサイクルできなくなります。",
+
+	"setting.recycle.fuzzy": "あいまいマッチング",
+	"setting.recycle.fuzzy.tip": "クラフトのレシピの中には、特定のアイテムを必要とせず、「卵(なんでも)」などのマッチングを行うものがあります。デフォルトでは、これらは取り戻せません。この機能を有効にすると、その場合に最も安価な対応アイテムを返却します。",
+
+	"setting.recycle.unknown": "未発見レシピの有効化",
+	"setting.recycle.unknown.tip": "有効にすると、クラフトレシピが未解放のアイテムでもリサイクルできるようになります。",
+
+	"setting.recycle.crafting": "クラフトリサイクル",
+	"setting.recycle.crafting.tip": "クラフトメニューでリサイクルを有効にするかどうかを設定します。",
+
+	"setting.recycle.cooking": "料理リサイクル",
+	"setting.recycle.cooking.tip": "料理メニューでリサイクルを有効にするかどうかを設定します。",
+
+	"setting.recycle-mode.enabled": "常に",
+	"setting.recycle-mode.disabled": "無効",
+	"setting.recycle-mode.automatic": "自動(リサイクル品所持時)",
+
+	"setting.recycle.click-toggle": "ゴミ箱クリックで切り替える",
+	"setting.recycle.click-toggle.tip": "有効にすると、クラフトメニューのゴミ箱をクリックすると、リサイクルのON/OFFが切り替わります。この機能は、カーソルがアイテムを持っていない時のみ有効です。",
+
+	"setting.transfer": "ストレージ転送",
+	"setting.transfer.about": "インベントリにあるアイテムを、作業台やキッチンに接続された箱に素早く収納することができる機能です。「既存のスタックに追加」と同様に、アイテムは適切な箱に収納されます。",
+
+	"setting.transfer.enable": "ストレージ転送の有効化",
+
+	"setting.transfer.action": "アクションキー ({{binding}})",
+	"setting.transfer.action-modifier": "修飾キー+アクションキー",
+	"setting.transfer.use-tool": "道具使用キー ({{binding}})",
+	"setting.transfer.use-tool-modifier": "修飾キー+道具使用キー",
+
+	"setting.transfer.behavior": "モード",
+
+	"setting.transfer.behavior.none": "何もしない",
+	"setting.transfer.behavior.all": "すべて転送",
+	"setting.transfer.behavior.all-quantity": "残す数を指定",
+	"setting.transfer.behavior.quantity": "転送する数を指定",
+	"setting.transfer.behavior.half": "半分だけ転送",
+
+	"setting.transfer.quantity": "個数",
+	"setting.transfer.quantity.tip": "「転送する数を指定」を使用する場合は箱へ転送する数、「残す数を指定」を使用する場合は所持品に残しておく数を入力します。",
+
+	"setting.cookout": "野外調理キットの動作",
+	"setting.cookout.about": "野外調理キットの仕様を変更し、より作業台に近い動作をするようにします。",
+
+	"setting.cookout.workbench": "作業台機能",
+	"setting.cookout.workbench.tip": "有効にすると、野外調理キットも作業台と同じように近くの箱などから材料を引き出せるようになります。",
+
+	"setting.cookout.durable": "寿命の無効化",
+	"setting.cookout.durable.tip": "有効にすると、野外調理キットが一晩で消滅しなくなり、回収もできるようになります。",
+
+	"setting.cookout.expensive": "キットを高価にする",
+	"setting.cookout.expensive.tip": "有効にすると、野外調理キットのクラフトレシピが調整されます。上のオプションで寿命を長くする分、少しコストを高くするための設定です。",
+
+	// Quality
+
+	"setting.quality": "品質",
+	"setting.quality.tip": "SpaceCoreなど他のソースから追加されたレシピは、APIの制限により、これらの設定を反映しない場合が\nあります。",
+
+	"setting.enable-quality": "品質の制限",
+	"setting.enable-quality.tip": "有効にすると、クラフト時に使用するアイテムの最大品質を選択できるボタンが表示されます。",
+
+	"setting.sort-quality": "低い品質から消費",
+	"setting.sort-quality.tip": "有効にすると、クラフト時に品質が低いアイテムから順に消費されるようになります。",
+
+	// Crafting
+	"setting.crafting": "クラフト",
+	"setting.crafting.tip": "この設定は、主に再実装されたクラフトメニューに適用されます。",
+
+	"setting.uniform-grid": "アイテムサイズ統一",
+	"setting.uniform-grid.tip": "有効にすると、大型のクラフトアイテムが1マスに収まるように縮小されます。",
+
+	"setting.big-craftables-last": "大型アイテム整列",
+	"setting.big-craftables-last.tip": "有効にすると、大型のクラフトアイテムがすべてリストの末尾に置かれるようになります。",
+
+	// Cooking
+	"setting.cooking": "料理",
+	"setting.cooking.tip": "この設定は、特に再実装された料理メニューに適用されます。",
+
+	"setting.seasoning": "調味料の使用",
+	"setting.seasoning.tip": "調理したアイテムに調味料を使用するかどうかを設定します。「インベントリのみ」に設定すると、調味料はインベントリからしか使用されず、冷蔵庫や他の場所からは使用されません。",
+
+	"seasoning.disabled": "無効",
+	"seasoning.enabled": "常に",
+	"seasoning.inventory": "インベントリのみ",
+
+	"setting.show-unknown": "未所持レシピの表示",
+	"setting.show-unknown.tip": "有効にすると、料理レシピと同様に、まだ習得していないレシピがクラフトメニューに表示されます。",
+
+	"setting.hide-unknown": "未所持レシピの非表示",
+	"setting.hide-unknown.tip": "有効にすると、まだ習得していないレシピがメニューに表示されなくなります。",
+
+	// Tool-tips
+	"tooltip.loves": "大好き: {{npcs}}",
+	"tooltip.likes": "好き: {{npcs}}",
+
+	"tooltip.copy-cat": "カテゴリをコピー",
+	"tooltip.paste-cat": "カテゴリを貼り付け",
+	"tooltip.trash-cat": "カテゴリを削除",
+	"tooltip.trash-cat.confirm": "カテゴリ \"{{name}}\" を本当に削除しますか？",
+
+	"tooltip.trash-all": "全カテゴリを初期状態に戻す",
+	"tooltip.trash-all.confirm": "本当にすべてのカテゴリを初期状態に戻してもよいですか？",
+
+	"tooltip.move-up": "カテゴリを上に移動",
+	"tooltip.move-down": "カテゴリを下に移動",
+
+	"tooltip.crafted": "{{count}}回作成",
+	"tooltip.cooked": "{{count}}回料理",
+
+	"tooltip.toggle-recipe": "カテゴリ登録切り替え",
+	"tooltip.use-as-icon": "カテゴリのアイコンへ適用",
+
+	"tooltip.transfer.to": "アイテムをストレージに入れる",
+	"tooltip.transfer.to-item": "保持アイテムをストレージに入れる",
+
+	"tooltip.transfer.from": "ストレージからアイテムを補充",
+	"tooltip.transfer.from-item": "ストレージから保持アイテムを補充",
+
+	"tooltip.transfer.all": "すべて転送",
+	"tooltip.transfer.but-quantity": "{{count}}個残して転送",
+	"tooltip.transfer.half": "半分だけ転送",
+	"tooltip.transfer.quantity": "{{count}}個転送",
+
+	"tooltip.edit-filter-locked": "カテゴリにダイナミックルールを使用する場合、個々のレシピを有効または無効にすることはできません。ルールを調整するか、ダイナミックルールを無効にしてください。",
+
+	// Recycling
+	"tooltip.recycle": "{{item}}をリサイクル",
+	"tooltip.recycle.invalid": "このアイテムはリサイクルできません。",
+	"tooltip.recycle.insufficient": "このアイテムをリサイクルするには最低{{count}}個必要です。",
+	"tooltip.recycle.returns": "得られるもの:",
+	"tooltip.recycle.not-returned": "得られないもの:",
+	"tooltip.recycle.all": "すべてリサイクル ({{amount}})",
+	"tooltip.recycle.once": "リサイクル ({{amount}})",
+
+	// Buttons
+	"tooltip.edit-mode": "カテゴリの編集",
+	"tooltip.favorites": "お気に入りのみ",
+	"tooltip.seasoning": "調味料を使用",
+	"tooltip.uniform": "アイテムサイズ統一",
+	"tooltip.settings": "設定を開く",
+
+	"tooltip.filter.enabled": "ダイナミックルール: 有効",
+	"tooltip.filter.disabled": "ダイナミックルール: 無効",
+	"tooltip.filter.about": "個々のレシピを手動で選択するのではなく、ルールに基づいたカテゴリを選択して適用することができます。",
+
+	"tooltip.include-in-misc": "「その他」にも含める: 有効",
+	"tooltip.include-in-misc.disabled": "「その他」にも含める: 無効",
+	"tooltip.include-in-misc.about": "通常、レシピが他のカテゴリにある場合は、「その他」カテゴリには表示されません。これを有効にすると、このカテゴリのレシピが「その他」カテゴリにも表示されるようになります。",
+
+	"tooltip.search": "レシピの検索",
+	"tooltip.search.old-tip": "ヒント: 「@B{{prefix}}@b」 で検索を開始すると、材料から検索することができます。好きな住人で検索したい場合は「@B{{likes}}@b」、大好きなら「@B{{loves}}@b」で検索を開始してください。",
+	"tooltip.search.tip": "詳細: 次の文字で検索を開始すると、さらに詳しい検索が可能です。:\n\n \"@B{{prefix}}@b\": 材料\n \"@B{{likes}}@b\": 好きな住人\n \"@B{{loves}}@b\": 大好きな住人",
+
+	"search.ingredient-prefix": "!",
+	"search.like-prefix": "#",
+	"search.love-prefix": "^",
+
+	"search.none": "条件を満たすレシピが見つかりません。",
+	"search.none.category": "このカテゴリには条件を満たすレシピが見つかりません。",
+
+	"tooltip.select-icon": "アイコン選択",
+
+	"tooltip.quality.none": "通常品質のみを使用",
+	"tooltip.quality.silver": "シルバー品質以下のみを使用",
+	"tooltip.quality.gold": "ゴールド品質以下のみを使用",
+	"tooltip.quality.iridium": "すべての品質を使用",
+
+	"tooltip.quality-unsupported": "このレシピは品質設定に対応していません。",
+
+	"ingredient.error": "無効な材料",
+
+	"error.locking": "一部のインベントリにアクセスできません。",
+	"error.crafting": "クラフト試行時にエラーが発生しました。",
+	"error.crafting.source": "クラフト試行時に'{{source}}'というModでエラーが発生しました。",
+	"error.pasting": "カテゴリを貼り付けできません。",
+
+	// Bulk Crafting
+	"bulk.crafting": "一括クラフト",
+	"bulk.craftable": "{{count}}個作成可能",
+	"bulk.craft": "{{name}}を{{count}}個作成",
+	"bulk.cooking": "一括料理",
+	"bulk.cookable": "{{count}}個料理可能",
+	"bulk.cook": "{{name}}を{{count}}個料理",
+
+	// Categories
+	"category.new": "新しいカテゴリ",
+	"category.favorites": "お気に入り",
+	"category.combat_rings": "戦闘/指輪",
+	"category.consumables": "消耗品",
+	"category.decoration": "装飾品",
+	"category.fertilizer_seeds": "肥料/種",
+	"category.fishing": "釣り",
+	"category.machinery": "機械類",
+	"category.misc": "その他",
+
+	"category.food.farming": "農業/採取",
+	"category.food.mining": "採鉱/磁力",
+	"category.food.fishing": "釣り",
+	"category.food.combat": "戦闘",
+	"category.food.other": "幸運/速度etc",
+
+	// Currencies
+	"currency.gold": "ゴールド",
+	"currency.festival-points": "ポイント",
+	"currency.club-coins": "Qiコイン",
+	"currency.qi-gems": "Qiジェム",
+
+	// Ingredient / Item Categories
+	"item.category.equipment": "装備品",
+	"item.category.cooking": "料理 (なんでも)",
+	"item.category.crafting": "クラフト (なんでも)",
+	"item.category.mineral": "鉱物 (なんでも)",
+	"item.category.meat": "肉類 (なんでも)",
+	"item.category.fertilizer": "肥料 (なんでも)",
+	"item.category.junk": "ゴミ (なんでも)",
+	"item.category.seeds": "種 (なんでも)",
+	"item.category.fruit": "くだもの (なんでも)",
+	"item.category.flower": "花 (なんでも)",
+
+	// Dynamic Filters
+	"filter.add-new": "ルールの追加",
+	"filter.from-rule": "ルールで有効",
+
+	"filter.include-toggle": "カテゴリに含める",
+	"filter.include-toggle.about": "このルールに一致するレシピをカテゴリに含める、または除外します。",
+
+	"filter.storage": "ストレージ",
+	"filter.storage.about": "箱やホッパーのような物を入れられるアイテムにマッチします。",
+
+	"filter.everything": "全て",
+	"filter.everything.about": "すべてのレシピにマッチします。",
+
+	"filter.new-buff": "バフ",
+	"filter.new-buff.about": "使用時に特定のバフを付与するアイテムにマッチします。",
+
+	"filter.uncrafted": "未作成",
+	"filter.uncrafted.about": "まだ作ったことがないアイテムにマッチします。",
+
+	"filter.search": "検索",
+	"filter.search.about": "クラフトメニューと同じルールで、検索内容に対してアイテムをマッチさせます。",
+
+	"filter.mod": "Modアイテム",
+	"filter.mod.about": "Modによって追加された全てのレシピにマッチします。",
+
+	"filter.gift-taste": "好み: {{taste}}",
+	"filter.gift-taste.about": "このルールは住人が{{taste}}なアイテムにマッチします。「未発見のプレゼントの表示」を有効にしていない限り、発見済みのものしか表示されません。",
+	"filter.gift-taste.likes": "好き",
+	"filter.gift-taste.loves": "大好き",
+	"filter.gift-taste.dislikes": "嫌い",
+	"filter.gift-taste.hates": "大嫌い",
+
+	"filter.machine": "機械類",
+	"filter.machine.about": "アイテムを加工するなど、何かしらの機能を持つ設備アイテムにマッチします。",
+
+	"filter.sprinkler": "スプリンクラー",
+	"filter.sprinkler.about": "スプリンクラーにマッチします。",
+
+	"filter.floors": "床/道",
+	"filter.floors.about": "床や道などのアイテムにマッチします。",
+
+	"filter.fences": "柵",
+	"filter.fences.about": "柵系アイテムにマッチします。",
+
+	"filter.furniture": "家具",
+	"filter.furniture.about": "家具アイテムにマッチします。",
+
+	"filter.light": "照明",
+	"filter.light.about": "設置可能な照明類にマッチします。",
+
+	"filter.error": "不正なルール",
+	"filter.error.about": "このルールIDは無効か未登録であり、削除されたMODのものである可能性があります。",
+
+	"filter.category": "カテゴリ",
+	"filter.category.about": "特定のカテゴリに属するアイテムにマッチします。",
+
+	"filter.context-tag": "タグ",
+	"filter.context-tag.about": "ゲーム内部で定義された特定のタグを含むアイテムにマッチします。",
+
+	"filter.edible": "たべもの",
+	"filter.edible.about": "プレイヤーが飲食できるアイテムにマッチします。",
+
+	"filter.recipe-count": "該当レシピ: {{count}}個",
+
+	// Kitchen
+	"station.kitchen": "キッチン"
+
+}
