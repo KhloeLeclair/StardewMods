@@ -7,6 +7,8 @@
 		
 		<EnableHarmony>true</EnableHarmony>
 		<EnableTranslation>true</EnableTranslation>
+
+    <UseCommon>Crafting;BCInventory;Inventory;GMCM;Mutex;Overlay;UI;SimpleLayout;Flow;SpookyAction;ThemeManager</UseCommon>
 	</PropertyGroup>
 
 	<Import Project="..\Common\Common.projitems" Label="Shared" />
