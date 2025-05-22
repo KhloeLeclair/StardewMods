@@ -66,6 +66,7 @@
 	"weather.lightning": "Orage",
 	"weather.festival": "Soleil",
 	"weather.snow": "Neige",
+	"weather.green": "Pluie verte",
 
 	"page.train": "Horaires des trains",
 	"page.train.about": "@BAttention :@b Des trains passeront par la gare de Stardew Valley aux heures suivantes. Pour votre sécurité, restez toujours à l'écart des rails quand un train est présent.",
@@ -111,7 +112,7 @@
 
 	"page.notices.season": "La saison des {{item}} s'étend du {{start}} au {{end}}.",
 	"page.notices.summer": "Les courants océaniques d'été devraient entraîner des débris supplémentaires sur la plage de Pelican Ville du 12 au 14.",
-	"page.notices.market": "Le marché nocturne est ouvert en soirée du 15 au 17.",
+	"page.notices.passive-festival": "Le festival sera ouvert à partir de {{startTime}} du {{startDay}} au {{endDay}}.",
 
 	"page.notices.anniversary.no-s": "C'est l'anniversaire de mariage de {{name}} et {{spouse}} !",
 	"page.notices.anniversary.s": "C'est l'anniversaire de mariage de {{name}} et {{spouse}} !",
@@ -126,6 +127,8 @@
 
 	"page.notices.merchant": "Le marchand itinérant sera en ville.",
 	"page.notices.merchant.stock": "Le marchand itinérant vendra :",
+	"page.notices.bookseller": "Le libraire sera en ville.",
+	"page.notices.bookseller.stock": "Le libraire vendra :",
 
 	"page.notices.train": "Un train doit passer en gare à {{time}}.",
 
@@ -154,7 +157,7 @@
 	"page.fish.locations.none": "Ce spécimen n'a pas de données d'emplacement.",
 	"page.fish.pond": "Aquaculture",
 	"page.fish.pond.none": "{{fish}} ne peut pas être placé dans un étang à poissons.",
-	"page.fish.pond.start": "",
+	"page.fish.pond.start": " ",
 	"page.fish.filter.weather": "Filtrer par temps",
 	"page.fish.filter.none": "Non filtré",
 	"page.fish.none": "Il n'y a aucun spécimen qui correspond à vos filtres actuels.",
@@ -219,7 +222,7 @@
 	"settings.weather.rules": "Activer les règles météo",
 	"settings.weather.rules-desc": "Les règles météo appliquent des contraintes supplémentaires à la météo aléatoire. Les règles par défaut garantissent un trio de jours pluvieux vers la fin du printemps pour faciliter l'amélioration des arrosoirs, ainsi qu'au moins un jour de pluie et au moins un jour ensoleillé chaque semaine.",
 
-	"settings.controls": "Contrôles",
+	"settings.controls": "Raccourcis",
 
 	"settings.controls.almanac": "Ouvrir l'Almanach",
 	"settings.controls.almanac-desc": "Appuyer sur cette touche ouvrira l'interface de l'Almanach.",
@@ -283,6 +286,12 @@
 	"settings.notices.merchant.Visit": "Afficher uniquement les visites",
 	"settings.notices.merchant.Stock": "Afficher les visites et le stock",
 
+	"settings.notices.bookseller": "Montrer le libraire",
+	"settings.notices.bookseller-desc": "Lorsque activé, les visites du libraires seront notés dans les annonces locales. Si vous le souhaitez, vous pouvez montrer les objets qu’il possède également",
+	"settings.notices.bookseller.Disabled": "Désactivé",
+	"settings.notices.bookseller.Visit": "Montrer les visites uniquement",
+	"settings.notices.bookseller.Stock": "Montrer les visites et le stock",
+
 	"settings.restore-state": "Restaurer l'état précédent",
 	"settings.restore-state.desc": "Lorsque activé, l'Almanach se souviendra de son état lorsque vous le fermerez puis le restaurera lorsque vous le rouvrirez.",
 
@@ -320,7 +329,7 @@
 	// rather than using the game's built-in getTimeOfDayString method.
 	// See https://stardewvalleywiki.com/Modding:Custom_languages#Data_format for
 	// details. (Specifically, TimeFormat in the data format table.)
-	"time-format": "",
+	"time-format": "[HOURS_24_00]:[MINUTES]",
 
 	// Locations
 
@@ -342,27 +351,31 @@
 
 	"location.Forest.River": "Rivière",
 	"location.Forest.Pond": "Étang",
+	"location.Forest.Lake": "Lac",
 
 	"location.Island.Ocean": "Océan",
 	"location.Island.Freshwater": "Eau douce",
-
+	"Location.Desert.TopPond": "Étang du haut",
 	// Maps: Stardew Aquarium
 	"location.Custom_ExteriorMuseum": "Aquarium Stardew",
 
 	// Maps: Stardew Valley Expanded
 	"location.Custom_AdventurerSummit": "Sommet de l'aventurier",
 	"location.Custom_BlueMoonVineyard": "Vignoble Blue Moon",
-	"location.Custom_BlueMoonVineyard.0": "Océan",
-	"location.Custom_BlueMoonVineyard.1": "Rivière",
+	"location.Custom_BlueMoonVineyard.Ocean": "Océan",
+	"location.Custom_BlueMoonVineyard.River": "Rivière",
 	"location.Custom_CrimsonBadlands": "Terres Maudites Écarlates",
 	"location.Custom_FableReef": "Récif des Fables",
 	"location.Custom_ForestWest": "Forêt Sève-Cendreuse Ouest",
 	"location.Custom_Highlands": "Hautes-Terres",
-	"location.Custom_Highlands.0": "Ruines",
-	"location.Custom_Highlands.1": "Rivière",
+	"location.Custom_Highlands.Pond": "Étang",
+	"location.Custom_Highlands.River": "Rivière",
 	"location.Custom_HighlandsCavern": "Hautes-Terres (Caverne)",
 	"location.Custom_JunimoWoods": "Forêt des Junimos",
-	//"location.Custom_MorrisProperty": "",
+	"location.Custom_MorrisProperty": "Propriété de Morris",
+	"location.Custom_HenchmanBackyard": "Arrière-cour",
+	"location.Custom_ForbiddenMaze": "Labyrinthe interdit",
+	"location.Custom_DiamondCavern": "Caverne de diamant",
 	"location.Custom_ShearwaterBridge": "Pont de Shearwater",
 	"location.Custom_SpriteSpring2": "Source des esprits",
 	"location.Custom_GrampletonSuburbs": "Banlieue de Grampleton",
