@@ -1,0 +1,43 @@
+{
+    "mod.name": "Better Game Menu",
+
+    "tab.reload-tab": "Recharger l’onglet",
+    "tab.reload-overlays": "Recharger les superpositions",
+
+    "tab.open-settings": "Paramètres de Better Game Menu",
+    "easter-egg.honk": "Klaxonner",
+
+    "error-page.try-again": "Essayer à nouveau",
+    "error-page.message": "Une erreur est apparue en créant cette page de menu. Voir le journal pour plus de détails.",
+
+    "config.enabled": "Menu activé",
+    "config.enabled.about": "Si cette option n'est pas activé, Better Game Menu ne remplacera pas le menu du jeu, ce qui désactiverait en fait totalement Better Game Menu. Potentiellement utile pour les tests.",
+
+    "config.second-row": "Deuxième rangée",
+    "config.second-row.about": "Lorsque vous avez beaucoup d'onglets, un meilleur menu de jeu peut placer certains d'entre eux dans une deuxième ligne pour permettre à plus d'être vu en même temps. Par défaut, il le fait en fonction de l'espace d'écran disponible, mais vous pouvez remplacer ce comportement ici.",
+    "config.second-row.automatic": "S'il y a de la place",
+    "config.second-row.always": "Toujours",
+    "config.second-row.never": "Jamais",
+
+    "config.advanced": "Avancé",
+    "config.advanced.about": "Cette section contient des paramètres plus avancés, y compris les outils de développement.",
+
+    "config.hot-swap": "Autoriser l'échange rapide",
+    "config.hot-swap.about": "Lorsque cela est activé, vous pouvez modifier le fournisseur de menu utilisé à tout moment en cliquant avec le bouton droit sur un onglet et en choisissant dans la liste.",
+
+    "config.providers": "Fournisseurs de menu",
+    "config.providers.about": "Vous pouvez sélectionner le mod que vous souhaitez utiliser pour chaque onglet du menu de jeu ici.",
+
+    "config.provider.automatic": "Automatique ({{value}})",
+    "config.provider.disable": "Désactiver",
+    "config.provider.stardew": "Jeu de base",
+    "config.provider.mod": "Mod: {{name}}",
+    "config.provider.unknown": "Inconnu ({{key}})",
+
+    "config.developer": "Mode développeur",
+    "config.developer.about": "Lorsque cela est activé, des données de performances supplémentaires sont enregistrées et certains éléments de l'interface utilisateur peuvent être modifiés pour la commodité du développeur.",
+
+    "config.fake-tabs": "Enregistrer les faux onglets",
+    "config.fake-tabs.about": "Lorsque cela est activé, un certain nombre de faux onglets sont enregistrés dans le menu pour tester la pagination."
+
+}
