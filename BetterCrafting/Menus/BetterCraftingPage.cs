@@ -6332,25 +6332,10 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		// Source Mod
 		if (Mod.Config.ShowSourceModInTooltip) {
-			IModInfo? info = null;
 
-			string name = hoverRecipe.Name;
-			if (name.StartsWith("bcbuildings:"))
-				name = name[12..];
-
-			int idx = name.IndexOf('_');
-			if (idx > 0)
-				info = Mod.Helper.ModRegistry.Get(name[..idx]);
-
-			if (info == null && recipeItem != null) {
-				idx = recipeItem.ItemId.IndexOf('_');
-				if (idx != -1)
-					info = Mod.Helper.ModRegistry.Get(recipeItem.ItemId[..idx]);
-			}
-
-			if (info != null) {
+			if (GetSourceModForTooltip(hoverRecipe, recipeItem) is string sourceModName) {
 				builder.Divider(false);
-				builder.Text(info.Manifest.Name, color: (Theme.TooltipTextColor ?? Theme.TextColor ?? Game1.textColor) * 0.5f, shadow: false);
+				builder.Text(sourceModName, color: (Theme.TooltipTextColor ?? Theme.TextColor ?? Game1.textColor) * 0.5f, shadow: false);
 			}
 		}
 
@@ -6412,6 +6397,30 @@ public class BetterCraftingPage : MenuSubscriber<ModEntry>, IBetterCraftingMenu 
 
 		CachedTip = builder.GetLayout();
 		return CachedTip;
+	}
+
+	private string? GetSourceModForTooltip(IRecipe recipe, Item? recipeItem) {
+		string name = recipe.Name;
+		if (name.StartsWith("bcbuildings:"))
+			name = name[12..];
+
+		if (Mod.mntIntegration?.TryGetModName(recipe.CraftingRecipe, recipeItem, name, out string? modName) ?? false) {
+			return modName;
+		}
+
+		IModInfo? info = null;
+
+		int idx = name.IndexOf('_');
+		if (idx > 0)
+			info = Mod.Helper.ModRegistry.Get(name[..idx]);
+
+		if (info == null && recipeItem != null) {
+			idx = recipeItem.ItemId.IndexOf('_');
+			if (idx != -1)
+				info = Mod.Helper.ModRegistry.Get(recipeItem.ItemId[..idx]);
+		}
+
+		return info?.Manifest.Name;
 	}
 
 	private bool AddBuffsToTooltip(ISimpleBuilder builder, Item? item, bool icons_only = false, bool divided = false) {

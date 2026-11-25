@@ -112,6 +112,7 @@ public class ModEntry : PintailModSubscriber {
 	internal Integrations.SpaceCore.SCIntegration? intSCore;
 	internal Integrations.BetterGameMenu.BGMIntegration? intBetterGameMenu;
 	internal Integrations.CustomCraftingStation.CCSIntegration? intCCStation;
+	internal Integrations.ModNameTooltip.MNTIntegration? mntIntegration;
 
 	private bool? _UseGlobalSave;
 
@@ -496,6 +497,7 @@ public class ModEntry : PintailModSubscriber {
 		intSCore = new(this);
 		intCCStation = new(this);
 		intBetterGameMenu = new(this);
+		mntIntegration = new(this);
 
 		// Commands
 		Helper.ConsoleCommands.Add("bc_update", "Invalidate cached data.", (name, args) => {
